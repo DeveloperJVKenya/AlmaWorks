@@ -17,12 +17,13 @@ import 'package:uuid/uuid.dart';
 
 enum TaskRowType { project, category, phase, task }
 
-enum DayStatus { none, done, holiday, badWeather }
+enum DayStatus { none, done, completed, holiday, badWeather }
 
 extension DayStatusX on DayStatus {
   String get code {
     switch (this) {
       case DayStatus.done:       return '✓';
+      case DayStatus.completed:  return '✓';
       case DayStatus.holiday:    return 'H';
       case DayStatus.badWeather: return 'W';
       default:                   return '';
@@ -33,6 +34,7 @@ extension DayStatusX on DayStatus {
   String get storageCode {
     switch (this) {
       case DayStatus.done:       return 'D';
+      case DayStatus.completed:  return 'X';
       case DayStatus.holiday:    return 'H';
       case DayStatus.badWeather: return 'W';
       default:                   return '';
@@ -41,7 +43,8 @@ extension DayStatusX on DayStatus {
 
   String get label {
     switch (this) {
-      case DayStatus.done:       return 'Work Done ✓';
+      case DayStatus.done:       return 'Work Done – Ongoing ✓';
+      case DayStatus.completed:  return 'Work Done – Completed ✓';
       case DayStatus.holiday:    return 'Holiday (H)';
       case DayStatus.badWeather: return 'Bad Weather (W)';
       default:                   return 'Not Set';
@@ -51,6 +54,7 @@ extension DayStatusX on DayStatus {
   Color get color {
     switch (this) {
       case DayStatus.done:       return const Color(0xFF2E7D32);
+      case DayStatus.completed:  return const Color(0xFF2E7D32);
       case DayStatus.holiday:    return const Color(0xFF6A1B9A);
       case DayStatus.badWeather: return const Color(0xFF00838F);
       default:                   return Colors.grey;
@@ -60,18 +64,20 @@ extension DayStatusX on DayStatus {
   Color get bgColor {
     switch (this) {
       case DayStatus.done:       return const Color(0xFFE8F5E9);
+      case DayStatus.completed:  return const Color(0xFFE8F5E9);
       case DayStatus.holiday:    return const Color(0xFFF3E5F5);
       case DayStatus.badWeather: return const Color(0xFFE0F7FA);
       default:                   return Colors.white;
     }
   }
 
-  bool get countsAsWorked => this == DayStatus.done;
+  bool get countsAsWorked => this == DayStatus.done || this == DayStatus.completed;
 
   static DayStatus fromCode(String? code) {
     switch (code) {
       // New codes
       case 'D': return DayStatus.done;
+      case 'X': return DayStatus.completed;
       case 'H': return DayStatus.holiday;
       case 'W': return DayStatus.badWeather;
       // Legacy migration – treat old started/ongoing/completed as done
@@ -986,7 +992,16 @@ class _TaskProgressMonitorScreenState
   }
 
   /// 0.0–1.0 progress for a single task.
+  /// If any day on this task is marked [DayStatus.completed] the task is
+  /// considered 100 % done regardless of how many days were checked.
   double _taskProgress(TaskProgressRowData task) {
+    final prefix = '${task.id}_';
+    for (final entry in _dailyStatuses.entries) {
+      if (entry.key.startsWith(prefix) &&
+          DayStatusX.fromCode(entry.value) == DayStatus.completed) {
+        return 1.0;
+      }
+    }
     final expected = _expectedDaysForTask(task);
     if (expected == 0) return 0.0;
     final checked  = _checkedDaysForTask(task);
@@ -994,6 +1009,8 @@ class _TaskProgressMonitorScreenState
   }
 
   /// 0.0–1.0 progress for a phase (weighted by expected work days).
+  /// Routes through [_taskProgress] so a task marked [DayStatus.completed]
+  /// contributes its full weight at 100 % to the phase total.
   double _phaseProgress(TaskProgressRowData phase) {
     if (phase.startDate == null || phase.endDate == null) return 0.0;
     final tasks = _rows
@@ -1001,14 +1018,16 @@ class _TaskProgressMonitorScreenState
         .toList();
     if (tasks.isEmpty) return 0.0;
 
-    int totalExpected = 0;
-    int totalChecked  = 0;
+    double weightedSum = 0.0;
+    int    totalWeight = 0;
     for (final t in tasks) {
-      totalExpected += _expectedDaysForTask(t);
-      totalChecked  += _checkedDaysForTask(t);
+      // Use at least 1 day of weight so tasks without dates still count.
+      final weight = _expectedDaysForTask(t).clamp(1, 1 << 30);
+      weightedSum += _taskProgress(t) * weight;
+      totalWeight += weight;
     }
-    if (totalExpected == 0) return 0.0;
-    return (totalChecked / totalExpected).clamp(0.0, 1.0);
+    if (totalWeight == 0) return 0.0;
+    return (weightedSum / totalWeight).clamp(0.0, 1.0);
   }
 
   /// 0.0–1.0 project-level progress (equal-weight average across phases).
@@ -1154,12 +1173,21 @@ class _TaskProgressMonitorScreenState
               labelColor: Colors.grey[500]!,
               onPick: pick,
             ),
-            // ── Work Done ──────────────────────────────────────────
+            // ── Work Done – Ongoing ────────────────────────────────
             _pickerTile(
               ctx: ctx,
               status: DayStatus.done,
               current: current,
               label: DayStatus.done.label,
+              labelColor: Colors.black87,
+              onPick: pick,
+            ),
+            // ── Work Done – Completed (forces task to 100 %) ───────
+            _pickerTile(
+              ctx: ctx,
+              status: DayStatus.completed,
+              current: current,
+              label: DayStatus.completed.label,
               labelColor: Colors.black87,
               onPick: pick,
             ),
@@ -1239,7 +1267,7 @@ class _TaskProgressMonitorScreenState
           border: Border.all(color: s.color.withValues(alpha: 0.5)),
           borderRadius: BorderRadius.circular(6)),
       child: Center(
-        child: s == DayStatus.done
+        child: (s == DayStatus.done || s == DayStatus.completed)
             ? Icon(Icons.check_rounded, size: 14, color: s.color)
             : Text(s.code,
                 style: GoogleFonts.poppins(
@@ -2481,10 +2509,10 @@ class _TaskProgressMonitorScreenState
   Widget _buildDayCell(DayStatus status, bool active, double h,
       {bool isWeekEnd = false, bool isOverrun = false}) {
     // Overrun done-marks are orange; in-range done is green
-    final effectiveColor = (isOverrun && status == DayStatus.done)
+    final effectiveColor = (isOverrun && (status == DayStatus.done || status == DayStatus.completed))
         ? const Color(0xFFE65100)
         : status.color;
-    final effectiveBg = (isOverrun && status == DayStatus.done)
+    final effectiveBg = (isOverrun && (status == DayStatus.done || status == DayStatus.completed))
         ? const Color(0xFFFFF3E0)
         : (active ? status.bgColor : const Color(0xFFF3F5F7));
 
@@ -2512,7 +2540,7 @@ class _TaskProgressMonitorScreenState
               child: status == DayStatus.none
                   ? Icon(Icons.add_rounded,
                       size: 11, color: Colors.grey[300])
-                  : status == DayStatus.done
+                  : (status == DayStatus.done || status == DayStatus.completed)
                       ? Icon(
                           Icons.check_rounded,
                           size: 14,
