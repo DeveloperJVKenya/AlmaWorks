@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:almaworks/models/project_model.dart';
@@ -304,6 +305,21 @@ class _TaskProgressMonitorScreenState
   // ── Phase-columns cache (avoid recomputing every build frame) ───
   List<_PhaseColumnData>? _cachedPhaseColumns;
 
+  // ── Computed-status cache ────────────────────────────────────────
+  // All four are invalidated together whenever any status changes.
+  // Building them once per status-change (not once per cell) is the
+  // primary fix for the web rendering lag.
+  Map<String, DateTime?>? _completedDateByTask;  // taskId → completion date | null
+  Map<String, double>?    _taskProgressCache;     // taskId → 0.0-1.0
+  Map<String, double>?    _phaseProgressCache;    // phaseId → 0.0-1.0
+  double?                 _projectProgressCache;
+
+  // ── Debounced Firestore autosave ─────────────────────────────────
+  // Collects dirty keys and flushes them in a single Firestore update
+  // 1.5 s after the last tap – eliminates per-tap network round-trips.
+  final Set<String> _dirtyStatusKeys = {};
+  Timer?            _autosaveDebounce;
+
   // ── Name column width (set by LayoutBuilder, used for height calc)
   double _nameColW = _kNameW;
 
@@ -342,6 +358,9 @@ class _TaskProgressMonitorScreenState
 
   @override
   void dispose() {
+    // Flush any pending status writes before tearing down.
+    _autosaveDebounce?.cancel();
+    if (_dirtyStatusKeys.isNotEmpty) _flushDirtyStatuses();
     _hScrollHeader.removeListener(_syncHeaderToData);
     _hScrollData.removeListener(_syncDataToHeader);
     _hScrollData.removeListener(_onHorizontalManualScroll);
@@ -528,6 +547,41 @@ class _TaskProgressMonitorScreenState
     _cachedPhaseColumns    = null;
     _lastAutoScrollRowId   = '';   // re-arm auto-scroll after data changes
     _periodAutoScroll      = true;
+    _invalidateProgressCache();    // phase structure affects all progress values
+  }
+
+  // ── Progress & completion-date cache ────────────────────────────
+  // Call this whenever _dailyStatuses or _rows change so the next
+  // build rebuilds values in one pass instead of per-cell.
+  void _invalidateProgressCache() {
+    _completedDateByTask  = null;
+    _taskProgressCache    = null;
+    _phaseProgressCache   = null;
+    _projectProgressCache = null;
+  }
+
+  /// Scans _dailyStatuses ONCE and populates _completedDateByTask.
+  /// Subsequent calls within the same build frame are O(1) lookups.
+  void _rebuildCompletedDateCacheIfNeeded() {
+    if (_completedDateByTask != null) return;
+    final cache = <String, DateTime?>{};
+    for (final entry in _dailyStatuses.entries) {
+      if (DayStatusX.fromCode(entry.value) != DayStatus.completed) continue;
+      // Key format: '{uuid}_{yyyyMMdd}' – UUIDs contain hyphens, not underscores,
+      // so lastIndexOf('_') always finds the correct separator.
+      final sep = entry.key.lastIndexOf('_');
+      if (sep < 0 || entry.key.length - sep - 1 != 8) continue;
+      final taskId  = entry.key.substring(0, sep);
+      final dateStr = entry.key.substring(sep + 1);
+      try {
+        cache[taskId] = DateTime(
+          int.parse(dateStr.substring(0, 4)),
+          int.parse(dateStr.substring(4, 6)),
+          int.parse(dateStr.substring(6, 8)),
+        );
+      } catch (_) {}
+    }
+    _completedDateByTask = cache;
   }
 
   List<_PhaseColumnData> get _phaseColumns =>
@@ -620,7 +674,7 @@ class _TaskProgressMonitorScreenState
           _dailyStatuses.clear();
           rawStatus.forEach((k, v) => _dailyStatuses[k] = v.toString());
           _isLoading = false;
-          _invalidatePhaseCache();
+          _invalidatePhaseCache();    // also calls _invalidateProgressCache
         });
         _syncNameControllers();
       }
@@ -667,19 +721,6 @@ class _TaskProgressMonitorScreenState
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
-  }
-
-  Future<void> _autosaveStatus(String key, String? value) async {
-    try {
-      if (value == null) {
-        await _docRef.update({'dailyStatuses.$key': FieldValue.delete()});
-      } else {
-        await _docRef.set(
-          {'dailyStatuses': {key: value}},
-          SetOptions(merge: true),
-        );
-      }
-    } catch (_) {}
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -909,8 +950,41 @@ class _TaskProgressMonitorScreenState
       } else {
         _dailyStatuses[key] = status.storageCode;
       }
+      // Invalidate all cached progress/completion values so the next
+      // build recomputes them in one efficient pass, not per-cell.
+      _invalidateProgressCache();
     });
-    _autosaveStatus(key, status == DayStatus.none ? null : status.storageCode);
+    // Track dirty key and schedule a single batched Firestore write.
+    _dirtyStatusKeys.add(key);
+    _scheduleAutosave();
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // DEBOUNCED AUTOSAVE
+  // Batches all taps within 1.5 s into a single Firestore update()
+  // instead of one network round-trip per tap.
+  // ─────────────────────────────────────────────────────────────────
+  void _scheduleAutosave() {
+    _autosaveDebounce?.cancel();
+    _autosaveDebounce = Timer(
+      const Duration(milliseconds: 1500),
+      _flushDirtyStatuses,
+    );
+  }
+
+  Future<void> _flushDirtyStatuses() async {
+    if (_dirtyStatusKeys.isEmpty) return;
+    final keysToFlush = Set<String>.from(_dirtyStatusKeys);
+    _dirtyStatusKeys.clear();
+    try {
+      final updates = <String, dynamic>{};
+      for (final k in keysToFlush) {
+        final v = _dailyStatuses[k];
+        // If key was removed from _dailyStatuses it needs a Firestore delete.
+        updates['dailyStatuses.$k'] = v ?? FieldValue.delete();
+      }
+      await _docRef.update(updates);
+    } catch (_) {}
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -992,76 +1066,65 @@ class _TaskProgressMonitorScreenState
   }
 
   /// 0.0–1.0 progress for a single task.
-  /// If any day on this task is marked [DayStatus.completed] the task is
-  /// considered 100 % done regardless of how many days were checked.
+  /// Uses [_taskProgressCache] so repeated calls within a build frame
+  /// are O(1) lookups rather than O(n) scans of _dailyStatuses.
   double _taskProgress(TaskProgressRowData task) {
-    final prefix = '${task.id}_';
-    for (final entry in _dailyStatuses.entries) {
-      if (entry.key.startsWith(prefix) &&
-          DayStatusX.fromCode(entry.value) == DayStatus.completed) {
-        return 1.0;
-      }
-    }
-    final expected = _expectedDaysForTask(task);
-    if (expected == 0) return 0.0;
-    final checked  = _checkedDaysForTask(task);
-    return (checked / expected).clamp(0.0, 1.0);
-  }
+    final cached = _taskProgressCache;
+    if (cached != null && cached.containsKey(task.id)) return cached[task.id]!;
 
-  /// Returns the [DateTime] of the day on [task] that was marked
-  /// [DayStatus.completed], or null if no such day exists.
-  /// Used to block further marking and render gained-day cells.
-  DateTime? _completedDateForTask(TaskProgressRowData task) {
-    final prefix = '${task.id}_';
-    for (final entry in _dailyStatuses.entries) {
-      if (!entry.key.startsWith(prefix)) continue;
-      if (DayStatusX.fromCode(entry.value) != DayStatus.completed) continue;
-      final dateStr = entry.key.substring(prefix.length); // 'yyyyMMdd'
-      try {
-        return DateTime(
-          int.parse(dateStr.substring(0, 4)),
-          int.parse(dateStr.substring(4, 6)),
-          int.parse(dateStr.substring(6, 8)),
-        );
-      } catch (_) {}
+    _rebuildCompletedDateCacheIfNeeded();
+    double value;
+    if (_completedDateByTask!.containsKey(task.id)) {
+      value = 1.0; // completed → always 100 %
+    } else {
+      final expected = _expectedDaysForTask(task);
+      value = expected == 0
+          ? 0.0
+          : (_checkedDaysForTask(task) / expected).clamp(0.0, 1.0);
     }
-    return null;
+    (_taskProgressCache ??= {})[task.id] = value;
+    return value;
   }
 
   /// 0.0–1.0 progress for a phase (weighted by expected work days).
-  /// Routes through [_taskProgress] so a task marked [DayStatus.completed]
-  /// contributes its full weight at 100 % to the phase total.
+  /// Routes through [_taskProgress] (cached) so completed tasks contribute
+  /// 100 % and the result is memoised for the lifetime of the build frame.
   double _phaseProgress(TaskProgressRowData phase) {
-    if (phase.startDate == null || phase.endDate == null) return 0.0;
-    final tasks = _rows
-        .where((r) => r.type == TaskRowType.task && r.parentPhaseId == phase.id)
-        .toList();
-    if (tasks.isEmpty) return 0.0;
+    final cached = _phaseProgressCache;
+    if (cached != null && cached.containsKey(phase.id)) return cached[phase.id]!;
 
-    double weightedSum = 0.0;
-    int    totalWeight = 0;
-    for (final t in tasks) {
-      // Use at least 1 day of weight so tasks without dates still count.
-      final weight = _expectedDaysForTask(t).clamp(1, 1 << 30);
-      weightedSum += _taskProgress(t) * weight;
-      totalWeight += weight;
+    double value = 0.0;
+    if (phase.startDate != null && phase.endDate != null) {
+      final tasks = _rows
+          .where((r) => r.type == TaskRowType.task && r.parentPhaseId == phase.id)
+          .toList();
+      if (tasks.isNotEmpty) {
+        double weightedSum = 0.0;
+        int    totalWeight = 0;
+        for (final t in tasks) {
+          final weight = _expectedDaysForTask(t).clamp(1, 1 << 30);
+          weightedSum += _taskProgress(t) * weight;
+          totalWeight += weight;
+        }
+        if (totalWeight > 0) value = (weightedSum / totalWeight).clamp(0.0, 1.0);
+      }
     }
-    if (totalWeight == 0) return 0.0;
-    return (weightedSum / totalWeight).clamp(0.0, 1.0);
+    (_phaseProgressCache ??= {})[phase.id] = value;
+    return value;
   }
 
   /// 0.0–1.0 project-level progress (equal-weight average across phases).
-  /// Each phase contributes an equal 1/N share to the project total,
-  /// regardless of how many tasks or work days it contains.
-  /// e.g. 4 phases → each phase = 25 %; a phase at 50 % adds 12.5 % to the project.
+  /// Each phase contributes an equal 1/N share to the project total.
+  /// Result is memoised until the next status or structure change.
   double get _projectProgress {
+    if (_projectProgressCache != null) return _projectProgressCache!;
     final phases = _rows.where((r) => r.type == TaskRowType.phase).toList();
-    if (phases.isEmpty) return 0.0;
+    if (phases.isEmpty) return _projectProgressCache = 0.0;
     double total = 0.0;
     for (final phase in phases) {
       total += _phaseProgress(phase);
     }
-    return (total / phases.length).clamp(0.0, 1.0);
+    return _projectProgressCache = (total / phases.length).clamp(0.0, 1.0);
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -2461,7 +2524,12 @@ class _TaskProgressMonitorScreenState
             );
           }
 
-          // Build day cells – each cell gets the exact height h
+          // Build day cells – each cell gets the exact height h.
+          // Pull the completion date once for this task row (O(1) cache
+          // lookup) so the per-cell loop does zero scanning of _dailyStatuses.
+          _rebuildCompletedDateCacheIfNeeded();
+          final completedDate = _completedDateByTask![row.id];
+
           return SizedBox(
             width: phaseW,
             height: h,
@@ -2487,7 +2555,7 @@ class _TaskProgressMonitorScreenState
                     !day.isBefore(DateTime(
                             taskStart.year, taskStart.month, taskStart.day));
 
-                final isActive    = inPlannedRange || isOverrun;
+                final isActive     = inPlannedRange || isOverrun;
                 final isBeforeTask = taskStart != null &&
                     day.isBefore(DateTime(
                             taskStart.year, taskStart.month, taskStart.day));
@@ -2495,18 +2563,20 @@ class _TaskProgressMonitorScreenState
                 final isWeekEnd = _isLastDayOfWeek(pc, dayIdx);
 
                 // ── Completion-lock logic ────────────────────────────
-                final completedDate = _completedDateForTask(row);
                 final normDay = DateTime(day.year, day.month, day.day);
                 final isAfterCompletion = completedDate != null &&
                     normDay.isAfter(completedDate);
-                // Gained days: planned range days freed up after completion
-                final isGained = isAfterCompletion && inPlannedRange &&
+                // Gained days: planned-range days freed up after completion
+                // that have no explicit mark – shown as plain green fills.
+                final isGained = isAfterCompletion &&
+                    inPlannedRange &&
                     status == DayStatus.none;
 
                 void onCellTap() {
                   if (isAfterCompletion) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                    ScaffoldMessenger.of(context)
+                      ..clearSnackBars()
+                      ..showSnackBar(SnackBar(
                         content: Row(children: [
                           const Icon(Icons.lock_rounded,
                               color: Colors.white, size: 16),
@@ -2525,8 +2595,7 @@ class _TaskProgressMonitorScreenState
                         duration: const Duration(seconds: 3),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
-                      ),
-                    );
+                      ));
                     return;
                   }
                   _showStatusPicker(row, day);
@@ -2565,7 +2634,7 @@ class _TaskProgressMonitorScreenState
 
   Widget _buildDayCell(DayStatus status, bool active, double h,
       {bool isWeekEnd = false, bool isOverrun = false, bool isGained = false}) {
-    // Gained days: green bg, no icon — freed time after task completion
+    // ── Gained days: green fill, no icon — freed time after completion ──
     if (isGained) {
       return Container(
         width: _kDayW,
