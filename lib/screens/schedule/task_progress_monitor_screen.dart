@@ -1008,6 +1008,26 @@ class _TaskProgressMonitorScreenState
     return (checked / expected).clamp(0.0, 1.0);
   }
 
+  /// Returns the [DateTime] of the day on [task] that was marked
+  /// [DayStatus.completed], or null if no such day exists.
+  /// Used to block further marking and render gained-day cells.
+  DateTime? _completedDateForTask(TaskProgressRowData task) {
+    final prefix = '${task.id}_';
+    for (final entry in _dailyStatuses.entries) {
+      if (!entry.key.startsWith(prefix)) continue;
+      if (DayStatusX.fromCode(entry.value) != DayStatus.completed) continue;
+      final dateStr = entry.key.substring(prefix.length); // 'yyyyMMdd'
+      try {
+        return DateTime(
+          int.parse(dateStr.substring(0, 4)),
+          int.parse(dateStr.substring(4, 6)),
+          int.parse(dateStr.substring(6, 8)),
+        );
+      } catch (_) {}
+    }
+    return null;
+  }
+
   /// 0.0–1.0 progress for a phase (weighted by expected work days).
   /// Routes through [_taskProgress] so a task marked [DayStatus.completed]
   /// contributes its full weight at 100 % to the phase total.
@@ -2474,16 +2494,53 @@ class _TaskProgressMonitorScreenState
 
                 final isWeekEnd = _isLastDayOfWeek(pc, dayIdx);
 
+                // ── Completion-lock logic ────────────────────────────
+                final completedDate = _completedDateForTask(row);
+                final normDay = DateTime(day.year, day.month, day.day);
+                final isAfterCompletion = completedDate != null &&
+                    normDay.isAfter(completedDate);
+                // Gained days: planned range days freed up after completion
+                final isGained = isAfterCompletion && inPlannedRange &&
+                    status == DayStatus.none;
+
+                void onCellTap() {
+                  if (isAfterCompletion) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(children: [
+                          const Icon(Icons.lock_rounded,
+                              color: Colors.white, size: 16),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '${row.taskName.trim()} is already marked as completed.',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ]),
+                        backgroundColor: const Color(0xFF1565C0),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 3),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                    return;
+                  }
+                  _showStatusPicker(row, day);
+                }
+
                 return GestureDetector(
-                  onTap: isActive && !isBeforeTask
-                      ? () => _showStatusPicker(row, day)
-                      : null,
+                  onTap: isActive && !isBeforeTask ? onCellTap : null,
                   child: _buildDayCell(
                     status,
                     isActive && !isBeforeTask,
                     h,
                     isWeekEnd: isWeekEnd,
                     isOverrun: isOverrun,
+                    isGained: isGained,
                   ),
                 );
               }).toList(),
@@ -2507,7 +2564,25 @@ class _TaskProgressMonitorScreenState
   }
 
   Widget _buildDayCell(DayStatus status, bool active, double h,
-      {bool isWeekEnd = false, bool isOverrun = false}) {
+      {bool isWeekEnd = false, bool isOverrun = false, bool isGained = false}) {
+    // Gained days: green bg, no icon — freed time after task completion
+    if (isGained) {
+      return Container(
+        width: _kDayW,
+        height: h,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5E9),
+          border: Border(
+            right: isWeekEnd
+                ? BorderSide(color: _weekBorderColor, width: _weekBorderWidth)
+                : BorderSide(color: _fieldBorder.withValues(alpha: 0.35), width: 0.5),
+            bottom: BorderSide(
+                color: _fieldBorder.withValues(alpha: 0.25), width: 0.3),
+          ),
+        ),
+      );
+    }
+
     // Overrun done-marks are orange; in-range done is green
     final effectiveColor = (isOverrun && (status == DayStatus.done || status == DayStatus.completed))
         ? const Color(0xFFE65100)
