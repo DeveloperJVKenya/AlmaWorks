@@ -362,6 +362,10 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
   /// Phase breakdown section is expanded by default.
   bool _phaseExpanded = true;
 
+  /// Per-project expand state inside the Phase Breakdown (dashboard mode only).
+  /// Defaults to true (expanded) for each project on first encounter.
+  final Map<String, bool> _projectPhaseExpanded = {};
+
   // ── Firestore stream ─────────────────────────────────────────────
   Stream<_TpmDocResult> _getStream() {
     final fs = FirebaseFirestore.instance;
@@ -666,7 +670,10 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
   }
 
   /// Grouped list — used in dashboard (multi-project) mode.
-  /// Each project gets a small folder-icon header; its phases are indented.
+  /// Each project gets a collapsible folder-icon header; its phases are
+  /// indented and hidden when the project row is collapsed.  This mirrors
+  /// the outer Phase Breakdown toggle and prevents overflow when a user
+  /// manages more than one project inside the fixed-height dashboard card.
   List<Widget> _buildGroupedPhaseRows(
       List<String> projectOrder,
       Map<String, List<_TpmPhase>> byProject,
@@ -677,41 +684,88 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
       final projectPhases = byProject[projectId]!;
       final projName = projectPhases.first.projectName ?? projectId;
 
-      // Project label
+      // Default each project to collapsed on first encounter.
+      final isProjectExpanded =
+          _projectPhaseExpanded.putIfAbsent(projectId, () => false);
+
+      // ── Collapsible project header ──────────────────────────────
       widgets.add(Padding(
-        padding:
-            EdgeInsets.only(top: pi > 0 ? 8 : 0, bottom: isMobile ? 4 : 5),
-        child: Row(
-          children: [
-            Icon(Icons.folder_outlined,
-                size: isMobile ? 11 : 12, color: Colors.grey[600]),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                projName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: isMobile ? 9 : 10,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[700],
-                  fontStyle: FontStyle.italic,
-                ),
+        padding: EdgeInsets.only(top: pi > 0 ? 6 : 0),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => setState(() {
+              // Accordion: close every project, then open the tapped one
+              // (if it was already open, tapping again closes it).
+              final wasOpen = _projectPhaseExpanded[projectId] ?? false;
+              for (final id in _projectPhaseExpanded.keys.toList()) {
+                _projectPhaseExpanded[id] = false;
+              }
+              _projectPhaseExpanded[projectId] = !wasOpen;
+            }),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                vertical: isMobile ? 3 : 4,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isProjectExpanded
+                        ? Icons.folder_open_outlined
+                        : Icons.folder_outlined,
+                    size: isMobile ? 11 : 12,
+                    color: _navy.withValues(alpha: 0.65),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      projName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: isMobile ? 9 : 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[700],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${projectPhases.length} phase${projectPhases.length == 1 ? '' : 's'}',
+                    style: TextStyle(
+                      fontSize: isMobile ? 8 : 9,
+                      color: Colors.grey[500],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(
+                    isProjectExpanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    size: isMobile ? 14 : 15,
+                    color: _navy.withValues(alpha: 0.55),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ));
 
-      // Phase rows indented under the project
-      for (int i = 0; i < projectPhases.length; i++) {
-        widgets.add(Padding(
-          padding: EdgeInsets.only(
-            left: 10,
-            bottom: i < projectPhases.length - 1 ? 5 : 0,
-          ),
-          child: _buildPhaseRow(projectPhases[i], i, isMobile),
-        ));
+      // ── Phase rows — only visible when project is expanded ──────
+      if (isProjectExpanded) {
+        for (int i = 0; i < projectPhases.length; i++) {
+          widgets.add(Padding(
+            padding: EdgeInsets.only(
+              left: 10,
+              top: 2,
+              bottom: i < projectPhases.length - 1 ? 5 : 4,
+            ),
+            child: _buildPhaseRow(projectPhases[i], i, isMobile),
+          ));
+        }
       }
     }
     return widgets;
@@ -1113,34 +1167,43 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
         ),
       );
 
-  Widget _buildEmpty(bool isMobile) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.assignment_outlined,
-                size: isMobile ? 40 : 48, color: Colors.grey[350]),
-            const SizedBox(height: 8),
-            Text(
-              'No active tasks yet',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: isMobile ? 12 : 14,
-                fontWeight: FontWeight.w500,
+  Widget _buildEmpty(bool isMobile) => LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.assignment_outlined,
+                      size: isMobile ? 40 : 48, color: Colors.grey[350]),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No active tasks yet',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: isMobile ? 12 : 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      'Ongoing and Completed tasks \nwill appear here',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontSize: isMobile ? 10 : 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                'Ongoing and Completed tasks \nwill appear here',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: isMobile ? 10 : 12,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       );
 }
