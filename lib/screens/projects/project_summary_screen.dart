@@ -670,6 +670,9 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
           logger: widget.logger,
           // 5 items visible before "View All" – single-project view has more room
           maxInitialDisplay: 5,
+          // Show a collapsible Phase Breakdown section (percentages only, no days)
+          // above the task list so the full phase picture is visible at a glance.
+          showPhaseBreakdown: true,
         ),
       ),
       SizedBox(

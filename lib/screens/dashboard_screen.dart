@@ -1015,6 +1015,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
           logger: widget.logger,
           // 4 items visible before "View All" – fits comfortably in the 400px card
           maxInitialDisplay: 4,
+          // Show per-project phase percentages grouped above the task list.
+          // Each project's phases are listed under a folder-icon project header.
+          showPhaseBreakdown: true,
         ),
       ),
       SizedBox(
