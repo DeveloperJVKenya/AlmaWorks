@@ -7,7 +7,8 @@ import 'package:almaworks/rbacsystem/client_request_service.dart';
 import 'package:almaworks/screens/account_screen.dart';
 import 'package:almaworks/screens/projects/projects_main_screen.dart';
 import 'package:almaworks/services/project_service.dart';
-import 'package:almaworks/widgets/activity_feed.dart';
+//import 'package:almaworks/widgets/activity_feed.dart';
+import 'package:almaworks/widgets/task_progress_widget.dart';
 import 'package:almaworks/widgets/dashboard_card.dart';
 import 'package:almaworks/widgets/responsive_layout.dart';
 import 'package:almaworks/widgets/weather_widget.dart';
@@ -1000,15 +1001,20 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
 
     widget.logger.d('🗳️ Dashboard: Building content section, isClient: $_isClient, projectLocations: ${_projectLocations.length}');
 
-    // ── Only ActivityFeed and WeatherWidget (TodoWidget removed) ───────────────
+    // ── ActivityFeed, TaskProgressWidget, and WeatherWidget ─────────────────
     final widgets = [
       SizedBox(
         width: availableWidth,
         height: widgetHeight,
-        child: ActivityFeed(
+        // Task Progress Widget: shows done-ongoing (top) and done-completed (bottom)
+        // tasks sourced from the TaskProgressMonitor collection, across all projects
+        // the current user is permitted to see.
+        child: TaskProgressWidget(
           showAllProjects: true,
-          logger: widget.logger,
           projectIds: _isClient ? widget.grantedProjectIds : [],
+          logger: widget.logger,
+          // 4 items visible before "View All" – fits comfortably in the 400px card
+          maxInitialDisplay: 4,
         ),
       ),
       SizedBox(

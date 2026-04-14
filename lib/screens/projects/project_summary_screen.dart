@@ -3,7 +3,8 @@ import 'package:almaworks/screens/documents_screen.dart';
 import 'package:almaworks/screens/drawings_screen.dart';
 import 'package:almaworks/screens/projects/edit_project_screen.dart';
 import 'package:almaworks/screens/projects/projects_main_screen.dart';
-import 'package:almaworks/widgets/activity_feed.dart';
+//import 'package:almaworks/widgets/activity_feed.dart';
+import 'package:almaworks/widgets/task_progress_widget.dart';
 import 'package:almaworks/widgets/dashboard_card.dart';
 import 'package:almaworks/widgets/weather_widget.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -655,17 +656,20 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       '🏗️ ProjectSummaryScreen: Building content section, isMobile: $isMobile, availableWidth: $availableWidth',
     );
 
-    // ── Only ActivityFeed and WeatherWidget (TodoWidget removed) ───────────────
+    // ── ActivityFeed, TaskProgressWidget, and WeatherWidget ─────────────────
     final widgets = [
       SizedBox(
         width: availableWidth,
         height: widgetHeight,
-        child: ActivityFeed(
+        // Task Progress Widget: shows done-ongoing (top) and done-completed (bottom)
+        // tasks for THIS project sourced from the TaskProgressMonitor collection.
+        // Ongoing tasks are shown first (active), completed tasks at the bottom.
+        child: TaskProgressWidget(
           projectId: widget.project.id,
-          project: widget.project,
-          logger: widget.logger,
           showAllProjects: false,
-          projectIds: [],
+          logger: widget.logger,
+          // 5 items visible before "View All" – single-project view has more room
+          maxInitialDisplay: 5,
         ),
       ),
       SizedBox(
