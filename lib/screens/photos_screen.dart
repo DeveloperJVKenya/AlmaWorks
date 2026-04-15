@@ -1,5 +1,6 @@
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/widgets/base_layout.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -137,6 +138,36 @@ class PhotosScreen extends StatefulWidget {
 
 class _PhotosScreenState extends State<PhotosScreen> {
   final _SelectionState _selection = _SelectionState();
+  String? _userRole = 'Client'; // default to most restrictive until loaded
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        widget.logger.e('❌ PhotosScreen: No authenticated user found');
+        return;
+      }
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('uid', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        final role =
+            querySnapshot.docs.first.data()['role'] as String? ?? 'Client';
+        if (mounted) setState(() => _userRole = role);
+        widget.logger.i('✅ PhotosScreen: User role fetched: $role');
+      }
+    } catch (e) {
+      widget.logger.e('❌ PhotosScreen: Error fetching user role: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -256,11 +287,12 @@ class _PhotosScreenState extends State<PhotosScreen> {
                 label: 'Share',
                 onPressed: hasSelection ? _handleMultiShare : null,
               ),
-              _buildActionButton(
-                icon: Icons.delete,
-                label: 'Delete',
-                onPressed: hasSelection ? _handleMultiDelete : null,
-              ),
+              if (_userRole != 'Client')
+                _buildActionButton(
+                  icon: Icons.delete,
+                  label: 'Delete',
+                  onPressed: hasSelection ? _handleMultiDelete : null,
+                ),
             ],
           ),
         ),
@@ -575,17 +607,18 @@ class _PhotosScreenState extends State<PhotosScreen> {
             ),
           ),
           // ── Delete ───────────────────────────────────────────────────────────
-          PopupMenuItem<void>(
-            onTap: () => WidgetsBinding.instance
-                .addPostFrameCallback((_) => _deletePhoto(photo)),
-            child: ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: Text('Delete',
-                  style:
-                      GoogleFonts.poppins(fontSize: 14, color: Colors.red)),
-              contentPadding: EdgeInsets.zero,
+          if (_userRole != 'Client')
+            PopupMenuItem<void>(
+              onTap: () => WidgetsBinding.instance
+                  .addPostFrameCallback((_) => _deletePhoto(photo)),
+              child: ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: Text('Delete',
+                    style:
+                        GoogleFonts.poppins(fontSize: 14, color: Colors.red)),
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
-          ),
         ],
       ],
     );
@@ -749,11 +782,12 @@ class _PhotosScreenState extends State<PhotosScreen> {
                 tooltip: 'Share',
                 onPressed: () => _sharePhoto(photo),
               ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                tooltip: 'Delete',
-                onPressed: () => _deletePhoto(photo),
-              ),
+              if (_userRole != 'Client')
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  tooltip: 'Delete',
+                  onPressed: () => _deletePhoto(photo),
+                ),
             ],
           ),
           body: PhotoView(

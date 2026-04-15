@@ -5,6 +5,7 @@ import 'package:almaworks/models/drawing_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/services/drawing_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -38,12 +39,37 @@ class _DrawingsScreenState extends State<DrawingsScreen>
   late TabController _tabController;
   final DrawingService _drawingService = DrawingService();
   bool _isUploading = false;
+  String? _userRole = 'Client'; // default to most restrictive until loaded
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this); // Changed from 2 to 3
     widget.logger.i('🏗️ DrawingsScreen: Initialized for project: ${widget.project.name}');
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        widget.logger.e('❌ DrawingsScreen: No authenticated user found');
+        return;
+      }
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('uid', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        final role =
+            querySnapshot.docs.first.data()['role'] as String? ?? 'Client';
+        if (mounted) setState(() => _userRole = role);
+        widget.logger.i('✅ DrawingsScreen: User role fetched: $role');
+      }
+    } catch (e) {
+      widget.logger.e('❌ DrawingsScreen: Error fetching user role: $e');
+    }
   }
 
   @override
@@ -279,16 +305,17 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 ],
               ),
             ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, size: 16, color: Colors.red[600]),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
-                ],
+            if (_userRole != 'Client')
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, size: 16, color: Colors.red[600]),
+                    SizedBox(width: 8),
+                    Text('Delete', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -745,16 +772,17 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   ],
                 ),
               ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete, size: 16, color: Colors.red[600]),
-                    SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: Colors.red)),
-                  ],
+              if (_userRole != 'Client')
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, size: 16, color: Colors.red[600]),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ],
@@ -818,16 +846,17 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               ),
             ),
             // REMOVED "Update" option
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, size: 16, color: Colors.red[600]),
-                  SizedBox(width: 8),
-                  Text('Delete', style: TextStyle(color: Colors.red)),
-                ],
+            if (_userRole != 'Client')
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, size: 16, color: Colors.red[600]),
+                    SizedBox(width: 8),
+                    Text('Delete', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:almaworks/models/document_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -37,6 +38,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
   late TabController _tabController;
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
   bool _isLoading = false;
+  String? _userRole = 'Client'; // default to most restrictive until loaded
 
   @override
   void initState() {
@@ -47,6 +49,30 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       final width = MediaQuery.of(context).size.width;
       widget.logger.d('📄 QualityAndSafetyScreen: Screen width: $width, isMobile: ${width < 600}');
     });
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        widget.logger.e('❌ QualityAndSafetyScreen: No authenticated user found');
+        return;
+      }
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('uid', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        final role =
+            querySnapshot.docs.first.data()['role'] as String? ?? 'Client';
+        if (mounted) setState(() => _userRole = role);
+        widget.logger.i('✅ QualityAndSafetyScreen: User role fetched: $role');
+      }
+    } catch (e) {
+      widget.logger.e('❌ QualityAndSafetyScreen: Error fetching user role: $e');
+    }
   }
 
   @override
@@ -343,16 +369,17 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 ],
               ),
             ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, color: Colors.red[600]),
-                  const SizedBox(width: 8),
-                  Text('Delete', style: GoogleFonts.poppins()),
-                ],
+            if (_userRole != 'Client')
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: Colors.red[600]),
+                    const SizedBox(width: 8),
+                    Text('Delete', style: GoogleFonts.poppins()),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),

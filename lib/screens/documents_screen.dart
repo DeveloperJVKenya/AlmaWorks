@@ -464,16 +464,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                           ],
                         ),
                       ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, color: Colors.red[600]),
-                            const SizedBox(width: 8),
-                            Text('Delete', style: GoogleFonts.poppins()),
-                          ],
+                      if (_userRole != 'Client')
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, color: Colors.red[600]),
+                              const SizedBox(width: 8),
+                              Text('Delete', style: GoogleFonts.poppins()),
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 );
