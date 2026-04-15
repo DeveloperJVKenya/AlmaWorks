@@ -881,6 +881,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
   static bool _isDone(String? code) {
     switch (code) {
       case 'D': // current "done" code
+      case 'X': // current "completed" code
       case 'S': // legacy: started
       case 'O': // legacy: ongoing
       case 'C': // legacy: completed
