@@ -130,6 +130,9 @@ class SafetyReportData {
   List<String> imageUrls;
   bool isDraft;
   DateTime? savedAt;
+  /// Firebase Storage download URL of the generated PDF.
+  /// Stored so the list screen can offer Open/Download for form-filled reports.
+  String? fileUrl;
 
   SafetyReportData({
     required this.id,
@@ -147,6 +150,7 @@ class SafetyReportData {
     this.imageUrls = const [],
     this.isDraft = true,
     this.savedAt,
+    this.fileUrl,
   })  : checklistItems = checklistItems ?? _defaultChecklist(),
         jvAlmaRows = jvAlmaRows ?? [],
         subContractorRows = subContractorRows ?? [];
@@ -185,6 +189,7 @@ class SafetyReportData {
         'isDraft': isDraft,
         'savedAt': Timestamp.now(),
         'type_category': 'Safety',
+        if (fileUrl != null) 'fileUrl': fileUrl!,
       };
 
   factory SafetyReportData.fromMap(Map<String, dynamic> m) {
@@ -216,6 +221,7 @@ class SafetyReportData {
           : [],
       imageUrls: List<String>.from(m['imageUrls'] ?? []),
       isDraft: m['isDraft'] ?? true,
+      fileUrl: m['fileUrl'] as String?,
     );
   }
 }
@@ -274,6 +280,11 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
   bool _isReadOnly = false;
   bool _isSaving = false;
   bool _isGeneratingPdf = false;
+
+  // ── Saved PDF URL (Firebase Storage) ───────────────────────────
+  // Populated after first save; lets the list screen show Open/Download
+  // for form-filled reports exactly like PDF-uploaded ones.
+  String? _savedPdfUrl;
 
   // ── Report meta ───────────────────────────────────────────────
   late String _reportId;
@@ -347,6 +358,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
     );
 
     _savedImageUrls.addAll(r.imageUrls);
+    _savedPdfUrl = r.fileUrl;
   }
 
   void _initDefaultAttendanceTables() {
@@ -685,6 +697,24 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             .update(map);
       }
 
+      // ── Generate PDF → upload to Firebase Storage → write fileUrl ─────────
+      // Gives form-filled reports a fileUrl identical to PDF-uploaded ones
+      // so the list screen can show Open / Download menu actions.
+      try {
+        final pdfUrl = await _generateAndUploadPdf(report);
+        if (pdfUrl != null) {
+          setState(() => _savedPdfUrl = pdfUrl);
+          await FirebaseFirestore.instance
+              .collection('Reports')
+              .doc(_reportId)
+              .update({'fileUrl': pdfUrl});
+          widget.logger.i('✅ SafetyForm: PDF uploaded → \$pdfUrl');
+        }
+      } catch (pdfErr) {
+        // Non-fatal — PDF failure must not block the overall save.
+        widget.logger.w('⚠️ SafetyForm: PDF upload after save failed – \$pdfErr');
+      }
+
       await _clearCache();
       _localImages.clear();
 
@@ -715,6 +745,8 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
   // ─────────────────────────────────────────────────────────────
   // PDF GENERATION
   // ─────────────────────────────────────────────────────────────
+  // _downloadAsPdf re-uses _buildPdfBytes so save-time generation
+  // and on-demand download always produce an identical document.
   Future<void> _downloadAsPdf() async {
     widget.logger.i('📋 SafetyForm: _downloadAsPdf START');
     setState(() => _isGeneratingPdf = true);
@@ -725,6 +757,134 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       final fileName =
           'Safety_${typeLabel}_Report_${report.projectName.replaceAll(' ', '_')}'
           '_${DateFormat('yyyyMMdd_HHmm').format(report.reportDate)}.pdf';
+
+      if (_savedPdfUrl != null) {
+        // Re-use the PDF already stored in Firebase Storage so we never
+        // regenerate an identical document unnecessarily.
+        widget.logger.i('📋 SafetyForm: reusing saved PDF URL');
+        await _openOrDownloadFromUrl(_savedPdfUrl!, fileName);
+      } else {
+        // No saved URL yet — build and save/share locally.
+        final bytes = await _buildPdfBytes(report);
+        if (bytes != null) await _savePdfBytes(bytes, fileName);
+      }
+      widget.logger.i('✅ SafetyForm: _downloadAsPdf done → $fileName');
+    } catch (e, st) {
+      widget.logger.e('❌ SafetyForm: PDF failed',
+          error: e, stackTrace: st);
+      if (mounted) _showError('Error generating PDF: $e');
+    } finally {
+      if (mounted) setState(() => _isGeneratingPdf = false);
+    }
+  }
+
+  /// Downloads the cloud PDF at [url] from Firebase Storage and opens it
+  /// locally via [_savePdfBytes], giving the user the same Open + snackbar
+  /// experience regardless of whether the PDF was just built or retrieved.
+  Future<void> _openOrDownloadFromUrl(String url, String fileName) async {
+    final data = await FirebaseStorage.instance
+        .refFromURL(url)
+        .getData(50 * 1024 * 1024);
+    if (data != null) {
+      await _savePdfBytes(Uint8List.fromList(data), fileName);
+    }
+  }
+
+  /// Saves [bytes] as [fileName] to the platform Downloads folder (or
+  /// Documents on iOS), opens it with [OpenFile], and shows a snackbar.
+  /// Falls back to [Printing.sharePdf] when direct file access fails.
+  /// Mirrors [MonthlyReportFormScreen._savePdfBytes] exactly.
+  Future<void> _savePdfBytes(Uint8List bytes, String fileName) async {
+    if (kIsWeb) {
+      await Printing.sharePdf(bytes: bytes, filename: fileName);
+      return;
+    }
+    try {
+      String dirPath;
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        const androidDownloads = '/storage/emulated/0/Download';
+        if (await Directory(androidDownloads).exists()) {
+          dirPath = androidDownloads;
+        } else {
+          final ext = await getExternalStorageDirectory();
+          if (ext != null) {
+            final parts = ext.path.split('/');
+            final idx = parts.indexOf('Android');
+            final base =
+                idx > 0 ? parts.sublist(0, idx).join('/') : ext.path;
+            dirPath = '$base/Download';
+          } else {
+            dirPath = (await getApplicationDocumentsDirectory()).path;
+          }
+        }
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        dirPath = (await getApplicationDocumentsDirectory()).path;
+      } else {
+        final homeDir = Platform.environment['USERPROFILE'] ??
+            Platform.environment['HOME'];
+        dirPath = homeDir != null && homeDir.isNotEmpty
+            ? '$homeDir${Platform.pathSeparator}Downloads'
+            : (await getApplicationDocumentsDirectory()).path;
+      }
+      final dir = Directory(dirPath);
+      if (!await dir.exists()) await dir.create(recursive: true);
+      final filePath = '$dirPath${Platform.pathSeparator}$fileName';
+      await File(filePath).writeAsBytes(bytes);
+      await OpenFile.open(filePath);
+      final ctx = context;
+      if (!ctx.mounted) return;
+      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+        content: Text('PDF saved: $fileName',
+            style: GoogleFonts.poppins()),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 4),
+      ));
+    } catch (e) {
+      await Printing.sharePdf(bytes: bytes, filename: fileName);
+    }
+  }
+
+  /// Builds the PDF for [report] and uploads it to Firebase Storage.
+  /// Returns the public download URL, or null on failure.
+  /// Called from [_saveReport] so every saved report immediately gets a
+  /// fileUrl, enabling Open / Download in the list screen.
+  Future<String?> _generateAndUploadPdf(SafetyReportData report) async {
+    widget.logger.i('📋 SafetyForm: _generateAndUploadPdf START');
+    final bytes = await _buildPdfBytes(report);
+    if (bytes == null) return null;
+    final typeLabel =
+        report.type == 'SafetyWeekly' ? 'Weekly' : 'Monthly';
+    final fileName =
+        'Safety_${typeLabel}_Report_${report.projectName.replaceAll(' ', '_')}'
+        '_${DateFormat('yyyyMMdd_HHmm').format(report.reportDate)}.pdf';
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child(widget.project.id)
+        .child('Reports')
+        .child('Safety')
+        .child('pdf')
+        .child(fileName);
+    await ref.putData(
+        bytes, SettableMetadata(contentType: 'application/pdf'));
+    return await ref.getDownloadURL();
+  }
+
+  /// Builds and returns the raw PDF bytes for [report].
+  /// Single source of truth for the PDF layout — both [_generateAndUploadPdf]
+  /// (called at save time) and the fallback path in [_downloadAsPdf] use this.
+  Future<Uint8List?> _buildPdfBytes(SafetyReportData report) async {
+    try {
+      final typeLabel =
+          report.type == 'SafetyWeekly' ? 'Weekly' : 'Monthly';
+
+      // ── Load Unicode-capable TTF fonts ────────────────────────
+      // Roboto supports hyphens (U+2013 –), bullets (U+2022 •),
+      // checkmarks (U+2713 ✓) and all other Latin extended chars
+      // that Helvetica (a Type-1 font) cannot render.
+      final robotoRegularFont =
+          await PdfGoogleFonts.robotoRegular();
+      final robotoBoldFont =
+          await PdfGoogleFonts.robotoBold();
 
       // ── Gather images ─────────────────────────────────────────
       final List<pw.MemoryImage> pdfImages = [];
@@ -746,39 +906,133 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       final actionsText =
           _actionsCtrl.document.toPlainText().trim();
 
-      // ── PDF Styles ────────────────────────────────────────────
-      final navyColor = PdfColor.fromHex('#0A2E5A');
-      final lightBlue = PdfColor.fromHex('#E8EEF6');
-      final checkedGreen = PdfColor.fromHex('#1B5E20');
+      // ── PDF Colours ───────────────────────────────────────────
+      final navyColor      = PdfColor.fromHex('#0A2E5A');
+      final lightBlue      = PdfColor.fromHex('#E8EEF6');
+      final checkedGreen   = PdfColor.fromHex('#1B5E20');
+      final checkedGreenBg = PdfColor.fromHex('#E8F5E9');
+      final emptyFieldGrey = PdfColors.grey400;
+
+      // ── PDF Text Styles (all use Roboto for full Unicode) ─────
       final sectionHeaderStyle = pw.TextStyle(
-        font: pw.Font.helveticaBold(),
+        font: robotoBoldFont,
         fontSize: 9.5,
         color: PdfColors.white,
         letterSpacing: 0.5,
       );
       final tableHeaderStyle = pw.TextStyle(
-        font: pw.Font.helveticaBold(),
+        font: robotoBoldFont,
         fontSize: 8,
         color: PdfColors.white,
       );
       final cellStyle = pw.TextStyle(
-        font: pw.Font.helvetica(),
+        font: robotoRegularFont,
         fontSize: 8.5,
         color: PdfColors.black,
       );
       final fieldLabelStyle = pw.TextStyle(
-        font: pw.Font.helveticaBold(),
+        font: robotoBoldFont,
         fontSize: 8,
         color: navyColor,
         letterSpacing: 0.3,
       );
       final fieldValueStyle = pw.TextStyle(
-        font: pw.Font.helvetica(),
+        font: robotoRegularFont,
         fontSize: 9,
         color: PdfColors.black,
       );
+      final emptyValueStyle = pw.TextStyle(
+        font: robotoRegularFont,
+        fontSize: 9,
+        color: emptyFieldGrey,
+      );
 
-      // ── Reusable PDF builders ─────────────────────────────────
+      // ── "Empty field" placeholder widget ─────────────────────
+      // Renders a light-grey dash (—) for unfilled single-line text.
+      pw.Widget emptyFieldPlaceholder() => pw.Text('\u2014',
+          style: emptyValueStyle); // U+2014 em-dash
+
+      // ── "Missing element" placeholder widget ─────────────────
+      // Renders a small rectangle with a cross inside, used when
+      // an element cannot be rendered (truly missing data).
+      /*pw.Widget missingElementBox({double size = 10}) {
+        return pw.SizedBox(
+          width: size,
+          height: size,
+          child: pw.CustomPaint(
+            painter: (canvas, sizeArg) {
+              // Outer border
+              canvas
+                ..setStrokeColor(PdfColors.grey500)
+                ..setLineWidth(0.8)
+                ..drawRect(0, 0, sizeArg.x, sizeArg.y)
+                ..strokePath();
+              // Diagonal cross
+              canvas
+                ..setLineWidth(0.7)
+                ..moveTo(1.5, 1.5)
+                ..lineTo(sizeArg.x - 1.5, sizeArg.y - 1.5)
+                ..strokePath()
+                ..moveTo(sizeArg.x - 1.5, 1.5)
+                ..lineTo(1.5, sizeArg.y - 1.5)
+                ..strokePath();
+            },
+          ),
+        );
+      }*/
+
+      // ── Checkbox widget drawn via CustomPaint (no Unicode) ────
+      // Renders exactly as the form checkbox: white square with
+      // a thick navy checkmark when checked, plain border when not.
+      pw.Widget pdfCheckbox(bool checked, {double size = 11}) {
+        return pw.SizedBox(
+          width: size,
+          height: size,
+          child: pw.CustomPaint(
+            painter: (canvas, sizeArg) {
+              final w = sizeArg.x;
+              final h = sizeArg.y;
+              if (checked) {
+                // Filled navy square
+                canvas
+                  ..setFillColor(navyColor)
+                  ..drawRect(0, 0, w, h)
+                  ..fillPath();
+                // White checkmark (✓ shape: two strokes)
+                // PDF canvas Y=0 is at the BOTTOM of the box, so Y values
+                // are the mirror image of screen coordinates:
+                //   short left leg:  left-middle → down-centre tick
+                //     screen (Y↓): h*0.50 → h*0.78   ← goes DOWN visually
+                //     PDF    (Y↑): h*0.50 → h*0.22   ← same visual result
+                //   long right arm: down-centre tick → upper-right corner
+                //     screen (Y↓): h*0.78 → h*0.22   ← goes UP visually
+                //     PDF    (Y↑): h*0.22 → h*0.78   ← same visual result
+                canvas
+                  ..setStrokeColor(PdfColors.white)
+                  ..setLineWidth(1.4)
+                  ..setLineCap(PdfLineCap.round)
+                  ..setLineJoin(PdfLineJoin.round)
+                  ..moveTo(w * 0.15, h * 0.50)
+                  ..lineTo(w * 0.40, h * 0.22)
+                  ..lineTo(w * 0.85, h * 0.78)
+                  ..strokePath();
+              } else {
+                // White square with grey border
+                canvas
+                  ..setFillColor(PdfColors.white)
+                  ..drawRect(0, 0, w, h)
+                  ..fillPath()
+                  ..setStrokeColor(PdfColors.grey400)
+                  ..setLineWidth(0.8)
+                  ..drawRect(0, 0, w, h)
+                  ..strokePath();
+              }
+            },
+          ),
+        );
+      }
+
+      // ── Reusable PDF widget builders ──────────────────────────
       pw.Widget sectionBar(String label) => pw.Container(
             width: double.infinity,
             color: navyColor,
@@ -806,9 +1060,9 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                   pw.Padding(
                     padding: const pw.EdgeInsets.symmetric(
                         horizontal: 5, vertical: 5),
-                    child: pw.Text(
-                        value.isEmpty ? '—' : value,
-                        style: fieldValueStyle),
+                    child: value.isEmpty
+                        ? emptyFieldPlaceholder()
+                        : pw.Text(value, style: fieldValueStyle),
                   ),
                 ],
               ),
@@ -816,22 +1070,18 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
           );
 
       // ── Signature images for PDF ──────────────────────────────
-      // Collect signature image bytes keyed by table-title → row-index.
-      // Priority: in-memory _sigBytes cache (never stale) → Firebase download.
-      // This ensures the PDF renders actual signature images, not raw URLs.
+      // Priority: in-memory _sigBytes cache → Firebase download.
       final Map<String, Map<int, pw.MemoryImage>> pdfSigImages = {};
 
       Future<void> collectSigImages(AttendanceTableData td) async {
         for (int ri = 0; ri < td.rows.length; ri++) {
           Uint8List? bytes;
-
-          // 1. Use the in-memory cache first (bytes from the current session)
           if (_sigBytes[td.title]?[ri] != null) {
             bytes = _sigBytes[td.title]![ri];
             widget.logger.d(
-                '🖊 PDF sig: ${td.title} row $ri – using cached bytes (${bytes!.length} bytes)');
+                '🖊 PDF sig: ${td.title} row $ri – using cached bytes'
+                ' (${bytes!.length} bytes)');
           } else {
-            // 2. Fall back to downloading from Firebase URL
             final sigVal = td.rows[ri]['Signature'] ?? '';
             if (sigVal.startsWith('http')) {
               try {
@@ -839,14 +1089,15 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                     .refFromURL(sigVal)
                     .getData(5 * 1024 * 1024);
                 widget.logger.d(
-                    '🖊 PDF sig: ${td.title} row $ri – downloaded from Firebase (${bytes?.length ?? 0} bytes)');
+                    '🖊 PDF sig: ${td.title} row $ri – downloaded from'
+                    ' Firebase (${bytes?.length ?? 0} bytes)');
               } catch (e) {
                 widget.logger.w(
-                    '⚠️ PDF sig: ${td.title} row $ri – Firebase download failed: $e');
+                    '⚠️ PDF sig: ${td.title} row $ri – Firebase download'
+                    ' failed: $e');
               }
             }
           }
-
           if (bytes != null && bytes.isNotEmpty) {
             pdfSigImages.putIfAbsent(td.title, () => {});
             pdfSigImages[td.title]![ri] = pw.MemoryImage(bytes);
@@ -858,7 +1109,8 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       await collectSigImages(_subContractorTable);
       widget.logger.i(
           '🖊 PDF sig: collected images for '
-          '${pdfSigImages.values.fold(0, (s, m) => s + m.length)} signature(s)');
+          '${pdfSigImages.values.fold(0, (s, m) => s + m.length)}'
+          ' signature(s)');
 
       // ── Attendance table builder ──────────────────────────────
       pw.Widget buildAttendanceTable(
@@ -872,16 +1124,15 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             decoration: pw.BoxDecoration(
                 border: pw.Border.all(
                     color: PdfColors.blueGrey300, width: 0.5)),
-            padding:
-                const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const pw.EdgeInsets.symmetric(
+                horizontal: 8, vertical: 8),
             child: pw.Text('No entries',
                 style: pw.TextStyle(
-                    font: pw.Font.helvetica(),
+                    font: robotoRegularFont,
                     fontSize: 8,
                     color: PdfColors.grey400)),
           );
         }
-        // Column widths: Signature column gets more room for the image
         final colWidths = <int, pw.TableColumnWidth>{};
         if (td.showRowNumbers) {
           colWidths[0] = const pw.FixedColumnWidth(20);
@@ -897,8 +1148,6 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                 : const pw.FlexColumnWidth(1);
           }
         }
-
-        // Header row
         final headerCells = <pw.Widget>[];
         if (td.showRowNumbers) {
           headerCells.add(pw.Container(
@@ -914,12 +1163,12 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             child: pw.Text(col, style: headerStyle),
           ));
         }
-
-        // Data rows
         final dataRows = <pw.TableRow>[];
         for (var ri = 0; ri < td.rows.length; ri++) {
           final rowData = td.rows[ri];
-          final bg = ri.isEven ? PdfColors.white : PdfColor.fromHex('#F5F7FA');
+          final bg = ri.isEven
+              ? PdfColors.white
+              : PdfColor.fromHex('#F5F7FA');
           final cells = <pw.Widget>[];
           if (td.showRowNumbers) {
             cells.add(pw.Container(
@@ -930,7 +1179,6 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
           }
           for (final col in cols) {
             if (col == 'Signature') {
-              // Render as image when bytes are available; blank cell otherwise.
               final sigImg = pdfSigImages[td.title]?[ri];
               cells.add(pw.Container(
                 color: bg,
@@ -941,19 +1189,21 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                         child: pw.Image(sigImg,
                             height: 32, fit: pw.BoxFit.contain),
                       )
-                    : pw.SizedBox(height: 32), // blank cell — no sig
+                    : pw.SizedBox(height: 32),
               ));
             } else {
+              final val = rowData[col] ?? '';
               cells.add(pw.Container(
                 color: bg,
                 padding: const pw.EdgeInsets.all(4),
-                child: pw.Text(rowData[col] ?? '', style: bodyStyle),
+                child: val.isEmpty
+                    ? emptyFieldPlaceholder()
+                    : pw.Text(val, style: bodyStyle),
               ));
             }
           }
           dataRows.add(pw.TableRow(children: cells));
         }
-
         return pw.Table(
           border: pw.TableBorder.all(
               color: PdfColors.blueGrey300, width: 0.4),
@@ -965,76 +1215,95 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         );
       }
 
-      // ── Checklist PDF builder (2-col grid) ────────────────────
+      // ── Checklist PDF builder (SINGLE column, mirrors form UI) ──
+      // Each checklist item gets its own full-width row — no 2-column
+      // splitting. The checkbox is drawn with CustomPaint so it
+      // renders identically to the Flutter form without any Unicode
+      // character issues.
       pw.Widget buildChecklistPdf() {
-        final chunks = <List<ChecklistItem>>[];
-        for (int i = 0; i < report.checklistItems.length; i += 2) {
-          chunks.add([
-            report.checklistItems[i],
-            if (i + 1 < report.checklistItems.length)
-              report.checklistItems[i + 1],
-          ]);
+        final items = report.checklistItems;
+        if (items.isEmpty) {
+          return pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.all(8),
+            decoration: pw.BoxDecoration(
+                border: pw.Border.all(
+                    color: PdfColors.blueGrey200, width: 0.4)),
+            child: pw.Text('No checklist items',
+                style: pw.TextStyle(
+                    font: robotoRegularFont,
+                    fontSize: 8,
+                    color: PdfColors.grey400)),
+          );
         }
         return pw.Column(
-          children: chunks.map((pair) {
-            return pw.Row(children: [
-              ...pair.map((item) => pw.Expanded(
-                    child: pw.Container(
-                      margin:
-                          const pw.EdgeInsets.only(bottom: 2, right: 2),
-                      decoration: pw.BoxDecoration(
-                        color: item.checked
-                            ? PdfColor.fromHex('#E8F5E9')
-                            : PdfColors.white,
-                        border: pw.Border.all(
-                            color: PdfColors.blueGrey200, width: 0.4),
+          children: items.asMap().entries.map((entry) {
+            final i    = entry.key;
+            final item = entry.value;
+            final isLast = i == items.length - 1;
+            final rowBg = item.checked
+                ? checkedGreenBg
+                : (i.isEven ? PdfColors.white : PdfColor.fromHex('#FAFAFA'));
+            final labelColor =
+                item.checked ? checkedGreen : PdfColors.black;
+            final labelFont =
+                item.checked ? robotoBoldFont : robotoRegularFont;
+
+            return pw.Container(
+              width: double.infinity,
+              decoration: pw.BoxDecoration(
+                color: rowBg,
+                border: pw.Border(
+                  left: pw.BorderSide(
+                      color: PdfColors.blueGrey200, width: 0.4),
+                  right: pw.BorderSide(
+                      color: PdfColors.blueGrey200, width: 0.4),
+                  top: pw.BorderSide(
+                      color: PdfColors.blueGrey200, width: 0.4),
+                  bottom: isLast
+                      ? pw.BorderSide(
+                          color: PdfColors.blueGrey200, width: 0.4)
+                      : pw.BorderSide.none,
+                ),
+              ),
+              padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 6, vertical: 5),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  // Row number badge — matches form UI
+                  pw.Container(
+                    width: 20,
+                    alignment: pw.Alignment.center,
+                    child: pw.Text(
+                      '${i + 1}',
+                      style: pw.TextStyle(
+                        font: robotoBoldFont,
+                        fontSize: 7.5,
+                        color: navyColor,
                       ),
-                      padding: const pw.EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 4),
-                      child: pw.Row(children: [
-                        pw.Container(
-                          width: 10,
-                          height: 10,
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border.all(
-                                color: item.checked
-                                    ? checkedGreen
-                                    : PdfColors.grey400,
-                                width: 1),
-                            color: item.checked
-                                ? checkedGreen
-                                : PdfColors.white,
-                            borderRadius:
-                                pw.BorderRadius.circular(1),
-                          ),
-                          child: item.checked
-                              ? pw.Center(
-                                  child: pw.Text('✓',
-                                      style: pw.TextStyle(
-                                          font: pw.Font.helveticaBold(),
-                                          fontSize: 7,
-                                          color: PdfColors.white)),
-                                )
-                              : null,
-                        ),
-                        pw.SizedBox(width: 5),
-                        pw.Expanded(
-                          child: pw.Text(item.label,
-                              style: pw.TextStyle(
-                                  font: item.checked
-                                      ? pw.Font.helveticaBold()
-                                      : pw.Font.helvetica(),
-                                  fontSize: 8,
-                                  color: item.checked
-                                      ? checkedGreen
-                                      : PdfColors.black)),
-                        ),
-                      ]),
                     ),
-                  )),
-              // Pad if odd
-              if (pair.length == 1) pw.Expanded(child: pw.SizedBox()),
-            ]);
+                  ),
+                  pw.SizedBox(width: 6),
+                  // Checkbox drawn with CustomPaint — no Unicode needed
+                  pdfCheckbox(item.checked, size: 11),
+                  pw.SizedBox(width: 7),
+                  // Item label
+                  pw.Expanded(
+                    child: pw.Text(
+                      item.label.isNotEmpty ? item.label : '\u2014',
+                      style: pw.TextStyle(
+                        font: labelFont,
+                        fontSize: 8.5,
+                        color: labelColor,
+                      ),
+                    ),
+                  ),
+                  // NOTE: No "CHECKED" tag pill in the PDF —
+                  // the filled checkbox itself is the checked indicator.
+                ],
+              ),
+            );
           }).toList(),
         );
       }
@@ -1051,7 +1320,9 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         if (imgs.length == 1) {
           rows.add(pw.Center(
               child: pw.Image(imgs[0],
-                  width: soloW, height: soloH, fit: pw.BoxFit.cover)));
+                  width: soloW,
+                  height: soloH,
+                  fit: pw.BoxFit.cover)));
           return rows;
         }
         for (int i = 0; i < imgs.length; i += 2) {
@@ -1077,6 +1348,12 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.fromLTRB(28, 28, 28, 48),
+          // Set default theme fonts to Roboto so any pw.Text that
+          // doesn't specify a font still gets Unicode support.
+          theme: pw.ThemeData.withFont(
+            base: robotoRegularFont,
+            bold: robotoBoldFont,
+          ),
           footer: (ctx) => pw.Container(
             decoration: const pw.BoxDecoration(
               border: pw.Border(
@@ -1088,32 +1365,32 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  '© JV Almacis Site Management System – Safety Report',
+                  '\u00A9 JV Almacis Site Management System \u2013 Safety Report',
                   style: pw.TextStyle(
-                      font: pw.Font.helvetica(),
+                      font: robotoRegularFont,
                       fontSize: 7,
                       color: PdfColors.grey600),
                 ),
-                pw.Text('Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                pw.Text(
+                    'Page ${ctx.pageNumber} of ${ctx.pagesCount}',
                     style: pw.TextStyle(
-                        font: pw.Font.helvetica(),
+                        font: robotoRegularFont,
                         fontSize: 7,
                         color: PdfColors.grey600)),
               ],
             ),
           ),
           build: (ctx) => [
-            // ══ TITLE BLOCK ═════════════════════════════════════
+            // ══ TITLE BLOCK ════════════════════════════════════
             pw.Container(
               width: double.infinity,
               color: navyColor,
-              padding:
-                  const pw.EdgeInsets.fromLTRB(16, 14, 16, 2),
+              padding: const pw.EdgeInsets.fromLTRB(16, 14, 16, 2),
               child: pw.Text(
                 report.projectName,
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
-                  font: pw.Font.helveticaBold(),
+                  font: robotoBoldFont,
                   fontSize: 14,
                   color: PdfColors.white,
                 ),
@@ -1125,10 +1402,10 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               padding: const pw.EdgeInsets.symmetric(
                   horizontal: 16, vertical: 4),
               child: pw.Text(
-                'SAFETY REPORT — $typeLabel'.toUpperCase(),
+                'SAFETY REPORT \u2014 $typeLabel'.toUpperCase(),
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
-                  font: pw.Font.helveticaBold(),
+                  font: robotoBoldFont,
                   fontSize: 10,
                   color: PdfColors.white,
                   letterSpacing: 2.5,
@@ -1140,39 +1417,47 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               color: navyColor,
               padding: const pw.EdgeInsets.fromLTRB(16, 2, 16, 12),
               child: pw.Text(
-                'Contract No: ${report.contractNumber}',
+                report.contractNumber.isEmpty
+                    ? 'Contract No: \u2014'
+                    : 'Contract No: ${report.contractNumber}',
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
-                  font: pw.Font.helvetica(),
+                  font: robotoRegularFont,
                   fontSize: 8.5,
                   color: PdfColor.fromHex('#FFFFFFB3'),
                 ),
               ),
             ),
             pw.SizedBox(height: 10),
-
-            // ══ META ROW ════════════════════════════════════════
+            // ══ META ROWS ══════════════════════════════════════
+            // Row 1 — DATE + TIME  (matches _buildDateTimeRow())
             pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 metaCellFilled('DATE',
-                    DateFormat('EEE, MMM d, yyyy').format(report.reportDate)),
+                    DateFormat('EEE, MMM d, yyyy')
+                        .format(report.reportDate)),
                 pw.SizedBox(width: 4),
                 metaCellFilled('TIME',
                     DateFormat('HH:mm').format(report.reportDate)),
-                pw.SizedBox(width: 4),
+              ],
+            ),
+            pw.SizedBox(height: 4),
+            // Row 2 — BUILDING on its own full-width row
+            // (matches _buildBuildingField() in the Flutter UI)
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
                 metaCellFilled('BUILDING', report.building),
               ],
             ),
             pw.SizedBox(height: 8),
-
-            // ══ CHECKLIST ════════════════════════════════════════
+            // ══ CHECKLIST ══════════════════════════════════════
             sectionBar('SAFETY CHECKLIST ITEMS'),
             pw.SizedBox(height: 4),
             buildChecklistPdf(),
             pw.SizedBox(height: 8),
-
-            // ══ OBSERVATIONS ═════════════════════════════════════
+            // ══ OBSERVATIONS ═══════════════════════════════════
             sectionBar('OBSERVATIONS & COMMENTS'),
             pw.Container(
               width: double.infinity,
@@ -1181,12 +1466,20 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                       color: PdfColors.blueGrey300, width: 0.5)),
               padding: const pw.EdgeInsets.all(8),
               child: observationsText.isEmpty
-                  ? pw.SizedBox(height: 50)
-                  : pw.Text(observationsText, style: fieldValueStyle),
+                  ? pw.Column(
+                      crossAxisAlignment:
+                          pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('\u2014',
+                            style: emptyValueStyle),
+                        pw.SizedBox(height: 36),
+                      ],
+                    )
+                  : pw.Text(observationsText,
+                      style: fieldValueStyle),
             ),
             pw.SizedBox(height: 8),
-
-            // ══ ACTIONS TAKEN ════════════════════════════════════
+            // ══ ACTIONS TAKEN ══════════════════════════════════
             sectionBar('ACTIONS TAKEN'),
             pw.Container(
               width: double.infinity,
@@ -1195,19 +1488,25 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                       color: PdfColors.blueGrey300, width: 0.5)),
               padding: const pw.EdgeInsets.all(8),
               child: actionsText.isEmpty
-                  ? pw.SizedBox(height: 50)
+                  ? pw.Column(
+                      crossAxisAlignment:
+                          pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('\u2014',
+                            style: emptyValueStyle),
+                        pw.SizedBox(height: 36),
+                      ],
+                    )
                   : pw.Text(actionsText, style: fieldValueStyle),
             ),
             pw.SizedBox(height: 8),
-
-            // ══ JV ALMA CIS ATTENDANCE ════════════════════════════
+            // ══ JV ALMA CIS ATTENDANCE ═════════════════════════
             sectionBar('JV ALMA CIS ATTENDANCE'),
             pw.SizedBox(height: 4),
             buildAttendanceTable(
                 _jvAlmaTable, tableHeaderStyle, cellStyle),
             pw.SizedBox(height: 8),
-
-            // ══ SUB-CONTRACTOR ATTENDANCE (Weekly only) ══════════
+            // ══ SUB-CONTRACTOR ATTENDANCE (Weekly only) ════════
             if (report.type == 'SafetyWeekly') ...[
               sectionBar('SUB-CONTRACTOR ATTENDANCE'),
               pw.SizedBox(height: 4),
@@ -1215,8 +1514,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                   _subContractorTable, tableHeaderStyle, cellStyle),
               pw.SizedBox(height: 8),
             ],
-
-            // ══ IMAGES ══════════════════════════════════════════
+            // ══ IMAGES ═════════════════════════════════════════
             if (pdfImages.isNotEmpty) ...[
               sectionBar('ATTACHED IMAGES'),
               pw.SizedBox(height: 8),
@@ -1226,53 +1524,14 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         ),
       );
 
-      final bytes = await pdf.save();
-      await _savePdfBytes(
-          Uint8List.fromList(bytes), fileName);
-      widget.logger.i('✅ SafetyForm: PDF done → $fileName');
+      return Uint8List.fromList(await pdf.save());
     } catch (e, st) {
-      widget.logger.e('❌ SafetyForm: PDF failed',
+      widget.logger.e('❌ SafetyForm: _buildPdfBytes failed',
           error: e, stackTrace: st);
-      if (mounted) _showError('Error generating PDF: $e');
-    } finally {
-      if (mounted) setState(() => _isGeneratingPdf = false);
+      return null;
     }
   }
 
-  Future<void> _savePdfBytes(Uint8List bytes, String fileName) async {
-    if (kIsWeb) {
-      await Printing.sharePdf(bytes: bytes, filename: fileName);
-      return;
-    }
-    try {
-      String dirPath;
-      if (defaultTargetPlatform == TargetPlatform.android) {
-        dirPath = '/storage/emulated/0/Download';
-      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-        dirPath = (await getApplicationDocumentsDirectory()).path;
-      } else {
-        dirPath = (await getDownloadsDirectory())?.path ??
-            (await getApplicationDocumentsDirectory()).path;
-      }
-      final dir = Directory(dirPath);
-      if (!await dir.exists()) await dir.create(recursive: true);
-      final filePath = '$dirPath${Platform.pathSeparator}$fileName';
-      await File(filePath).writeAsBytes(bytes);
-      widget.logger.i('✅ SafetyForm: PDF saved → $filePath');
-      await OpenFile.open(filePath);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('PDF saved to Downloads: $fileName',
-            style: GoogleFonts.poppins()),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 4),
-      ));
-    } catch (e, st) {
-      widget.logger.e('❌ SafetyForm: PDF save failed – falling back',
-          error: e, stackTrace: st);
-      await Printing.sharePdf(bytes: bytes, filename: fileName);
-    }
-  }
 
   // ─────────────────────────────────────────────────────────────
   // BUILD
@@ -3026,11 +3285,6 @@ class _SafetyAttendanceTableWidgetState
 
 // ══════════════════════════════════════════════════════════════════
 // SIGNATURE PICKER DIALOG
-// Pops up when a signature cell is tapped. Provides three tabs:
-//   0 = Draw (canvas pad)   1 = Photo (pick + crop)   2 = From PDF
-// All cropping is handled INSIDE the dialog so ImageCropper always
-// receives the dialog's own BuildContext — avoids stale-context bugs
-// that arise when passing context-bound callbacks from a parent State.
 // ══════════════════════════════════════════════════════════════════
 class _SSignaturePickerDialog extends StatefulWidget {
   final Uint8List? storedBytes;
@@ -3095,36 +3349,6 @@ class _SSignaturePickerDialogState
               context: context,
               presentStyle: WebPresentStyle.dialog,
               // ── Dynamic CropperSize calculation ──────────────────
-              // CropperSize controls the cropper UI inside the package's
-              // own dialog (cropper_dialog.dart). That dialog wraps the
-              // cropper in a Column that also contains its own chrome, so
-              // the final content height Flutter has to lay out is:
-              //
-              //   totalContent = CropperSize.height + packageChrome
-              //
-              // For no overflow we need: totalContent ≤ dialogAvailableHeight
-              //
-              // Values derived from the measured overflow error:
-              //   • dialogAvailableHeight   = 716 px  (from constraint in log)
-              //   • overflow                = 104 px
-              //   • totalContent            = 716 + 104 = 820 px
-              //   • CropperSize.height used = 600 px  (our old clamp ceiling)
-              //   • packageChrome (proven)  = 820 − 600 = 220 px
-              //
-              // Flutter's Dialog reserves vertical inset padding by default:
-              //   • dialogSystemInsets = EdgeInsets.symmetric(vertical:24)
-              //                       = 48 px
-              //
-              // Safe formula for any screen:
-              //   availableScreen = mq.size.height
-              //                   − mq.padding.top        (status bar / notch)
-              //                   − mq.padding.bottom     (home indicator)
-              //                   − mq.viewInsets.bottom  (software keyboard)
-              //   dialogHeight    = availableScreen − 48   (dialog system insets)
-              //   cropperHeight   = dialogHeight − 220     (package chrome)
-              //
-              // The result is clamped: min 240 (usable floor) / max 490
-              // (490 + 220 = 710 < 716, leaving a 6 px safety margin).
               size: () {
                 final mq = MediaQuery.of(context);
 

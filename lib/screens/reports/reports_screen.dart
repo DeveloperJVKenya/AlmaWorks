@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:io' show File;
 import 'dart:typed_data';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/report_model.dart';
@@ -10,7 +8,7 @@ import 'package:almaworks/screens/reports/monthly_report_form_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
@@ -23,6 +21,12 @@ import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:almaworks/helpers/download_helper.dart';
+
+import 'dart:io' show Directory, File, Platform;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class ReportsScreen extends StatefulWidget {
   final ProjectModel project;
@@ -322,6 +326,12 @@ class _ReportsScreenState extends State<ReportsScreen>
             ...reports.map((doc) {
               try {
                 final data = doc.data() as Map<String, dynamic>;
+                // Form-filled safety report (has savedAt, no uploaded file url)
+                final isFormReport = data['savedAt'] != null &&
+                    (data['url'] == null || data['url'] == '');
+                if (isFormReport) {
+                  return _buildSafetyFormReportItem(doc.id, data);
+                }
                 final report = ReportModel.fromMap(doc.id, data);
                 return _buildReportItem(report);
               } catch (e, st) {
@@ -447,20 +457,27 @@ class _ReportsScreenState extends State<ReportsScreen>
         isThreeLine: true,
         trailing: PopupMenuButton<String>(
           onSelected: (value) => _handleReportAction(value, report),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          itemBuilder: (context) => [
-            if (report.url != null)
-              _popupItem('view', Icons.visibility, Colors.blue[600]!, 'View'),
-            if (report.safetyFormData != null)
-              _popupItem('view_form', Icons.visibility,
-                  Colors.blue[600]!, 'View Form'),
-            _popupItem(
-                'download', Icons.download, Colors.green[600]!, 'Download'),
-            // Clients cannot delete reports.
-            if (!widget.isClient)
-              _popupItem('delete', Icons.delete, Colors.red[600]!, 'Delete'),
-          ],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          itemBuilder: (context) {
+            // A safety form-filled report has a fileUrl (PDF) but no legacy 'url' field,
+            // OR it has safetyFormData. Either way we can view the form itself.
+            final isSafetyFormReport = report.type == 'SafetyWeekly' ||
+                report.type == 'SafetyMonthly' ||
+                report.safetyFormData != null;
+
+            return [
+              if (report.url != null)
+                _popupItem('view', Icons.visibility, Colors.blue[600]!, 'View File'),
+              if (isSafetyFormReport)
+                _popupItem(
+                    'view_form', Icons.assignment, Colors.blue[600]!, 'View / Edit Form'),
+              _popupItem(
+                  'download', Icons.download, Colors.green[600]!, 'Download PDF'),
+              // Clients cannot delete reports.
+              if (!widget.isClient)
+                _popupItem('delete', Icons.delete, Colors.red[600]!, 'Delete'),
+            ];
+          },
         ),
       ),
     );
@@ -605,15 +622,43 @@ class _ReportsScreenState extends State<ReportsScreen>
     );
   }
 
-  Future<void> _handleFormReportAction(
-      String action, String docId, Map<String, dynamic> data, String type) async {
+  /*Future<void> _handleReportAction(
+      String action, ReportModel report) async {
     switch (action) {
-      case 'open':
-        _openFormReport(docId, data, type, readOnly: true);
+      case 'view':
+        await _viewDocument(
+            report.url!, report.fileType ?? 'pdf', report.name);
         break;
-      case 'edit':
-        _openFormReport(docId, data, type, readOnly: false);
+
+      case 'view_form':
+        // Open the safety form in read-only mode so the user can inspect
+        // all filled data and switch to edit mode via the FAB if needed.
+        if (!mounted) return;
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SafetyFormScreen(
+              project: widget.project,
+              logger: widget.logger,
+              isClientView: widget.isClient,
+              // Pass the raw Firestore data so the form can pre-populate.
+              existingReportId: report.id,
+              isReadOnly: true,
+            ),
+          ),
+        );
         break;
+
+      case 'download':
+        // If the report already has a stored PDF url use it directly,
+        // otherwise fall back to building one from safetyFormData.
+        if (report.url != null && report.url!.isNotEmpty) {
+          await _downloadDocument(report.url!, '${report.name}.pdf');
+        } else {
+          await _downloadSafetyReport(report);
+        }
+        break;
+
       case 'delete':
         final confirmed = await showDialog<bool>(
           context: context,
@@ -621,9 +666,10 @@ class _ReportsScreenState extends State<ReportsScreen>
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
             title: Text('Delete Report',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600)),
             content: Text(
-                'Are you sure you want to permanently delete this $type report? This cannot be undone.',
+                'Are you sure you want to delete "${report.name}"?',
                 style: GoogleFonts.poppins()),
             actions: [
               TextButton(
@@ -641,11 +687,14 @@ class _ReportsScreenState extends State<ReportsScreen>
           ),
         );
         if (confirmed == true) {
-          await _deleteFormReport(docId, data);
+          // Delete both any uploaded file AND the generated PDF URL
+          // so Storage is kept clean.
+          final urlToDelete = report.url ?? '';
+          await _deleteDocument(report.id, urlToDelete, 'Reports');
         }
         break;
     }
-  }
+  }*/
 
   void _openFormReport(
       String docId, Map<String, dynamic> data, String type,
@@ -696,6 +745,11 @@ class _ReportsScreenState extends State<ReportsScreen>
             ),
           ),
         );
+      } else if (type == 'Safety' ||
+          type == 'SafetyWeekly' ||
+          type == 'SafetyMonthly') {
+        _openSafetyFormReport(docId, data,
+            readOnly: effectiveReadOnly);
       } else {
         widget.logger.w(
             '⚠️ ReportsScreen: No form viewer for type=$type');
@@ -719,7 +773,482 @@ class _ReportsScreenState extends State<ReportsScreen>
     }
   }
 
-  Future<void> _deleteFormReport(
+  // ─────────────────────── SAFETY FORM REPORT ITEM ────────────────
+
+  /// Builds a list tile for a form-filled safety meeting report.
+  /// Mirrors [_buildFormReportItem] but is Safety-specific:
+  /// – uses [reportDate] (not 'date'/'weekStart') for the display name
+  /// – Delete is always hidden from clients (enforced via [widget.isClient])
+  Widget _buildSafetyFormReportItem(String docId, Map<String, dynamic> data) {
+    final reportDateRaw = data['reportDate'];
+    final DateTime reportDate = reportDateRaw is Timestamp
+        ? reportDateRaw.toDate()
+        : DateTime.now();
+
+    final savedAtRaw = data['savedAt'];
+    final DateTime savedAt =
+        savedAtRaw is Timestamp ? savedAtRaw.toDate() : DateTime.now();
+
+    final String safetyType =
+        data['type'] as String? ?? 'SafetyWeekly';
+    final String meetingLabel = safetyType == 'SafetyMonthly'
+        ? 'Monthly Safety Meeting'
+        : 'Weekly Safety Meeting';
+
+    final displayName =
+        '$meetingLabel – ${DateFormat('dd MMM yyyy').format(reportDate)}';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _openSafetyFormReport(docId, data, readOnly: true),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: CircleAvatar(
+            backgroundColor:
+                const Color(0xFF0A2E5A).withValues(alpha: 0.12),
+            child: const Icon(
+              Icons.security_rounded,
+              color: Color(0xFF0A2E5A),
+              size: 22,
+            ),
+          ),
+          title: Text(
+            displayName,
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600, fontSize: 15),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 2),
+              Text(
+                'Saved: ${_dateFormat.format(savedAt)}',
+                style: GoogleFonts.poppins(
+                    color: Colors.grey[600], fontSize: 13),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A2E5A).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Safety Form',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: const Color(0xFF0A2E5A),
+                      fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          isThreeLine: true,
+          trailing: PopupMenuButton<String>(
+            onSelected: (action) =>
+                _handleFormReportAction(action, docId, data, 'Safety'),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            itemBuilder: (context) => [
+              _popupItem('open', Icons.visibility_rounded,
+                  Colors.blue[700]!, 'Open'),
+              // Edit and Delete are hidden from clients.
+              if (!widget.isClient) ...[
+                _popupItem('edit', Icons.edit_rounded,
+                    const Color(0xFF0A2E5A), 'Edit'),
+                _popupItem('delete', Icons.delete_rounded,
+                    Colors.red[600]!, 'Delete'),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────── FORM REPORT ACTION HANDLER ──────────
+
+  /// Handles popup-menu actions for all form-filled reports
+  /// (Daily / Weekly / Monthly / Safety).
+  Future<void> _handleFormReportAction(
+      String action,
+      String docId,
+      Map<String, dynamic> data,
+      String type) async {
+    switch (action) {
+      case 'open':
+        if (type == 'Safety') {
+          _openSafetyFormReport(docId, data, readOnly: true);
+        } else {
+          _openFormReport(docId, data, type, readOnly: true);
+        }
+        break;
+
+      case 'edit':
+        if (type == 'Safety') {
+          _openSafetyFormReport(docId, data, readOnly: false);
+        } else {
+          _openFormReport(docId, data, type, readOnly: false);
+        }
+        break;
+
+      case 'download':
+        await _downloadSafetyFormData(docId, data);
+        break;
+
+      case 'delete':
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            title: Text('Delete Report',
+                style:
+                    GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            content: Text(
+                'Are you sure you want to delete this safety report?',
+                style: GoogleFonts.poppins()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancel', style: GoogleFonts.poppins()),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white),
+                child: Text('Delete', style: GoogleFonts.poppins()),
+              ),
+            ],
+          ),
+        );
+        if (confirmed == true) {
+          // Delete all Storage images attached to the safety form.
+          final imageUrls =
+              List<String>.from(data['imageUrls'] ?? []);
+          for (final url in imageUrls) {
+            try {
+              await FirebaseStorage.instance.refFromURL(url).delete();
+            } catch (_) {}
+          }
+          // Also delete the pre-generated PDF if one was stored.
+          final fileUrl = data['fileUrl'] as String?;
+          if (fileUrl != null && fileUrl.isNotEmpty) {
+            try {
+              await FirebaseStorage.instance
+                  .refFromURL(fileUrl)
+                  .delete();
+            } catch (_) {}
+          }
+          await FirebaseFirestore.instance
+              .collection('Reports')
+              .doc(docId)
+              .delete();
+          widget.logger.i(
+              '✅ ReportsScreen: Safety form report $docId deleted');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Report deleted successfully',
+                  style: GoogleFonts.poppins()),
+              backgroundColor: Colors.green,
+            ));
+          }
+        }
+        break;
+    }
+  }
+
+  // ─────────────────────── OPEN SAFETY FORM REPORT ─────────────
+
+  /// Pushes [SafetyFormScreen] pre-populated from [data] (raw Firestore map).
+  /// Clients are always forced into read-only mode.
+  void _openSafetyFormReport(
+      String docId, Map<String, dynamic> data,
+      {required bool readOnly}) {
+    final effectiveReadOnly = widget.isClient ? true : readOnly;
+    widget.logger.i(
+        '📊 ReportsScreen: Opening safety form report $docId '
+        '(readOnly=$effectiveReadOnly)');
+    try {
+      final report = SafetyReportData.fromMap({...data, 'id': docId});
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SafetyFormScreen(
+            project: widget.project,
+            logger: widget.logger,
+            existingReport: report,
+            isReadOnly: effectiveReadOnly,
+          ),
+        ),
+      );
+    } catch (e, st) {
+      widget.logger.e(
+          '❌ ReportsScreen: Error opening safety form report',
+          error: e,
+          stackTrace: st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error opening report: $e',
+              style: GoogleFonts.poppins()),
+          backgroundColor: Colors.red,
+        ));
+      }
+    }
+  }
+
+  // ─────────────────────── DOWNLOAD SAFETY FORM DATA ───────────
+
+  /// Downloads a form-filled safety report as a PDF.
+  ///
+  /// Path 1 — if [data] contains a `fileUrl` (PDF generated by
+  /// [SafetyFormScreen] at save time), it is fetched directly from
+  /// Firebase Storage so we never regenerate an identical document.
+  ///
+  /// Path 2 — if no `fileUrl` exists (legacy or draft records), a styled
+  /// A4 PDF is built on-the-fly from the stored [SafetyReportData] fields,
+  /// mirroring the layout in [_downloadSafetyReport].
+  Future<void> _downloadSafetyFormData(
+      String docId, Map<String, dynamic> data) async {
+    // Show progress snackbar
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Row(children: [
+          const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white)),
+          const SizedBox(width: 14),
+          Text('Preparing PDF…', style: GoogleFonts.poppins()),
+        ]),
+        duration: const Duration(seconds: 30),
+      ));
+    }
+
+    try {
+      final SafetyReportData safetyData =
+          SafetyReportData.fromMap({...data, 'id': docId});
+      final dateStr =
+          DateFormat('yyyyMMdd').format(safetyData.reportDate);
+      final fileName = 'Safety_Report_$dateStr.pdf';
+
+      final fileUrl = data['fileUrl'] as String?;
+
+      if (fileUrl != null && fileUrl.isNotEmpty) {
+        // ── Path 1: fetch pre-generated PDF from Storage ──────────
+        final storageData = await FirebaseStorage.instance
+            .refFromURL(fileUrl)
+            .getData(50 * 1024 * 1024);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        if (storageData != null) {
+          await _savePdfBytesLocally(
+              Uint8List.fromList(storageData), fileName);
+        }
+        return;
+      }
+
+      // ── Path 2: generate PDF on the fly ───────────────────────
+      final pdf = pw.Document();
+      final navyColor = PdfColor.fromHex('#0A2E5A');
+      final meetingTitle = safetyData.type == 'SafetyMonthly'
+          ? 'MONTHLY SAFETY MEETING REPORT'
+          : 'WEEKLY SAFETY MEETING REPORT';
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.fromLTRB(28, 28, 28, 48),
+          footer: (ctx) => pw.Container(
+            decoration: const pw.BoxDecoration(
+                border: pw.Border(
+                    top: pw.BorderSide(
+                        color: PdfColors.grey400, width: 0.5))),
+            padding: const pw.EdgeInsets.only(top: 4),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                    '© JV Almacis Site Management System - Safety Report',
+                    style: pw.TextStyle(
+                        font: pw.Font.helvetica(),
+                        fontSize: 7,
+                        color: PdfColors.grey600)),
+                pw.Text(
+                    'Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                    style: pw.TextStyle(
+                        font: pw.Font.helvetica(),
+                        fontSize: 7,
+                        color: PdfColors.grey600)),
+              ],
+            ),
+          ),
+          build: (ctx) => [
+            // Header band
+            pw.Container(
+              width: double.infinity,
+              color: navyColor,
+              padding:
+                  const pw.EdgeInsets.fromLTRB(16, 14, 16, 12),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Text(widget.project.name,
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                          font: pw.Font.helveticaBold(),
+                          fontSize: 14,
+                          color: PdfColors.white)),
+                  pw.SizedBox(height: 6),
+                  pw.Text(meetingTitle,
+                      style: pw.TextStyle(
+                          font: pw.Font.helveticaBold(),
+                          fontSize: 10,
+                          color: PdfColor.fromHex('#FFFFFFB3'),
+                          letterSpacing: 1.5)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 14),
+            // Content block
+            pw.Container(
+              width: double.infinity,
+              decoration: pw.BoxDecoration(
+                  border: pw.Border.all(
+                      color: PdfColors.blueGrey200, width: 0.5)),
+              padding: const pw.EdgeInsets.all(12),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  _pdfLabelValue('Date',
+                      DateFormat('dd MMM yyyy').format(safetyData.reportDate)),
+                  if (safetyData.contractNumber.isNotEmpty)
+                    _pdfLabelValue(
+                        'Contract No.', safetyData.contractNumber),
+                  if (safetyData.building.isNotEmpty)
+                    _pdfLabelValue(
+                        'Building/Area', safetyData.building),
+                  pw.SizedBox(height: 8),
+                  // Safety checklist
+                  pw.Text('Safety Checklist',
+                      style: pw.TextStyle(
+                          font: pw.Font.helveticaBold(),
+                          fontSize: 10)),
+                  pw.SizedBox(height: 4),
+                  ...safetyData.checklistItems.map(
+                    (item) => pw.Padding(
+                      padding:
+                          const pw.EdgeInsets.only(bottom: 2),
+                      child: pw.Row(children: [
+                        pw.Text(
+                            item.checked ? '[X]' : '[ ]',
+                            style: pw.TextStyle(
+                                font: pw.Font.helvetica(),
+                                fontSize: 9)),
+                        pw.SizedBox(width: 6),
+                        pw.Text(item.label,
+                            style: pw.TextStyle(
+                                font: pw.Font.helvetica(),
+                                fontSize: 9)),
+                      ]),
+                    ),
+                  ),
+                  pw.SizedBox(height: 8),
+                  // JV Alma attendance
+                  if (safetyData.jvAlmaRows.isNotEmpty) ...[
+                    pw.Text('JV Alma CIS Attendance',
+                        style: pw.TextStyle(
+                            font: pw.Font.helveticaBold(),
+                            fontSize: 10)),
+                    pw.SizedBox(height: 4),
+                    ...safetyData.jvAlmaRows.map(
+                      (r) => pw.Padding(
+                        padding:
+                            const pw.EdgeInsets.only(bottom: 2),
+                        child: pw.Text(
+                            '• ${r.name} – ${r.title}',
+                            style: pw.TextStyle(
+                                font: pw.Font.helvetica(),
+                                fontSize: 9)),
+                      ),
+                    ),
+                    pw.SizedBox(height: 8),
+                  ],
+                  // Sub-contractor attendance (weekly only)
+                  if (safetyData.subContractorRows.isNotEmpty) ...[
+                    pw.Text('Sub-Contractor Attendance',
+                        style: pw.TextStyle(
+                            font: pw.Font.helveticaBold(),
+                            fontSize: 10)),
+                    pw.SizedBox(height: 4),
+                    ...safetyData.subContractorRows.map(
+                      (r) => pw.Padding(
+                        padding:
+                            const pw.EdgeInsets.only(bottom: 2),
+                        child: pw.Text(
+                            '• ${r.companyName ?? ''} – ${r.name} (${r.title})',
+                            style: pw.TextStyle(
+                                font: pw.Font.helvetica(),
+                                fontSize: 9)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+      final bytes = Uint8List.fromList(await pdf.save());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      await _savePdfBytesLocally(bytes, fileName);
+    } catch (e) {
+      widget.logger.e(
+          '❌ Error downloading safety form data as PDF',
+          error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error generating PDF: $e',
+              style: GoogleFonts.poppins()),
+          backgroundColor: Colors.red,
+        ));
+      }
+    }
+  }
+
+  /// Renders a bold-label + plain-value row inside the PDF.
+  pw.Widget _pdfLabelValue(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text('$label: ',
+              style: pw.TextStyle(
+                  font: pw.Font.helveticaBold(), fontSize: 9)),
+          pw.Expanded(
+            child: pw.Text(value,
+                style: pw.TextStyle(
+                    font: pw.Font.helvetica(), fontSize: 9)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /*Future<void> _deleteFormReport(
       String docId, Map<String, dynamic> data) async {
     widget.logger.i('🗑️ ReportsScreen: Deleting form report: $docId');
     try {
@@ -754,7 +1283,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         ));
       }
     }
-  }
+  }*/
 
   // ─────────────────────── FAB LOGIC ───────────────────────────
 
@@ -1580,42 +2109,216 @@ class _ReportsScreenState extends State<ReportsScreen>
     return buffer.toString();
   }
 
+  /// Downloads the safety form report as a proper PDF.
+  /// If the report already has a `fileUrl` (generated at save-time by
+  /// SafetyFormScreen), it fetches that PDF from Firebase Storage so we
+  /// never regenerate an identical document.  Otherwise it falls back to
+  /// the plain-text approach for legacy records that pre-date PDF generation.
   Future<void> _downloadSafetyReport(ReportModel report) async {
-    if (report.safetyFormData == null) {
+    if (report.safetyFormData == null && report.url == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('No form data available for download',
+          content: Text('No form data or file available for download.',
               style: GoogleFonts.poppins()),
         ));
       }
       return;
     }
+
+    // show a progress indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Row(children: [
+          const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white)),
+          const SizedBox(width: 14),
+          Text('Preparing PDF…', style: GoogleFonts.poppins()),
+        ]),
+        duration: const Duration(seconds: 30),
+      ));
+    }
+
     try {
+      // ── Path 1: report has a stored PDF URL ──────────────────────
+      // This covers all reports saved by the updated SafetyFormScreen,
+      // which uploads a PDF and writes 'fileUrl' to Firestore at save-time.
+      if (report.url != null && report.url!.isNotEmpty) {
+        final fileName = '${report.name.replaceAll(' ', '_')}.pdf';
+        final data = await FirebaseStorage.instance
+            .refFromURL(report.url!)
+            .getData(50 * 1024 * 1024);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        if (data != null) {
+          await _savePdfBytesLocally(
+              Uint8List.fromList(data), fileName);
+        }
+        return;
+      }
+
+      // ── Path 2: legacy record — generate PDF on the fly ──────────
+      // Builds a simple but styled PDF from the stored safetyFormData map
+      // so older records that pre-date the fileUrl field are still
+      // downloadable as PDF (not just .txt).
       final content = _generateSafetyReportContent(report);
-      final bytes = utf8.encode(content);
-      final result = await platformDownloadFile(
-          Uint8List.fromList(bytes), '${report.name}.txt');
-      if (mounted && result != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Downloaded successfully!\nLocation: $result',
-              style: GoogleFonts.poppins()),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'Open',
-            textColor: Colors.white,
-            onPressed: () async => await OpenFile.open(result),
+      final navyColor = PdfColor.fromHex('#0A2E5A');
+      //final lightBlue = PdfColor.fromHex('#E8EEF6');
+
+      final pdf = pw.Document();
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.fromLTRB(28, 28, 28, 48),
+          footer: (ctx) => pw.Container(
+            decoration: const pw.BoxDecoration(
+                border: pw.Border(
+                    top: pw.BorderSide(
+                        color: PdfColors.grey400, width: 0.5))),
+            padding: const pw.EdgeInsets.only(top: 4),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                    '© JV Almacis Site Management System - Safety Report',
+                    style: pw.TextStyle(
+                        font: pw.Font.helvetica(),
+                        fontSize: 7,
+                        color: PdfColors.grey600)),
+                pw.Text('Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                    style: pw.TextStyle(
+                        font: pw.Font.helvetica(),
+                        fontSize: 7,
+                        color: PdfColors.grey600)),
+              ],
+            ),
           ),
-        ));
-      }
+          build: (ctx) => [
+            // Header band
+            pw.Container(
+              width: double.infinity,
+              color: navyColor,
+              padding: const pw.EdgeInsets.fromLTRB(16, 14, 16, 12),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Text(widget.project.name,
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                          font: pw.Font.helveticaBold(),
+                          fontSize: 14,
+                          color: PdfColors.white)),
+                  pw.SizedBox(height: 6),
+                  pw.Text(
+                    report.type == 'SafetyWeekly'
+                        ? 'WEEKLY SAFETY MEETING REPORT'
+                        : 'MONTHLY SAFETY MEETING REPORT',
+                    style: pw.TextStyle(
+                        font: pw.Font.helveticaBold(),
+                        fontSize: 10,
+                        color: PdfColor.fromHex('#FFFFFFB3'),
+                        letterSpacing: 1.5),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 14),
+            // Content block
+            pw.Container(
+              width: double.infinity,
+              decoration: pw.BoxDecoration(
+                  border: pw.Border.all(
+                      color: PdfColors.blueGrey200, width: 0.5)),
+              padding: const pw.EdgeInsets.all(12),
+              child: pw.Text(
+                content,
+                style: pw.TextStyle(
+                    font: pw.Font.helvetica(),
+                    fontSize: 9,
+                    color: PdfColors.black),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      final bytes = Uint8List.fromList(await pdf.save());
+      final fileName =
+          '${report.name.replaceAll(' ', '_')}.pdf';
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      await _savePdfBytesLocally(bytes, fileName);
     } catch (e) {
-      widget.logger.e('❌ Error downloading safety report', error: e);
+      widget.logger.e('❌ Error downloading safety report as PDF', error: e);
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error downloading: $e',
+          content: Text('Error generating PDF: $e',
               style: GoogleFonts.poppins()),
+          backgroundColor: Colors.red,
         ));
       }
+    }
+  }
+
+  /// Saves [bytes] as [fileName] to the platform Downloads folder,
+  /// opens it with OpenFile, and shows a success snackbar.
+  /// Falls back to Printing.sharePdf when direct file access fails.
+  /// Mirrors MonthlyReportFormScreen._savePdfBytes exactly.
+  Future<void> _savePdfBytesLocally(
+      Uint8List bytes, String fileName) async {
+    if (kIsWeb) {
+      await Printing.sharePdf(bytes: bytes, filename: fileName);
+      return;
+    }
+    try {
+      String dirPath;
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        const androidDownloads = '/storage/emulated/0/Download';
+        if (await Directory(androidDownloads).exists()) {
+          dirPath = androidDownloads;
+        } else {
+          final ext = await getExternalStorageDirectory();
+          if (ext != null) {
+            final parts = ext.path.split('/');
+            final idx = parts.indexOf('Android');
+            final base =
+                idx > 0 ? parts.sublist(0, idx).join('/') : ext.path;
+            dirPath = '$base/Download';
+          } else {
+            dirPath = (await getApplicationDocumentsDirectory()).path;
+          }
+        }
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        dirPath = (await getApplicationDocumentsDirectory()).path;
+      } else {
+        final homeDir = Platform.environment['USERPROFILE'] ??
+            Platform.environment['HOME'];
+        dirPath = homeDir != null && homeDir.isNotEmpty
+            ? '$homeDir${Platform.pathSeparator}Downloads'
+            : (await getApplicationDocumentsDirectory()).path;
+      }
+      final dir = Directory(dirPath);
+      if (!await dir.exists()) await dir.create(recursive: true);
+      final filePath = '$dirPath${Platform.pathSeparator}$fileName';
+      await File(filePath).writeAsBytes(bytes);
+      await OpenFile.open(filePath);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('PDF saved: $fileName', style: GoogleFonts.poppins()),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Open',
+          textColor: Colors.white,
+          onPressed: () async => await OpenFile.open(filePath),
+        ),
+      ));
+    } catch (e) {
+      await Printing.sharePdf(bytes: bytes, filename: fileName);
     }
   }
 
