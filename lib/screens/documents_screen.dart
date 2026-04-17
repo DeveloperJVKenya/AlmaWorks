@@ -49,6 +49,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
   final List<String> _mainTabs = ['Client', 'Sub-Contractor', 'Supplier'];
   final List<String> _subSections = ['Contract', 'Communication'];
 
+  // Client tab has an extra "Access Requests" sub-tab that Sub-Contractor
+  // and Supplier tabs do not expose.
+  final List<String> _clientSubSections = [
+    'Contract',
+    'Communication',
+    'Access Requests',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -56,7 +64,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     
     // Initialize tab controllers immediately with default values
     _mainTabController = TabController(length: _mainTabs.length, vsync: this);
-    _clientSubTabController = TabController(length: _subSections.length, vsync: this);
+    // Client gets 3 sub-tabs; sub-contractor and supplier keep 2.
+    _clientSubTabController = TabController(length: _clientSubSections.length, vsync: this);
     _subContractorSubTabController = TabController(length: _subSections.length, vsync: this);
     _supplierSubTabController = TabController(length: _subSections.length, vsync: this);
     
@@ -163,7 +172,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             );
             return;
           }
-          String section = _subSections[subController.index];
+          // Resolve which sections list to index into so that the
+          // third Client sub-tab ('Access Requests') maps correctly.
+          final List<String> activeSections =
+              (role == 'Client') ? _clientSubSections : _subSections;
+          String section = activeSections[subController.index];
           _addDocument(role, section, teamMemberName: memberName);
         },
         backgroundColor: const Color(0xFF0A2E5A),
@@ -194,11 +207,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                       SizedBox(
                         height: constraints.maxHeight - (isClient ? 0 : 48) - 48,
                         child: isClient
-                            ? _buildRoleSection('Client', _clientSubTabController, memberName: null)
+                            ? _buildRoleSection('Client', _clientSubTabController, memberName: null, sections: _clientSubSections)
                             : TabBarView(
                                 controller: _mainTabController,
                                 children: [
-                                  _buildRoleSection('Client', _clientSubTabController, memberName: null),
+                                  _buildRoleSection('Client', _clientSubTabController, memberName: null, sections: _clientSubSections),
                                   _buildSubcontractorContent(),
                                   _buildSupplierContent(),
                                 ],
@@ -234,23 +247,54 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     );
   }
 
-  Widget _buildRoleSection(String role, TabController subTabController, {String? memberName}) {
-    return Column(
-      children: [
-        TabBar(
-          controller: subTabController,
-          tabs: _subSections.map((section) => Tab(text: section)).toList(),
-          labelColor: const Color(0xFF0A2E5A),
-          unselectedLabelColor: Colors.grey,
-          labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: subTabController,
-            children: _subSections.map((section) => _buildDocumentList(role, section, memberName: memberName)).toList(),
-          ),
-        ),
-      ],
+  Widget _buildRoleSection(
+    String role,
+    TabController subTabController, {
+    String? memberName,
+    // Callers can supply their own sections list (e.g. Client's 3-tab list).
+    // Falls back to the shared 2-tab list for Sub-Contractor and Supplier.
+    List<String>? sections,
+  }) {
+    final List<String> tabSections = sections ?? _subSections;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // On narrow screens the sub-tab bar becomes horizontally scrollable so
+        // that all tabs stay accessible without overflowing.
+        final bool narrowScreen = constraints.maxWidth < 400;
+        return Column(
+          children: [
+            TabBar(
+              controller: subTabController,
+              // isScrollable prevents RenderFlex overflow on slim devices.
+              isScrollable: true,
+              // Center the tabs on wide screens; left-align on narrow ones so
+              // the first tab isn't hidden behind the screen edge.
+              tabAlignment: narrowScreen
+                  ? TabAlignment.start
+                  : TabAlignment.center,
+              tabs: tabSections
+                  .map((section) => Tab(text: section))
+                  .toList(),
+              labelColor: const Color(0xFF0A2E5A),
+              unselectedLabelColor: Colors.grey,
+              labelStyle:
+                  GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: subTabController,
+                children: tabSections
+                    .map((section) => _buildDocumentList(
+                          role,
+                          section,
+                          memberName: memberName,
+                        ))
+                    .toList(),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
