@@ -648,7 +648,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          _buildNavItems(projectProvider, padding: EdgeInsets.zero),
+          Expanded(
+            child: _buildNavItems(projectProvider, padding: EdgeInsets.zero),
+          ),
         ],
       ),
     );
