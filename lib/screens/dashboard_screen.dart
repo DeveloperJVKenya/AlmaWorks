@@ -7,7 +7,6 @@ import 'package:almaworks/rbacsystem/client_request_service.dart';
 import 'package:almaworks/screens/account_screen.dart';
 import 'package:almaworks/screens/projects/projects_main_screen.dart';
 import 'package:almaworks/services/project_service.dart';
-//import 'package:almaworks/widgets/activity_feed.dart';
 import 'package:almaworks/widgets/task_progress_widget.dart';
 import 'package:almaworks/widgets/dashboard_card.dart';
 import 'package:almaworks/widgets/responsive_layout.dart';
