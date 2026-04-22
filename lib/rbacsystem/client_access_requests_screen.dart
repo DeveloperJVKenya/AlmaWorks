@@ -18,7 +18,8 @@ class ClientAccessRequestsScreen extends StatefulWidget {
 }
 
 class _ClientAccessRequestsScreenState
-    extends State<ClientAccessRequestsScreen> with SingleTickerProviderStateMixin {
+    extends State<ClientAccessRequestsScreen>
+    with SingleTickerProviderStateMixin {
   final ClientRequestService _requestService = ClientRequestService();
   final AuthService _authService = AuthService();
   late TabController _tabController;
@@ -34,6 +35,10 @@ class _ClientAccessRequestsScreenState
     _tabController.dispose();
     super.dispose();
   }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Scaffold
+  // ──────────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +74,10 @@ class _ClientAccessRequestsScreenState
     );
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Pending tab
+  // ──────────────────────────────────────────────────────────────────────────
+
   Widget _buildPendingRequestsTab() {
     return StreamBuilder<List<ClientRequest>>(
       stream: _requestService.getPendingRequests(),
@@ -88,10 +97,8 @@ class _ClientAccessRequestsScreenState
               children: [
                 const Icon(Icons.error, size: 64, color: Colors.red),
                 const SizedBox(height: 16),
-                Text(
-                  'Error loading requests',
-                  style: GoogleFonts.poppins(fontSize: 18),
-                ),
+                Text('Error loading requests',
+                    style: GoogleFonts.poppins(fontSize: 18)),
                 const SizedBox(height: 8),
                 Text(
                   snapshot.error.toString(),
@@ -110,11 +117,7 @@ class _ClientAccessRequestsScreenState
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.inbox,
-                  size: 100,
-                  color: Colors.grey[300],
-                ),
+                Icon(Icons.inbox, size: 100, color: Colors.grey[300]),
                 const SizedBox(height: 16),
                 Text(
                   'No Pending Requests',
@@ -140,9 +143,8 @@ class _ClientAccessRequestsScreenState
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: requests.length,
-          itemBuilder: (context, index) {
-            return _buildPendingRequestCard(requests[index]);
-          },
+          itemBuilder: (context, index) =>
+              _buildPendingRequestCard(requests[index]),
         );
       },
     );
@@ -265,6 +267,10 @@ class _ClientAccessRequestsScreenState
     );
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // History tab
+  // ──────────────────────────────────────────────────────────────────────────
+
   Widget _buildRequestHistoryTab() {
     return StreamBuilder<List<ClientRequest>>(
       stream: _requestService.getAllRequests(),
@@ -286,12 +292,11 @@ class _ClientAccessRequestsScreenState
           );
         }
 
-        final requests = snapshot.data ?? [];
-        final processedRequests = requests
+        final requests = (snapshot.data ?? [])
             .where((r) => r.status != 'pending')
             .toList();
 
-        if (processedRequests.isEmpty) {
+        if (requests.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -313,10 +318,9 @@ class _ClientAccessRequestsScreenState
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: processedRequests.length,
-          itemBuilder: (context, index) {
-            return _buildHistoryRequestCard(processedRequests[index]);
-          },
+          itemCount: requests.length,
+          itemBuilder: (context, index) =>
+              _buildHistoryRequestCard(requests[index]),
         );
       },
     );
@@ -335,10 +339,13 @@ class _ClientAccessRequestsScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Header row ────────────────────────────────────────────────
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CircleAvatar(
-                  backgroundColor: const Color(0xFF0A2E5A).withValues(alpha: 0.2),
+                  backgroundColor:
+                      const Color(0xFF0A2E5A).withValues(alpha: 0.15),
                   child: Text(
                     request.clientUsername[0].toUpperCase(),
                     style: const TextStyle(color: Color(0xFF0A2E5A)),
@@ -366,27 +373,34 @@ class _ClientAccessRequestsScreenState
                     ],
                   ),
                 ),
+                // Status badge
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: 10,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.2),
+                    color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     isApproved ? 'Approved' : 'Denied',
                     style: GoogleFonts.poppins(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: statusColor,
                     ),
                   ),
                 ),
+                const SizedBox(width: 4),
+                // ── Action menu ───────────────────────────────────────────
+                _buildHistoryActionMenu(request, isApproved),
               ],
             ),
+
             const SizedBox(height: 12),
+
+            // ── Metadata rows ──────────────────────────────────────────────
             _buildInfoRow(
               Icons.calendar_today,
               'Requested: ${DateFormat('MMM dd, yyyy').format(request.requestDate)}',
@@ -403,8 +417,8 @@ class _ClientAccessRequestsScreenState
               ),
             if (isApproved && request.grantedProjects.isNotEmpty)
               _buildInfoRow(
-                Icons.folder,
-                'Projects: ${request.grantedProjects.length}',
+                Icons.folder_open,
+                '${request.grantedProjects.length} project(s) granted',
               ),
             if (!isApproved && request.denialReason != null)
               Padding(
@@ -417,7 +431,8 @@ class _ClientAccessRequestsScreenState
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, size: 16, color: Colors.red),
+                      const Icon(Icons.info_outline,
+                          size: 16, color: Colors.red),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -432,9 +447,165 @@ class _ClientAccessRequestsScreenState
                   ),
                 ),
               ),
+
+            // ── Quick-action buttons ───────────────────────────────────────
+            const SizedBox(height: 12),
+            if (isApproved)
+              _buildApprovedQuickActions(request)
+            else
+              _buildDeniedQuickActions(request),
           ],
         ),
       ),
+    );
+  }
+
+  /// Three-dot overflow menu on every history card.
+  Widget _buildHistoryActionMenu(ClientRequest request, bool isApproved) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, size: 20, color: Colors.grey),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      onSelected: (value) {
+        switch (value) {
+          case 'add_projects':
+            _showAddProjectsDialog(request);
+            break;
+          case 'revoke_projects':
+            _showRevokeProjectsDialog(request);
+            break;
+          case 're_approve':
+            _showReApproveDialog(request);
+            break;
+          case 're_deny':
+            _showReDenyDialog(request);
+            break;
+        }
+      },
+      itemBuilder: (_) => isApproved
+          ? [
+              PopupMenuItem(
+                value: 'add_projects',
+                child: _popupItem(
+                  Icons.add_circle_outline,
+                  'Add More Projects',
+                  Colors.green,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'revoke_projects',
+                child: _popupItem(
+                  Icons.remove_circle_outline,
+                  'Revoke Project Access',
+                  Colors.orange,
+                ),
+              ),
+            ]
+          : [
+              PopupMenuItem(
+                value: 're_approve',
+                child: _popupItem(
+                  Icons.check_circle_outline,
+                  'Approve Now',
+                  Colors.green,
+                ),
+              ),
+              PopupMenuItem(
+                value: 're_deny',
+                child: _popupItem(
+                  Icons.edit_note,
+                  'Update Denial Reason',
+                  Colors.red,
+                ),
+              ),
+            ],
+    );
+  }
+
+  Widget _popupItem(IconData icon, String label, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Text(label, style: GoogleFonts.poppins(fontSize: 13)),
+      ],
+    );
+  }
+
+  /// Compact buttons shown inline for approved cards.
+  Widget _buildApprovedQuickActions(ClientRequest request) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _showAddProjectsDialog(request),
+            icon: const Icon(Icons.add, size: 16),
+            label: Text('Add Projects',
+                style: GoogleFonts.poppins(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.green[700],
+              side: BorderSide(color: Colors.green[300]!),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _showRevokeProjectsDialog(request),
+            icon: const Icon(Icons.remove, size: 16),
+            label: Text('Revoke Access',
+                style: GoogleFonts.poppins(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.orange[700],
+              side: BorderSide(color: Colors.orange[300]!),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Compact buttons shown inline for denied cards.
+  Widget _buildDeniedQuickActions(ClientRequest request) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _showReApproveDialog(request),
+            icon: const Icon(Icons.check_circle_outline, size: 16),
+            label: Text('Approve Now',
+                style: GoogleFonts.poppins(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.green[700],
+              side: BorderSide(color: Colors.green[300]!),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _showReDenyDialog(request),
+            icon: const Icon(Icons.edit_note, size: 16),
+            label: Text('Update Reason',
+                style: GoogleFonts.poppins(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red[700],
+              side: BorderSide(color: Colors.red[300]!),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -456,6 +627,10 @@ class _ClientAccessRequestsScreenState
       ),
     );
   }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Pending request dialogs (unchanged logic, unchanged UI)
+  // ──────────────────────────────────────────────────────────────────────────
 
   Future<void> _showApprovalDialog(ClientRequest request) async {
     final selectedProjects = <String>[];
@@ -483,13 +658,9 @@ class _ClientAccessRequestsScreenState
                 ),
                 const SizedBox(height: 16),
                 if (projects.isEmpty)
-                  Text(
-                    'No projects available',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                  )
+                  Text('No projects available',
+                      style: GoogleFonts.poppins(
+                          color: Colors.grey[600], fontSize: 14))
                 else
                   Container(
                     constraints: const BoxConstraints(maxHeight: 300),
@@ -500,12 +671,9 @@ class _ClientAccessRequestsScreenState
                         final project = projects[index];
                         final projectId = project['id'] as String;
                         final projectName = project['name'] as String;
-
                         return CheckboxListTile(
-                          title: Text(
-                            projectName,
-                            style: GoogleFonts.poppins(fontSize: 14),
-                          ),
+                          title: Text(projectName,
+                              style: GoogleFonts.poppins(fontSize: 14)),
                           value: selectedProjects.contains(projectId),
                           activeColor: const Color(0xFF0A2E5A),
                           onChanged: (bool? value) {
@@ -527,22 +695,17 @@ class _ClientAccessRequestsScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.poppins(color: Colors.grey),
-              ),
+              child: Text('Cancel',
+                  style: GoogleFonts.poppins(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: selectedProjects.isEmpty
                   ? null
                   : () => _approveRequest(request, selectedProjects),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0A2E5A),
-              ),
-              child: Text(
-                'Approve',
-                style: GoogleFonts.poppins(color: Colors.white),
-              ),
+                  backgroundColor: const Color(0xFF0A2E5A)),
+              child: Text('Approve',
+                  style: GoogleFonts.poppins(color: Colors.white)),
             ),
           ],
         ),
@@ -556,10 +719,8 @@ class _ClientAccessRequestsScreenState
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          'Deny Access Request',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-        ),
+        title: Text('Deny Access Request',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -582,31 +743,428 @@ class _ClientAccessRequestsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.poppins(color: Colors.grey),
-            ),
+            child: Text('Cancel',
+                style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () => _denyRequest(request, reasonController.text),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: Text(
-              'Deny',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
+            onPressed: () =>
+                _denyRequest(request, reasonController.text),
+            style:
+                ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Deny',
+                style: GoogleFonts.poppins(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // History — Approved request dialogs
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /// Dialog: add more projects to an already-approved request.
+  Future<void> _showAddProjectsDialog(ClientRequest request) async {
+    final selectedProjects = <String>[];
+    final allProjects = await _fetchAvailableProjects();
+
+    // Filter out already-granted ones.
+    final available = allProjects
+        .where((p) => !request.grantedProjects.contains(p['id']))
+        .toList();
+
+    if (!mounted) return;
+
+    if (available.isEmpty) {
+      _showSnack(
+          'All available projects have already been granted.', Colors.blue);
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.add_circle_outline,
+                  color: Colors.green, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Add Projects — ${request.clientUsername}',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Select additional projects to grant:',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: available.length,
+                    itemBuilder: (context, i) {
+                      final p = available[i];
+                      return CheckboxListTile(
+                        dense: true,
+                        title: Text(p['name'] as String,
+                            style: GoogleFonts.poppins(fontSize: 13)),
+                        value: selectedProjects.contains(p['id']),
+                        activeColor: Colors.green,
+                        onChanged: (v) => setDialogState(() {
+                          if (v == true) {
+                            selectedProjects.add(p['id'] as String);
+                          } else {
+                            selectedProjects.remove(p['id']);
+                          }
+                        }),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel',
+                  style: GoogleFonts.poppins(color: Colors.grey)),
+            ),
+            ElevatedButton.icon(
+              onPressed: selectedProjects.isEmpty
+                  ? null
+                  : () => _addProjects(request, selectedProjects),
+              icon: const Icon(Icons.add, size: 16),
+              label: Text('Add',
+                  style: GoogleFonts.poppins(color: Colors.white)),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Dialog: revoke specific projects from an already-approved request.
+  Future<void> _showRevokeProjectsDialog(ClientRequest request) async {
+    if (request.grantedProjects.isEmpty) {
+      _showSnack('No granted projects to revoke.', Colors.blue);
+      return;
+    }
+
+    // Resolve project names for display.
+    final projectDetails =
+        await _fetchProjectDetails(request.grantedProjects);
+
+    if (!mounted) return;
+
+    final selectedToRevoke = <String>[];
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.remove_circle_outline,
+                  color: Colors.orange, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Revoke Access — ${request.clientUsername}',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Select projects to revoke access from:',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded,
+                          size: 16, color: Colors.orange[700]),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Revoking all projects will mark this request as denied.',
+                          style: GoogleFonts.poppins(
+                              fontSize: 11, color: Colors.orange[800]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: projectDetails.length,
+                    itemBuilder: (context, i) {
+                      final p = projectDetails[i];
+                      return CheckboxListTile(
+                        dense: true,
+                        title: Text(p['name'] as String,
+                            style: GoogleFonts.poppins(fontSize: 13)),
+                        value:
+                            selectedToRevoke.contains(p['id']),
+                        activeColor: Colors.orange[700],
+                        onChanged: (v) => setDialogState(() {
+                          if (v == true) {
+                            selectedToRevoke.add(p['id'] as String);
+                          } else {
+                            selectedToRevoke.remove(p['id']);
+                          }
+                        }),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel',
+                  style: GoogleFonts.poppins(color: Colors.grey)),
+            ),
+            ElevatedButton.icon(
+              onPressed: selectedToRevoke.isEmpty
+                  ? null
+                  : () => _revokeProjects(request, selectedToRevoke),
+              icon: const Icon(Icons.remove, size: 16),
+              label: Text('Revoke',
+                  style: GoogleFonts.poppins(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[700]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // History — Denied request dialogs
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /// Dialog: approve a previously denied request.
+  Future<void> _showReApproveDialog(ClientRequest request) async {
+    final selectedProjects = <String>[];
+    final projects = await _fetchAvailableProjects();
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.check_circle_outline,
+                  color: Colors.green, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Approve Request — ${request.clientUsername}',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Previous denial reason context
+                if (request.denialReason != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.history,
+                            size: 14, color: Colors.red),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Previously denied: ${request.denialReason}',
+                            style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: Colors.red[800]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Text(
+                  'Select projects to grant:',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                if (projects.isEmpty)
+                  Text('No projects available',
+                      style: GoogleFonts.poppins(
+                          color: Colors.grey[600], fontSize: 13))
+                else
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 260),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: projects.length,
+                      itemBuilder: (context, i) {
+                        final p = projects[i];
+                        return CheckboxListTile(
+                          dense: true,
+                          title: Text(p['name'] as String,
+                              style:
+                                  GoogleFonts.poppins(fontSize: 13)),
+                          value: selectedProjects.contains(p['id']),
+                          activeColor: Colors.green,
+                          onChanged: (v) => setDialogState(() {
+                            if (v == true) {
+                              selectedProjects.add(p['id'] as String);
+                            } else {
+                              selectedProjects.remove(p['id']);
+                            }
+                          }),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel',
+                  style: GoogleFonts.poppins(color: Colors.grey)),
+            ),
+            ElevatedButton.icon(
+              onPressed: selectedProjects.isEmpty
+                  ? null
+                  : () => _reApproveRequest(request, selectedProjects),
+              icon: const Icon(Icons.check, size: 16),
+              label: Text('Approve',
+                  style: GoogleFonts.poppins(color: Colors.white)),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Dialog: update denial reason / re-deny.
+  Future<void> _showReDenyDialog(ClientRequest request) async {
+    final reasonController =
+        TextEditingController(text: request.denialReason ?? '');
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.edit_note, color: Colors.red, size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Update Denial — ${request.clientUsername}',
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Update the denial reason or confirm denial with a new message:',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              decoration: InputDecoration(
+                labelText: 'Denial reason (optional)',
+                labelStyle: GoogleFonts.poppins(fontSize: 13),
+                border: const OutlineInputBorder(),
+                hintText: 'Enter a reason for the denial...',
+                hintStyle:
+                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+              ),
+              maxLines: 4,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel',
+                style: GoogleFonts.poppins(color: Colors.grey)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () =>
+                _reDenyRequest(request, reasonController.text),
+            icon: const Icon(Icons.save, size: 16),
+            label: Text('Save & Re-deny',
+                style: GoogleFonts.poppins(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Actions — existing
+  // ──────────────────────────────────────────────────────────────────────────
+
   Future<void> _approveRequest(
-    ClientRequest request,
-    List<String> projectIds,
-  ) async {
-    Navigator.pop(context); // Close dialog
+      ClientRequest request, List<String> projectIds) async {
+    Navigator.pop(context);
 
     final userData = await _authService.getUserData();
     if (userData == null) return;
@@ -619,29 +1177,15 @@ class _ClientAccessRequestsScreenState
     );
 
     if (!mounted) return;
-
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showSnack(error, Colors.red);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Access granted to ${request.clientUsername}',
-            style: GoogleFonts.poppins(),
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
+      _showSnack('Access granted to ${request.clientUsername}', Colors.green);
     }
   }
 
   Future<void> _denyRequest(ClientRequest request, String reason) async {
-    Navigator.pop(context); // Close dialog
+    Navigator.pop(context);
 
     final userData = await _authService.getUserData();
     if (userData == null) return;
@@ -654,47 +1198,166 @@ class _ClientAccessRequestsScreenState
     );
 
     if (!mounted) return;
-
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showSnack(error, Colors.red);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Request denied for ${request.clientUsername}',
-            style: GoogleFonts.poppins(),
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _showSnack(
+          'Request denied for ${request.clientUsername}', Colors.orange);
     }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Actions — new (history editing)
+  // ──────────────────────────────────────────────────────────────────────────
+
+  Future<void> _addProjects(
+      ClientRequest request, List<String> newProjectIds) async {
+    Navigator.pop(context);
+
+    final userData = await _authService.getUserData();
+    if (userData == null) return;
+
+    final error = await _requestService.addProjectsToApprovedRequest(
+      requestId: request.requestId,
+      clientUid: request.clientUid,
+      clientUsername: request.clientUsername,
+      newProjectIds: newProjectIds,
+      adminUsername: userData['username'],
+      adminUid: userData['uid'],
+    );
+
+    if (!mounted) return;
+    if (error != null) {
+      _showSnack(error, Colors.red);
+    } else {
+      _showSnack(
+          'Projects added for ${request.clientUsername}', Colors.green);
+    }
+  }
+
+  Future<void> _revokeProjects(
+      ClientRequest request, List<String> projectIdsToRevoke) async {
+    Navigator.pop(context);
+
+    final userData = await _authService.getUserData();
+    if (userData == null) return;
+
+    final error = await _requestService.revokeProjectsFromApprovedRequest(
+      requestId: request.requestId,
+      clientUid: request.clientUid,
+      clientUsername: request.clientUsername,
+      projectIdsToRevoke: projectIdsToRevoke,
+      adminUsername: userData['username'],
+      adminUid: userData['uid'],
+    );
+
+    if (!mounted) return;
+    if (error != null) {
+      _showSnack(error, Colors.red);
+    } else {
+      _showSnack(
+          'Access revoked for ${request.clientUsername}', Colors.orange);
+    }
+  }
+
+  Future<void> _reApproveRequest(
+      ClientRequest request, List<String> projectIds) async {
+    Navigator.pop(context);
+
+    final userData = await _authService.getUserData();
+    if (userData == null) return;
+
+    final error = await _requestService.reApproveRequest(
+      requestId: request.requestId,
+      projectIds: projectIds,
+      adminUsername: userData['username'],
+      adminUid: userData['uid'],
+    );
+
+    if (!mounted) return;
+    if (error != null) {
+      _showSnack(error, Colors.red);
+    } else {
+      _showSnack(
+          '${request.clientUsername}\'s request has been approved',
+          Colors.green);
+    }
+  }
+
+  Future<void> _reDenyRequest(
+      ClientRequest request, String newReason) async {
+    Navigator.pop(context);
+
+    final userData = await _authService.getUserData();
+    if (userData == null) return;
+
+    final error = await _requestService.reDenyRequest(
+      requestId: request.requestId,
+      adminUsername: userData['username'],
+      adminUid: userData['uid'],
+      newReason: newReason.isNotEmpty ? newReason : null,
+    );
+
+    if (!mounted) return;
+    if (error != null) {
+      _showSnack(error, Colors.red);
+    } else {
+      _showSnack('Denial updated for ${request.clientUsername}', Colors.orange);
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Helpers
+  // ──────────────────────────────────────────────────────────────────────────
+
+  void _showSnack(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.poppins()),
+        backgroundColor: color,
+      ),
+    );
   }
 
   Future<List<Map<String, dynamic>>> _fetchAvailableProjects() async {
     try {
-      widget.logger.i('📋 Fetching available projects for approval dialog');
-      
-      final snapshot = await FirebaseFirestore.instance
-          .collection('Projects')  
-          .get();
-
-      widget.logger.i('✅ Found ${snapshot.docs.length} projects');
-
+      widget.logger.i('📋 Fetching available projects');
+      final snapshot =
+          await FirebaseFirestore.instance.collection('Projects').get();
+      widget.logger
+          .i('✅ Found ${snapshot.docs.length} projects');
       return snapshot.docs.map((doc) {
         final data = doc.data();
-        return {
-          'id': doc.id,
-          'name': data['name'] ?? 'Unnamed Project',
-        };
+        return {'id': doc.id, 'name': data['name'] ?? 'Unnamed Project'};
       }).toList();
     } catch (e) {
       widget.logger.e('❌ Error fetching projects: $e');
       return [];
+    }
+  }
+
+  /// Fetches project name/id details for a given list of project IDs.
+  /// Used to display the names of already-granted projects in the revoke dialog.
+  Future<List<Map<String, dynamic>>> _fetchProjectDetails(
+      List<String> projectIds) async {
+    try {
+      final results = <Map<String, dynamic>>[];
+      for (final id in projectIds) {
+        final doc = await FirebaseFirestore.instance
+            .collection('Projects')
+            .doc(id)
+            .get();
+        results.add({
+          'id': id,
+          'name': doc.exists
+              ? (doc.data()?['name'] ?? 'Unknown Project')
+              : 'Unknown Project',
+        });
+      }
+      return results;
+    } catch (e) {
+      widget.logger.e('❌ Error fetching project details: $e');
+      return projectIds.map((id) => {'id': id, 'name': id}).toList();
     }
   }
 }

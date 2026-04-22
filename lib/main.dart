@@ -1,11 +1,13 @@
 import 'package:almaworks/authentication/login_screen.dart';
 import 'package:almaworks/authentication/welcome_screen.dart';
+import 'package:almaworks/rbacsystem/firebase_notification_handler.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/providers/locale_provider.dart';
 import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:almaworks/screens/communication/communication_message_detail_screen.dart';
 import 'package:almaworks/screens/communication/communication_models.dart';
-import 'package:almaworks/screens/communication/communication_notification_service.dart';
+import 'package:almaworks/screens/communication/communication_notification_service.dart'
+    hide firebaseMessagingBackgroundHandler;
 import 'package:almaworks/screens/communication/communication_screen.dart';
 import 'package:almaworks/screens/communication/communication_service.dart';
 import 'package:almaworks/screens/utils/app_theme.dart';
@@ -14,6 +16,7 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
@@ -46,6 +49,13 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     logger.i('✅ Firebase initialized successfully');
+
+    // ── FCM background handler — MUST be registered before runApp ─────────
+    // This top-level function handles FCM pushes when the app is terminated
+    // or backgrounded. It is defined in firebase_notification_handler.dart
+    // and annotated with @pragma('vm:entry-point') to survive tree-shaking.
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    logger.i('✅ FCM background handler registered');
 
     // Enable Firestore offline persistence
     FirebaseFirestore.instance.settings = const Settings(

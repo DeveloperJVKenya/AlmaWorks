@@ -4,6 +4,7 @@ import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:almaworks/rbacsystem/client_access_requests_screen.dart';
 import 'package:almaworks/rbacsystem/client_request_model.dart';
 import 'package:almaworks/rbacsystem/client_request_service.dart';
+import 'package:almaworks/rbacsystem/notification_service.dart';
 import 'package:almaworks/screens/account_screen.dart';
 import 'package:almaworks/screens/projects/projects_main_screen.dart';
 import 'package:almaworks/services/project_service.dart';
@@ -75,6 +76,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (role == 'Client') {
           grantedIds = await _requestService.getClientGrantedProjects(user.uid);
           _logger.i('✅ DashboardScreen: Client granted project IDs: $grantedIds');
+        }
+
+        // ── Admin / MainAdmin: attach the AdminNotificationQueue listener ──
+        // This activates the real-time Firestore listener that shows a local
+        // notification whenever a client submits an access request (or any
+        // other admin-targeted event written to AdminNotificationQueue).
+        // It is intentionally guarded here — after the Firestore role document
+        // is confirmed — so Clients never receive admin notifications.
+        if (role == 'Admin' || role == 'MainAdmin') {
+          await NotificationService().setupAdminNotificationListener(user.uid);
+          _logger.i(
+            '🔔 DashboardScreen: Admin notification listener started for $role (uid: ${user.uid})',
+          );
         }
         
         setState(() {
@@ -794,6 +808,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _logger.i('🧹 DashboardScreen: Disposing resources');
+    // Cancel the AdminNotificationQueue Firestore listener so it does not
+    // fire after logout or when the widget is removed from the tree.
+    // Safe to call for non-admin users — the service ignores no-op cancels.
+    NotificationService().cancelAdminNotificationListener();
     super.dispose();
   }
 }
