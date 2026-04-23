@@ -500,7 +500,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 4),
           itemCount: items.length,
-          separatorBuilder: (_, __) =>
+          separatorBuilder: (_, _) =>
               Divider(height: 1, color: Colors.grey.shade200),
           itemBuilder: (_, i) => itemBuilder(items[i]),
         );
@@ -525,7 +525,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 4),
           itemCount: drafts.length,
-          separatorBuilder: (_, __) =>
+          separatorBuilder: (_, _) =>
               Divider(height: 1, color: Colors.grey.shade200),
           itemBuilder: (_, i) {
             final d = drafts[i];

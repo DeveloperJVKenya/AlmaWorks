@@ -1628,7 +1628,7 @@ class _ReportsScreenState extends State<ReportsScreen>
   Future<void> _uploadReport(String type) async {
     try {
       // 1. Pick file
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc', 'pptx', 'ppt', 'txt'],
       );

@@ -189,7 +189,7 @@ class SafetyReportData {
         'isDraft': isDraft,
         'savedAt': Timestamp.now(),
         'type_category': 'Safety',
-        if (fileUrl != null) 'fileUrl': fileUrl!,
+        'fileUrl': ?fileUrl,
       };
 
   factory SafetyReportData.fromMap(Map<String, dynamic> m) {
@@ -3228,7 +3228,7 @@ class _SafetyAttendanceTableWidgetState
                         width: 60,
                         fit: BoxFit.contain,
                         gaplessPlayback: true,
-                        errorBuilder: (_, __, ___) => Icon(
+                        errorBuilder: (_, _, _) => Icon(
                           Icons.broken_image_rounded,
                           size: 18,
                           color: Colors.grey[400],
@@ -3607,7 +3607,7 @@ class _SSignaturePickerDialogState
 
     FilePickerResult? result;
     try {
-      result = await FilePicker.platform.pickFiles(
+      result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
         withData: true,
@@ -3829,7 +3829,7 @@ class _SSignaturePickerDialogState
                           : const Center(
                               child: CircularProgressIndicator(
                                   strokeWidth: 2)),
-                      errorBuilder: (_, __, ___) => Center(
+                      errorBuilder: (_, _, _) => Center(
                         child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

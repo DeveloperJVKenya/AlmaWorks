@@ -897,7 +897,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
       
       // Update Schedule collection (source of truth for taskStatus)
       final scheduleUpdateData = {
-        if (newTaskStatus != null) 'taskStatus': newTaskStatus,
+        'taskStatus': ?newTaskStatus,
         if (newActualStart != null) 'actualStartDate': Timestamp.fromDate(newActualStart),
         if (newActualEnd != null) 'actualEndDate': Timestamp.fromDate(newActualEnd),
         'updatedAt': Timestamp.now(),

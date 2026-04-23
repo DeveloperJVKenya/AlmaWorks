@@ -753,7 +753,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                     controller: sc,
                     padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
                     itemCount: members.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (_, idx) {
                       final member    = members[idx];
                       final isManager =

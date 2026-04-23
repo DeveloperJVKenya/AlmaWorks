@@ -586,7 +586,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     try {
       setState(() => _isLoading = true);
 
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc', 'pptx', 'ppt', 'txt'],
         allowMultiple: false,

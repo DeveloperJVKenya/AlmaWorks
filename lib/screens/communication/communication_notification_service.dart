@@ -20,11 +20,12 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
-  plugin.show(
-    message.hashCode,
-    message.notification?.title ?? 'New Message',
-    message.notification?.body ?? '',
-    NotificationDetails(
+  // FIX 1 — flutter_local_notifications v18+: show() now uses named parameters.
+  await plugin.show(
+    id: message.hashCode,
+    title: message.notification?.title ?? 'New Message',
+    body: message.notification?.body ?? '',
+    notificationDetails: NotificationDetails(
       android: AndroidNotificationDetails(
         channel.id,
         channel.name,
@@ -82,6 +83,8 @@ class CommunicationNotificationService {
         ?.createNotificationChannel(_channel);
 
     // 4. Init local notifications
+    // FIX 2 — flutter_local_notifications v18+: initialize() now requires the
+    //          named parameter `settings:` instead of a positional argument.
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
@@ -90,8 +93,10 @@ class CommunicationNotificationService {
       requestSoundPermission: true,
     );
     await _localNotifications.initialize(
-      const InitializationSettings(
-          android: androidSettings, iOS: iosSettings),
+      settings: const InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      ),
     );
 
     // 5. Handle foreground FCM messages
@@ -128,11 +133,12 @@ class CommunicationNotificationService {
     required String title,
     required String body,
   }) async {
+    // FIX 3 — flutter_local_notifications v18+: show() now uses named parameters.
     await _localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      title,
-      body,
-      NotificationDetails(
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channel.id,
           _channel.name,

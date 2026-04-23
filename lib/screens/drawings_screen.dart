@@ -326,7 +326,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
   Future<void> _uploadContractDrawing() async {
     try {
       // Step 1: Pick file first
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'dwg', 'dxf', 'jpg', 'jpeg', 'png'],
         allowMultiple: false,
@@ -867,7 +867,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
   Future<void> _uploadAsBuiltDrawing() async {
     try {
       // Step 1: Pick file first
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'dwg', 'dxf', 'jpg', 'jpeg', 'png'],
         allowMultiple: false,
@@ -1116,7 +1116,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       }
 
       // Pick file (common for both)
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'dwg', 'dxf', 'jpg', 'jpeg', 'png'],
         allowMultiple: false,

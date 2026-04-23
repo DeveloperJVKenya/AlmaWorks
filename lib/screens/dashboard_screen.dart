@@ -24,7 +24,7 @@ class DashboardScreen extends StatefulWidget {
   
   const DashboardScreen({super.key, required this.logger});
   
-  get projectId => null;
+  Null get projectId => null;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();

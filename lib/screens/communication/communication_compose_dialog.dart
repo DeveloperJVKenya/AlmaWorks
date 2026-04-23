@@ -467,7 +467,7 @@ class _CommunicationComposeDialogState
   // ── Attachment picking ────────────────────────────────────────────────────────
   Future<void> _pickAttachment() async {
     _log.i('📎 ComposeDialog: opening file picker');
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: [

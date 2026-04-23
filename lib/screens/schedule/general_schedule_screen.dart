@@ -216,7 +216,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
   Future<void> _uploadScheduleDocument() async {
     try {
       // Step 1: Pick file
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'mpp', 'jpg', 'jpeg', 'png'],
         allowMultiple: false,

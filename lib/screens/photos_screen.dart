@@ -113,9 +113,9 @@ class _PhotoItem {
     String? phase,
   }) =>
       {
-        if (name != null) 'name': name,
-        if (category != null) 'category': category,
-        if (phase != null) 'phase': phase,
+        'name': ?name,
+        'category': ?category,
+        'phase': ?phase,
       };
 }
 

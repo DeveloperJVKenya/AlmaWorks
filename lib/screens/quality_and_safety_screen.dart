@@ -393,7 +393,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         _isLoading = true;
       });
 
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'pptx', 'txt', 'doc', 'ppt'],
         withData: true,

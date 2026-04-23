@@ -742,7 +742,7 @@ class _TaskProgressMonitorScreenState
 
     try {
       // ── 1. Pick file ────────────────────────────────────────────
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['xlsx', 'xls'],
         withData: true,
@@ -1649,7 +1649,7 @@ class _TaskProgressMonitorScreenState
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: _phaseColumns.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 6),
+                separatorBuilder: (_, _) => const SizedBox(width: 6),
                 itemBuilder: (_, i) {
                   final pc = _phaseColumns[i];
                   final pp = _phaseProgress(pc.phase);

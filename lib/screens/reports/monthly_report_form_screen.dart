@@ -748,7 +748,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
   /// Handles both bytes (web/some Android) and path (mobile) from FilePicker.
   Future<void> _pickFromPdf(int signeeIndex) async {
     // ── Step 1: pick PDF ────────────────────────────────────────
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],
       withData: true,      // populated on web + some mobile configs
@@ -3288,7 +3288,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                               : const Center(
                                   child: CircularProgressIndicator(
                                       strokeWidth: 2)),
-                      errorBuilder: (_, __, ___) => Center(
+                      errorBuilder: (_, _, _) => Center(
                         child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -3393,7 +3393,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                     ? child
                     : const Center(
                         child: CircularProgressIndicator(strokeWidth: 2)),
-                errorBuilder: (_, __, ___) => Center(
+                errorBuilder: (_, _, _) => Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

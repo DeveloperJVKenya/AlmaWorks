@@ -421,7 +421,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
         Expanded(
           child: ListView.separated(
             itemCount: visible.length,
-            separatorBuilder: (_, __) => SizedBox(height: isMobile ? 8 : 10),
+            separatorBuilder: (_, _) => SizedBox(height: isMobile ? 8 : 10),
             itemBuilder: (_, i) => isMulti
                 ? _buildMultiCard(visible[i], isMobile)
                 : _buildSingleCard(visible[i], isMobile),

@@ -540,7 +540,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
     widget.logger.i('📤 FinancialScreen: Initiating add document to $role${teamMemberName != null ? ' - $teamMemberName' : ''}');
 
     widget.logger.d('📤 FinancialScreen: Picking file...');
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'docx', 'pptx', 'txt', 'doc', 'ppt', 'xlsx', 'xls'],
       withData: true,
