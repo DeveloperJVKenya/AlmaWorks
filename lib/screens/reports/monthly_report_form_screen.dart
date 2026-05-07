@@ -12,7 +12,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
+// image_cropper is used on Android / iOS only.
+// On web it depends on Cropper.js which may not be loaded, causing
+// "dart.global.Cropper is not a constructor" and the
+// "cropper has not been initialized" cascade. We therefore gate the
+// import behind a non-web conditional and use crop_your_image (pure
+// Flutter, zero JS dependencies) for web / desktop instead.
+import 'package:image_cropper/image_cropper.dart'
+    if (dart.library.html) 'package:almaworks/screens/utils/image_cropper_stub.dart';
+import 'package:crop_your_image/crop_your_image.dart' hide ImageCropper;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
@@ -586,12 +594,34 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
   // ─────────────────────────────────────────────────────────────
   // SIGNATURE CROP / PHOTO / PDF HELPERS
   // ─────────────────────────────────────────────────────────────
+  //
+  // PLATFORM STRATEGY
+  // ─────────────────
+  // • Web / desktop  → _showInAppCropper()
+  //   Uses crop_your_image — a pure-Flutter widget with zero JS
+  //   dependencies.  This eliminates the "dart.global.Cropper is
+  //   not a constructor" and "cropper has not been initialized"
+  //   errors that were caused by image_cropper_for_web requiring
+  //   Cropper.js to be loaded in index.html.
+  //
+  // • Android / iOS  → image_cropper native UI (unchanged).
+  //   image_cropper delegates to the platform's native cropping
+  //   activity and works perfectly on mobile.
 
-  /// Launches [ImageCropper] on a file at [sourcePath], returns cropped
-  /// bytes or null if the user cancels.
-  /// [sourcePath] must be a real file path — on web pass '' and the web
-  /// settings handle the blob URL internally.
-  Future<Uint8List?> _cropFromPath(String sourcePath) async {
+  /// Shows the pure-Flutter crop dialog (crop_your_image).
+  /// Returns cropped PNG bytes, or null if cancelled.
+  Future<Uint8List?> _showInAppCropper(Uint8List imageBytes) async {
+    return showDialog<Uint8List?>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _CropDialog(imageBytes: imageBytes),
+    );
+  }
+
+  /// Crop bytes on Android/iOS via image_cropper (native UI).
+  /// On web/desktop this path is never called — _cropImage routes to
+  /// _showInAppCropper instead.
+  Future<Uint8List?> _cropFromPathNative(String sourcePath) async {
     try {
       final cropped = await ImageCropper().cropImage(
         sourcePath: sourcePath,
@@ -620,90 +650,101 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             aspectRatioPickerButtonHidden: false,
             minimumAspectRatio: 0.2,
           ),
-          if (kIsWeb)
-            WebUiSettings(
-              context: context,
-              presentStyle: WebPresentStyle.dialog,
-              size: const CropperSize(width: 520, height: 520),
-            ),
         ],
       );
       if (cropped == null) return null;
       return await cropped.readAsBytes();
     } catch (e) {
-      widget.logger.w('⚠️ MonthlyForm: image crop failed – $e');
+      widget.logger.w('⚠️ MonthlyForm: native crop failed – $e');
       return null;
     }
   }
 
-  /// Writes [bytes] to a uniquely-named temp PNG, crops it, deletes the
-  /// temp file, returns cropped bytes.  Used for PDF pages (raw bytes only).
+  /// Crops [bytes] using the appropriate strategy for the current platform:
+  ///   • Web / desktop  → in-app Flutter dialog (crop_your_image)
+  ///   • Android / iOS  → native image_cropper (temp-file round-trip)
   Future<Uint8List?> _cropImage(Uint8List bytes) async {
-    if (kIsWeb) {
-      // On web there is no real file system — cropFromPath with empty
-      // string uses the WebUiSettings blob-URL approach.
-      return _cropFromPath('');
+    // ── Web & desktop: pure-Flutter in-app cropper ──────────────
+    if (kIsWeb ||
+        (!kIsWeb &&
+            defaultTargetPlatform != TargetPlatform.android &&
+            defaultTargetPlatform != TargetPlatform.iOS)) {
+      return _showInAppCropper(bytes);
     }
+
+    // ── Android / iOS: image_cropper via temp file ───────────────
     File? tmp;
     try {
       final dir = await getTemporaryDirectory();
       tmp = File(
           '${dir.path}/sig_tmp_${DateTime.now().millisecondsSinceEpoch}.png');
       await tmp.writeAsBytes(bytes);
-      return await _cropFromPath(tmp.path);
+      return await _cropFromPathNative(tmp.path);
     } catch (e) {
       widget.logger.w('⚠️ MonthlyForm: _cropImage write failed – $e');
       return null;
     } finally {
-      try { await tmp?.delete(); } catch (_) {}
+      try {
+        await tmp?.delete();
+      } catch (_) {}
     }
   }
 
-  /// Pick a photo (gallery or camera) then launch the cropper.
-  /// Passes xfile.path directly — no unnecessary bytes read/write.
+  /// Pick a photo (gallery / camera) then launch the platform-appropriate
+  /// cropper.
   Future<void> _pickAndCropPhoto(int signeeIndex) async {
     if (!mounted) return;
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40, height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-              child: Text('Select Signature Photo',
-                  style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: _navy)),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.photo_library_rounded, color: _navy),
-              title: Text('Choose from Gallery',
-                  style: GoogleFonts.poppins(fontSize: 13)),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_rounded, color: _navy),
-              title: Text('Take a Photo',
-                  style: GoogleFonts.poppins(fontSize: 13)),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            const SizedBox(height: 8),
-          ],
+
+    // ── On web, camera is not reliably available — skip the source sheet ──
+    ImageSource? source;
+    if (kIsWeb) {
+      source = ImageSource.gallery;
+    } else {
+      source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                child: Text('Select Signature Photo',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: _navy)),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading:
+                    const Icon(Icons.photo_library_rounded, color: _navy),
+                title: Text('Choose from Gallery',
+                    style: GoogleFonts.poppins(fontSize: 13)),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_rounded, color: _navy),
+                title: Text('Take a Photo',
+                    style: GoogleFonts.poppins(fontSize: 13)),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
+
     if (source == null || !mounted) return;
 
     try {
@@ -711,15 +752,10 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
           .pickImage(source: source, imageQuality: 92, maxWidth: 2000);
       if (xfile == null || !mounted) return;
 
-      // Pass file path directly — no bytes read needed before cropping
-      final Uint8List? cropped;
-      if (kIsWeb) {
-        // Web: ImagePicker gives no real path; read bytes and use blob path
-        final raw = await xfile.readAsBytes();
-        cropped = await _cropImage(raw);
-      } else {
-        cropped = await _cropFromPath(xfile.path);
-      }
+      // Read bytes first so both paths (web + native) work uniformly
+      // through _cropImage, which handles the platform branching.
+      final rawBytes = await xfile.readAsBytes();
+      final Uint8List? cropped = await _cropImage(rawBytes);
 
       if (cropped == null || !mounted) return;
       setState(() {
@@ -5233,6 +5269,194 @@ class _MImageViewerDialogState extends State<_MImageViewerDialog> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// _CropDialog — Pure-Flutter in-app image cropper
+// ══════════════════════════════════════════════════════════════════
+//
+// Replaces image_cropper on web and desktop where Cropper.js is not
+// available.  Uses the crop_your_image package which is 100 % Flutter
+// (no JS, no platform channels) and therefore works on every platform.
+//
+// Returns the cropped PNG bytes, or null if the user cancelled.
+// ══════════════════════════════════════════════════════════════════
+
+class _CropDialog extends StatefulWidget {
+  final Uint8List imageBytes;
+  const _CropDialog({required this.imageBytes});
+
+  @override
+  State<_CropDialog> createState() => _CropDialogState();
+}
+
+class _CropDialogState extends State<_CropDialog> {
+  static const _navy = Color(0xFF0A2E5A);
+
+  final CropController _cropCtrl = CropController();
+  bool _isCropping = false;
+
+  Future<void> _confirmCrop() async {
+    setState(() => _isCropping = true);
+    try {
+      _cropCtrl.crop();
+      // Result arrives via onCropped callback below — Navigator.pop()
+      // is called from there once the cropped bytes are ready.
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCropping = false);
+        Navigator.of(context).pop(null);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final dialogW = (screenSize.width * 0.92).clamp(320.0, 700.0);
+    final dialogH = (screenSize.height * 0.82).clamp(400.0, 680.0);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      insetPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: SizedBox(
+        width: dialogW,
+        height: dialogH,
+        child: Column(
+          children: [
+            // ── Title bar ─────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 18, vertical: 13),
+              decoration: const BoxDecoration(
+                color: _navy,
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(14)),
+              ),
+              child: Row(children: [
+                const Icon(Icons.crop_rounded,
+                    color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Text(
+                  'Crop Signature',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _isCropping
+                      ? null
+                      : () => Navigator.of(context).pop(null),
+                  child: const Icon(Icons.close_rounded,
+                      color: Colors.white70, size: 20),
+                ),
+              ]),
+            ),
+
+            // ── Hint ──────────────────────────────────────────────
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Text(
+                'Drag to reposition · Use handles to resize the crop area',
+                style: GoogleFonts.poppins(
+                    fontSize: 11, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            // ── Crop widget ───────────────────────────────────────
+            Expanded(
+              child: ClipRect(
+                child: Crop(
+                  controller: _cropCtrl,
+                  image: widget.imageBytes,
+                  // Free-form aspect ratio so any signature region works
+                  aspectRatio: null,
+                  baseColor: Colors.black,
+                  maskColor: Colors.black.withValues(alpha: 0.5),
+                  cornerDotBuilder: (size, edgeAlignment) =>
+                      const DotControl(color: _navy),
+                  onCropped: (result) {
+                    if (!mounted) return;
+                    final Uint8List? bytes =
+                        result is CropSuccess ? result.croppedImage : null;
+                    Navigator.of(context).pop(bytes);
+                  },
+                  onStatusChanged: (status) {
+                    // Clear the spinner if something unexpected stops the crop
+                    if (mounted &&
+                        status != CropStatus.cropping &&
+                        _isCropping) {
+                      setState(() => _isCropping = false);
+                    }
+                  },
+                ),
+              ),
+            ),
+
+            // ── Actions ───────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+              child: Row(children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isCropping
+                        ? null
+                        : () => Navigator.of(context).pop(null),
+                    icon: const Icon(Icons.close_rounded, size: 16),
+                    label: Text('Cancel',
+                        style: GoogleFonts.poppins(fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: _navy),
+                      foregroundColor: _navy,
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isCropping ? null : _confirmCrop,
+                    icon: _isCropping
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white))
+                        : const Icon(Icons.check_rounded, size: 16),
+                    label: Text(
+                      _isCropping ? 'Cropping…' : 'Use Crop',
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _navy,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor:
+                          _navy.withValues(alpha: 0.55),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+          ],
+        ),
       ),
     );
   }
