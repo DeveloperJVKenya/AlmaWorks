@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/projects/edit_project_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -39,7 +41,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
   late TabController _subContractorSubTabController;
   late TabController _supplierSubTabController;
   bool _isLoading = false;
-  double? _uploadProgress;
   late ProjectModel _currentProject;
   String? _selectedSubcontractor;
   String? _selectedSupplier;
@@ -651,46 +652,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
 
       UploadTask? uploadTask;
 
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: Text('Uploading Document', style: GoogleFonts.poppins()),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(
-                  value: _uploadProgress,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueGrey),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _uploadProgress != null
-                      ? '${(_uploadProgress! * 100).toStringAsFixed(0)}%'
-                      : 'Starting upload...',
-                  style: GoogleFonts.poppins(),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  if (uploadTask != null) {
-                    await uploadTask.cancel();
-                    widget.logger.d('📤 DocumentsScreen: Upload cancelled by user');
-                  }
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                },
-                child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.red)),
-              ),
-            ],
-          ),
-        );
-      }
-
       try {
         final timestamp = DateTime.now().millisecondsSinceEpoch;
         final storageRef = FirebaseStorage.instance
@@ -709,25 +670,25 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           },
         );
 
+        // Create the task BEFORE opening the dialog so the StreamBuilder
+        // inside the dialog can subscribe to snapshotEvents immediately.
         uploadTask = storageRef.putData(fileBytes, metadata);
 
-        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-          if (mounted) {
-            setState(() {
-              _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
-            });
-          }
-        }, onError: (e) {
-          widget.logger.e('Upload progress error: $e');
-          if (mounted) {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Upload failed: ${e.toString()}', style: GoogleFonts.poppins()),
-              ),
-            );
-          }
-        });
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => _UploadProgressDialog(
+              uploadTask: uploadTask!,
+              fileName: fileName,
+              onCancel: () async {
+                await uploadTask?.cancel();
+                widget.logger.d('📤 DocumentsScreen: Upload cancelled by user');
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              },
+            ),
+          );
+        }
 
         await uploadTask;
         final url = await storageRef.getDownloadURL();
@@ -791,7 +752,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _uploadProgress = null;
           });
         }
       }
@@ -1099,5 +1059,170 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
   String _formatDate(Timestamp timestamp) {
     final date = timestamp.toDate();
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dedicated upload-progress dialog
+// ---------------------------------------------------------------------------
+// Uses its own StatefulWidget so it owns the stream subscription and calls
+// its own setState — completely independent of the parent screen's state.
+// This is the only reliable pattern for live progress inside showDialog.
+// ---------------------------------------------------------------------------
+
+class _UploadProgressDialog extends StatefulWidget {
+  final UploadTask uploadTask;
+  final String fileName;
+  final VoidCallback onCancel;
+
+  const _UploadProgressDialog({
+    required this.uploadTask,
+    required this.fileName,
+    required this.onCancel,
+  });
+
+  @override
+  State<_UploadProgressDialog> createState() => _UploadProgressDialogState();
+}
+
+class _UploadProgressDialogState extends State<_UploadProgressDialog> {
+  double _progress = 0.0;
+  String _bytesLabel = '';
+  String _statusLabel = 'Preparing…';
+  StreamSubscription<TaskSnapshot>? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = widget.uploadTask.snapshotEvents.listen(
+      (TaskSnapshot snap) {
+        if (!mounted) return;
+        final transferred = snap.bytesTransferred;
+        final total = snap.totalBytes;
+        setState(() {
+          _progress = total > 0 ? transferred / total : 0.0;
+          final tMB = (transferred / 1048576).toStringAsFixed(1);
+          final totalMB = (total / 1048576).toStringAsFixed(1);
+          _bytesLabel = '$tMB MB / $totalMB MB';
+          _statusLabel = _progress >= 1.0 ? 'Finalising…' : 'Uploading…';
+        });
+      },
+      onError: (_) {/* parent handles errors */},
+      cancelOnError: true,
+    );
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (_progress * 100).toStringAsFixed(0);
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      title: Row(
+        children: [
+          const Icon(Icons.cloud_upload_outlined, color: Color(0xFF0A2E5A), size: 22),
+          const SizedBox(width: 10),
+          Text(
+            'Uploading Document',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 280,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+
+            // ── Circular ring with % in the centre ───────────────────────
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: CircularProgressIndicator(
+                    value: _progress,
+                    strokeWidth: 9,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0A2E5A)),
+                  ),
+                ),
+                Text(
+                  '$pct%',
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0A2E5A),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 22),
+
+            // ── Rounded linear bar ────────────────────────────────────────
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: _progress,
+                minHeight: 8,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0A2E5A)),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Status label + bytes transferred ─────────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _statusLabel,
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                if (_bytesLabel.isNotEmpty)
+                  Text(
+                    _bytesLabel,
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            // ── File name ─────────────────────────────────────────────────
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                widget.fileName,
+                style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: widget.onCancel,
+          child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.red[600])),
+        ),
+      ],
+    );
   }
 }
