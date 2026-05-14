@@ -586,10 +586,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     try {
       setState(() => _isLoading = true);
 
+      // withData: true ensures PlatformFile.bytes is populated on web.
+      // Without this flag the bytes field is null on web and causes a
+      // "Null check operator used on a null value" crash.
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc', 'pptx', 'ppt', 'txt'],
         allowMultiple: false,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -610,8 +614,38 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
 
       Uint8List fileBytes;
       if (kIsWeb) {
+        // bytes is guaranteed non-null when withData: true is set above,
+        // but we guard defensively so a future regression gives a clear error.
+        if (pickedFile.bytes == null) {
+          widget.logger.e('❌ DocumentsScreen: File bytes are null on web — withData may not have worked');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Could not read file data. Please try again.',
+                  style: GoogleFonts.poppins(),
+                ),
+              ),
+            );
+          }
+          return;
+        }
         fileBytes = pickedFile.bytes!;
       } else {
+        if (pickedFile.path == null) {
+          widget.logger.e('❌ DocumentsScreen: File path is null on native');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Could not access file path. Please try again.',
+                  style: GoogleFonts.poppins(),
+                ),
+              ),
+            );
+          }
+          return;
+        }
         fileBytes = await File(pickedFile.path!).readAsBytes();
       }
 
