@@ -326,10 +326,14 @@ class _DrawingsScreenState extends State<DrawingsScreen>
   Future<void> _uploadContractDrawing() async {
     try {
       // Step 1: Pick file first
+      // withData: true ensures PlatformFile.bytes is populated on web.
+      // Without this flag, bytes is null on web and the null-check
+      // operator below throws "Unexpected null value".
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'dwg', 'dxf', 'jpg', 'jpeg', 'png'],
         allowMultiple: false,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -363,8 +367,26 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       // Step 3: Get file bytes
       List<int> fileBytes;
       if (kIsWeb) {
+        if (pickedFile.bytes == null) {
+          widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not read file data. Please try again.', style: GoogleFonts.poppins())),
+            );
+          }
+          return;
+        }
         fileBytes = pickedFile.bytes!;
       } else {
+        if (pickedFile.path == null) {
+          widget.logger.e('❌ DrawingsScreen: File path is null on native');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not access file path. Please try again.', style: GoogleFonts.poppins())),
+            );
+          }
+          return;
+        }
         fileBytes = await File(pickedFile.path!).readAsBytes();
       }
 
@@ -867,10 +889,12 @@ class _DrawingsScreenState extends State<DrawingsScreen>
   Future<void> _uploadAsBuiltDrawing() async {
     try {
       // Step 1: Pick file first
+      // withData: true ensures PlatformFile.bytes is populated on web.
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'dwg', 'dxf', 'jpg', 'jpeg', 'png'],
         allowMultiple: false,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -904,8 +928,26 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       // Step 3: Get file bytes
       List<int> fileBytes;
       if (kIsWeb) {
+        if (pickedFile.bytes == null) {
+          widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not read file data. Please try again.', style: GoogleFonts.poppins())),
+            );
+          }
+          return;
+        }
         fileBytes = pickedFile.bytes!;
       } else {
+        if (pickedFile.path == null) {
+          widget.logger.e('❌ DrawingsScreen: File path is null on native');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not access file path. Please try again.', style: GoogleFonts.poppins())),
+            );
+          }
+          return;
+        }
         fileBytes = await File(pickedFile.path!).readAsBytes();
       }
 
@@ -1116,10 +1158,12 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       }
 
       // Pick file (common for both)
+      // withData: true ensures PlatformFile.bytes is populated on web.
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'dwg', 'dxf', 'jpg', 'jpeg', 'png'],
         allowMultiple: false,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -1152,8 +1196,26 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       // Get file bytes
       List<int> fileBytes;
       if (kIsWeb) {
+        if (pickedFile.bytes == null) {
+          widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not read file data. Please try again.', style: GoogleFonts.poppins())),
+            );
+          }
+          return;
+        }
         fileBytes = pickedFile.bytes!;
       } else {
+        if (pickedFile.path == null) {
+          widget.logger.e('❌ DrawingsScreen: File path is null on native');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not access file path. Please try again.', style: GoogleFonts.poppins())),
+            );
+          }
+          return;
+        }
         fileBytes = await File(pickedFile.path!).readAsBytes();
       }
 

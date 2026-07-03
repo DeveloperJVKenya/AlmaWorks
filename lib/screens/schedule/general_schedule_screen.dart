@@ -216,10 +216,14 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
   Future<void> _uploadScheduleDocument() async {
     try {
       // Step 1: Pick file
+      // withData: true ensures PlatformFile.bytes is populated on web.
+      // Without this flag, bytes is null on web and the null-check
+      // operator below throws "Unexpected null value".
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'mpp', 'jpg', 'jpeg', 'png'],
         allowMultiple: false,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -253,8 +257,26 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
       // Step 3: Get file bytes
       List<int> fileBytes;
       if (kIsWeb) {
+        if (pickedFile.bytes == null) {
+          widget.logger.e('❌ GeneralScheduleScreen: File bytes are null on web — withData may not have worked');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not read file data. Please try again.', style: GoogleFonts.poppins())),
+            );
+          }
+          return;
+        }
         fileBytes = pickedFile.bytes!;
       } else {
+        if (pickedFile.path == null) {
+          widget.logger.e('❌ GeneralScheduleScreen: File path is null on native');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Could not access file path. Please try again.', style: GoogleFonts.poppins())),
+            );
+          }
+          return;
+        }
         fileBytes = await File(pickedFile.path!).readAsBytes();
       }
 

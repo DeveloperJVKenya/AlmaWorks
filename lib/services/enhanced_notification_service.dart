@@ -188,7 +188,7 @@ class EnhancedNotificationService {
           category: NotificationCategory.Reminder,
           wakeUpScreen: true,
           fullScreenIntent: false,
-          criticalAlert: type == 'overdue',
+          locked: type == 'overdue',
           autoDismissible: true,
           displayOnForeground: true,
           displayOnBackground: true,

@@ -757,6 +757,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       }
     } catch (e) {
       widget.logger.e('❌ DocumentsScreen: Unexpected error in _addDocument', error: e);
+    } finally {
+      // Runs on every exit path — success, error, or an early return from
+      // a cancelled picker/title dialog or a null bytes/path guard.
+      // Previously the reset only lived in the inner try's finally, so
+      // cancelling the file picker or title dialog left _isLoading stuck
+      // at true, permanently disabling (dimming) the upload FAB.
       if (mounted) {
         setState(() => _isLoading = false);
       }

@@ -79,11 +79,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         // ── Admin / MainAdmin: attach the AdminNotificationQueue listener ──
-        // This activates the real-time Firestore listener that shows a local
-        // notification whenever a client submits an access request (or any
-        // other admin-targeted event written to AdminNotificationQueue).
-        // It is intentionally guarded here — after the Firestore role document
-        // is confirmed — so Clients never receive admin notifications.
         if (role == 'Admin' || role == 'MainAdmin') {
           await NotificationService().setupAdminNotificationListener(user.uid);
           _logger.i(
