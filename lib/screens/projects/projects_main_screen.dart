@@ -829,10 +829,14 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
     }
   }
 
-  // ── TaskProgressMonitor helpers (mirrors ProjectSummaryScreen) ──────────────
+  // ── TaskProgressMonitor helpers (mirrors TaskProgressMonitorScreen) ─────────
 
   /// Replicates the exact formula from TaskProgressMonitorScreen:
-  ///   progress = Σ checkedDays(task) / Σ expectedWorkDays(task)
+  ///   task %  = checkedDays / expectedWorkDays (or 1.0 once completed)
+  ///   phase % = weighted average of its own tasks' progress (by expected days)
+  ///   project % = EQUAL-weight average across phases — every phase counts as
+  ///               1/N of the project regardless of task count or day-span
+  ///               (4 phases → 25% each, 5 phases → 20% each, etc.)
   static double _computeProgressFromSnapshot(DocumentSnapshot snap) {
     if (!snap.exists) return 0.0;
 
@@ -840,29 +844,66 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
     final rawRows   = data['rows']          as List<dynamic>?        ?? [];
     final rawStatus = data['dailyStatuses'] as Map<String, dynamic>? ?? {};
 
-    int totalExpected = 0;
-    int totalChecked  = 0;
+    final phaseIds = <String>{};
+    // phaseId → (weightedSum, totalWeight)
+    final phaseWeightedSum = <String, double>{};
+    final phaseTotalWeight = <String, int>{};
+
+    for (final entry in rawRows) {
+      final m = Map<String, dynamic>.from(entry as Map);
+      if ((m['type'] as String?) == 'phase') {
+        final id = m['id'] as String? ?? '';
+        if (id.isNotEmpty) phaseIds.add(id);
+      }
+    }
 
     for (final entry in rawRows) {
       final m = Map<String, dynamic>.from(entry as Map);
       if ((m['type'] as String?) != 'task') continue;
 
-      final id    = m['id']         as String?    ?? '';
-      final start = (m['startDate'] as Timestamp?)?.toDate();
-      final end   = (m['endDate']   as Timestamp?)?.toDate();
-      if (start == null || end == null || id.isEmpty) continue;
+      final id             = m['id']             as String? ?? '';
+      final parentPhaseId  = m['parentPhaseId']   as String?;
+      final start          = (m['startDate'] as Timestamp?)?.toDate();
+      final end            = (m['endDate']   as Timestamp?)?.toDate();
+      if (start == null || end == null || id.isEmpty || parentPhaseId == null) {
+        continue;
+      }
 
-      totalExpected += _countWorkDays(start, end);
+      final expected = _countWorkDays(start, end);
+      if (expected == 0) continue;
 
+      bool hasCompleted = false;
+      int checkedDays = 0;
       final prefix = '${id}_';
       for (final kv in rawStatus.entries) {
         if (!kv.key.startsWith(prefix)) continue;
-        if (_isDone(kv.value as String?)) totalChecked++;
+        final code = kv.value as String?;
+        if (code == 'X') {
+          hasCompleted = true;
+        } else if (code == 'D' || code == 'S' || code == 'O' || code == 'C') {
+          checkedDays++;
+        }
       }
+
+      final taskProgress = hasCompleted
+          ? 1.0
+          : (checkedDays / expected).clamp(0.0, 1.0);
+
+      phaseWeightedSum[parentPhaseId] =
+          (phaseWeightedSum[parentPhaseId] ?? 0.0) + taskProgress * expected;
+      phaseTotalWeight[parentPhaseId] =
+          (phaseTotalWeight[parentPhaseId] ?? 0) + expected;
     }
 
-    if (totalExpected == 0) return 0.0;
-    return (totalChecked / totalExpected).clamp(0.0, 1.0);
+    if (phaseIds.isEmpty) return 0.0;
+
+    double total = 0.0;
+    for (final phaseId in phaseIds) {
+      final weight = phaseTotalWeight[phaseId] ?? 0;
+      final sum    = phaseWeightedSum[phaseId] ?? 0.0;
+      total += weight > 0 ? (sum / weight).clamp(0.0, 1.0) : 0.0;
+    }
+    return (total / phaseIds.length).clamp(0.0, 1.0);
   }
 
   /// Mon–Sat working days between [start] and [end] inclusive.
@@ -875,20 +916,6 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
       cur = cur.add(const Duration(days: 1));
     }
     return count;
-  }
-
-  /// Returns true for any storage code that counts as "work done".
-  static bool _isDone(String? code) {
-    switch (code) {
-      case 'D': // current "done" code
-      case 'X': // current "completed" code
-      case 'S': // legacy: started
-      case 'O': // legacy: ongoing
-      case 'C': // legacy: completed
-        return true;
-      default:
-        return false;
-    }
   }
 
   @override

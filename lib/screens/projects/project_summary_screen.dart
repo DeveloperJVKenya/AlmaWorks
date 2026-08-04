@@ -44,27 +44,72 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
   // HELPERS – mirror TaskProgressMonitorScreen formula exactly
   // ─────────────────────────────────────────────────────────────────
 
+  /// project % = EQUAL-weight average across phases — every phase counts as
+  /// 1/N of the project regardless of task count or day-span (4 phases →
+  /// 25% each, 5 phases → 20% each, etc.), matching TaskProgressMonitorScreen.
   static double _computeOverallProgress(Map<String, dynamic> data) {
     final rawRows   = data['rows']          as List<dynamic>?        ?? [];
     final rawStatus = data['dailyStatuses'] as Map<String, dynamic>? ?? {};
-    int expected = 0, checked = 0;
+
+    final phaseIds = <String>{};
+    final phaseWeightedSum = <String, double>{};
+    final phaseTotalWeight = <String, int>{};
+
+    for (final entry in rawRows) {
+      final m = Map<String, dynamic>.from(entry as Map);
+      if ((m['type'] as String?) == 'phase') {
+        final id = m['id'] as String? ?? '';
+        if (id.isNotEmpty) phaseIds.add(id);
+      }
+    }
 
     for (final entry in rawRows) {
       final m = Map<String, dynamic>.from(entry as Map);
       if ((m['type'] as String?) != 'task') continue;
-      final id    = m['id']        as String?   ?? '';
-      final start = (m['startDate'] as Timestamp?)?.toDate();
-      final end   = (m['endDate']   as Timestamp?)?.toDate();
-      if (start == null || end == null || id.isEmpty) continue;
-      expected += _countWorkDays(start, end);
+
+      final id            = m['id']           as String? ?? '';
+      final parentPhaseId = m['parentPhaseId'] as String?;
+      final start         = (m['startDate'] as Timestamp?)?.toDate();
+      final end           = (m['endDate']   as Timestamp?)?.toDate();
+      if (start == null || end == null || id.isEmpty || parentPhaseId == null) {
+        continue;
+      }
+
+      final expected = _countWorkDays(start, end);
+      if (expected == 0) continue;
+
+      bool hasCompleted = false;
+      int checkedDays = 0;
       final prefix = '${id}_';
       for (final kv in rawStatus.entries) {
-        if (kv.key.startsWith(prefix) && _isDone(kv.value as String?)) {
-          checked++;
+        if (!kv.key.startsWith(prefix)) continue;
+        final code = kv.value as String?;
+        if (code == 'X') {
+          hasCompleted = true;
+        } else if (code == 'D' || code == 'S' || code == 'O' || code == 'C') {
+          checkedDays++;
         }
       }
+
+      final taskProgress = hasCompleted
+          ? 1.0
+          : (checkedDays / expected).clamp(0.0, 1.0);
+
+      phaseWeightedSum[parentPhaseId] =
+          (phaseWeightedSum[parentPhaseId] ?? 0.0) + taskProgress * expected;
+      phaseTotalWeight[parentPhaseId] =
+          (phaseTotalWeight[parentPhaseId] ?? 0) + expected;
     }
-    return expected == 0 ? 0.0 : (checked / expected).clamp(0.0, 1.0);
+
+    if (phaseIds.isEmpty) return 0.0;
+
+    double total = 0.0;
+    for (final phaseId in phaseIds) {
+      final weight = phaseTotalWeight[phaseId] ?? 0;
+      final sum    = phaseWeightedSum[phaseId] ?? 0.0;
+      total += weight > 0 ? (sum / weight).clamp(0.0, 1.0) : 0.0;
+    }
+    return (total / phaseIds.length).clamp(0.0, 1.0);
   }
 
   static ({DateTime? start, DateTime? end}) _tpmDateRange(
@@ -92,9 +137,6 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
     }
     return count;
   }
-
-  static bool _isDone(String? c) =>
-      c == 'D' || c == 'S' || c == 'O' || c == 'C' || c == 'X';
 
   static ({String label, Color color}) _deriveHealth({
     required double progress,
