@@ -57,6 +57,14 @@ class LoginScreenState extends State<LoginScreen> {
       final username = querySnapshot.docs.first.id; // Doc ID is Username
       final role = userData['role'] as String? ?? 'Client'; // Fallback to Client
 
+      // Keep the UserRoles/{uid} mirror in sync so pre-existing accounts
+      // (registered before this mirror existed) and any account whose role
+      // was changed directly in Users aren't gated out of role-restricted
+      // features like Inventory. Safe to call every login — see
+      // AuthService.ensureUserRoleMirror for why this can't grant a role the
+      // account doesn't already have.
+      await _authService.ensureUserRoleMirror(uid: user.uid, username: username, role: role);
+
       // Set persistent login state
       await _authService.setLoginState(true);
 

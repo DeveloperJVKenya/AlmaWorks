@@ -92,6 +92,29 @@ class AuthService {
     return null;
   }
 
+  // Mirror this user's uid -> role into UserRoles so Firestore security
+  // rules (which can only get() a doc by known path, not query) can resolve
+  // a caller's role for the Inventory module. Safe and idempotent to call on
+  // every login/registration: firestore.rules only accepts this write if
+  // [role]/[username] exactly match the caller's own Users doc, so it can
+  // never grant a role the account doesn't already have. Failures are
+  // swallowed — this is a best-effort background sync, never something that
+  // should block sign-in.
+  Future<void> ensureUserRoleMirror({
+    required String uid,
+    required String username,
+    required String role,
+  }) async {
+    try {
+      await _firestore.collection('UserRoles').doc(uid).set({
+        'role': role,
+        'username': username,
+      });
+    } catch (e) {
+      debugPrint('Error syncing UserRoles mirror: $e');
+    }
+  }
+
   // Logout
   Future<void> logout() async {
     await setLoginState(false);

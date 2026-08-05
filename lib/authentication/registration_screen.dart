@@ -67,6 +67,11 @@ class RegistrationScreenState extends State<RegistrationScreen> {
 
       await FirebaseFirestore.instance.collection('Users').doc(username).set(userData);
 
+      // Mirror uid -> role in UserRoles so Firestore security rules can look
+      // up the caller's role via a direct get() (Users doc IDs are usernames,
+      // not uids, so rules can't query Users directly).
+      await _authService.ensureUserRoleMirror(uid: user.uid, username: username, role: 'Client');
+
       // Set persistent login state
       await _authService.setLoginState(true);
 

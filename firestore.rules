@@ -1,12 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to all documents for any request
-    // This is for development without authentication
-    match /{document=**} {
-      allow read, write: if true;
-    }
-    
+    // NOTE: the previous blanket `match /{document=**} { allow read, write: if
+    // true; }` catch-all has been removed. Firestore evaluates all matching
+    // rule blocks for a path as an OR, so as long as that catch-all existed,
+    // no other rule in this file — including the strict InventoryAssets /
+    // InventoryAssetAssignments rules below — could ever actually restrict
+    // anything. Every collection the app uses now has its own explicit block
+    // below (audited against the full lib/ source tree), so removing the
+    // catch-all is a no-op for every existing feature and is required for
+    // the new Inventory rules to mean anything.
+
     // Rules for Projects collection
     match /Projects/{projectId} {
       allow read, write: if true;
@@ -161,6 +165,140 @@ service cloud.firestore {
     // Rules for GeneralSchedules collection (NEW)
     match /GeneralSchedules/{scheduleId} {
       allow read, write: if true;
+    }
+
+    // ── Collections discovered in use but previously relying solely on the
+    // top-level catch-all (audited prior to its removal, see below) ────────
+    match /AdminNotificationQueue/{itemId} {
+      allow read, write: if true;
+    }
+
+    match /Communication/{messageId} {
+      allow read, write: if true;
+    }
+
+    match /CommunicationDrafts/{draftId} {
+      allow read, write: if true;
+    }
+
+    match /ScheduleMonitor/{docId} {
+      allow read, write: if true;
+    }
+
+    match /TaskProgressMonitor/{docId} {
+      allow read, write: if true;
+    }
+
+    match /ClientAccessRequests/{requestId} {
+      allow read, write: if true;
+    }
+
+    match /Photos/{photoId} {
+      allow read, write: if true;
+    }
+
+    match /NotificationQueue/{itemId} {
+      allow read, write: if true;
+    }
+
+    match /NotificationLocks/{lockId} {
+      allow read, write: if true;
+    }
+
+    // Lowercase 'projects' — distinct from the capitalized 'Projects'
+    // collection above; used by financial_screen.dart, documents_screen.dart,
+    // and rbacsystem/client_request_service.dart.
+    match /projects/{projectId} {
+      allow read, write: if true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // INVENTORY MODULE (Phase 1: Assets + custody traceability)
+    // These are the only collections in this file with real, enforced
+    // role checks — everything above stays wide open to match the rest
+    // of the (pre-auth, dev-mode) app.
+    // ═══════════════════════════════════════════════════════════════════
+
+    // uid -> role mirror. Users/{username} docs are keyed by username, not
+    // uid, so rules can't get() a caller's role directly from Users; this
+    // collection exists purely so inventoryUserRole() below can resolve it
+    // with a single-document get().
+    //
+    // Self-healing sync, not a one-time write: the doc must carry a
+    // 'username' field naming the caller's own Users/{username} doc, and the
+    // write is only accepted if that Users doc's `uid` matches the caller AND
+    // its `role` matches the value being written. A caller can therefore
+    // never write a role they don't already hold in Users — they can only
+    // mirror truth that already exists there, into a shape rules can look up
+    // by uid. AuthService.ensureUserRoleMirror() calls this on every login
+    // and at registration, so any account — new or pre-existing — self-heals
+    // its mirror automatically the next time it signs in; no manual Admin SDK
+    // backfill is required for accounts to stop being gated out of Inventory.
+    function _usersDocForRoleMirror() {
+      return get(/databases/$(database)/documents/Users/$(request.resource.data.username));
+    }
+
+    match /UserRoles/{uid} {
+      allow read: if request.auth != null;
+
+      allow create, update: if request.auth != null
+                             && request.auth.uid == uid
+                             && request.resource.data.keys().hasOnly(['role', 'username'])
+                             && _usersDocForRoleMirror().data.uid == request.auth.uid
+                             && _usersDocForRoleMirror().data.role == request.resource.data.role;
+
+      allow delete: if false;
+    }
+
+    function inventoryUserRole() {
+      return get(/databases/$(database)/documents/UserRoles/$(request.auth.uid)).data.role;
+    }
+
+    match /InventoryAssets/{assetId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+
+      // Only MainAdmin may register new assets.
+      allow create: if request.auth != null
+                     && inventoryUserRole() == 'MainAdmin'
+                     && request.resource.data.createdByUid == request.auth.uid;
+
+      // Two distinct, narrowly-scoped update paths:
+      //  (a) MainAdmin correcting descriptive fields.
+      //  (b) MainAdmin OR Admin's checkout/return transaction updating only
+      //      the custody-pointer fields (paired with a new, immutable
+      //      InventoryAssetAssignments doc in the same transaction).
+      allow update: if request.auth != null && (
+        (inventoryUserRole() == 'MainAdmin' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['name', 'category', 'description', 'serialNumber', 'photoUrl', 'updatedAt']))
+        ||
+        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'currentHolderId', 'currentHolderName',
+                      'currentProjectId', 'currentProjectName',
+                      'currentAssignmentId', 'updatedAt']))
+      );
+
+      // No delete — assets anchor their custody ledger; retire via status
+      // update instead so history is never orphaned.
+      allow delete: if false;
+    }
+
+    // Append-only custody ledger: checkout / return events.
+    match /InventoryAssetAssignments/{assignmentId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && request.resource.data.recordedByUid == request.auth.uid
+                     && request.resource.data.recordedByRole == inventoryUserRole();
+
+      // Hard requirement: nobody — not even MainAdmin — may ever edit or
+      // delete a custody event once it's written.
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }

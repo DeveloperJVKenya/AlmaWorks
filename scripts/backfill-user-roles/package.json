@@ -1,0 +1,13 @@
+{
+  "name": "backfill-user-roles",
+  "private": true,
+  "version": "1.0.0",
+  "description": "One-time migration: mirror every existing Users/{username}.role into UserRoles/{uid} so Firestore security rules (which can only look up a doc by known path, not by query) can resolve a caller's role for the Inventory module.",
+  "main": "backfill.js",
+  "scripts": {
+    "backfill": "node backfill.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:almaworks/rbacsystem/client_request_service.dart';
 import 'package:almaworks/screens/communication/communication_screen.dart';
 import 'package:almaworks/screens/financial_screen.dart';
@@ -8,6 +11,7 @@ import 'package:almaworks/screens/projects/projects_main_screen.dart';
 import 'package:almaworks/screens/projects/project_summary_screen.dart';
 import 'package:almaworks/screens/documents_screen.dart';
 import 'package:almaworks/screens/drawings_screen.dart';
+import 'package:almaworks/screens/inventory/inventory_screen.dart';
 import 'package:almaworks/screens/quality_and_safety_screen.dart';
 import 'package:almaworks/screens/reports/reports_screen.dart';
 import 'package:almaworks/screens/schedule/schedule_screen.dart';
@@ -49,6 +53,7 @@ class _BaseLayoutState extends State<BaseLayout> {
   List<String>? _clientProjectIds;
   bool _isLoadingUserData = true;
   final ClientRequestService _requestService = ClientRequestService();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -79,7 +84,17 @@ class _BaseLayoutState extends State<BaseLayout> {
 
       if (querySnapshot.docs.isNotEmpty) {
         final userData = querySnapshot.docs.first.data();
+        final username = querySnapshot.docs.first.id;
         final role = userData['role'] as String? ?? 'Client';
+
+        // Keep UserRoles/{uid} in sync on every screen load, not just at
+        // login — persisted sessions skip login_screen.dart entirely on app
+        // restart (see main.dart's isLoggedIn fast-path), so this is the
+        // only place guaranteed to run for an already-signed-in user. This
+        // is what lets a pre-existing account (or one whose role was just
+        // changed directly in Users) stop being gated out of role-restricted
+        // features like Inventory without needing to log out and back in.
+        unawaited(_authService.ensureUserRoleMirror(uid: user.uid, username: username, role: role));
 
         List<String> grantedIds = [];
         if (role == 'Client') {
@@ -446,6 +461,26 @@ class _BaseLayoutState extends State<BaseLayout> {
                   isMobile: isMobile,
                   isClient: isClient,
                   onNavigate: () => FinancialScreen(
+                    project: widget.project!,
+                    logger: widget.logger,
+                  ),
+                ),
+
+              // ── Inventory (Admin / MainAdmin only) ────────────────────────
+              // Company-wide asset register + custody ledger. Not scoped to
+              // widget.project's data — project is passed through only so
+              // BaseLayout can render its header/project-switcher chrome
+              // consistently with every other destination screen.
+              if (!isClient)
+                _buildProtectedMenuItem(
+                  context: context,
+                  icon: Icons.inventory_2,
+                  iconColor: Colors.brown,
+                  title: 'Inventory',
+                  selectedItem: 'Inventory',
+                  isMobile: isMobile,
+                  isClient: isClient,
+                  onNavigate: () => InventoryScreen(
                     project: widget.project!,
                     logger: widget.logger,
                   ),

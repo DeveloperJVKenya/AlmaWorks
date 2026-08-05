@@ -3,6 +3,11 @@
 *.log
 *.pyc
 *.swp
+
+# Firebase Admin SDK service account keys — never commit these
+serviceAccountKey.json
+scripts/**/node_modules/
+scripts/**/serviceAccountKey.json
 .DS_Store
 .atom/
 .build/
