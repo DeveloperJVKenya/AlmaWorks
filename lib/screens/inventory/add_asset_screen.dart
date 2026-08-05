@@ -231,37 +231,41 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                     title: 'Photo',
                     icon: Icons.photo_camera_outlined,
                     children: [
-                      GestureDetector(
-                        onTap: _isSaving ? null : _pickPhoto,
-                        child: Container(
-                          height: 160,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: _selectedPhoto == null
-                              ? Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 22,
-                                        backgroundColor: inventoryNavy.withValues(alpha: 0.08),
-                                        child: Icon(Icons.add_a_photo_outlined, color: inventoryNavy, size: 22),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text('Tap to add a photo (optional)',
-                                          style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
-                                    ],
+                      Material(
+                        color: const Color(0xFFFAFBFC),
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          onTap: _isSaving ? null : _pickPhoto,
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            height: 160,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.grey.withValues(alpha: 0.22)),
+                            ),
+                            child: _selectedPhoto == null
+                                ? Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 22,
+                                          backgroundColor: inventoryNavy.withValues(alpha: 0.08),
+                                          child: Icon(Icons.add_a_photo_outlined, color: inventoryNavy, size: 22),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text('Tap to add a photo (optional)',
+                                            style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+                                      ],
+                                    ),
+                                  )
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: kIsWeb
+                                        ? Image.network(_selectedPhoto!.path, fit: BoxFit.cover, width: double.infinity)
+                                        : Image.file(File(_selectedPhoto!.path), fit: BoxFit.cover, width: double.infinity),
                                   ),
-                                )
-                              : ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: kIsWeb
-                                      ? Image.network(_selectedPhoto!.path, fit: BoxFit.cover, width: double.infinity)
-                                      : Image.file(File(_selectedPhoto!.path), fit: BoxFit.cover, width: double.infinity),
-                                ),
+                          ),
                         ),
                       ),
                     ],
@@ -272,44 +276,37 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                     children: [
                       TextFormField(
                         controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: _isTool ? 'Tool Name' : 'Asset Name',
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        decoration: inventoryInputDecoration(
+                          label: _isTool ? 'Tool Name' : 'Asset Name',
+                          icon: _isTool ? Icons.handyman_outlined : Icons.precision_manufacturing_outlined,
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       TextFormField(
                         controller: _serialNumberController,
-                        decoration: InputDecoration(
-                          labelText: 'Serial Number (optional)',
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        decoration: inventoryInputDecoration(
+                          label: 'Serial Number (optional)',
+                          icon: Icons.qr_code_2_outlined,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       TextFormField(
                         controller: _descriptionController,
                         maxLines: 3,
-                        decoration: InputDecoration(
-                          labelText: 'Description (optional)',
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        decoration: inventoryInputDecoration(
+                          label: 'Description (optional)',
+                          icon: Icons.notes_outlined,
                         ),
                       ),
                       if (!_isEditing) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                         DropdownButtonFormField<String>(
                           initialValue: _condition,
-                          decoration: InputDecoration(
-                            labelText: 'Condition at Intake',
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          isExpanded: true,
+                          decoration: inventoryInputDecoration(
+                            label: 'Condition at Intake',
+                            icon: Icons.fact_check_outlined,
                           ),
                           items: [
                             AssetModel.conditionNew,
@@ -330,12 +327,10 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                     children: [
                       TextFormField(
                         controller: _categoryController,
-                        decoration: InputDecoration(
-                          labelText: 'Category',
-                          hintText: _isTool ? 'e.g. Power Tool, IT Equipment / Electronics' : 'e.g. Heavy Equipment, Vehicle',
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        decoration: inventoryInputDecoration(
+                          label: 'Category',
+                          hint: _isTool ? 'e.g. Power Tool, IT Equipment / Electronics' : 'e.g. Heavy Equipment, Vehicle',
+                          icon: Icons.category_outlined,
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Category is required' : null,
                       ),

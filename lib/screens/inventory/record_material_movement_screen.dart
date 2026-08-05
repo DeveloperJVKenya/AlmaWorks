@@ -247,24 +247,18 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                       TextFormField(
                         controller: _quantityController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          labelText: 'Quantity (${widget.material.unit})',
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        decoration: inventoryInputDecoration(
+                          label: 'Quantity (${widget.material.unit})',
+                          icon: Icons.numbers_outlined,
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Quantity is required' : null,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       if (_isReceive) ...[
                         DropdownButtonFormField<String>(
                           initialValue: _condition,
-                          decoration: InputDecoration(
-                            labelText: 'Condition on Receipt',
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                          ),
+                          isExpanded: true,
+                          decoration: inventoryInputDecoration(label: 'Condition on Receipt', icon: Icons.fact_check_outlined),
                           items: [
                             MaterialMovementModel.conditionGood,
                             MaterialMovementModel.conditionPartial,
@@ -274,28 +268,24 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                               .toList(),
                           onChanged: (v) => setState(() => _condition = v ?? _condition),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                         if (widget.material.source == MaterialModel.sourceInternational) ...[
                           TextFormField(
                             controller: _portVerifiedByController,
-                            decoration: InputDecoration(
-                              labelText: 'Verified at Port of Arrival By',
-                              hintText: 'Name of person who verified this shipment',
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                            decoration: inventoryInputDecoration(
+                              label: 'Verified at Port of Arrival By',
+                              hint: 'Name of person who verified this shipment',
+                              icon: Icons.anchor_outlined,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
                         ],
                         TextFormField(
                           controller: _receivedByController,
-                          decoration: InputDecoration(
-                            labelText: 'Received Into Storage By',
-                            hintText: 'Name of person who signed for it',
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          decoration: inventoryInputDecoration(
+                            label: 'Received Into Storage By',
+                            hint: 'Name of person who signed for it',
+                            icon: Icons.badge_outlined,
                           ),
                         ),
                       ] else
@@ -309,12 +299,10 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                       TextField(
                         controller: _notesController,
                         maxLines: 3,
-                        decoration: InputDecoration(
-                          labelText: 'Notes',
-                          hintText: _isReceive ? 'Condition/state details on receipt' : 'Reason / additional notes',
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        decoration: inventoryInputDecoration(
+                          label: 'Notes',
+                          hint: _isReceive ? 'Condition/state details on receipt' : 'Reason / additional notes',
+                          icon: Icons.notes_outlined,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -387,14 +375,13 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
     }
     return DropdownButtonFormField<String>(
       initialValue: _selectedProjectId,
-      decoration: InputDecoration(
-        labelText: 'Destination Project',
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-      ),
+      isExpanded: true,
+      decoration: inventoryInputDecoration(label: 'Destination Project', icon: Icons.folder_outlined),
       items: _projects
-          .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name, style: GoogleFonts.poppins())))
+          .map((p) => DropdownMenuItem(
+                value: p.id,
+                child: Text(p.name, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
+              ))
           .toList(),
       onChanged: (value) => setState(() => _selectedProjectId = value),
     );

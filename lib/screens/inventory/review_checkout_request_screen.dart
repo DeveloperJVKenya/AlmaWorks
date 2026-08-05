@@ -196,12 +196,7 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
                     TextField(
                       controller: _conditionController,
                       maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Condition notes',
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                      ),
+                      decoration: inventoryInputDecoration(label: 'Condition notes', icon: Icons.fact_check_outlined),
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(

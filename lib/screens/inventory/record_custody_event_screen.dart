@@ -246,12 +246,10 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
                     TextField(
                       controller: _conditionController,
                       maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Condition notes',
-                        hintText: _isCheckout ? 'Condition at handover' : 'Condition at return',
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      decoration: inventoryInputDecoration(
+                        label: 'Condition notes',
+                        hint: _isCheckout ? 'Condition at handover' : 'Condition at return',
+                        icon: Icons.fact_check_outlined,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -336,16 +334,12 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
     }
     return DropdownButtonFormField<String>(
       initialValue: _selectedUserUid,
-      decoration: InputDecoration(
-        labelText: 'Assign To',
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-      ),
+      isExpanded: true,
+      decoration: inventoryInputDecoration(label: 'Assign To', icon: Icons.person_outline),
       items: _users
           .map((m) => DropdownMenuItem(
                 value: m['uid'] as String,
-                child: Text(m['username'] as String, style: GoogleFonts.poppins()),
+                child: Text(m['username'] as String, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
               ))
           .toList(),
       onChanged: (value) => setState(() => _selectedUserUid = value),
@@ -361,14 +355,16 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
     }
     return DropdownButtonFormField<String>(
       initialValue: _selectedProjectId,
-      decoration: InputDecoration(
-        labelText: 'Project (optional — leave blank for company storage)',
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+      isExpanded: true,
+      decoration: inventoryInputDecoration(
+        label: 'Project (optional — leave blank for company storage)',
+        icon: Icons.folder_outlined,
       ),
       items: _projects
-          .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name, style: GoogleFonts.poppins())))
+          .map((p) => DropdownMenuItem(
+                value: p.id,
+                child: Text(p.name, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
+              ))
           .toList(),
       onChanged: (value) => setState(() => _selectedProjectId = value),
     );

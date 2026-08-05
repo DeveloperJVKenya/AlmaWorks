@@ -9,6 +9,7 @@ import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/material_detail_screen.dart';
 import 'package:almaworks/screens/inventory/pending_requests_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
+import 'package:almaworks/widgets/inventory_form_section.dart' show inventoryInputDecoration;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -490,14 +491,10 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
     return _filterSurface(children: [
       TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
-        decoration: InputDecoration(
-          hintText: 'Search ${widget.itemType.toLowerCase()}s...',
-          hintStyle: GoogleFonts.poppins(fontSize: 13),
-          prefixIcon: const Icon(Icons.search, size: 20),
+        decoration: inventoryInputDecoration(
+          hint: 'Search ${widget.itemType.toLowerCase()}s...',
+          icon: Icons.search,
           isDense: true,
-          filled: true,
-          fillColor: Colors.grey[50],
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         ),
       ),
       const SizedBox(height: 10),
@@ -510,13 +507,7 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: _statusFilter,
               isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Status',
-                isDense: true,
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              ),
+              decoration: inventoryInputDecoration(label: 'Status', icon: Icons.flag_outlined, isDense: true),
               items: _statusOptions
                   .map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.poppins(fontSize: 13))))
                   .toList(),
@@ -528,13 +519,7 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: safeCategoryFilter,
               isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Category',
-                isDense: true,
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              ),
+              decoration: inventoryInputDecoration(label: 'Category', icon: Icons.category_outlined, isDense: true),
               items: dynamicCategories
                   .map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.poppins(fontSize: 13))))
                   .toList(),
@@ -756,15 +741,7 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
     return _filterSurface(children: [
       TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
-        decoration: InputDecoration(
-          hintText: 'Search materials...',
-          hintStyle: GoogleFonts.poppins(fontSize: 13),
-          prefixIcon: const Icon(Icons.search, size: 20),
-          isDense: true,
-          filled: true,
-          fillColor: Colors.grey[50],
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-        ),
+        decoration: inventoryInputDecoration(hint: 'Search materials...', icon: Icons.search, isDense: true),
       ),
       const SizedBox(height: 10),
       Wrap(
@@ -776,13 +753,7 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: _sourceFilter,
               isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Source',
-                isDense: true,
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              ),
+              decoration: inventoryInputDecoration(label: 'Source', icon: Icons.public_outlined, isDense: true),
               items: _sourceOptions
                   .map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.poppins(fontSize: 13))))
                   .toList(),
@@ -794,13 +765,7 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: _stockFilter,
               isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Stock',
-                isDense: true,
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              ),
+              decoration: inventoryInputDecoration(label: 'Stock', icon: Icons.inventory_2_outlined, isDense: true),
               items: _stockOptions
                   .map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.poppins(fontSize: 13))))
                   .toList(),
@@ -812,13 +777,7 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: safeCategoryFilter,
               isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Category',
-                isDense: true,
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              ),
+              decoration: inventoryInputDecoration(label: 'Category', icon: Icons.category_outlined, isDense: true),
               items: dynamicCategories
                   .map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.poppins(fontSize: 13))))
                   .toList(),

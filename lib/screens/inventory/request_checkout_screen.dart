@@ -157,16 +157,14 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
                       TextFormField(
                         controller: _reasonController,
                         maxLines: 3,
-                        decoration: InputDecoration(
-                          labelText: 'Reason for checkout',
-                          hintText: 'e.g. Needed for site work at ...',
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        decoration: inventoryInputDecoration(
+                          label: 'Reason for checkout',
+                          hint: 'e.g. Needed for site work at ...',
+                          icon: Icons.edit_note_outlined,
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Reason is required' : null,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       if (!_projectsLoaded)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
@@ -175,14 +173,13 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
                       else
                         DropdownButtonFormField<ProjectModel>(
                           initialValue: _selectedProject,
-                          decoration: InputDecoration(
-                            labelText: 'Project (optional)',
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                          ),
+                          isExpanded: true,
+                          decoration: inventoryInputDecoration(label: 'Project (optional)', icon: Icons.folder_outlined),
                           items: _projects
-                              .map((p) => DropdownMenuItem(value: p, child: Text(p.name, style: GoogleFonts.poppins())))
+                              .map((p) => DropdownMenuItem(
+                                    value: p,
+                                    child: Text(p.name, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
+                                  ))
                               .toList(),
                           onChanged: (value) => setState(() => _selectedProject = value),
                         ),
