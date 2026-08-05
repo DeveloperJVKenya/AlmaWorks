@@ -94,7 +94,23 @@ class _BaseLayoutState extends State<BaseLayout> {
         // is what lets a pre-existing account (or one whose role was just
         // changed directly in Users) stop being gated out of role-restricted
         // features like Inventory without needing to log out and back in.
-        unawaited(_authService.ensureUserRoleMirror(uid: user.uid, username: username, role: role));
+        //
+        // Awaited (not fire-and-forget) deliberately: BaseLayout wraps every
+        // Inventory screen too, and its Riverpod stream providers start
+        // querying InventoryAssets/InventoryMaterials as soon as the screen
+        // builds. Those rules can only resolve the caller's role via a
+        // UserRoles/{uid} get() — if that write is still in flight when the
+        // stream attaches, Firestore denies it and the listener stays
+        // permanently in an error state (a Firestore snapshot listener does
+        // not auto-retry after permission-denied), so what looked like a
+        // one-off race actually reproduced on every single visit.
+        final mirrorSynced = await _authService.ensureUserRoleMirror(uid: user.uid, username: username, role: role);
+        if (!mirrorSynced) {
+          widget.logger.w(
+            '⚠️ BaseLayout: UserRoles mirror sync failed for uid=${user.uid} username=$username role=$role — '
+            'role-restricted collections (e.g. Inventory) may deny reads until this succeeds.',
+          );
+        }
 
         List<String> grantedIds = [];
         if (role == 'Client') {
@@ -245,7 +261,14 @@ class _BaseLayoutState extends State<BaseLayout> {
           ),
         ),
         Expanded(
-          child: ListView(
+          // Material(color: transparent) gives ListTile's selectedTileColor/
+          // ink-splash an explicit canvas-type Material ancestor — without
+          // it, Flutter can't guarantee the tile's background/splash paints
+          // visibly and logs "ListTile background color or ink splashes may
+          // be invisible" on every build (harmless visually here, but noisy).
+          child: Material(
+            color: Colors.transparent,
+            child: ListView(
             padding: EdgeInsets.zero,
             children: [
               // ── Switch Project ────────────────────────────────────────────
@@ -505,6 +528,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ],

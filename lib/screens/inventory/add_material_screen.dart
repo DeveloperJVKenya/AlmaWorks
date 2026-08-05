@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/inventory/inventory_categories.dart';
+import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -14,60 +14,58 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 
-/// MainAdmin-only screen to register a new company asset or tool, or (when
-/// [existingAsset] is supplied) edit one's descriptive fields. The two item
-/// types share this exact form/model, distinguished only by [itemType],
-/// which drives the title, hints, and quick-pick category chips shown below.
-class AddAssetScreen extends StatefulWidget {
+/// MainAdmin-only screen to register a new material, or (when
+/// [existingMaterial] is supplied) edit one's descriptive fields.
+class AddMaterialScreen extends StatefulWidget {
   final ProjectModel project;
   final Logger logger;
-  final String itemType; // AssetModel.typeAsset | AssetModel.typeTool
   final String createdByUid;
   final String createdByName;
+  final MaterialModel? existingMaterial;
 
-  /// When supplied, the screen behaves as an editor for this asset instead
-  /// of a create form — descriptive fields only, never custody state.
-  final AssetModel? existingAsset;
-
-  const AddAssetScreen({
+  const AddMaterialScreen({
     super.key,
     required this.project,
     required this.logger,
-    this.itemType = AssetModel.typeAsset,
     required this.createdByUid,
     required this.createdByName,
-    this.existingAsset,
+    this.existingMaterial,
   });
 
   @override
-  State<AddAssetScreen> createState() => _AddAssetScreenState();
+  State<AddMaterialScreen> createState() => _AddMaterialScreenState();
 }
 
-class _AddAssetScreenState extends State<AddAssetScreen> {
+class _AddMaterialScreenState extends State<AddMaterialScreen> {
+  static const _units = ['bags', 'pieces', 'kg', 'tonnes', 'm', 'm²', 'm³', 'litres', 'rolls'];
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _categoryController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _serialNumberController = TextEditingController();
+  final _initialQuantityController = TextEditingController(text: '0');
+  final _reorderLevelController = TextEditingController(text: '0');
   final InventoryService _inventoryService = InventoryService();
 
+  String _unit = _units.first;
+  String _source = MaterialModel.sourceLocal;
+  String _condition = MaterialModel.conditionGood;
   XFile? _selectedPhoto;
   bool _isSaving = false;
-  String _condition = AssetModel.conditionGood;
 
-  bool get _isEditing => widget.existingAsset != null;
-  bool get _isTool => widget.itemType == AssetModel.typeTool;
-  List<String> get _categoryOptions => _isTool ? InventoryCategories.tool : InventoryCategories.asset;
+  bool get _isEditing => widget.existingMaterial != null;
 
   @override
   void initState() {
     super.initState();
-    final existing = widget.existingAsset;
+    final existing = widget.existingMaterial;
     if (existing != null) {
       _nameController.text = existing.name;
       _categoryController.text = existing.category;
       _descriptionController.text = existing.description ?? '';
-      _serialNumberController.text = existing.serialNumber ?? '';
+      _reorderLevelController.text = existing.reorderLevel.toString();
+      _unit = existing.unit;
+      _source = existing.source;
       _condition = existing.initialCondition;
     }
   }
@@ -77,7 +75,8 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
     _nameController.dispose();
     _categoryController.dispose();
     _descriptionController.dispose();
-    _serialNumberController.dispose();
+    _initialQuantityController.dispose();
+    _reorderLevelController.dispose();
     super.dispose();
   }
 
@@ -120,15 +119,14 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final itemLabel = _isTool ? 'tool' : 'asset';
-    final actionLabel = _isEditing ? 'Save Changes' : (_isTool ? 'Add Tool' : 'Add Asset');
+    final actionLabel = _isEditing ? 'Save Changes' : 'Add Material';
     final confirmed = await showConfirmDialog(
       context,
       title: actionLabel,
       message: _isEditing
           ? 'Save changes to "${_nameController.text.trim()}"?'
           : 'Register "${_nameController.text.trim()}" (${_categoryController.text.trim()}) '
-              'as a new company $itemLabel?',
+              'as a new material in the stock register?',
       confirmLabel: actionLabel,
     );
     if (!confirmed || !mounted) return;
@@ -148,34 +146,31 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
       if (_isEditing) {
         String? photoUrl;
         if (photoBytes != null && photoFileName != null) {
-          // Re-uses createAsset's upload path indirectly isn't possible here
-          // (that method also creates a doc), so edits that change the photo
-          // upload directly via the same storage path convention.
-          photoUrl = await _inventoryService.uploadAssetPhoto(
-            assetId: widget.existingAsset!.id,
+          photoUrl = await _inventoryService.uploadMaterialPhoto(
+            materialId: widget.existingMaterial!.id,
             photoBytes: photoBytes,
             photoFileName: photoFileName,
           );
         }
-        await _inventoryService.updateAsset(
-          assetId: widget.existingAsset!.id,
+        await _inventoryService.updateMaterial(
+          materialId: widget.existingMaterial!.id,
           name: _nameController.text.trim(),
           category: _categoryController.text.trim(),
+          unit: _unit,
+          source: _source,
           description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-          serialNumber: _serialNumberController.text.trim().isEmpty ? null : _serialNumberController.text.trim(),
+          reorderLevel: double.tryParse(_reorderLevelController.text.trim()),
           photoUrl: photoUrl,
         );
       } else {
-        await _inventoryService.createAsset(
-          itemType: widget.itemType,
+        await _inventoryService.createMaterial(
           name: _nameController.text.trim(),
           category: _categoryController.text.trim(),
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
-          serialNumber: _serialNumberController.text.trim().isEmpty
-              ? null
-              : _serialNumberController.text.trim(),
+          unit: _unit,
+          source: _source,
+          description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+          initialQuantity: double.tryParse(_initialQuantityController.text.trim()) ?? 0,
+          reorderLevel: double.tryParse(_reorderLevelController.text.trim()) ?? 0,
           initialCondition: _condition,
           createdByUid: widget.createdByUid,
           createdByName: widget.createdByName,
@@ -187,20 +182,17 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _isEditing ? 'Changes saved' : '${_isTool ? 'Tool' : 'Asset'} added successfully',
-            style: GoogleFonts.poppins(),
-          ),
+          content: Text(_isEditing ? 'Changes saved' : 'Material added successfully', style: GoogleFonts.poppins()),
           backgroundColor: Colors.green,
         ),
       );
       Navigator.pop(context);
     } catch (e) {
-      widget.logger.e('❌ AddAssetScreen: Failed to save ${widget.itemType}', error: e);
+      widget.logger.e('❌ AddMaterialScreen: Failed to save material', error: e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to save $itemLabel: $e', style: GoogleFonts.poppins()),
+          content: Text('Failed to save material: $e', style: GoogleFonts.poppins()),
           backgroundColor: Colors.red,
         ),
       );
@@ -211,9 +203,8 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _isEditing ? 'Edit ${_isTool ? 'Tool' : 'Asset'}' : (_isTool ? 'Add Tool' : 'Add Asset');
     return BaseLayout(
-      title: title,
+      title: _isEditing ? 'Edit Material' : 'Add Material',
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -273,22 +264,12 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                       TextFormField(
                         controller: _nameController,
                         decoration: InputDecoration(
-                          labelText: _isTool ? 'Tool Name' : 'Asset Name',
+                          labelText: 'Material Name',
                           filled: true,
                           fillColor: Colors.grey[50],
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _serialNumberController,
-                        decoration: InputDecoration(
-                          labelText: 'Serial Number (optional)',
-                          filled: true,
-                          fillColor: Colors.grey[50],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                        ),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -312,10 +293,10 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                           ),
                           items: [
-                            AssetModel.conditionNew,
-                            AssetModel.conditionGood,
-                            AssetModel.conditionFair,
-                            AssetModel.conditionDamaged,
+                            MaterialModel.conditionNew,
+                            MaterialModel.conditionGood,
+                            MaterialModel.conditionFair,
+                            MaterialModel.conditionDamaged,
                           ]
                               .map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.poppins())))
                               .toList(),
@@ -332,7 +313,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                         controller: _categoryController,
                         decoration: InputDecoration(
                           labelText: 'Category',
-                          hintText: _isTool ? 'e.g. Power Tool, IT Equipment / Electronics' : 'e.g. Heavy Equipment, Vehicle',
+                          hintText: 'e.g. Cement & Aggregates, Steel & Metal',
                           filled: true,
                           fillColor: Colors.grey[50],
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
@@ -343,7 +324,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: _categoryOptions.where((c) => c != 'Other').map((c) {
+                        children: InventoryCategories.material.where((c) => c != 'Other').map((c) {
                           final selected = _categoryController.text == c;
                           return ChoiceChip(
                             label: Text(c, style: GoogleFonts.poppins(fontSize: 12)),
@@ -361,9 +342,92 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                       ),
                     ],
                   ),
+                  inventoryFormSection(
+                    title: 'Stock',
+                    icon: Icons.inventory_2_outlined,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _unit,
+                              decoration: InputDecoration(
+                                labelText: 'Unit',
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                              ),
+                              items: _units
+                                  .map((u) => DropdownMenuItem(value: u, child: Text(u, style: GoogleFonts.poppins())))
+                                  .toList(),
+                              onChanged: (v) => setState(() => _unit = v ?? _unit),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _source,
+                              decoration: InputDecoration(
+                                labelText: 'Source',
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                              ),
+                              items: [MaterialModel.sourceLocal, MaterialModel.sourceInternational]
+                                  .map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.poppins())))
+                                  .toList(),
+                              onChanged: (v) => setState(() => _source = v ?? _source),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          if (!_isEditing) ...[
+                            Expanded(
+                              child: TextFormField(
+                                controller: _initialQuantityController,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: InputDecoration(
+                                  labelText: 'Initial Quantity',
+                                  filled: true,
+                                  fillColor: Colors.grey[50],
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                          Expanded(
+                            child: TextFormField(
+                              controller: _reorderLevelController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                labelText: 'Reorder Level',
+                                hintText: 'Low-stock threshold',
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_isEditing) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Quantity in storage (${widget.existingMaterial!.quantityInStorage} '
+                          '${widget.existingMaterial!.unit}) can only be changed by recording a '
+                          'receipt or issue — not by editing.',
+                          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   inventoryPrimaryButton(
-                    label: _isEditing ? 'Save Changes' : (_isTool ? 'Add Tool' : 'Add Asset'),
+                    label: _isEditing ? 'Save Changes' : 'Add Material',
                     isLoading: _isSaving,
                     onPressed: _submit,
                     icon: _isEditing ? Icons.check : Icons.add,

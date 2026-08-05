@@ -127,25 +127,32 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
           child: SlideTransition(
             position: _slideAnimation,
             child: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildHeader(isMobile),
-                    const SizedBox(height: 40),
-                    _buildFeatureCards(isMobile),
-                    const SizedBox(height: 40),
-                    _buildContinueButton(isMobile),
-                    const SizedBox(height: 20),
-                    _buildLogoutButton(),
-                  ],
-                ),
+              // Extra bottom padding keeps content clear of the floating
+              // "Continue to Dashboard" button pinned via the Scaffold.
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 16.0 : 24.0,
+                isMobile ? 16.0 : 24.0,
+                isMobile ? 16.0 : 24.0,
+                isMobile ? 96.0 : 108.0,
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  _buildHeader(isMobile),
+                  const SizedBox(height: 40),
+                  _buildFeatureCards(isMobile),
+                  const SizedBox(height: 24),
+                  _buildLogoutButton(),
+                ],
               ),
             ),
           ),
         ),
       ),
+      // Floating rather than at the bottom of the scroll content, so it's
+      // always reachable without scrolling on shorter screens.
+      floatingActionButton: _buildContinueButton(isMobile),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -328,32 +335,21 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
   }
 
   Widget _buildContinueButton(bool isMobile) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _navigateToDashboard,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0A2E5A),
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 3,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Continue to Dashboard',
-              style: TextStyle(
-                fontSize: isMobile ? 16 : 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward, size: 20),
-          ],
+    return FloatingActionButton.extended(
+      onPressed: _navigateToDashboard,
+      backgroundColor: const Color(0xFF0A2E5A),
+      foregroundColor: Colors.white,
+      elevation: 4,
+      extendedPadding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 28),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      label: Text(
+        'Continue to Dashboard',
+        style: TextStyle(
+          fontSize: isMobile ? 15 : 17,
+          fontWeight: FontWeight.bold,
         ),
       ),
+      icon: const Icon(Icons.arrow_forward, size: 20),
     );
   }
 

@@ -1,5 +1,9 @@
+import 'package:almaworks/authentication/login_screen.dart';
 import 'package:almaworks/providers/locale_provider.dart';
+import 'package:almaworks/providers/theme_provider.dart';
+import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:almaworks/screens/projects/projects_main_screen.dart';
+import 'package:almaworks/services/notification_preferences.dart';
 import 'package:almaworks/widgets/responsive_layout.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,11 +14,13 @@ import 'package:logger/logger.dart';
 class AccountScreen extends StatefulWidget {
   final Logger? logger;
   final LocaleProvider localeProvider;
+  final ThemeProvider themeProvider;
 
   const AccountScreen({
     super.key,
     this.logger,
     required this.localeProvider,
+    required this.themeProvider,
   });
 
   @override
@@ -24,6 +30,7 @@ class AccountScreen extends StatefulWidget {
 class _AccountScreenState extends State<AccountScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
   late final Logger _logger;
 
   // ── Profile state ──────────────────────────────────────────────────────────
@@ -53,6 +60,16 @@ class _AccountScreenState extends State<AccountScreen> {
         'current language = ${widget.localeProvider.language}, '
         'locale = ${widget.localeProvider.locale}');
     _loadUserProfile();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final notificationsEnabled = await NotificationPreferences.isEnabled();
+    if (!mounted) return;
+    setState(() {
+      _notificationsEnabled = notificationsEnabled;
+      _darkModeEnabled = widget.themeProvider.isDarkMode;
+    });
   }
 
   // ── Data Loading ───────────────────────────────────────────────────────────
@@ -359,7 +376,12 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
         // ── Nav items ──────────────────────────────────────────────────────
         Expanded(
-          child: ListView(
+          // See base_layout.dart's identical wrap for why this Material is
+          // needed — avoids the "ListTile background color or ink splashes
+          // may be invisible" warning from the selectedTileColor below.
+          child: Material(
+            color: Colors.transparent,
+            child: ListView(
             padding: EdgeInsets.zero,
             children: [
               // Switch Project / My Projects
@@ -420,6 +442,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 onTap: () {},
               ),
             ],
+            ),
           ),
         ),
       ],
@@ -634,9 +657,10 @@ class _AccountScreenState extends State<AccountScreen> {
               'Notifications',
               Switch(
                 value: _notificationsEnabled,
-                onChanged: (v) {
+                onChanged: (v) async {
                   _logger.d('🔔 AccountScreen: Notifications toggled → $v');
                   setState(() => _notificationsEnabled = v);
+                  await NotificationPreferences.setEnabled(v);
                 },
                 activeThumbColor: const Color(0xFF0A2E5A),
               ),
@@ -646,9 +670,10 @@ class _AccountScreenState extends State<AccountScreen> {
               'Dark Mode',
               Switch(
                 value: _darkModeEnabled,
-                onChanged: (v) {
+                onChanged: (v) async {
                   _logger.d('🌙 AccountScreen: Dark mode toggled → $v');
                   setState(() => _darkModeEnabled = v);
+                  await widget.themeProvider.setDarkMode(v);
                 },
                 activeThumbColor: const Color(0xFF0A2E5A),
               ),
@@ -909,19 +934,27 @@ class _AccountScreenState extends State<AccountScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _logger.i('🚪 AccountScreen: Logging out — calling _auth.signOut()');
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              navigator.pop(); // close the confirmation dialog
+              _logger.i('🚪 AccountScreen: Logging out');
               try {
-                _auth.signOut();
-                _logger.i('🚪 AccountScreen: signOut() succeeded');
+                // AuthService.logout() clears the persisted "isLoggedIn" flag
+                // AND signs out of Firebase Auth. Calling _auth.signOut()
+                // alone (the previous behavior) left the persisted flag
+                // stale, and nothing navigated the user away from this
+                // screen afterward — they'd appear "logged out" under the
+                // hood while still looking at their (now-broken) account
+                // page. Mirrors WelcomeScreen's logout button.
+                await _authService.logout();
+                _logger.i('🚪 AccountScreen: logout() succeeded');
               } catch (e) {
-                _logger.e('❌ AccountScreen: signOut() failed — $e');
+                _logger.e('❌ AccountScreen: logout() failed — $e');
               }
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Logged out successfully'),
-                    backgroundColor: Colors.blue),
+              if (!mounted) return;
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
               );
             },
             style: ElevatedButton.styleFrom(

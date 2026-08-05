@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:almaworks/rbacsystem/notification_id_util.dart';
+import 'package:almaworks/services/notification_preferences.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -88,14 +90,23 @@ class NotificationService {
       });
 
       // Foreground messages — show a local notification manually.
+      //
+      // Messages sourced from AdminNotificationQueue (docId present in the
+      // data payload) carry a stable id derived from that doc's id — the
+      // same id setupAdminNotificationListener() below uses when it shows
+      // the notification straight off the Firestore snapshot. Whichever of
+      // the two fires first shows it; the other silently updates the same
+      // notification instead of creating a visible duplicate.
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         _logger.i(
           '📨 Foreground message: ${message.notification?.title}',
         );
+        final docId = message.data['docId'];
         _showLocalNotification(
           title: message.notification?.title ?? 'New Notification',
           body: message.notification?.body ?? '',
           payload: message.data,
+          id: docId != null ? stableNotificationId(docId) : null,
         );
       });
 
@@ -194,6 +205,7 @@ class NotificationService {
               title: title,
               body: body,
               payload: payload,
+              id: stableNotificationId(docId),
             );
 
             _logger.i('🔔 Admin notification shown: $title');
@@ -221,11 +233,13 @@ class NotificationService {
     required String title,
     required String body,
     Map<String, dynamic>? payload,
+    int? id,
   }) async {
+    if (!await NotificationPreferences.isEnabled()) return;
     try {
       await AwesomeNotifications().createNotification(
         content: NotificationContent(
-          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          id: id ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
           channelKey: 'client_requests',
           title: title,
           body: body,
@@ -245,11 +259,13 @@ class NotificationService {
     required String title,
     required String body,
     Map<String, String>? payload,
+    int? id,
   }) async {
+    if (!await NotificationPreferences.isEnabled()) return;
     try {
       await AwesomeNotifications().createNotification(
         content: NotificationContent(
-          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          id: id ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
           channelKey: 'client_requests',
           title: title,
           body: body,
@@ -334,6 +350,7 @@ class NotificationService {
     required String clientUsername,
     required List<String> projectNames,
   }) async {
+    if (!await NotificationPreferences.isEnabled()) return;
     try {
       final projectList = projectNames.join(', ');
       await AwesomeNotifications().createNotification(
@@ -363,6 +380,7 @@ class NotificationService {
     required String clientUsername,
     String? reason,
   }) async {
+    if (!await NotificationPreferences.isEnabled()) return;
     try {
       await AwesomeNotifications().createNotification(
         content: NotificationContent(
@@ -392,6 +410,7 @@ class NotificationService {
     required List<String> addedProjects,
     required List<String> revokedProjects,
   }) async {
+    if (!await NotificationPreferences.isEnabled()) return;
     try {
       String body;
       if (addedProjects.isNotEmpty && revokedProjects.isNotEmpty) {

@@ -27,6 +27,8 @@
 //   will always exist when this handler fires.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'package:almaworks/rbacsystem/notification_id_util.dart';
+import 'package:almaworks/services/notification_preferences.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -50,17 +52,26 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     '🔔 [BG Handler] Message received: ${message.notification?.title}',
   );
 
+  if (!await NotificationPreferences.isEnabled()) {
+    debugPrint('🔕 [BG Handler] Notifications disabled by user — skipping display');
+    return;
+  }
+
   // Show the notification via Awesome Notifications so it surfaces in the
   // system tray even when the app is fully terminated / backgrounded.
   try {
     final title = message.notification?.title ?? '🔔 New Notification';
     final body  = message.notification?.body  ?? '';
     final data  = message.data;
+    final docId = data['docId'];
 
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
-        // Use millisecondsSinceEpoch ~/ 1000 to keep id within int32 range.
-        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        // AdminNotificationQueue-sourced messages carry docId, giving a
+        // stable id shared with the live Firestore listener path (see
+        // notification_service.dart) so this can never show as a second,
+        // duplicate entry if both paths happen to fire for the same event.
+        id: docId != null ? stableNotificationId(docId) : DateTime.now().millisecondsSinceEpoch ~/ 1000,
         channelKey: 'client_requests',
         title: title,
         body: body,

@@ -277,7 +277,7 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['status', 'currentHolderId', 'currentHolderName',
                       'currentProjectId', 'currentProjectName',
-                      'currentAssignmentId', 'updatedAt']))
+                      'currentAssignmentId', 'pendingRequestId', 'updatedAt']))
       );
 
       // No delete — assets anchor their custody ledger; retire via status
@@ -298,6 +298,72 @@ service cloud.firestore {
       // Hard requirement: nobody — not even MainAdmin — may ever edit or
       // delete a custody event once it's written.
       allow update: if false;
+      allow delete: if false;
+    }
+
+    // ── InventoryMaterials — same shape/permissions as InventoryAssets ────
+    match /InventoryMaterials/{materialId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() == 'MainAdmin'
+                     && request.resource.data.createdByUid == request.auth.uid;
+
+      // (a) MainAdmin correcting descriptive fields.
+      // (b) MainAdmin OR Admin's receipt/issue transaction updating only the
+      //     running quantity balance (paired with a new, immutable
+      //     InventoryMaterialMovements doc in the same transaction).
+      allow update: if request.auth != null && (
+        (inventoryUserRole() == 'MainAdmin' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['name', 'category', 'unit', 'source', 'description',
+                      'photoUrl', 'reorderLevel', 'updatedAt']))
+        ||
+        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['quantityInStorage', 'updatedAt']))
+      );
+
+      allow delete: if false;
+    }
+
+    // Append-only stock ledger: receipt / issue events.
+    match /InventoryMaterialMovements/{movementId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && request.resource.data.recordedByUid == request.auth.uid
+                     && request.resource.data.recordedByRole == inventoryUserRole();
+
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ── InventoryCheckoutRequests: Admin requests, MainAdmin approves/rejects ─
+    // A request starts 'pending' and can only ever move to 'approved' or
+    // 'rejected' — never back, and never edited further after that. Only
+    // MainAdmin may resolve a request (approve/reject); either role may
+    // read them (Admins need to see their own request's status).
+    match /InventoryCheckoutRequests/{requestId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && request.resource.data.requestedByUid == request.auth.uid
+                     && request.resource.data.status == 'pending';
+
+      allow update: if request.auth != null
+                     && inventoryUserRole() == 'MainAdmin'
+                     && resource.data.status == 'pending'
+                     && request.resource.data.status in ['approved', 'rejected']
+                     && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['status', 'respondedByUid', 'respondedByName',
+                                    'respondedAt', 'rejectionReason']);
+
       allow delete: if false;
     }
   }

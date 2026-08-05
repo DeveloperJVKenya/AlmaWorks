@@ -1,10 +1,14 @@
 import 'package:almaworks/models/inventory/asset_assignment_model.dart';
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/screens/inventory/add_asset_screen.dart';
+import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/record_custody_event_screen.dart';
-import 'package:almaworks/services/inventory_service.dart';
+import 'package:almaworks/screens/inventory/request_checkout_screen.dart';
+import 'package:almaworks/screens/inventory/review_checkout_request_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
@@ -12,7 +16,7 @@ import 'package:logger/logger.dart';
 /// Full traceability view for a single asset: current status/holder plus
 /// the complete, immutable custody history (checkout/return events with
 /// condition notes and photos).
-class AssetDetailScreen extends StatefulWidget {
+class AssetDetailScreen extends ConsumerWidget {
   final ProjectModel project;
   final Logger logger;
   final String assetId;
@@ -31,27 +35,48 @@ class AssetDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<AssetDetailScreen> createState() => _AssetDetailScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final assetAsync = ref.watch(assetByIdProvider(assetId));
 
-class _AssetDetailScreenState extends State<AssetDetailScreen> {
-  final InventoryService _inventoryService = InventoryService();
-
-  @override
-  Widget build(BuildContext context) {
     return BaseLayout(
       title: 'Asset Details',
-      project: widget.project,
-      logger: widget.logger,
+      project: project,
+      logger: logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      child: StreamBuilder<AssetModel?>(
-        stream: _inventoryService.streamAsset(widget.assetId),
-        builder: (context, assetSnapshot) {
-          if (assetSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final asset = assetSnapshot.data;
+      actions: userRole == 'MainAdmin'
+          ? [
+              assetAsync.maybeWhen(
+                data: (asset) => asset == null
+                    ? const SizedBox.shrink()
+                    : IconButton(
+                        icon: const Icon(Icons.edit_outlined),
+                        tooltip: 'Edit',
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddAssetScreen(
+                              project: project,
+                              logger: logger,
+                              itemType: asset.itemType,
+                              createdByUid: currentUid,
+                              createdByName: username,
+                              existingAsset: asset,
+                            ),
+                          ),
+                        ),
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+            ]
+          : null,
+      child: assetAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) {
+          logger.e('❌ AssetDetailScreen: stream error $err');
+          return Center(child: Text('Error loading asset', style: GoogleFonts.poppins()));
+        },
+        data: (asset) {
           if (asset == null) {
             return Center(child: Text('Asset not found', style: GoogleFonts.poppins()));
           }
@@ -61,28 +86,34 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
             children: [
               _buildHeaderCard(asset),
               const SizedBox(height: 16),
-              _buildActionButton(asset),
+              _buildActionButton(context, asset),
               const SizedBox(height: 20),
               Text('Custody History', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              StreamBuilder<List<AssetAssignmentModel>>(
-                stream: _inventoryService.streamAssetHistory(widget.assetId),
-                builder: (context, historySnapshot) {
-                  if (historySnapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
+              Consumer(
+                builder: (context, ref, _) {
+                  final historyAsync = ref.watch(assetHistoryProvider(assetId));
+                  return historyAsync.when(
+                    loading: () => const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  final history = historySnapshot.data ?? const [];
-                  if (history.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text('No custody events yet', style: GoogleFonts.poppins(color: Colors.grey[600])),
-                    );
-                  }
-                  return Column(
-                    children: history.map(_buildHistoryEntry).toList(),
+                    ),
+                    error: (err, _) {
+                      logger.e('❌ AssetDetailScreen: history stream error $err');
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text('Error loading history', style: GoogleFonts.poppins(color: Colors.grey[600])),
+                      );
+                    },
+                    data: (history) {
+                      if (history.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text('No custody events yet', style: GoogleFonts.poppins(color: Colors.grey[600])),
+                        );
+                      }
+                      return Column(children: history.map((e) => _buildHistoryEntry(context, e)).toList());
+                    },
                   );
                 },
               ),
@@ -94,7 +125,8 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
   }
 
   Widget _buildHeaderCard(AssetModel asset) {
-    final statusColor = _statusColor(asset.status);
+    final statusColor = asset.hasPendingRequest ? const Color(0xFFE65100) : _statusColor(asset.status);
+    final statusLabel = asset.hasPendingRequest ? 'Request Pending' : asset.status;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -114,7 +146,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: statusColor.withValues(alpha: 0.35)),
                   ),
-                  child: Text(asset.status,
+                  child: Text(statusLabel,
                       style: GoogleFonts.poppins(fontSize: 12, color: statusColor, fontWeight: FontWeight.w600)),
                 ),
               ],
@@ -125,6 +157,9 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
               const SizedBox(height: 4),
               Text('S/N: ${asset.serialNumber}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
             ],
+            const SizedBox(height: 4),
+            Text('Condition at intake: ${asset.initialCondition}',
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
             if (asset.description != null) ...[
               const SizedBox(height: 8),
               Text(asset.description!, style: GoogleFonts.poppins(fontSize: 13)),
@@ -155,15 +190,99 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     );
   }
 
-  Widget _buildActionButton(AssetModel asset) {
-    final canAct = widget.userRole == 'MainAdmin' || widget.userRole == 'Admin';
+  Widget _buildActionButton(BuildContext context, AssetModel asset) {
+    final canAct = userRole == 'MainAdmin' || userRole == 'Admin';
     if (!canAct) return const SizedBox.shrink();
 
+    // A pending request locks the asset — nobody else can request/check it
+    // out until MainAdmin resolves it.
+    if (asset.hasPendingRequest) {
+      if (userRole != 'MainAdmin') {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE65100).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE65100).withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.hourglass_top, color: Color(0xFFE65100), size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('A checkout request for this item is awaiting MainAdmin review.',
+                    style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFE65100))),
+              ),
+            ],
+          ),
+        );
+      }
+      return Consumer(
+        builder: (context, ref, _) {
+          final requestAsync = ref.watch(requestByIdProvider(asset.pendingRequestId!));
+          return requestAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => Text('Error loading request', style: GoogleFonts.poppins(color: Colors.red)),
+            data: (req) {
+              if (req == null) return const SizedBox.shrink();
+              return ElevatedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReviewCheckoutRequestScreen(
+                      project: project,
+                      logger: logger,
+                      request: req,
+                      respondedByUid: currentUid,
+                      respondedByName: username,
+                      respondedByRole: userRole,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.fact_check_outlined),
+                label: Text('Review Request from ${req.requestedByName}',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE65100),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(46),
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
+
     if (asset.isAvailable) {
+      if (userRole == 'MainAdmin') {
+        return ElevatedButton.icon(
+          onPressed: () => _navigateToCustodyEvent(context, mode: CustodyEventMode.checkout, asset: asset),
+          icon: const Icon(Icons.logout),
+          label: Text('Check Out', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1565C0),
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(46),
+          ),
+        );
+      }
+      // Admin: request only — MainAdmin must approve before it's checked out.
       return ElevatedButton.icon(
-        onPressed: () => _navigateToCustodyEvent(mode: CustodyEventMode.checkout, asset: asset),
-        icon: const Icon(Icons.logout),
-        label: Text('Check Out', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RequestCheckoutScreen(
+              project: project,
+              logger: logger,
+              asset: asset,
+              requestedByUid: currentUid,
+              requestedByName: username,
+            ),
+          ),
+        ),
+        icon: const Icon(Icons.send_outlined),
+        label: Text('Request Checkout', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF1565C0),
           foregroundColor: Colors.white,
@@ -173,7 +292,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     }
     if (asset.isCheckedOut) {
       return ElevatedButton.icon(
-        onPressed: () => _navigateToCustodyEvent(mode: CustodyEventMode.returnEvent, asset: asset),
+        onPressed: () => _navigateToCustodyEvent(context, mode: CustodyEventMode.returnEvent, asset: asset),
         icon: const Icon(Icons.login),
         label: Text('Record Return', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         style: ElevatedButton.styleFrom(
@@ -186,24 +305,24 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     return const SizedBox.shrink();
   }
 
-  void _navigateToCustodyEvent({required CustodyEventMode mode, required AssetModel asset}) {
+  void _navigateToCustodyEvent(BuildContext context, {required CustodyEventMode mode, required AssetModel asset}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => RecordCustodyEventScreen(
-          project: widget.project,
-          logger: widget.logger,
+          project: project,
+          logger: logger,
           asset: asset,
           mode: mode,
-          recordedByUid: widget.currentUid,
-          recordedByName: widget.username,
-          recordedByRole: widget.userRole,
+          recordedByUid: currentUid,
+          recordedByName: username,
+          recordedByRole: userRole,
         ),
       ),
     );
   }
 
-  Widget _buildHistoryEntry(AssetAssignmentModel entry) {
+  Widget _buildHistoryEntry(BuildContext context, AssetAssignmentModel entry) {
     final isCheckout = entry.isCheckout;
     final color = isCheckout ? const Color(0xFF1565C0) : const Color(0xFF2E7D32);
     return Card(
@@ -246,7 +365,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
                   itemBuilder: (context, i) => ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: GestureDetector(
-                      onTap: () => _showFullPhoto(entry.photoUrls[i]),
+                      onTap: () => _showFullPhoto(context, entry.photoUrls[i]),
                       child: Image.network(entry.photoUrls[i], width: 72, height: 72, fit: BoxFit.cover),
                     ),
                   ),
@@ -262,7 +381,7 @@ class _AssetDetailScreenState extends State<AssetDetailScreen> {
     );
   }
 
-  void _showFullPhoto(String url) {
+  void _showFullPhoto(BuildContext context, String url) {
     showDialog(
       context: context,
       builder: (context) => Dialog(

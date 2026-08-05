@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -7,6 +8,7 @@ import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/services/project_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
+import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -52,16 +54,73 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
   final List<XFile> _selectedPhotos = [];
   bool _isSaving = false;
 
-  // checkout-only state
-  Map<String, dynamic>? _selectedUserDoc; // {'username': ..., 'uid': ...}
-  ProjectModel? _selectedProject;
+  // checkout-only state.
+  //
+  // Selection is tracked by primitive String key (uid / project id), never
+  // by the Map/ProjectModel object itself — DropdownButtonFormField matches
+  // its current value against `items` by `==`, and since Map has no value
+  // equality (reference-only) and ProjectModel doesn't override `==`
+  // either, a freshly-rebuilt items list (e.g. the next Firestore snapshot)
+  // would never match a previously-selected object again, which is exactly
+  // what threw "There should be exactly one item with [DropdownButton]'s
+  // value" here. Both lists are also loaded once up front instead of
+  // inside a StreamBuilder in build(), since DropdownButtonFormField only
+  // honors `initialValue` on its very first build — building it before the
+  // stream has emitted would strand the selection on nothing forever.
+  List<Map<String, dynamic>> _users = [];
+  bool _usersLoaded = false;
+  String? _selectedUserUid;
+  StreamSubscription<QuerySnapshot>? _usersSub;
+
+  List<ProjectModel> _projects = [];
+  bool _projectsLoaded = false;
+  String? _selectedProjectId;
+  StreamSubscription<List<ProjectModel>>? _projectsSub;
 
   bool get _isCheckout => widget.mode == CustodyEventMode.checkout;
 
   @override
+  void initState() {
+    super.initState();
+    if (_isCheckout) {
+      _usersSub = FirebaseFirestore.instance.collection('Users').snapshots().listen((snapshot) {
+        if (!mounted) return;
+        setState(() {
+          _users = snapshot.docs
+              .map((d) => {'username': d.id, 'uid': (d.data())['uid'] as String? ?? ''})
+              .where((m) => (m['uid'] as String).isNotEmpty)
+              .toList();
+          _usersLoaded = true;
+        });
+      });
+      _projectsSub = _projectService.getAllProjects().listen((projects) {
+        if (!mounted) return;
+        setState(() {
+          _projects = projects;
+          _projectsLoaded = true;
+        });
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    _usersSub?.cancel();
+    _projectsSub?.cancel();
     _conditionController.dispose();
     super.dispose();
+  }
+
+  Map<String, dynamic>? get _selectedUserDoc {
+    if (_selectedUserUid == null) return null;
+    final matches = _users.where((m) => m['uid'] == _selectedUserUid);
+    return matches.isEmpty ? null : matches.first;
+  }
+
+  ProjectModel? get _selectedProject {
+    if (_selectedProjectId == null) return null;
+    final matches = _projects.where((p) => p.id == _selectedProjectId);
+    return matches.isEmpty ? null : matches.first;
   }
 
   Future<void> _pickPhotos() async {
@@ -156,86 +215,100 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(widget.asset.name, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 16),
-          if (_isCheckout) ...[
-            _buildUserPicker(),
-            const SizedBox(height: 12),
-            _buildProjectPicker(),
-            const SizedBox(height: 12),
-          ] else ...[
-            _buildReadOnlyRow('Returning from', widget.asset.currentHolderName ?? 'Unknown'),
-            if (widget.asset.currentProjectName != null)
-              _buildReadOnlyRow('Project', widget.asset.currentProjectName!),
-            const SizedBox(height: 12),
-          ],
-          TextField(
-            controller: _conditionController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: 'Condition notes',
-              hintText: _isCheckout ? 'Condition at handover' : 'Condition at return',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: _isSaving ? null : _pickPhotos,
-            icon: const Icon(Icons.add_a_photo_outlined),
-            label: Text('Add Photos', style: GoogleFonts.poppins()),
-          ),
-          if (_selectedPhotos.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 80,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _selectedPhotos.length,
-                separatorBuilder: (context, _) => const SizedBox(width: 8),
-                itemBuilder: (context, i) {
-                  final file = _selectedPhotos[i];
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: kIsWeb
-                            ? Image.network(file.path, width: 80, height: 80, fit: BoxFit.cover)
-                            : Image.file(File(file.path), width: 80, height: 80, fit: BoxFit.cover),
+          inventoryFormMaxWidth(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(widget.asset.name,
+                      style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
+                ),
+                inventoryFormSection(
+                  title: _isCheckout ? 'Handover' : 'Return',
+                  icon: _isCheckout ? Icons.logout : Icons.login,
+                  children: [
+                    if (_isCheckout) ...[
+                      _buildUserPicker(),
+                      const SizedBox(height: 12),
+                      _buildProjectPicker(),
+                    ] else ...[
+                      _buildReadOnlyRow('Returning from', widget.asset.currentHolderName ?? 'Unknown'),
+                      if (widget.asset.currentProjectName != null)
+                        _buildReadOnlyRow('Project', widget.asset.currentProjectName!),
+                    ],
+                  ],
+                ),
+                inventoryFormSection(
+                  title: 'Condition & Photos',
+                  icon: Icons.fact_check_outlined,
+                  children: [
+                    TextField(
+                      controller: _conditionController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Condition notes',
+                        hintText: _isCheckout ? 'Condition at handover' : 'Condition at return',
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                       ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedPhotos.removeAt(i)),
-                          child: const CircleAvatar(
-                            radius: 10,
-                            backgroundColor: Colors.black54,
-                            child: Icon(Icons.close, size: 12, color: Colors.white),
-                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _isSaving ? null : _pickPhotos,
+                      icon: const Icon(Icons.add_a_photo_outlined),
+                      label: Text('Add Photos', style: GoogleFonts.poppins()),
+                    ),
+                    if (_selectedPhotos.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 80,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _selectedPhotos.length,
+                          separatorBuilder: (context, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, i) {
+                            final file = _selectedPhotos[i];
+                            return Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: kIsWeb
+                                      ? Image.network(file.path, width: 80, height: 80, fit: BoxFit.cover)
+                                      : Image.file(File(file.path), width: 80, height: 80, fit: BoxFit.cover),
+                                ),
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _selectedPhotos.removeAt(i)),
+                                    child: const CircleAvatar(
+                                      radius: 10,
+                                      backgroundColor: Colors.black54,
+                                      child: Icon(Icons.close, size: 12, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],
-                  );
-                },
-              ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                inventoryPrimaryButton(
+                  label: _isCheckout ? 'Check Out' : 'Record Return',
+                  isLoading: _isSaving,
+                  onPressed: _submit,
+                  icon: _isCheckout ? Icons.logout : Icons.login,
+                  color: _isCheckout ? const Color(0xFF1565C0) : const Color(0xFF2E7D32),
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
-          ],
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _isSaving ? null : _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _isCheckout ? const Color(0xFF1565C0) : const Color(0xFF2E7D32),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-            child: _isSaving
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : Text(_isCheckout ? 'Check Out' : 'Record Return',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -255,47 +328,49 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
   }
 
   Widget _buildUserPicker() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('Users').snapshots(),
-      builder: (context, snapshot) {
-        final docs = snapshot.data?.docs ?? const [];
-        final items = docs
-            .map((d) => {'username': d.id, 'uid': (d.data() as Map<String, dynamic>)['uid'] as String? ?? ''})
-            .where((m) => (m['uid'] as String).isNotEmpty)
-            .toList();
-
-        return DropdownButtonFormField<Map<String, dynamic>>(
-          initialValue: _selectedUserDoc,
-          decoration: InputDecoration(
-            labelText: 'Assign To',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          items: items
-              .map((m) => DropdownMenuItem(value: m, child: Text(m['username'] as String, style: GoogleFonts.poppins())))
-              .toList(),
-          onChanged: (value) => setState(() => _selectedUserDoc = value),
-        );
-      },
+    if (!_usersLoaded) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedUserUid,
+      decoration: InputDecoration(
+        labelText: 'Assign To',
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+      ),
+      items: _users
+          .map((m) => DropdownMenuItem(
+                value: m['uid'] as String,
+                child: Text(m['username'] as String, style: GoogleFonts.poppins()),
+              ))
+          .toList(),
+      onChanged: (value) => setState(() => _selectedUserUid = value),
     );
   }
 
   Widget _buildProjectPicker() {
-    return StreamBuilder<List<ProjectModel>>(
-      stream: _projectService.getAllProjects(),
-      builder: (context, snapshot) {
-        final projects = snapshot.data ?? const [];
-        return DropdownButtonFormField<ProjectModel>(
-          initialValue: _selectedProject,
-          decoration: InputDecoration(
-            labelText: 'Project (optional — leave blank for company storage)',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          items: projects
-              .map((p) => DropdownMenuItem(value: p, child: Text(p.name, style: GoogleFonts.poppins())))
-              .toList(),
-          onChanged: (value) => setState(() => _selectedProject = value),
-        );
-      },
+    if (!_projectsLoaded) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedProjectId,
+      decoration: InputDecoration(
+        labelText: 'Project (optional — leave blank for company storage)',
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+      ),
+      items: _projects
+          .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name, style: GoogleFonts.poppins())))
+          .toList(),
+      onChanged: (value) => setState(() => _selectedProjectId = value),
     );
   }
 }

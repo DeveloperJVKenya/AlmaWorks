@@ -100,7 +100,10 @@ class AuthService {
   // never grant a role the account doesn't already have. Failures are
   // swallowed — this is a best-effort background sync, never something that
   // should block sign-in.
-  Future<void> ensureUserRoleMirror({
+  /// Returns true on success. Never throws — callers can await this for
+  /// ordering (so nothing tries to read a rule-gated collection before the
+  /// mirror exists) without it ever being able to block sign-in on failure.
+  Future<bool> ensureUserRoleMirror({
     required String uid,
     required String username,
     required String role,
@@ -110,8 +113,16 @@ class AuthService {
         'role': role,
         'username': username,
       });
+      return true;
     } catch (e) {
-      debugPrint('Error syncing UserRoles mirror: $e');
+      // Most likely cause if this ever fires: firestore.rules' cross-check
+      // (Users/{username}.uid == auth.uid && Users/{username}.role == role)
+      // failed — e.g. the Users doc is missing a `uid` field, or `uid`
+      // doesn't match this Firebase Auth account. Left visible via
+      // debugPrint (rather than fully swallowed) since a silent failure
+      // here manifests later as a confusing permission-denied on Inventory.
+      debugPrint('⚠️ ensureUserRoleMirror failed for uid=$uid username=$username role=$role: $e');
+      return false;
     }
   }
 

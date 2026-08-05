@@ -3,6 +3,7 @@ import 'package:almaworks/authentication/welcome_screen.dart';
 import 'package:almaworks/rbacsystem/firebase_notification_handler.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/providers/locale_provider.dart';
+import 'package:almaworks/providers/theme_provider.dart';
 import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:almaworks/screens/communication/communication_message_detail_screen.dart';
 import 'package:almaworks/screens/communication/communication_models.dart';
@@ -15,6 +16,7 @@ import 'package:almaworks/services/notification_service.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,8 +25,9 @@ import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations
 import 'package:logger/logger.dart';
 import 'firebase_options.dart';
 
-// ─── Global LocaleProvider ────────────────────────────────────────────────────
+// ─── Global providers ─────────────────────────────────────────────────────────
 final LocaleProvider localeProvider = LocaleProvider();
+final ThemeProvider themeProvider = ThemeProvider();
 // ─────────────────────────────────────────────────────────────────────────────
 
 void main() async {
@@ -49,6 +52,12 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     logger.i('✅ Firebase initialized successfully');
+
+    // ── Restore persisted language/theme preferences before first frame ────
+    await localeProvider.load();
+    await themeProvider.load();
+    logger.i('✅ Locale/theme preferences restored '
+        '(language=${localeProvider.language}, darkMode=${themeProvider.isDarkMode})');
 
     // ── FCM background handler — MUST be registered before runApp ─────────
     // This top-level function handles FCM pushes when the app is terminated
@@ -159,7 +168,12 @@ void main() async {
           '⚠️ Communication Notification Service initialization failed (non-critical): $e');
     }
 
-    runApp(AlmaWorksApp(logger: logger));
+    // ProviderScope wraps the whole app because Riverpod requires it as a
+    // root ancestor of anything using `ref` — it's additive and does not
+    // affect any existing `provider`-package (ChangeNotifierProvider/
+    // LocaleProvider) code elsewhere in the app. Currently only the
+    // Inventory module (lib/screens/inventory/) consumes Riverpod providers.
+    runApp(ProviderScope(child: AlmaWorksApp(logger: logger)));
     logger.i('✅ AlmaWorks app started successfully');
   } catch (e, stackTrace) {
     logger.e('❌ Failed to initialize AlmaWorks app',
@@ -367,11 +381,13 @@ class _AlmaWorksAppState extends State<AlmaWorksApp> {
     );
 
     return ListenableBuilder(
-      listenable: localeProvider,
+      listenable: Listenable.merge([localeProvider, themeProvider]),
       builder: (context, _) => MaterialApp(
         navigatorKey: navigatorKey,
         title: 'AlmaWorks',
         theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeProvider.themeMode,
         debugShowCheckedModeBanner: false,
         locale: localeProvider.locale,
         localizationsDelegates: const [

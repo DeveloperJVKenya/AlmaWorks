@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:almaworks/models/schedule_monitor_model.dart';
+import 'package:almaworks/services/notification_preferences.dart';
 import 'package:almaworks/services/notification_service.dart';
 
 class EnhancedNotificationService {
@@ -162,6 +163,7 @@ class EnhancedNotificationService {
     required String type,
     required String firestoreNotificationId,
   }) async {
+    if (!await NotificationPreferences.isEnabled()) return;
     try {
       final notificationId = '${projectId}_${task.scheduleTaskId}'.hashCode;
       final channelKey = type == 'overdue' ? 'schedule_overdue' : 'schedule_starting_soon';
@@ -220,6 +222,7 @@ class EnhancedNotificationService {
     required List<Map<String, dynamic>> taskGroups,
     required int totalCount,
   }) async {
+    if (!await NotificationPreferences.isEnabled()) return;
     try {
       final groupId = projectId.hashCode;
       

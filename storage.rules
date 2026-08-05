@@ -30,5 +30,19 @@ service firebase.storage {
       allow read, write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin'];
       allow delete: if false;
     }
+
+    // Material catalog photos — MainAdmin only, matching InventoryMaterials'
+    // create restriction in firestore.rules.
+    match /Inventory/Materials/{materialId}/{allPaths=**} {
+      allow read: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin'];
+      allow write: if request.auth != null && inventoryRole() == 'MainAdmin';
+    }
+
+    // Stock movement (receipt/issue) photos — MainAdmin or Admin. No delete,
+    // same reasoning as AssetAssignments above.
+    match /Inventory/MaterialMovements/{movementId}/{allPaths=**} {
+      allow read, write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin'];
+      allow delete: if false;
+    }
   }
 }

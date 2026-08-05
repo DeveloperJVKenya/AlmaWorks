@@ -17,7 +17,7 @@ import 'package:provider/provider.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:almaworks/main.dart' show localeProvider;
+import 'package:almaworks/main.dart' show localeProvider, themeProvider;
 
 class DashboardScreen extends StatefulWidget {
   final Logger logger;
@@ -219,7 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AccountScreen(localeProvider: localeProvider),
+                      builder: (context) => AccountScreen(localeProvider: localeProvider, themeProvider: themeProvider),
                     ),
                   );
                 },
@@ -558,7 +558,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider)),
+              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider, themeProvider: themeProvider)),
             ),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
@@ -586,7 +586,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider)),
+              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider, themeProvider: themeProvider)),
             ),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
@@ -619,7 +619,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider)),
+              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider, themeProvider: themeProvider)),
             ),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
@@ -685,7 +685,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildNavItems(SelectedProjectProvider projectProvider, {EdgeInsets? padding}) {
-    return ListView(
+    return Material(
+      color: Colors.transparent,
+      child: ListView(
       padding: padding,
       children: [
         ListTile(
@@ -721,6 +723,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
       ],
+      ),
     );
   }
 
