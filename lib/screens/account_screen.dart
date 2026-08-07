@@ -11,6 +11,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 
+// Sidebar here mirrors base_layout.dart's fixed white surface (see
+// _buildSidebar's hardcoded `color: Colors.white`) — same fix applied
+// there for the same reason: unset text/icon colors were inheriting the
+// ambient theme's default, which turns near-white under AppTheme.darkTheme
+// and becomes invisible against this sidebar's permanently-light background.
+const _sidebarTextColor = Color(0xFF37474F);
+const _sidebarDisabledTextColor = Color(0xFFB0BEC5);
+const _sidebarSelectedTextColor = Color(0xFF0A2E5A);
+
 class AccountScreen extends StatefulWidget {
   final Logger? logger;
   final LocaleProvider localeProvider;
@@ -386,10 +395,10 @@ class _AccountScreenState extends State<AccountScreen> {
             children: [
               // Switch Project / My Projects
               ListTile(
-                leading: const Icon(Icons.swap_horiz),
+                leading: const Icon(Icons.swap_horiz, color: Colors.blueGrey),
                 title: Text(
                   isClient ? 'My Projects' : 'Switch Project',
-                  style: GoogleFonts.poppins(),
+                  style: GoogleFonts.poppins(color: _sidebarTextColor),
                 ),
                 onTap: () {
                   _logger.i('🧭 AccountScreen sidebar: Switch Project tapped');
@@ -408,8 +417,8 @@ class _AccountScreenState extends State<AccountScreen> {
 
               // Overview — no project selected from this screen, shown greyed
               ListTile(
-                leading: const Icon(Icons.dashboard),
-                title: Text('Overview', style: GoogleFonts.poppins()),
+                leading: Icon(Icons.dashboard, color: Colors.indigo.withValues(alpha: 0.4)),
+                title: Text('Overview', style: GoogleFonts.poppins(color: _sidebarDisabledTextColor)),
                 enabled: false,
                 onTap: null,
               ),
@@ -426,20 +435,28 @@ class _AccountScreenState extends State<AccountScreen> {
                 (Icons.account_balance, 'Financials'),
               ])
                 ListTile(
-                  leading: Icon(item.$1),
-                  title: Text(item.$2, style: GoogleFonts.poppins()),
+                  leading: Icon(item.$1, color: _sidebarDisabledTextColor),
+                  title: Text(item.$2, style: GoogleFonts.poppins(color: _sidebarDisabledTextColor)),
                   enabled: false,
                 ),
 
               const Divider(),
 
               // Account — currently selected
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: Text('Account', style: GoogleFonts.poppins()),
-                selected: true,
-                selectedTileColor: Colors.blueGrey[50],
-                onTap: () {},
+              Container(
+                decoration: const BoxDecoration(
+                  border: Border(left: BorderSide(color: _sidebarSelectedTextColor, width: 3)),
+                ),
+                child: ListTile(
+                  leading: const Icon(Icons.person, color: _sidebarSelectedTextColor),
+                  title: Text(
+                    'Account',
+                    style: GoogleFonts.poppins(color: _sidebarSelectedTextColor, fontWeight: FontWeight.w600),
+                  ),
+                  selected: true,
+                  selectedTileColor: Colors.blueGrey[50],
+                  onTap: () {},
+                ),
               ),
             ],
             ),

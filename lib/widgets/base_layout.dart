@@ -22,6 +22,22 @@ import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// The sidebar is a deliberately fixed white surface (see _buildSidebar's
+// hardcoded `color: Colors.white`) — it doesn't participate in the
+// light/dark theme toggle the way most of the app now can. Menu item labels
+// previously left their color unset, which meant they silently inherited
+// whatever the *ambient* theme's default text color was — near-black under
+// the light theme (fine, invisible bug masked), but near-white under the
+// dark theme once AppTheme.darkTheme was introduced, i.e. white text on a
+// white sidebar. The selected item stayed visible only because
+// ListTile auto-tints a *selected* title/icon with the theme's primary
+// color, which happens to still read on white. Every title now gets an
+// explicit color instead of an inherited one, so the sidebar's own
+// intentionally-fixed light appearance no longer depends on which theme
+// happens to be active app-wide.
+const _sidebarSelectedTextColor = Color(0xFF0A2E5A);
+const _sidebarTextColor = Color(0xFF37474F);
+
 class BaseLayout extends StatefulWidget {
   final Widget child;
   final String title;
@@ -276,7 +292,10 @@ class _BaseLayoutState extends State<BaseLayout> {
                 leading: const Icon(Icons.swap_horiz, color: Colors.blueGrey),
                 title: Text(
                   isClient ? 'My Projects' : 'Switch Project',
-                  style: GoogleFonts.poppins(),
+                  style: GoogleFonts.poppins(
+                    color: widget.selectedMenuItem == 'Switch Project' ? _sidebarSelectedTextColor : _sidebarTextColor,
+                    fontWeight: widget.selectedMenuItem == 'Switch Project' ? FontWeight.w600 : FontWeight.w400,
+                  ),
                 ),
                 selected: widget.selectedMenuItem == 'Switch Project',
                 selectedTileColor: Colors.blueGrey[50],
@@ -301,7 +320,13 @@ class _BaseLayoutState extends State<BaseLayout> {
               // ── Overview ──────────────────────────────────────────────────
               ListTile(
                 leading: const Icon(Icons.dashboard, color: Colors.indigo),
-                title: Text('Overview', style: GoogleFonts.poppins()),
+                title: Text(
+                  'Overview',
+                  style: GoogleFonts.poppins(
+                    color: widget.selectedMenuItem == 'Overview' ? _sidebarSelectedTextColor : _sidebarTextColor,
+                    fontWeight: widget.selectedMenuItem == 'Overview' ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
                 selected: widget.selectedMenuItem == 'Overview',
                 selectedTileColor: Colors.blueGrey[50],
                 onTap: () {
@@ -545,12 +570,32 @@ class _BaseLayoutState extends State<BaseLayout> {
     required bool isClient,
     required Widget Function() onNavigate,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(title, style: GoogleFonts.poppins()),
-      selected: widget.selectedMenuItem == selectedItem,
-      selectedTileColor: Colors.blueGrey[50],
-      onTap: () {
+    final selected = widget.selectedMenuItem == selectedItem;
+    // A left accent bar on the active item — a clearer, more modern "you
+    // are here" affordance than relying on background tint alone. A
+    // Container border (not ListTile's `shape`, which draws uniformly
+    // around all four edges) so only the left edge is marked.
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(
+            color: selected ? _sidebarSelectedTextColor : Colors.transparent,
+            width: 3,
+          ),
+        ),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: iconColor),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            color: selected ? _sidebarSelectedTextColor : _sidebarTextColor,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+        selected: selected,
+        selectedTileColor: Colors.blueGrey[50],
+        onTap: () {
         widget.logger.i('🧭 BaseLayout: $title selected');
         if (isMobile) Navigator.pop(context);
 
@@ -588,7 +633,8 @@ class _BaseLayoutState extends State<BaseLayout> {
             ),
           );
         }
-      },
+        },
+      ),
     );
   }
 }

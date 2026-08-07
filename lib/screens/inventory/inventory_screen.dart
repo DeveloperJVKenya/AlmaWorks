@@ -541,6 +541,23 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
         side: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
       ),
       clipBehavior: Clip.antiAlias,
+      // A status-colored left accent strip — a quicker visual read of an
+      // item's state than the pill alone, and the same "colored edge"
+      // language now used for the sidebar's active-item indicator.
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Container(width: 4, color: statusColor),
+            Expanded(child: _buildItemCardBody(item, statusColor)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemCardBody(AssetModel item, Color statusColor) {
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: () => Navigator.push(
           context,
@@ -805,6 +822,20 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
         side: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
       ),
       clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Container(width: 4, color: stockColor),
+            Expanded(child: _buildMaterialCardBody(material, stockColor, stockLabel)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMaterialCardBody(MaterialModel material, Color stockColor, String stockLabel) {
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: () => Navigator.push(
           context,
