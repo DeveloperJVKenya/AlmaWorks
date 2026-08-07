@@ -167,11 +167,13 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          inventoryFormMaxWidth(
-            child: Column(
+      child: Container(
+        color: inventoryPageBackground,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            inventoryFormMaxWidth(
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 inventoryFormSection(
@@ -279,6 +281,7 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
             ),
           ),
         ],
+        ),
       ),
     );
   }

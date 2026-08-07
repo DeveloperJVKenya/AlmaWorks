@@ -111,22 +111,17 @@ class _BaseLayoutState extends State<BaseLayout> {
         // changed directly in Users) stop being gated out of role-restricted
         // features like Inventory without needing to log out and back in.
         //
-        // Awaited (not fire-and-forget) deliberately: BaseLayout wraps every
-        // Inventory screen too, and its Riverpod stream providers start
-        // querying InventoryAssets/InventoryMaterials as soon as the screen
-        // builds. Those rules can only resolve the caller's role via a
-        // UserRoles/{uid} get() — if that write is still in flight when the
-        // stream attaches, Firestore denies it and the listener stays
-        // permanently in an error state (a Firestore snapshot listener does
-        // not auto-retry after permission-denied), so what looked like a
-        // one-off race actually reproduced on every single visit.
-        final mirrorSynced = await _authService.ensureUserRoleMirror(uid: user.uid, username: username, role: role);
-        if (!mirrorSynced) {
-          widget.logger.w(
-            '⚠️ BaseLayout: UserRoles mirror sync failed for uid=${user.uid} username=$username role=$role — '
-            'role-restricted collections (e.g. Inventory) may deny reads until this succeeds.',
-          );
-        }
+        // Fire-and-forget again (not awaited): awaiting this here previously
+        // meant every single navigation in the ENTIRE app — not just
+        // Inventory — paid for a full extra Firestore round trip (this
+        // write's own rules cross-check does a get() before the set())
+        // behind BaseLayout's full-screen loading gate below, which is what
+        // made every "Add" button feel like it hung. The race this exists
+        // to prevent only matters for Inventory's own Firestore listeners,
+        // so that wait now lives in inventory_providers.dart's
+        // roleMirrorSyncProvider instead, scoped to just the Inventory
+        // screen's content area — everywhere else stays instant.
+        unawaited(_authService.ensureUserRoleMirror(uid: user.uid, username: username, role: role));
 
         List<String> grantedIds = [];
         if (role == 'Client') {

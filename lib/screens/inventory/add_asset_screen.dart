@@ -49,11 +49,19 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
   final _categoryController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _serialNumberController = TextEditingController();
+  final _quantityController = TextEditingController(text: '1');
   final InventoryService _inventoryService = InventoryService();
 
   XFile? _selectedPhoto;
   bool _isSaving = false;
   String _condition = AssetModel.conditionGood;
+
+  /// Tools only, and only when creating (not editing): how many identical
+  /// units to register at once. Each still becomes its own doc with its
+  /// own independent custody history — this is purely a convenience for
+  /// batch-registering (e.g. "4 hammers") rather than a shared counter, so
+  /// per-unit traceability (who has *this specific* hammer) is never lost.
+  int get _quantity => int.tryParse(_quantityController.text.trim()) ?? 1;
 
   bool get _isEditing => widget.existingAsset != null;
   bool get _isTool => widget.itemType == AssetModel.typeTool;
@@ -78,6 +86,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
     _categoryController.dispose();
     _descriptionController.dispose();
     _serialNumberController.dispose();
+    _quantityController.dispose();
     super.dispose();
   }
 
@@ -122,13 +131,18 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
 
     final itemLabel = _isTool ? 'tool' : 'asset';
     final actionLabel = _isEditing ? 'Save Changes' : (_isTool ? 'Add Tool' : 'Add Asset');
+    final quantity = _isTool && !_isEditing ? _quantity.clamp(1, 500) : 1;
     final confirmed = await showConfirmDialog(
       context,
       title: actionLabel,
       message: _isEditing
           ? 'Save changes to "${_nameController.text.trim()}"?'
-          : 'Register "${_nameController.text.trim()}" (${_categoryController.text.trim()}) '
-              'as a new company $itemLabel?',
+          : quantity > 1
+              ? 'Register $quantity units of "${_nameController.text.trim()}" '
+                  '(${_categoryController.text.trim()}) as new company ${itemLabel}s? '
+                  'Each unit is tracked separately, with its own custody history.'
+              : 'Register "${_nameController.text.trim()}" (${_categoryController.text.trim()}) '
+                  'as a new company $itemLabel?',
       confirmLabel: actionLabel,
     );
     if (!confirmed || !mounted) return;
@@ -166,29 +180,39 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
           photoUrl: photoUrl,
         );
       } else {
-        await _inventoryService.createAsset(
-          itemType: widget.itemType,
-          name: _nameController.text.trim(),
-          category: _categoryController.text.trim(),
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
-          serialNumber: _serialNumberController.text.trim().isEmpty
-              ? null
-              : _serialNumberController.text.trim(),
-          initialCondition: _condition,
-          createdByUid: widget.createdByUid,
-          createdByName: widget.createdByName,
-          photoBytes: photoBytes,
-          photoFileName: photoFileName,
-        );
+        // A shared serial number across multiple units would misrepresent
+        // per-unit identity, so it's only carried over when registering a
+        // single unit — batches rely on each unit's own doc id instead.
+        final serialNumber = quantity > 1
+            ? null
+            : (_serialNumberController.text.trim().isEmpty ? null : _serialNumberController.text.trim());
+        for (var i = 0; i < quantity; i++) {
+          await _inventoryService.createAsset(
+            itemType: widget.itemType,
+            name: _nameController.text.trim(),
+            category: _categoryController.text.trim(),
+            description: _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+            serialNumber: serialNumber,
+            initialCondition: _condition,
+            createdByUid: widget.createdByUid,
+            createdByName: widget.createdByName,
+            photoBytes: photoBytes,
+            photoFileName: photoFileName,
+          );
+        }
       }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isEditing ? 'Changes saved' : '${_isTool ? 'Tool' : 'Asset'} added successfully',
+            _isEditing
+                ? 'Changes saved'
+                : quantity > 1
+                    ? '$quantity units added successfully'
+                    : '${_isTool ? 'Tool' : 'Asset'} added successfully',
             style: GoogleFonts.poppins(),
           ),
           backgroundColor: Colors.green,
@@ -218,13 +242,15 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            inventoryFormMaxWidth(
-              child: Column(
+      child: Container(
+        color: inventoryPageBackground,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              inventoryFormMaxWidth(
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   inventoryFormSection(
@@ -282,14 +308,34 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
                       ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _serialNumberController,
-                        decoration: inventoryInputDecoration(
-                          label: 'Serial Number (optional)',
-                          icon: Icons.qr_code_2_outlined,
+                      if (_isTool && !_isEditing) ...[
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _quantityController,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setState(() {}),
+                          decoration: inventoryInputDecoration(
+                            label: 'Quantity',
+                            hint: 'Number of identical units to register',
+                            icon: Icons.numbers_outlined,
+                          ),
+                          validator: (v) {
+                            final n = int.tryParse((v ?? '').trim());
+                            if (n == null || n < 1) return 'Enter a whole number of 1 or more';
+                            return null;
+                          },
                         ),
-                      ),
+                      ],
+                      if (_quantity <= 1) ...[
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _serialNumberController,
+                          decoration: inventoryInputDecoration(
+                            label: 'Serial Number (optional)',
+                            icon: Icons.qr_code_2_outlined,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 14),
                       TextFormField(
                         controller: _descriptionController,
@@ -368,6 +414,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

@@ -60,8 +60,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
   Widget build(BuildContext context) {
     final roleAsync = ref.watch(userRoleProvider);
     final usernameAsync = ref.watch(usernameProvider);
+    // Gates only the Assets/Tools/Materials streams below (not the rest of
+    // the app — see roleMirrorSyncProvider's doc comment) so they never
+    // subscribe before the UserRoles/{uid} mirror they depend on exists.
+    final mirrorSyncAsync = ref.watch(roleMirrorSyncProvider);
 
-    if (roleAsync.isLoading || usernameAsync.isLoading) {
+    if (roleAsync.isLoading || usernameAsync.isLoading || mirrorSyncAsync.isLoading) {
       return BaseLayout(
         title: 'Inventory',
         project: widget.project,
@@ -441,7 +445,8 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
               return _buildStreamErrorState(err, onRetry: () => ref.invalidate(allAssetsStreamProvider));
             },
             data: (allAssets) {
-              final items = _applyFilters(allAssets.where((a) => a.itemType == widget.itemType).toList());
+              final allOfType = allAssets.where((a) => a.itemType == widget.itemType).toList();
+              final items = _applyFilters(allOfType);
 
               if (items.isEmpty) {
                 return _emptyState(
@@ -451,6 +456,16 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
                 );
               }
 
+              // For Tools, several identical units are commonly registered
+              // as separate docs sharing one name (each keeps its own full
+              // custody history — better for traceability than a single
+              // shared quantity counter would be). This aggregates them by
+              // name so "4 hammers, 2 checked out" reads as "2 of 4
+              // available" instead of 4 separate, hard-to-relate rows.
+              final quantityAgg = widget.itemType == AssetModel.typeTool
+                  ? _computeQuantityAggregate(allOfType)
+                  : const <String, ({int total, int available})>{};
+
               return AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
                 child: KeyedSubtree(
@@ -458,7 +473,7 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
                   child: _responsiveItems(
                     context: context,
                     itemCount: items.length,
-                    itemBuilder: (context, index) => _buildItemCard(items[index]),
+                    itemBuilder: (context, index) => _buildItemCard(items[index], quantityAgg),
                   ),
                 ),
               );
@@ -531,8 +546,25 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
     ]);
   }
 
-  Widget _buildItemCard(AssetModel item) {
+  /// Groups same-named Tools (each still its own doc with its own full
+  /// custody history) into a total/available count, keyed by lower-cased
+  /// trimmed name. Not used for Assets — those are always individually
+  /// unique (vehicles, heavy equipment), so a count would be meaningless.
+  Map<String, ({int total, int available})> _computeQuantityAggregate(List<AssetModel> itemsOfType) {
+    final totals = <String, int>{};
+    final available = <String, int>{};
+    for (final item in itemsOfType) {
+      final key = item.name.trim().toLowerCase();
+      totals[key] = (totals[key] ?? 0) + 1;
+      if (item.isAvailable) available[key] = (available[key] ?? 0) + 1;
+    }
+    return {for (final key in totals.keys) key: (total: totals[key]!, available: available[key] ?? 0)};
+  }
+
+  Widget _buildItemCard(AssetModel item, Map<String, ({int total, int available})> quantityAgg) {
     final statusColor = _statusColor(item.status);
+    final agg = quantityAgg[item.name.trim().toLowerCase()];
+    final showQuantity = widget.itemType == AssetModel.typeTool && agg != null && agg.total > 1;
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 10),
@@ -548,14 +580,14 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
         child: Row(
           children: [
             Container(width: 4, color: statusColor),
-            Expanded(child: _buildItemCardBody(item, statusColor)),
+            Expanded(child: _buildItemCardBody(item, statusColor, showQuantity ? agg : null)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildItemCardBody(AssetModel item, Color statusColor) {
+  Widget _buildItemCardBody(AssetModel item, Color statusColor, ({int total, int available})? quantity) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -588,7 +620,7 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  item.itemType == AssetModel.typeTool ? Icons.handyman_outlined : Icons.build_outlined,
+                  item.itemType == AssetModel.typeTool ? Icons.handyman_outlined : Icons.precision_manufacturing_outlined,
                   color: Colors.white,
                   size: 22,
                 ),
@@ -609,6 +641,17 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
                     ),
+                    if (quantity != null) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        '${quantity.available} of ${quantity.total} available',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: quantity.available > 0 ? const Color(0xFF2E7D32) : Colors.red[700],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

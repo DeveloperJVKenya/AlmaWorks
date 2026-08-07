@@ -3,6 +3,17 @@ import 'package:google_fonts/google_fonts.dart';
 
 const inventoryNavy = Color(0xFF0A2E5A);
 
+/// Page background for every Inventory form screen (Add Asset/Tool/
+/// Material, Request/Review Checkout, Record Custody/Movement) — a visible
+/// step down from the white section cards. Previously these screens had no
+/// explicit background at all, so near-white cards (fill ~0xFAFBFC) sat
+/// directly on the Scaffold's own white, and the near-invisible field
+/// borders (alpha 0.22) made everything blur into one flat, washed-out
+/// surface, especially under bright ambient light. Applying this behind the
+/// form content is what actually makes the cards and fields read as
+/// distinct surfaces rather than all just "white."
+const inventoryPageBackground = Color(0xFFEEF1F5);
+
 /// A titled, card-style section used to group related fields on the
 /// Inventory module's Add/Record forms — replaces the previous flat list of
 /// unrelated fields with a clearer visual hierarchy. The icon renders as a
@@ -21,8 +32,8 @@ Widget inventoryFormSection({
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.grey.withValues(alpha: 0.10)),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.045), blurRadius: 14, offset: const Offset(0, 4))],
+      border: Border.all(color: Colors.grey.withValues(alpha: 0.20)),
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 14, offset: const Offset(0, 4))],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,15 +96,15 @@ InputDecoration inventoryInputDecoration({
     labelText: label,
     isDense: isDense,
     hintText: hint,
-    hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[400]),
-    labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600]),
+    hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[500]),
+    labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[700]),
     floatingLabelStyle: GoogleFonts.poppins(fontSize: 13, color: inventoryNavy, fontWeight: FontWeight.w600),
-    prefixIcon: icon != null ? Icon(icon, size: 19, color: Colors.grey[500]) : null,
+    prefixIcon: icon != null ? Icon(icon, size: 19, color: Colors.grey[600]) : null,
     filled: true,
-    fillColor: const Color(0xFFFAFBFC),
+    fillColor: const Color(0xFFF3F5F8),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    border: border(Colors.grey.withValues(alpha: 0.22)),
-    enabledBorder: border(Colors.grey.withValues(alpha: 0.22)),
+    border: border(Colors.grey.withValues(alpha: 0.4)),
+    enabledBorder: border(Colors.grey.withValues(alpha: 0.4)),
     focusedBorder: border(inventoryNavy, 1.6),
     errorBorder: border(Colors.red.shade300),
     focusedErrorBorder: border(Colors.red.shade400, 1.6),

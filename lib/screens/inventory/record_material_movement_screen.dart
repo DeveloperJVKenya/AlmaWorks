@@ -220,13 +220,15 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            inventoryFormMaxWidth(
-              child: Column(
+      child: Container(
+        color: inventoryPageBackground,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              inventoryFormMaxWidth(
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
@@ -361,6 +363,7 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
               ),
             ),
           ],
+          ),
         ),
       ),
     );

@@ -131,18 +131,22 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            inventoryFormMaxWidth(
-              child: Column(
+      child: Container(
+        color: inventoryPageBackground,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              inventoryFormMaxWidth(
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   inventoryFormSection(
                     title: widget.asset.name,
-                    icon: widget.asset.itemType == AssetModel.typeTool ? Icons.handyman_outlined : Icons.build_outlined,
+                    icon: widget.asset.itemType == AssetModel.typeTool
+                        ? Icons.handyman_outlined
+                        : Icons.precision_manufacturing_outlined,
                     children: [
                       Text(
                         '${widget.asset.category} • ${widget.asset.itemType}',
@@ -197,6 +201,7 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

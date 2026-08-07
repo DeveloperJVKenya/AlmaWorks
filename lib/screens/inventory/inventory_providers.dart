@@ -44,6 +44,23 @@ final currentUidProvider = Provider<String>((ref) {
   return ref.watch(authServiceProvider).currentUser?.uid ?? '';
 });
 
+/// Ensures UserRoles/{uid} exists before Inventory's own Firestore listeners
+/// (below) attach — those collections' rules can only resolve the caller's
+/// role via a get() on that mirror doc, so subscribing before it's written
+/// gets a permission-denied that then sticks (StreamProviders here aren't
+/// autoDispose, so a failed listener stays failed for the session). Scoped
+/// to just the Inventory screen's content — not awaited from BaseLayout,
+/// which would otherwise add this round trip to every screen navigation in
+/// the app, not just Inventory's. Not autoDispose: only needs to succeed
+/// once per session.
+final roleMirrorSyncProvider = FutureProvider<bool>((ref) async {
+  final uid = ref.watch(currentUidProvider);
+  if (uid.isEmpty) return false;
+  final role = await ref.watch(userRoleProvider.future);
+  final username = await ref.watch(usernameProvider.future);
+  return ref.watch(authServiceProvider).ensureUserRoleMirror(uid: uid, username: username, role: role);
+});
+
 /// Single shared listener for ALL assets+tools — both list tabs watch this
 /// same provider and filter client-side by `itemType`, rather than each
 /// opening its own Firestore subscription against the same collection.

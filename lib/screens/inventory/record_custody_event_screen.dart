@@ -212,11 +212,13 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          inventoryFormMaxWidth(
-            child: Column(
+      child: Container(
+        color: inventoryPageBackground,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            inventoryFormMaxWidth(
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
@@ -309,6 +311,7 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
