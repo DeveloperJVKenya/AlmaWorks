@@ -11,14 +11,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 
-// Sidebar here mirrors base_layout.dart's fixed white surface (see
-// _buildSidebar's hardcoded `color: Colors.white`) — same fix applied
-// there for the same reason: unset text/icon colors were inheriting the
-// ambient theme's default, which turns near-white under AppTheme.darkTheme
-// and becomes invisible against this sidebar's permanently-light background.
-const _sidebarTextColor = Color(0xFF37474F);
-const _sidebarDisabledTextColor = Color(0xFFB0BEC5);
-const _sidebarSelectedTextColor = Color(0xFF0A2E5A);
+// Sidebar here mirrors base_layout.dart's own sidebar — same dark-mode
+// support applied there for the same reason: this is a second, separate
+// implementation of the same sidebar, so it needs the same theme-aware
+// surface/text colors rather than staying permanently light.
+const _sidebarSurfaceLight = Colors.white;
+const _sidebarSurfaceDark = Color(0xFF1E1E1E);
+const _sidebarTextColorLight = Color(0xFF37474F);
+const _sidebarTextColorDark = Color(0xFFECEFF1);
+const _sidebarDisabledTextColorLight = Color(0xFFB0BEC5);
+const _sidebarDisabledTextColorDark = Color(0xFF6B7480);
+const _sidebarSelectedTextColorLight = Color(0xFF0A2E5A);
+const _sidebarSelectedTextColorDark = Color(0xFF82B1FF);
 
 class AccountScreen extends StatefulWidget {
   final Logger? logger;
@@ -330,13 +334,14 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget _buildDrawer() => Drawer(child: _buildSidebarContent());
 
   Widget _buildSidebar(bool isTablet) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: isTablet ? 280 : 300,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? _sidebarSurfaceDark : _sidebarSurfaceLight,
         boxShadow: [
           BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
               blurRadius: 4,
               offset: const Offset(2, 0)),
         ],
@@ -351,9 +356,15 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget _buildSidebarContent() {
     final bool isClient = _userRole == 'Client';
     final bool isMobile = MediaQuery.of(context).size.width < 600;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? _sidebarTextColorDark : _sidebarTextColorLight;
+    final disabledTextColor = isDark ? _sidebarDisabledTextColorDark : _sidebarDisabledTextColorLight;
+    final selectedTextColor = isDark ? _sidebarSelectedTextColorDark : _sidebarSelectedTextColorLight;
 
-    return Column(
-      children: [
+    return ColoredBox(
+      color: isDark ? _sidebarSurfaceDark : _sidebarSurfaceLight,
+      child: Column(
+        children: [
         // ── Header ─────────────────────────────────────────────────────────
         Container(
           height: 120,
@@ -398,7 +409,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 leading: const Icon(Icons.swap_horiz, color: Colors.blueGrey),
                 title: Text(
                   isClient ? 'My Projects' : 'Switch Project',
-                  style: GoogleFonts.poppins(color: _sidebarTextColor),
+                  style: GoogleFonts.poppins(color: textColor, fontWeight: FontWeight.w600),
                 ),
                 onTap: () {
                   _logger.i('🧭 AccountScreen sidebar: Switch Project tapped');
@@ -418,7 +429,7 @@ class _AccountScreenState extends State<AccountScreen> {
               // Overview — no project selected from this screen, shown greyed
               ListTile(
                 leading: Icon(Icons.dashboard, color: Colors.indigo.withValues(alpha: 0.4)),
-                title: Text('Overview', style: GoogleFonts.poppins(color: _sidebarDisabledTextColor)),
+                title: Text('Overview', style: GoogleFonts.poppins(color: disabledTextColor)),
                 enabled: false,
                 onTap: null,
               ),
@@ -435,8 +446,8 @@ class _AccountScreenState extends State<AccountScreen> {
                 (Icons.account_balance, 'Financials'),
               ])
                 ListTile(
-                  leading: Icon(item.$1, color: _sidebarDisabledTextColor),
-                  title: Text(item.$2, style: GoogleFonts.poppins(color: _sidebarDisabledTextColor)),
+                  leading: Icon(item.$1, color: disabledTextColor),
+                  title: Text(item.$2, style: GoogleFonts.poppins(color: disabledTextColor)),
                   enabled: false,
                 ),
 
@@ -444,17 +455,17 @@ class _AccountScreenState extends State<AccountScreen> {
 
               // Account — currently selected
               Container(
-                decoration: const BoxDecoration(
-                  border: Border(left: BorderSide(color: _sidebarSelectedTextColor, width: 3)),
+                decoration: BoxDecoration(
+                  border: Border(left: BorderSide(color: selectedTextColor, width: 3)),
                 ),
                 child: ListTile(
-                  leading: const Icon(Icons.person, color: _sidebarSelectedTextColor),
+                  leading: Icon(Icons.person, color: selectedTextColor),
                   title: Text(
                     'Account',
-                    style: GoogleFonts.poppins(color: _sidebarSelectedTextColor, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.poppins(color: selectedTextColor, fontWeight: FontWeight.w700),
                   ),
                   selected: true,
-                  selectedTileColor: Colors.blueGrey[50],
+                  selectedTileColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blueGrey[50],
                   onTap: () {},
                 ),
               ),
@@ -463,6 +474,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
       ],
+      ),
     );
   }
 

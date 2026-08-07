@@ -5,6 +5,7 @@ import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:almaworks/services/inventory_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Riverpod providers for the Inventory module.
@@ -28,20 +29,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final inventoryServiceProvider = Provider<InventoryService>((ref) => InventoryService());
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
-/// Current signed-in user's role and username. Cached for the app's
-/// lifetime (not autoDispose) since BaseLayout/login already keep the
-/// underlying Users doc in sync — re-fetching on every Inventory visit adds
-/// latency for no benefit within a single session.
-final userRoleProvider = FutureProvider<String>((ref) {
-  return ref.watch(authServiceProvider).getUserRole();
-});
-
-final usernameProvider = FutureProvider<String>((ref) {
-  return ref.watch(authServiceProvider).getUsername();
-});
-
 final currentUidProvider = Provider<String>((ref) {
   return ref.watch(authServiceProvider).currentUser?.uid ?? '';
+});
+
+/// Single source of the caller's Users doc — role AND username come from
+/// the exact same query, run once. userRoleProvider/usernameProvider and
+/// roleMirrorSyncProvider below all derive from this instead of each
+/// separately querying `Users` (which is what AuthService.getUserRole() /
+/// getUsername() do individually) — that used to mean 2-3 sequential
+/// Firestore round trips gating the Inventory screen before it could
+/// render its tabs at all. Cached for the app's lifetime (not autoDispose).
+final _currentUserDocProvider = FutureProvider<({String role, String username})>((ref) async {
+  final uid = ref.watch(currentUidProvider);
+  if (uid.isEmpty) return (role: 'Client', username: '');
+  final snapshot =
+      await FirebaseFirestore.instance.collection('Users').where('uid', isEqualTo: uid).limit(1).get();
+  if (snapshot.docs.isEmpty) return (role: 'Client', username: '');
+  final data = snapshot.docs.first.data();
+  return (role: data['role'] as String? ?? 'Client', username: snapshot.docs.first.id);
+});
+
+final userRoleProvider = FutureProvider<String>((ref) async {
+  return (await ref.watch(_currentUserDocProvider.future)).role;
+});
+
+final usernameProvider = FutureProvider<String>((ref) async {
+  return (await ref.watch(_currentUserDocProvider.future)).username;
 });
 
 /// Ensures UserRoles/{uid} exists before Inventory's own Firestore listeners
@@ -56,9 +70,8 @@ final currentUidProvider = Provider<String>((ref) {
 final roleMirrorSyncProvider = FutureProvider<bool>((ref) async {
   final uid = ref.watch(currentUidProvider);
   if (uid.isEmpty) return false;
-  final role = await ref.watch(userRoleProvider.future);
-  final username = await ref.watch(usernameProvider.future);
-  return ref.watch(authServiceProvider).ensureUserRoleMirror(uid: uid, username: username, role: role);
+  final doc = await ref.watch(_currentUserDocProvider.future);
+  return ref.watch(authServiceProvider).ensureUserRoleMirror(uid: uid, username: doc.username, role: doc.role);
 });
 
 /// Single shared listener for ALL assets+tools — both list tabs watch this

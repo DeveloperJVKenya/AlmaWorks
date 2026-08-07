@@ -22,21 +22,25 @@ import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// The sidebar is a deliberately fixed white surface (see _buildSidebar's
-// hardcoded `color: Colors.white`) — it doesn't participate in the
-// light/dark theme toggle the way most of the app now can. Menu item labels
-// previously left their color unset, which meant they silently inherited
-// whatever the *ambient* theme's default text color was — near-black under
-// the light theme (fine, invisible bug masked), but near-white under the
-// dark theme once AppTheme.darkTheme was introduced, i.e. white text on a
-// white sidebar. The selected item stayed visible only because
-// ListTile auto-tints a *selected* title/icon with the theme's primary
-// color, which happens to still read on white. Every title now gets an
-// explicit color instead of an inherited one, so the sidebar's own
-// intentionally-fixed light appearance no longer depends on which theme
-// happens to be active app-wide.
-const _sidebarSelectedTextColor = Color(0xFF0A2E5A);
-const _sidebarTextColor = Color(0xFF37474F);
+// The sidebar now switches its own surface/text colors with the app theme
+// instead of staying permanently white — it used to hardcode `color:
+// Colors.white` (see _buildSidebar) while menu item labels left their color
+// unset, so titles silently inherited the *ambient* theme's default text
+// color: near-black under light (fine, coincidentally correct), near-white
+// under dark — on a sidebar that was still hardcoded white, i.e. invisible
+// white-on-white text. Rather than keep the sidebar permanently light (a
+// workaround, not what a "dark mode" toggle should mean), both the surface
+// and every text/icon color below now branch on Theme.of(context).brightness.
+const _sidebarSurfaceLight = Colors.white;
+const _sidebarSurfaceDark = Color(0xFF1E1E1E);
+
+// Bolder + brighter than a plain light-blue would be washed out against
+// _sidebarSurfaceDark, per feedback that dark-mode sidebar text needed more
+// visual weight generally, not just to be technically visible.
+const _sidebarSelectedTextColorLight = Color(0xFF0A2E5A);
+const _sidebarSelectedTextColorDark = Color(0xFF82B1FF);
+const _sidebarTextColorLight = Color(0xFF37474F);
+const _sidebarTextColorDark = Color(0xFFECEFF1);
 
 class BaseLayout extends StatefulWidget {
   final Widget child;
@@ -212,13 +216,14 @@ class _BaseLayoutState extends State<BaseLayout> {
   }
 
   Widget _buildSidebar(BuildContext context, bool isTablet) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: isTablet ? 280 : 300,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? _sidebarSurfaceDark : _sidebarSurfaceLight,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
             blurRadius: 4,
             offset: const Offset(2, 0),
           ),
@@ -232,9 +237,12 @@ class _BaseLayoutState extends State<BaseLayout> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
     final bool isClient = _userRole == 'Client';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      children: [
+    return ColoredBox(
+      color: isDark ? _sidebarSurfaceDark : _sidebarSurfaceLight,
+      child: Column(
+        children: [
         Container(
           height: 120,
           width: double.infinity,
@@ -288,12 +296,14 @@ class _BaseLayoutState extends State<BaseLayout> {
                 title: Text(
                   isClient ? 'My Projects' : 'Switch Project',
                   style: GoogleFonts.poppins(
-                    color: widget.selectedMenuItem == 'Switch Project' ? _sidebarSelectedTextColor : _sidebarTextColor,
-                    fontWeight: widget.selectedMenuItem == 'Switch Project' ? FontWeight.w600 : FontWeight.w400,
+                    color: widget.selectedMenuItem == 'Switch Project'
+                        ? (isDark ? _sidebarSelectedTextColorDark : _sidebarSelectedTextColorLight)
+                        : (isDark ? _sidebarTextColorDark : _sidebarTextColorLight),
+                    fontWeight: widget.selectedMenuItem == 'Switch Project' ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
                 selected: widget.selectedMenuItem == 'Switch Project',
-                selectedTileColor: Colors.blueGrey[50],
+                selectedTileColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blueGrey[50],
                 onTap: () {
                   widget.logger.i(
                       '🧭 BaseLayout: Switch Project selected, isClient: $isClient');
@@ -318,12 +328,14 @@ class _BaseLayoutState extends State<BaseLayout> {
                 title: Text(
                   'Overview',
                   style: GoogleFonts.poppins(
-                    color: widget.selectedMenuItem == 'Overview' ? _sidebarSelectedTextColor : _sidebarTextColor,
-                    fontWeight: widget.selectedMenuItem == 'Overview' ? FontWeight.w600 : FontWeight.w400,
+                    color: widget.selectedMenuItem == 'Overview'
+                        ? (isDark ? _sidebarSelectedTextColorDark : _sidebarSelectedTextColorLight)
+                        : (isDark ? _sidebarTextColorDark : _sidebarTextColorLight),
+                    fontWeight: widget.selectedMenuItem == 'Overview' ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
                 selected: widget.selectedMenuItem == 'Overview',
-                selectedTileColor: Colors.blueGrey[50],
+                selectedTileColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blueGrey[50],
                 onTap: () {
                   widget.logger.i('🧭 BaseLayout: Overview selected');
                   if (isMobile) Navigator.pop(context);
@@ -552,6 +564,7 @@ class _BaseLayoutState extends State<BaseLayout> {
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -566,6 +579,9 @@ class _BaseLayoutState extends State<BaseLayout> {
     required Widget Function() onNavigate,
   }) {
     final selected = widget.selectedMenuItem == selectedItem;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedTextColor = isDark ? _sidebarSelectedTextColorDark : _sidebarSelectedTextColorLight;
+    final unselectedTextColor = isDark ? _sidebarTextColorDark : _sidebarTextColorLight;
     // A left accent bar on the active item — a clearer, more modern "you
     // are here" affordance than relying on background tint alone. A
     // Container border (not ListTile's `shape`, which draws uniformly
@@ -574,7 +590,7 @@ class _BaseLayoutState extends State<BaseLayout> {
       decoration: BoxDecoration(
         border: Border(
           left: BorderSide(
-            color: selected ? _sidebarSelectedTextColor : Colors.transparent,
+            color: selected ? selectedTextColor : Colors.transparent,
             width: 3,
           ),
         ),
@@ -584,12 +600,12 @@ class _BaseLayoutState extends State<BaseLayout> {
         title: Text(
           title,
           style: GoogleFonts.poppins(
-            color: selected ? _sidebarSelectedTextColor : _sidebarTextColor,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            color: selected ? selectedTextColor : unselectedTextColor,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
         selected: selected,
-        selectedTileColor: Colors.blueGrey[50],
+        selectedTileColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blueGrey[50],
         onTap: () {
         widget.logger.i('🧭 BaseLayout: $title selected');
         if (isMobile) Navigator.pop(context);

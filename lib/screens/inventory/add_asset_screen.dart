@@ -50,6 +50,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
   final _descriptionController = TextEditingController();
   final _serialNumberController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
+  final _addMoreUnitsController = TextEditingController(text: '0');
   final InventoryService _inventoryService = InventoryService();
 
   XFile? _selectedPhoto;
@@ -62,6 +63,13 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
   /// batch-registering (e.g. "4 hammers") rather than a shared counter, so
   /// per-unit traceability (who has *this specific* hammer) is never lost.
   int get _quantity => int.tryParse(_quantityController.text.trim()) ?? 1;
+
+  /// Tools only, when editing: since quantity isn't a single field to edit
+  /// (each unit is its own doc — see _quantity above), "editing the
+  /// quantity" of an already-registered tool means registering additional
+  /// matching units alongside the one being edited, rather than changing a
+  /// number on this specific doc.
+  int get _addMoreUnits => int.tryParse(_addMoreUnitsController.text.trim()) ?? 0;
 
   bool get _isEditing => widget.existingAsset != null;
   bool get _isTool => widget.itemType == AssetModel.typeTool;
@@ -87,6 +95,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
     _descriptionController.dispose();
     _serialNumberController.dispose();
     _quantityController.dispose();
+    _addMoreUnitsController.dispose();
     super.dispose();
   }
 
@@ -132,11 +141,15 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
     final itemLabel = _isTool ? 'tool' : 'asset';
     final actionLabel = _isEditing ? 'Save Changes' : (_isTool ? 'Add Tool' : 'Add Asset');
     final quantity = _isTool && !_isEditing ? _quantity.clamp(1, 500) : 1;
+    final addMoreUnits = _isTool && _isEditing ? _addMoreUnits.clamp(0, 500) : 0;
     final confirmed = await showConfirmDialog(
       context,
       title: actionLabel,
       message: _isEditing
-          ? 'Save changes to "${_nameController.text.trim()}"?'
+          ? (addMoreUnits > 0
+              ? 'Save changes, and register $addMoreUnits more unit${addMoreUnits == 1 ? '' : 's'} '
+                  'of "${_nameController.text.trim()}"? Each new unit gets its own custody history.'
+              : 'Save changes to "${_nameController.text.trim()}"?')
           : quantity > 1
               ? 'Register $quantity units of "${_nameController.text.trim()}" '
                   '(${_categoryController.text.trim()}) as new company ${itemLabel}s? '
@@ -179,6 +192,18 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
           serialNumber: _serialNumberController.text.trim().isEmpty ? null : _serialNumberController.text.trim(),
           photoUrl: photoUrl,
         );
+
+        for (var i = 0; i < addMoreUnits; i++) {
+          await _inventoryService.createAsset(
+            itemType: widget.itemType,
+            name: _nameController.text.trim(),
+            category: _categoryController.text.trim(),
+            description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+            initialCondition: _condition,
+            createdByUid: widget.createdByUid,
+            createdByName: widget.createdByName,
+          );
+        }
       } else {
         // A shared serial number across multiple units would misrepresent
         // per-unit identity, so it's only carried over when registering a
@@ -209,7 +234,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
         SnackBar(
           content: Text(
             _isEditing
-                ? 'Changes saved'
+                ? (addMoreUnits > 0 ? 'Changes saved, $addMoreUnits more unit${addMoreUnits == 1 ? '' : 's'} added' : 'Changes saved')
                 : quantity > 1
                     ? '$quantity units added successfully'
                     : '${_isTool ? 'Tool' : 'Asset'} added successfully',
@@ -326,6 +351,24 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                           },
                         ),
                       ],
+                      if (_isTool && _isEditing) ...[
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _addMoreUnitsController,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setState(() {}),
+                          decoration: inventoryInputDecoration(
+                            label: 'Add More Units (optional)',
+                            hint: 'e.g. 2 more of this tool just arrived',
+                            icon: Icons.add_box_outlined,
+                          ),
+                          validator: (v) {
+                            final n = int.tryParse((v ?? '0').trim());
+                            if (n == null || n < 0) return 'Enter 0 or more';
+                            return null;
+                          },
+                        ),
+                      ],
                       if (_quantity <= 1) ...[
                         const SizedBox(height: 14),
                         TextFormField(
@@ -345,13 +388,13 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                           icon: Icons.notes_outlined,
                         ),
                       ),
-                      if (!_isEditing) ...[
+                      if (!_isEditing || _addMoreUnits > 0) ...[
                         const SizedBox(height: 14),
                         DropdownButtonFormField<String>(
                           initialValue: _condition,
                           isExpanded: true,
                           decoration: inventoryInputDecoration(
-                            label: 'Condition at Intake',
+                            label: _isEditing ? 'Condition at Intake (for new units)' : 'Condition at Intake',
                             icon: Icons.fact_check_outlined,
                           ),
                           items: [
