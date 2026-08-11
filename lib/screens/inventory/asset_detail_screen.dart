@@ -191,7 +191,7 @@ class AssetDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildActionButton(BuildContext context, AssetModel asset) {
-    final canAct = userRole == 'MainAdmin' || userRole == 'Admin';
+    final canAct = userRole == 'MainAdmin' || userRole == 'Admin' || userRole == 'Technician';
     if (!canAct) return const SizedBox.shrink();
 
     // A pending request locks the asset — nobody else can request/check it

@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:almaworks/services/file_pick_helper.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -1627,19 +1627,23 @@ class _ReportsScreenState extends State<ReportsScreen>
 
   Future<void> _uploadReport(String type) async {
     try {
-      // 1. Pick file
-      final result = await FilePicker.pickFiles(
-        type: FileType.custom,
+      // 1. Pick file — routed through pickFileForUpload (file_pick_helper.dart)
+      // rather than calling FilePicker directly: that helper is what
+      // guarantees `withData: true` (required for bytes on web) is never
+      // missing again. This exact call used to set withData itself and
+      // lost it at some point, which is what made every upload across all
+      // five Reports tabs fail identically (they all funnel through this
+      // one shared method) with "Unexpected null value".
+      final picked = await pickFileForUpload(
         allowedExtensions: ['pdf', 'docx', 'doc', 'pptx', 'ppt', 'txt'],
       );
-      if (result == null || result.files.isEmpty) {
+      if (picked == null) {
         widget.logger.d('📤 ReportsScreen: File selection cancelled');
         return;
       }
 
-      final pickedFile = result.files.first;
-      final originalFileName = pickedFile.name;
-      final extension = originalFileName.split('.').last.toLowerCase();
+      final originalFileName = picked.name;
+      final extension = picked.extension;
       widget.logger
           .i('📤 ReportsScreen: File selected: $originalFileName');
 
@@ -1658,14 +1662,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       }
 
       final finalFileName = '$title.$extension';
-
-      // 3. Read bytes
-      Uint8List fileBytes;
-      if (kIsWeb) {
-        fileBytes = pickedFile.bytes!;
-      } else {
-        fileBytes = await File(pickedFile.path!).readAsBytes();
-      }
+      final fileBytes = picked.bytes;
 
       setState(() => _isLoading = true);
 

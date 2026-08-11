@@ -102,9 +102,15 @@ class ClientRequestService {
     required List<String> projectIds,
     required String approvedByUsername,
     required String approvedByUid,
+    // 'Client' or 'Technician' — every account self-registers as 'Client'
+    // and goes through this same request either way; this is the one
+    // point where an Admin/MainAdmin actually decides which role the
+    // account ends up with. Defaults to 'Client' so every existing call
+    // site (which predates Technician) keeps its current behavior exactly.
+    String grantedRole = 'Client',
   }) async {
     try {
-      _logger.i('✅ Approving request: $requestId');
+      _logger.i('✅ Approving request: $requestId as $grantedRole');
 
       final requestDoc = await _firestore
           .collection('ClientRequests')
@@ -121,11 +127,13 @@ class ClientRequestService {
         'approvedByUid': approvedByUid,
         'approvalDate': Timestamp.now(),
         'denialReason': null,
+        'grantedRole': grantedRole,
       });
 
       await _updateClientProjectAccess(
         clientUid: request.clientUid,
         projectIds: projectIds,
+        role: grantedRole,
       );
 
       final projectNames = await _getProjectNames(projectIds);
@@ -306,9 +314,10 @@ class ClientRequestService {
     required List<String> projectIds,
     required String adminUsername,
     required String adminUid,
+    String grantedRole = 'Client',
   }) async {
     try {
-      _logger.i('🔄 Re-approving denied request: $requestId');
+      _logger.i('🔄 Re-approving denied request: $requestId as $grantedRole');
 
       final requestDoc = await _firestore
           .collection('ClientRequests')
@@ -325,11 +334,13 @@ class ClientRequestService {
         'approvedByUid': adminUid,
         'approvalDate': Timestamp.now(),
         'denialReason': null,
+        'grantedRole': grantedRole,
       });
 
       await _updateClientProjectAccess(
         clientUid: request.clientUid,
         projectIds: projectIds,
+        role: grantedRole,
       );
 
       final projectNames = await _getProjectNames(projectIds);
@@ -393,6 +404,11 @@ class ClientRequestService {
   Future<void> _updateClientProjectAccess({
     required String clientUid,
     required List<String> projectIds,
+    // Only passed (and only written) from approveClientRequest, where an
+    // Admin/MainAdmin is actively deciding the account's role — every
+    // other caller here (adding/revoking projects on an already-approved
+    // request) leaves the account's existing role untouched.
+    String? role,
   }) async {
     try {
       final userQuery = await _firestore
@@ -408,12 +424,12 @@ class ClientRequestService {
       );
       final updated = {...existing, ...projectIds}.toList();
 
-      await _firestore
-          .collection('Users')
-          .doc(userDoc.id)
-          .update({'grantedProjects': updated});
+      await _firestore.collection('Users').doc(userDoc.id).update({
+        'grantedProjects': updated,
+        'role': ?role,
+      });
 
-      _logger.i('✅ Client project access updated');
+      _logger.i('✅ Client project access updated${role != null ? ' (role: $role)' : ''}');
     } catch (e) {
       _logger.e('❌ Error updating client project access: $e');
       rethrow;

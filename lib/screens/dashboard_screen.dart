@@ -71,11 +71,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final userData = querySnapshot.docs.first.data();
         final role = userData['role'] as String? ?? 'Client';
         
-        // If client, fetch granted project IDs
+        // Client and Technician are both restricted to their granted
+        // project list (Technician just sees Admin-equivalent sections
+        // once inside one — see BaseLayout for that split).
         List<String> grantedIds = [];
-        if (role == 'Client') {
+        if (role == 'Client' || role == 'Technician') {
           grantedIds = await _requestService.getClientGrantedProjects(user.uid);
-          _logger.i('✅ DashboardScreen: Client granted project IDs: $grantedIds');
+          _logger.i('✅ DashboardScreen: $role granted project IDs: $grantedIds');
         }
 
         // ── Admin / MainAdmin: attach the AdminNotificationQueue listener ──
@@ -745,7 +747,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return ProjectsMainScreen(
             logger: _logger,
             initialTabIndex: _projectsInitialTab,
-            clientProjectIds: _userRole == 'Client' ? _grantedProjectIds : null,
+            clientProjectIds:
+                (_userRole == 'Client' || _userRole == 'Technician') ? _grantedProjectIds : null,
           );
         case 2:
           if (_userRole == 'MainAdmin' || _userRole == 'Admin') {
@@ -860,7 +863,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
       final locations = <String>[];
       for (final doc in snapshot.docs) {
         // For clients, only include granted project locations
-        if (_isClient && !widget.grantedProjectIds.contains(doc.id)) continue;
+        if (_isRestrictedRole && !widget.grantedProjectIds.contains(doc.id)) continue;
 
         final data = doc.data();
         final loc  = data['location'] as String?;
@@ -883,7 +886,10 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     super.dispose();
   }
 
-  bool get _isClient => widget.userRole == 'Client';
+  // Client and Technician are both scoped to widget.grantedProjectIds —
+  // they only differ in which sections they see once inside a project
+  // (handled in BaseLayout), not in the dashboard's own project filtering.
+  bool get _isRestrictedRole => widget.userRole == 'Client' || widget.userRole == 'Technician';
 
   @override
   Widget build(BuildContext context) {
@@ -892,7 +898,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     final isTablet  = screenWidth >= 600 && screenWidth < 1200;
     final isDesktop = screenWidth >= 1200;
 
-    widget.logger.d('🗂️ UnifiedDashboard: Building dashboard, isClient: $_isClient, grantedProjects: ${widget.grantedProjectIds.length}');
+    widget.logger.d('🗂️ UnifiedDashboard: Building dashboard, isClient: $_isRestrictedRole, grantedProjects: ${widget.grantedProjectIds.length}');
 
     return SingleChildScrollView(
       child: Column(
@@ -901,7 +907,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
           Padding(
             padding: EdgeInsets.all(isMobile ? 12 : 16),
             child: Text(
-              _isClient ? 'My Projects Overview' : 'General Overview',
+              _isRestrictedRole ? 'My Projects Overview' : 'General Overview',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
@@ -928,7 +934,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
           Expanded(
             child: FutureBuilder<int>(
               future: _safeGetProjectCount(
-                () => _isClient
+                () => _isRestrictedRole
                     ? widget.projectService.getClientProjectsCount(widget.grantedProjectIds)
                     : widget.projectService.getAllProjectsCount(),
                 'total',
@@ -951,7 +957,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
           Expanded(
             child: FutureBuilder<int>(
               future: _safeGetProjectCount(
-                () => _isClient
+                () => _isRestrictedRole
                     ? widget.projectService.getClientActiveProjectsCount(widget.grantedProjectIds)
                     : widget.projectService.getProjectCountByStatus('active'),
                 'active',
@@ -974,7 +980,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
           Expanded(
             child: FutureBuilder<int>(
               future: _safeGetProjectCount(
-                () => _isClient
+                () => _isRestrictedRole
                     ? widget.projectService.getClientCompletedProjectsCount(widget.grantedProjectIds)
                     : widget.projectService.getProjectCountByStatus('completed'),
                 'completed',
@@ -1016,7 +1022,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     final availableWidth = screenWidth - sidebarWidth - (isMobile ? 24 : 32);
     const double widgetHeight = 400.0;
 
-    widget.logger.d('🗳️ Dashboard: Building content section, isClient: $_isClient, projectLocations: ${_projectLocations.length}');
+    widget.logger.d('🗳️ Dashboard: Building content section, isClient: $_isRestrictedRole, projectLocations: ${_projectLocations.length}');
 
     // ── ActivityFeed, TaskProgressWidget, and WeatherWidget ─────────────────
     final widgets = [
@@ -1028,7 +1034,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
         // the current user is permitted to see.
         child: TaskProgressWidget(
           showAllProjects: true,
-          projectIds: _isClient ? widget.grantedProjectIds : [],
+          projectIds: _isRestrictedRole ? widget.grantedProjectIds : [],
           logger: widget.logger,
           // 4 items visible before "View All" – fits comfortably in the 400px card
           maxInitialDisplay: 4,

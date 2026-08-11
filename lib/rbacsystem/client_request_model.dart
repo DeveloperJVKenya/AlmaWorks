@@ -14,6 +14,15 @@ class ClientRequest {
   final DateTime? approvalDate;
   final String? denialReason;
 
+  /// The role granted on approval — 'Client' or 'Technician'. Every account
+  /// self-registers as 'Client' (registration_screen.dart hardcodes this)
+  /// and submits this same request either way; it's only at approval time
+  /// that an Admin/MainAdmin decides which role to actually grant, which
+  /// then overwrites Users/{username}.role. Defaults to 'Client' so
+  /// pre-existing request docs (written before this field existed) still
+  /// parse correctly.
+  final String grantedRole;
+
   ClientRequest({
     required this.requestId,
     required this.clientUsername,
@@ -26,6 +35,7 @@ class ClientRequest {
     this.approvedByUid,
     this.approvalDate,
     this.denialReason,
+    this.grantedRole = 'Client',
   });
 
   // Convert from Firestore document
@@ -45,6 +55,7 @@ class ClientRequest {
           ? (data['approvalDate'] as Timestamp).toDate() 
           : null,
       denialReason: data['denialReason'],
+      grantedRole: data['grantedRole'] as String? ?? 'Client',
     );
   }
 
@@ -63,6 +74,7 @@ class ClientRequest {
           ? Timestamp.fromDate(approvalDate!) 
           : null,
       'denialReason': denialReason,
+      'grantedRole': grantedRole,
     };
   }
 
@@ -79,6 +91,7 @@ class ClientRequest {
     String? approvedByUid,
     DateTime? approvalDate,
     String? denialReason,
+    String? grantedRole,
   }) {
     return ClientRequest(
       requestId: requestId ?? this.requestId,
@@ -92,6 +105,7 @@ class ClientRequest {
       approvedByUid: approvedByUid ?? this.approvedByUid,
       approvalDate: approvalDate ?? this.approvalDate,
       denialReason: denialReason ?? this.denialReason,
+      grantedRole: grantedRole ?? this.grantedRole,
     );
   }
 }

@@ -78,7 +78,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
 
     final role = roleAsync.value ?? 'Client';
     final username = usernameAsync.value ?? '';
-    final isAuthorized = role == 'MainAdmin' || role == 'Admin';
+    // Technician reads + requests checkouts same as Admin (see
+    // asset_detail_screen.dart's action-button split, which already
+    // routes any non-MainAdmin role into the "request only" path) but
+    // never registers new items or approves requests — both stay
+    // MainAdmin-only via isMainAdmin below.
+    final isAuthorized = role == 'MainAdmin' || role == 'Admin' || role == 'Technician';
     final isMainAdmin = role == 'MainAdmin';
     final uid = ref.watch(currentUidProvider);
 

@@ -255,8 +255,13 @@ service cloud.firestore {
     }
 
     match /InventoryAssets/{assetId} {
+      // Technician reads + requests checkouts (see InventoryCheckoutRequests
+      // below) same as Admin, but never registers new items and never
+      // performs the custody-pointer update directly (see the `update`
+      // block below) — that stays MainAdmin, or MainAdmin/Admin via the
+      // approval transaction only.
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
 
       // Only MainAdmin may register new assets.
       allow create: if request.auth != null
@@ -288,10 +293,10 @@ service cloud.firestore {
     // Append-only custody ledger: checkout / return events.
     match /InventoryAssetAssignments/{assignmentId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician']
                      && request.resource.data.recordedByUid == request.auth.uid
                      && request.resource.data.recordedByRole == inventoryUserRole();
 
@@ -304,7 +309,7 @@ service cloud.firestore {
     // ── InventoryMaterials — same shape/permissions as InventoryAssets ────
     match /InventoryMaterials/{materialId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
 
       allow create: if request.auth != null
                      && inventoryUserRole() == 'MainAdmin'
@@ -331,10 +336,10 @@ service cloud.firestore {
     // Append-only stock ledger: receipt / issue events.
     match /InventoryMaterialMovements/{movementId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician']
                      && request.resource.data.recordedByUid == request.auth.uid
                      && request.resource.data.recordedByRole == inventoryUserRole();
 
@@ -349,10 +354,10 @@ service cloud.firestore {
     // read them (Admins need to see their own request's status).
     match /InventoryCheckoutRequests/{requestId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician']
                      && request.resource.data.requestedByUid == request.auth.uid
                      && request.resource.data.status == 'pending';
 

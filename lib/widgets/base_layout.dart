@@ -127,18 +127,23 @@ class _BaseLayoutState extends State<BaseLayout> {
         // screen's content area — everywhere else stays instant.
         unawaited(_authService.ensureUserRoleMirror(uid: user.uid, username: username, role: role));
 
+        // Technician is granted through the exact same request/approval
+        // flow as Client (see ClientAccessRequestsScreen's role selector)
+        // and is restricted to the same granted-project list — the two
+        // roles only differ in which sections they see once inside a
+        // project, not in how project access itself is scoped.
         List<String> grantedIds = [];
-        if (role == 'Client') {
+        if (role == 'Client' || role == 'Technician') {
           grantedIds =
               await _requestService.getClientGrantedProjects(user.uid);
           widget.logger
-              .i('✅ BaseLayout: Client granted project IDs: $grantedIds');
+              .i('✅ BaseLayout: $role granted project IDs: $grantedIds');
         }
 
         if (mounted) {
           setState(() {
             _userRole = role;
-            _clientProjectIds = role == 'Client' ? grantedIds : null;
+            _clientProjectIds = (role == 'Client' || role == 'Technician') ? grantedIds : null;
             _isLoadingUserData = false;
           });
         }
@@ -237,6 +242,18 @@ class _BaseLayoutState extends State<BaseLayout> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
     final bool isClient = _userRole == 'Client';
+    // Technician sees the same section set Admin does (everything except
+    // Financials — Inventory stays visible since Technicians can read +
+    // request checkouts there), but — like Client — is restricted to only
+    // their granted projects. Since every `_buildProtectedMenuItem` call
+    // below already shows to "everyone" by default and only Client gets an
+    // explicit exclusion (Financials being the one exception), Technician
+    // automatically inherits Admin's section visibility with zero further
+    // changes there; the two places that DO need to know about Technician
+    // are the granted-project restriction (isRestrictedRole below) and the
+    // Financials exclusion.
+    final bool isTechnician = _userRole == 'Technician';
+    final bool isRestrictedRole = isClient || isTechnician;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ColoredBox(
@@ -294,7 +311,7 @@ class _BaseLayoutState extends State<BaseLayout> {
               ListTile(
                 leading: const Icon(Icons.swap_horiz, color: Colors.blueGrey),
                 title: Text(
-                  isClient ? 'My Projects' : 'Switch Project',
+                  isRestrictedRole ? 'My Projects' : 'Switch Project',
                   style: GoogleFonts.poppins(
                     color: widget.selectedMenuItem == 'Switch Project'
                         ? (isDark ? _sidebarSelectedTextColorDark : _sidebarSelectedTextColorLight)
@@ -306,7 +323,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 selectedTileColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blueGrey[50],
                 onTap: () {
                   widget.logger.i(
-                      '🧭 BaseLayout: Switch Project selected, isClient: $isClient');
+                      '🧭 BaseLayout: Switch Project selected, role: $_userRole');
                   if (isMobile) Navigator.pop(context);
 
                   Navigator.pushReplacement(
@@ -315,7 +332,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                       builder: (context) => ProjectsMainScreen(
                         logger: widget.logger,
                         clientProjectIds:
-                            isClient ? _clientProjectIds : null,
+                            isRestrictedRole ? _clientProjectIds : null,
                       ),
                     ),
                   );
@@ -340,11 +357,11 @@ class _BaseLayoutState extends State<BaseLayout> {
                   widget.logger.i('🧭 BaseLayout: Overview selected');
                   if (isMobile) Navigator.pop(context);
                   if (widget.project != null) {
-                    if (isClient &&
+                    if (isRestrictedRole &&
                         _clientProjectIds != null &&
                         !_clientProjectIds!.contains(widget.project!.id)) {
                       widget.logger.w(
-                          '⚠️ BaseLayout: Client attempted to access unauthorized project');
+                          '⚠️ BaseLayout: $_userRole attempted to access unauthorized project');
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -387,7 +404,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 title: 'Documents',
                 selectedItem: 'Documents',
                 isMobile: isMobile,
-                isClient: isClient,
+                isClient: isRestrictedRole,
                 onNavigate: () => DocumentsScreen(
                   project: widget.project!,
                   logger: widget.logger,
@@ -402,7 +419,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 title: 'Drawings',
                 selectedItem: 'Drawings',
                 isMobile: isMobile,
-                isClient: isClient,
+                isClient: isRestrictedRole,
                 onNavigate: () => DrawingsScreen(
                   project: widget.project!,
                   logger: widget.logger,
@@ -417,7 +434,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 title: 'Schedule',
                 selectedItem: 'Schedule',
                 isMobile: isMobile,
-                isClient: isClient,
+                isClient: isRestrictedRole,
                 onNavigate: () => ScheduleScreen(
                   project: widget.project!,
                   logger: widget.logger,
@@ -432,7 +449,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 title: 'Quality & Safety',
                 selectedItem: 'Quality & Safety',
                 isMobile: isMobile,
-                isClient: isClient,
+                isClient: isRestrictedRole,
                 onNavigate: () => QualityAndSafetyScreen(
                   project: widget.project!,
                   logger: widget.logger,
@@ -449,7 +466,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 title: 'Reports',
                 selectedItem: 'Reports',
                 isMobile: isMobile,
-                isClient: isClient,
+                isClient: isRestrictedRole,
                 onNavigate: () => ReportsScreen(
                   project: widget.project!,
                   logger: widget.logger,
@@ -466,7 +483,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   title: 'Task Progress',
                   selectedItem: 'Task Progress',
                   isMobile: isMobile,
-                  isClient: isClient,
+                  isClient: isRestrictedRole,
                   onNavigate: () => TaskProgressMonitorScreen(
                     project: widget.project!,
                     logger: widget.logger,
@@ -482,7 +499,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   title: 'Photo Gallery',
                   selectedItem: 'Photo Gallery',
                   isMobile: isMobile,
-                  isClient: isClient,
+                  isClient: isRestrictedRole,
                   onNavigate: () => PhotoGalleryScreen(
                     project: widget.project!,
                     logger: widget.logger,
@@ -498,15 +515,17 @@ class _BaseLayoutState extends State<BaseLayout> {
                   title: 'Photos',
                   selectedItem: 'Photos',
                   isMobile: isMobile,
-                  isClient: isClient,
+                  isClient: isRestrictedRole,
                   onNavigate: () => PhotosScreen(
                     project: widget.project!,
                     logger: widget.logger,
                   ),
                 ),
 
-              // ── Financials (Admin / MainAdmin only) ───────────────────────
-              if (!isClient)
+              // ── Financials (Admin / MainAdmin only — explicitly excludes
+              // Technician too, unlike every other Admin-visible section
+              // above, since Technicians shouldn't see budget/payment data) ──
+              if (!isRestrictedRole)
                 _buildProtectedMenuItem(
                   context: context,
                   icon: Icons.account_balance,
@@ -514,7 +533,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   title: 'Financials',
                   selectedItem: 'Financials',
                   isMobile: isMobile,
-                  isClient: isClient,
+                  isClient: isRestrictedRole,
                   onNavigate: () => FinancialScreen(
                     project: widget.project!,
                     logger: widget.logger,
@@ -534,6 +553,10 @@ class _BaseLayoutState extends State<BaseLayout> {
                   title: 'Inventory',
                   selectedItem: 'Inventory',
                   isMobile: isMobile,
+                  // Not isRestrictedRole here — Technician keeps Inventory
+                  // access (read + request checkouts), only Client is
+                  // excluded, matching the `if (!isClient)` visibility
+                  // condition above this call.
                   isClient: isClient,
                   onNavigate: () => InventoryScreen(
                     project: widget.project!,
@@ -553,7 +576,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 title: 'Communication',
                 selectedItem: 'Communication',
                 isMobile: isMobile,
-                isClient: isClient,
+                isClient: isRestrictedRole,
                 onNavigate: () => CommunicationScreen(
                   project: widget.project!,
                   logger: widget.logger,
@@ -615,7 +638,7 @@ class _BaseLayoutState extends State<BaseLayout> {
               _clientProjectIds != null &&
               !_clientProjectIds!.contains(widget.project!.id)) {
             widget.logger.w(
-                '⚠️ BaseLayout: Client attempted to access unauthorized project: $title');
+                '⚠️ BaseLayout: $_userRole attempted to access unauthorized project: $title');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(

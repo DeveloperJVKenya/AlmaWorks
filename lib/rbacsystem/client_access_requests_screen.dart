@@ -634,6 +634,12 @@ class _ClientAccessRequestsScreenState
 
   Future<void> _showApprovalDialog(ClientRequest request) async {
     final selectedProjects = <String>[];
+    // 'Client' (read-only, project-scoped) or 'Technician' (full Admin-
+    // equivalent access — minus Financials and Inventory approval — on
+    // just their granted projects). Every requester goes through this
+    // exact same request regardless of which one they'll end up with; this
+    // is the only place that decision actually gets made.
+    String grantedRole = 'Client';
     final projects = await _fetchAvailableProjects();
 
     if (!mounted) return;
@@ -653,7 +659,39 @@ class _ClientAccessRequestsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Select projects to grant access to ${request.clientUsername}:',
+                  'Grant access to ${request.clientUsername} as:',
+                  style: GoogleFonts.poppins(fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                RadioGroup<String>(
+                  groupValue: grantedRole,
+                  onChanged: (v) => setDialogState(() => grantedRole = v ?? 'Client'),
+                  child: Column(
+                    children: [
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text('Client', style: GoogleFonts.poppins(fontSize: 14)),
+                        subtitle: Text('Read-only access to granted projects',
+                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                        value: 'Client',
+                        activeColor: const Color(0xFF0A2E5A),
+                      ),
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text('Technician', style: GoogleFonts.poppins(fontSize: 14)),
+                        subtitle: Text('Full working access to granted projects (like Admin, minus Financials)',
+                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                        value: 'Technician',
+                        activeColor: const Color(0xFF0A2E5A),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Select projects to grant access to:',
                   style: GoogleFonts.poppins(fontSize: 14),
                 ),
                 const SizedBox(height: 16),
@@ -701,7 +739,7 @@ class _ClientAccessRequestsScreenState
             ElevatedButton(
               onPressed: selectedProjects.isEmpty
                   ? null
-                  : () => _approveRequest(request, selectedProjects),
+                  : () => _approveRequest(request, selectedProjects, grantedRole),
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0A2E5A)),
               child: Text('Approve',
@@ -982,6 +1020,7 @@ class _ClientAccessRequestsScreenState
   /// Dialog: approve a previously denied request.
   Future<void> _showReApproveDialog(ClientRequest request) async {
     final selectedProjects = <String>[];
+    String grantedRole = 'Client';
     final projects = await _fetchAvailableProjects();
 
     if (!mounted) return;
@@ -1036,6 +1075,33 @@ class _ClientAccessRequestsScreenState
                     ),
                   ),
                 Text(
+                  'Grant access as:',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                RadioGroup<String>(
+                  groupValue: grantedRole,
+                  onChanged: (v) => setDialogState(() => grantedRole = v ?? 'Client'),
+                  child: Column(
+                    children: [
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text('Client', style: GoogleFonts.poppins(fontSize: 13)),
+                        value: 'Client',
+                        activeColor: Colors.green,
+                      ),
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text('Technician', style: GoogleFonts.poppins(fontSize: 13)),
+                        value: 'Technician',
+                        activeColor: Colors.green,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
                   'Select projects to grant:',
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
@@ -1082,7 +1148,7 @@ class _ClientAccessRequestsScreenState
             ElevatedButton.icon(
               onPressed: selectedProjects.isEmpty
                   ? null
-                  : () => _reApproveRequest(request, selectedProjects),
+                  : () => _reApproveRequest(request, selectedProjects, grantedRole),
               icon: const Icon(Icons.check, size: 16),
               label: Text('Approve',
                   style: GoogleFonts.poppins(color: Colors.white)),
@@ -1163,7 +1229,7 @@ class _ClientAccessRequestsScreenState
   // ──────────────────────────────────────────────────────────────────────────
 
   Future<void> _approveRequest(
-      ClientRequest request, List<String> projectIds) async {
+      ClientRequest request, List<String> projectIds, String grantedRole) async {
     Navigator.pop(context);
 
     final userData = await _authService.getUserData();
@@ -1174,6 +1240,7 @@ class _ClientAccessRequestsScreenState
       projectIds: projectIds,
       approvedByUsername: userData['username'],
       approvedByUid: userData['uid'],
+      grantedRole: grantedRole,
     );
 
     if (!mounted) return;
@@ -1261,7 +1328,7 @@ class _ClientAccessRequestsScreenState
   }
 
   Future<void> _reApproveRequest(
-      ClientRequest request, List<String> projectIds) async {
+      ClientRequest request, List<String> projectIds, String grantedRole) async {
     Navigator.pop(context);
 
     final userData = await _authService.getUserData();
@@ -1272,6 +1339,7 @@ class _ClientAccessRequestsScreenState
       projectIds: projectIds,
       adminUsername: userData['username'],
       adminUid: userData['uid'],
+      grantedRole: grantedRole,
     );
 
     if (!mounted) return;
