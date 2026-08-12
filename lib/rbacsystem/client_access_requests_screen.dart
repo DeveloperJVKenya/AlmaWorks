@@ -23,11 +23,21 @@ class _ClientAccessRequestsScreenState
   final ClientRequestService _requestService = ClientRequestService();
   final AuthService _authService = AuthService();
   late TabController _tabController;
+  // Gates the 'Admin' option in the role-edit dialog — only a MainAdmin may
+  // hand out Admin from this screen; a plain Admin can still switch someone
+  // between Client and Technician.
+  String _currentUserRole = '';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadCurrentUserRole();
+  }
+
+  Future<void> _loadCurrentUserRole() async {
+    final role = await _authService.getUserRole();
+    if (mounted) setState(() => _currentUserRole = role);
   }
 
   @override
@@ -415,6 +425,11 @@ class _ClientAccessRequestsScreenState
                 Icons.person,
                 'By: ${request.approvedBy}',
               ),
+            if (isApproved)
+              _buildInfoRow(
+                Icons.badge_outlined,
+                'Role: ${request.grantedRole}',
+              ),
             if (isApproved && request.grantedProjects.isNotEmpty)
               _buildInfoRow(
                 Icons.folder_open,
@@ -473,6 +488,9 @@ class _ClientAccessRequestsScreenState
           case 'revoke_projects':
             _showRevokeProjectsDialog(request);
             break;
+          case 'edit_role':
+            _showEditRoleDialog(request);
+            break;
           case 're_approve':
             _showReApproveDialog(request);
             break;
@@ -497,6 +515,14 @@ class _ClientAccessRequestsScreenState
                   Icons.remove_circle_outline,
                   'Revoke Project Access',
                   Colors.orange,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'edit_role',
+                child: _popupItem(
+                  Icons.manage_accounts_outlined,
+                  'Change Role',
+                  Colors.blue,
                 ),
               ),
             ]
@@ -1013,6 +1039,114 @@ class _ClientAccessRequestsScreenState
     );
   }
 
+  /// Dialog: change the role granted to an already-approved account —
+  /// Client/Technician, plus Admin when the caller is a MainAdmin — without
+  /// having to revoke and re-approve the request.
+  Future<void> _showEditRoleDialog(ClientRequest request) async {
+    final canGrantAdmin = _currentUserRole == 'MainAdmin';
+    String selectedRole = canGrantAdmin || request.grantedRole != 'Admin'
+        ? request.grantedRole
+        : 'Technician';
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.manage_accounts_outlined,
+                  color: Colors.blue, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Change Role — ${request.clientUsername}',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Current role: ${request.grantedRole}',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 8),
+                RadioGroup<String>(
+                  groupValue: selectedRole,
+                  onChanged: (v) =>
+                      setDialogState(() => selectedRole = v ?? selectedRole),
+                  child: Column(
+                    children: [
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text('Client',
+                            style: GoogleFonts.poppins(fontSize: 14)),
+                        subtitle: Text('Read-only access to granted projects',
+                            style: GoogleFonts.poppins(
+                                fontSize: 12, color: Colors.grey[600])),
+                        value: 'Client',
+                        activeColor: const Color(0xFF0A2E5A),
+                      ),
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        title: Text('Technician',
+                            style: GoogleFonts.poppins(fontSize: 14)),
+                        subtitle: Text(
+                            'Full working access to granted projects (like Admin, minus Financials)',
+                            style: GoogleFonts.poppins(
+                                fontSize: 12, color: Colors.grey[600])),
+                        value: 'Technician',
+                        activeColor: const Color(0xFF0A2E5A),
+                      ),
+                      if (canGrantAdmin)
+                        RadioListTile<String>(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text('Admin',
+                              style: GoogleFonts.poppins(fontSize: 14)),
+                          subtitle: Text(
+                              'Full system access, not limited to granted projects',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, color: Colors.grey[600])),
+                          value: 'Admin',
+                          activeColor: const Color(0xFF0A2E5A),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel',
+                  style: GoogleFonts.poppins(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: selectedRole == request.grantedRole
+                  ? null
+                  : () => _updateRole(request, selectedRole),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0A2E5A)),
+              child: Text('Save',
+                  style: GoogleFonts.poppins(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
   // History — Denied request dialogs
   // ──────────────────────────────────────────────────────────────────────────
@@ -1324,6 +1458,29 @@ class _ClientAccessRequestsScreenState
     } else {
       _showSnack(
           'Access revoked for ${request.clientUsername}', Colors.orange);
+    }
+  }
+
+  Future<void> _updateRole(ClientRequest request, String newRole) async {
+    Navigator.pop(context);
+
+    final userData = await _authService.getUserData();
+    if (userData == null) return;
+
+    final error = await _requestService.updateGrantedRole(
+      requestId: request.requestId,
+      clientUid: request.clientUid,
+      newRole: newRole,
+      adminUsername: userData['username'],
+      adminUid: userData['uid'],
+    );
+
+    if (!mounted) return;
+    if (error != null) {
+      _showSnack(error, Colors.red);
+    } else {
+      _showSnack(
+          '${request.clientUsername}\'s role changed to $newRole', Colors.green);
     }
   }
 

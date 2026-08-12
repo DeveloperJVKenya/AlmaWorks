@@ -10,14 +10,27 @@ class AuthService {
 
   // Check if user is logged in
   Future<bool> isUserLoggedIn() async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      // Check SharedPreferences for persistent login
-      final prefs = await SharedPreferences.getInstance();
-      final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-      return isLoggedIn;
-    }
-    return false;
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    if (!isLoggedIn) return false;
+
+    // SharedPreferences says the session should still be valid, but
+    // FirebaseAuth.instance.currentUser is not guaranteed to be populated
+    // the instant this runs — its persisted-session restore after
+    // Firebase.initializeApp() is asynchronous. Reading currentUser
+    // synchronously here used to race that restore: on any cold start that
+    // happens to run this check before restoration completes (e.g. Android
+    // killing and relaunching the app after a back-button press on a
+    // root-level screen), currentUser would still read null even though the
+    // user never logged out, and the app would wrongly bounce to the login
+    // screen. Waiting for the first authStateChanges() emission gives
+    // restoration a chance to finish before we decide.
+    if (_auth.currentUser != null) return true;
+    final user = await _auth.authStateChanges().first.timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => _auth.currentUser,
+        );
+    return user != null;
   }
 
   // Set login state

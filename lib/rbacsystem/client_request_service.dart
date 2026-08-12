@@ -304,6 +304,53 @@ class ClientRequestService {
     }
   }
 
+  /// Changes the role granted to an already-approved request's account,
+  /// without touching its granted projects. Lets an Admin/MainAdmin switch
+  /// someone between Client/Technician/Admin after the fact, instead of the
+  /// account having to be revoked and re-approved just to change its role.
+  Future<String?> updateGrantedRole({
+    required String requestId,
+    required String clientUid,
+    required String newRole,
+    required String adminUsername,
+    required String adminUid,
+  }) async {
+    try {
+      _logger.i('🔁 Updating granted role for request $requestId to $newRole');
+
+      final requestDoc = await _firestore
+          .collection('ClientRequests')
+          .doc(requestId)
+          .get();
+      if (!requestDoc.exists) return 'Request not found';
+
+      await _firestore.collection('ClientRequests').doc(requestId).update({
+        'grantedRole': newRole,
+        'approvedBy': adminUsername,
+        'approvedByUid': adminUid,
+        'approvalDate': Timestamp.now(),
+      });
+
+      final userQuery = await _firestore
+          .collection('Users')
+          .where('uid', isEqualTo: clientUid)
+          .limit(1)
+          .get();
+      if (userQuery.docs.isEmpty) return 'User account not found';
+
+      await _firestore
+          .collection('Users')
+          .doc(userQuery.docs.first.id)
+          .update({'role': newRole});
+
+      _logger.i('✅ Granted role updated to $newRole');
+      return null;
+    } catch (e) {
+      _logger.e('❌ Error updating granted role: $e');
+      return 'Failed to update role. Please try again.';
+    }
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
   // History item editing — Denied requests
   // ──────────────────────────────────────────────────────────────────────────
