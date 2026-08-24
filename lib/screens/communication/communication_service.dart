@@ -50,11 +50,14 @@ class CommunicationService {
         final data = doc.data();
         final uid = data['uid'] as String? ?? doc.id;
         if (uid == myUid) continue; // exclude self
-        participants.add(MessageParticipant(
-          uid: uid,
-          email: data['email'] as String? ?? '',
-          username: data['username'] as String? ?? data['email'] as String? ?? '',
-        ));
+        participants.add(
+          MessageParticipant(
+            uid: uid,
+            email: data['email'] as String? ?? '',
+            username:
+                data['username'] as String? ?? data['email'] as String? ?? '',
+          ),
+        );
       }
 
       for (final doc in clientSnap.docs) {
@@ -65,15 +68,20 @@ class CommunicationService {
         // Check if this client is granted this project
         final granted = await _getClientGrantedProjects(uid);
         if (granted.contains(projectId)) {
-          participants.add(MessageParticipant(
-            uid: uid,
-            email: data['email'] as String? ?? '',
-            username: data['username'] as String? ?? data['email'] as String? ?? '',
-          ));
+          participants.add(
+            MessageParticipant(
+              uid: uid,
+              email: data['email'] as String? ?? '',
+              username:
+                  data['username'] as String? ?? data['email'] as String? ?? '',
+            ),
+          );
         }
       }
 
-      _log.i('✅ CommunicationService: ${participants.length} users found for project $projectId');
+      _log.i(
+        '✅ CommunicationService: ${participants.length} users found for project $projectId',
+      );
       return participants;
     } catch (e) {
       _log.e('❌ CommunicationService.getProjectUsers: $e');
@@ -163,7 +171,9 @@ class CommunicationService {
       );
 
       await _commsCol.doc(id).set(msg.toMap());
-      _log.i('✅ CommunicationService: Message $id sent to ${to.length} recipient(s)');
+      _log.i(
+        '✅ CommunicationService: Message $id sent to ${to.length} recipient(s)',
+      );
       return id;
     } catch (e) {
       _log.e('❌ CommunicationService.sendMessage: $e');
@@ -175,20 +185,39 @@ class CommunicationService {
   //  STREAMS — INBOX / SENT / TRASH
   // ─────────────────────────────────────────────────────────────────────────
 
+  // NOTE on every query below: Firestore security rules for a *list* query
+  // (as opposed to a single get()) must be provable directly from the
+  // query's own filters — Firestore checks whether the query's potential
+  // result set could ever include a document the rule would reject, and if
+  // it can't prove otherwise, it denies the ENTIRE query server-side rather
+  // than silently filtering. Our Communication read rule is
+  // `request.auth.uid in resource.data.participantUids`, so every query here
+  // must explicitly filter `participantUids array-contains uid` for
+  // Firestore to accept it — filtering by `to`/`cc`/`from.uid` client-side
+  // alone is not enough, even though it's logically equivalent. Without this,
+  // the local optimistic cache briefly shows results (cache isn't
+  // rule-checked) and then the live listener gets rejected by the server and
+  // the list appears to "flash and disappear".
+
   /// Messages where current user is a recipient (to OR cc) and hasn't deleted
   Stream<List<CommunicationMessage>> inboxStream(String projectId) {
     final uid = _currentUid;
     return _commsCol
         .where('projectId', isEqualTo: projectId)
+        .where('participantUids', arrayContains: uid)
         .orderBy('sentAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => CommunicationMessage.fromDoc(d))
-            .where((m) =>
-                !m.isDeletedBy(uid) &&
-                (m.to.any((p) => p.uid == uid) ||
-                    m.cc.any((p) => p.uid == uid)))
-            .toList());
+        .map(
+          (snap) => snap.docs
+              .map((d) => CommunicationMessage.fromDoc(d))
+              .where(
+                (m) =>
+                    !m.isDeletedBy(uid) &&
+                    (m.to.any((p) => p.uid == uid) ||
+                        m.cc.any((p) => p.uid == uid)),
+              )
+              .toList(),
+        );
   }
 
   /// Messages sent by the current user that haven't been deleted
@@ -197,12 +226,15 @@ class CommunicationService {
     return _commsCol
         .where('projectId', isEqualTo: projectId)
         .where('from.uid', isEqualTo: uid)
+        .where('participantUids', arrayContains: uid)
         .orderBy('sentAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => CommunicationMessage.fromDoc(d))
-            .where((m) => !m.isDeletedBy(uid))
-            .toList());
+        .map(
+          (snap) => snap.docs
+              .map((d) => CommunicationMessage.fromDoc(d))
+              .where((m) => !m.isDeletedBy(uid))
+              .toList(),
+        );
   }
 
   /// Messages soft-deleted by the current user
@@ -210,26 +242,39 @@ class CommunicationService {
     final uid = _currentUid;
     return _commsCol
         .where('projectId', isEqualTo: projectId)
+        .where('participantUids', arrayContains: uid)
         .orderBy('sentAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => CommunicationMessage.fromDoc(d))
-            .where((m) =>
-                m.isDeletedBy(uid) &&
-                (m.from.uid == uid ||
-                    m.to.any((p) => p.uid == uid) ||
-                    m.cc.any((p) => p.uid == uid)))
-            .toList());
+        .map(
+          (snap) => snap.docs
+              .map((d) => CommunicationMessage.fromDoc(d))
+              .where(
+                (m) =>
+                    m.isDeletedBy(uid) &&
+                    (m.from.uid == uid ||
+                        m.to.any((p) => p.uid == uid) ||
+                        m.cc.any((p) => p.uid == uid)),
+              )
+              .toList(),
+        );
   }
 
-  /// Thread: all messages sharing the same threadId, ordered oldest first
+  /// Thread: all messages sharing the same threadId, ordered oldest first.
+  /// Scoped to messages the current user actually participated in — also
+  /// the behavior you want anyway: someone not CC'd on a given reply
+  /// shouldn't see it just because they were on an earlier message in the
+  /// same thread.
   Stream<List<CommunicationMessage>> threadStream(String threadId) {
+    final uid = _currentUid;
     return _commsCol
         .where('threadId', isEqualTo: threadId)
+        .where('participantUids', arrayContains: uid)
         .orderBy('sentAt')
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => CommunicationMessage.fromDoc(d)).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => CommunicationMessage.fromDoc(d)).toList(),
+        );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -316,8 +361,7 @@ class CommunicationService {
         .where('ownerUid', isEqualTo: _currentUid)
         .orderBy('savedAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => DraftMessage.fromDoc(d)).toList());
+        .map((snap) => snap.docs.map((d) => DraftMessage.fromDoc(d)).toList());
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -331,10 +375,12 @@ class CommunicationService {
     required String projectId,
   }) async {
     try {
-      final path =
-          'communication/$projectId/${_uuid.v4()}_$fileName';
+      final path = 'communication/$projectId/${_uuid.v4()}_$fileName';
       final ref = _storage.ref().child(path);
-      final task = await ref.putData(bytes, SettableMetadata(contentType: mimeType));
+      final task = await ref.putData(
+        bytes,
+        SettableMetadata(contentType: mimeType),
+      );
       final url = await task.ref.getDownloadURL();
 
       return MessageAttachment(
@@ -357,14 +403,19 @@ class CommunicationService {
     final uid = _currentUid;
     return _commsCol
         .where('projectId', isEqualTo: projectId)
+        .where('participantUids', arrayContains: uid)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => CommunicationMessage.fromDoc(d))
-            .where((m) =>
-                !m.isDeletedBy(uid) &&
-                !m.isReadBy(uid) &&
-                (m.to.any((p) => p.uid == uid) ||
-                    m.cc.any((p) => p.uid == uid)))
-            .length);
+        .map(
+          (snap) => snap.docs
+              .map((d) => CommunicationMessage.fromDoc(d))
+              .where(
+                (m) =>
+                    !m.isDeletedBy(uid) &&
+                    !m.isReadBy(uid) &&
+                    (m.to.any((p) => p.uid == uid) ||
+                        m.cc.any((p) => p.uid == uid)),
+              )
+              .length,
+        );
   }
 }

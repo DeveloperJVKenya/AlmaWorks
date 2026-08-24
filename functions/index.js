@@ -2,10 +2,20 @@ const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
-const admin = require("firebase-admin");
+const { initializeApp } = require("firebase-admin/app");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
+const { getMessaging } = require("firebase-admin/messaging");
 
-admin.initializeApp();
+// firebase-admin v13+ dropped the old `admin.firestore()` / `admin.messaging()`
+// default-namespace API (it's simply undefined now, not just deprecated) —
+// this modular form (getFirestore()/getMessaging()/FieldValue from their own
+// submodules) is the only one that still works against the installed
+// firebase-admin@14.x.
+initializeApp();
 setGlobalOptions({ region: "us-central1" });
+
+const db = getFirestore();
+const messaging = getMessaging();
 
 const MESSAGING_CHUNK_SIZE = 500; // FCM multicast hard limit
 const UID_QUERY_CHUNK_SIZE = 30; // Firestore 'in' query hard limit
@@ -33,10 +43,10 @@ function collectTokensForUser(userData) {
 /** Clears a single dead token from both the multi-device map and the legacy field. */
 async function clearStaleToken(userDocRef, token) {
   const update = {};
-  update[`fcmTokens.${token}`] = admin.firestore.FieldValue.delete();
+  update[`fcmTokens.${token}`] = FieldValue.delete();
   const doc = await userDocRef.get();
   if (doc.exists && doc.data().fcmToken === token) {
-    update.fcmToken = admin.firestore.FieldValue.delete();
+    update.fcmToken = FieldValue.delete();
   }
   await userDocRef.update(update);
 }
@@ -68,8 +78,7 @@ exports.onAdminNotificationQueued = onDocumentCreated(
     const body = data.body || "";
     const payload = data.payload || {};
 
-    const usersSnap = await admin
-      .firestore()
+    const usersSnap = await db
       .collection("Users")
       .where("role", "in", ["MainAdmin", "Admin"])
       .get();
@@ -104,7 +113,7 @@ exports.onAdminNotificationQueued = onDocumentCreated(
     const staleTokens = [];
     for (let i = 0; i < tokens.length; i += MESSAGING_CHUNK_SIZE) {
       const chunk = tokens.slice(i, i + MESSAGING_CHUNK_SIZE);
-      const response = await admin.messaging().sendEachForMulticast({
+      const response = await messaging.sendEachForMulticast({
         ...message,
         tokens: chunk,
       });
@@ -158,8 +167,7 @@ exports.onUserNotificationQueued = onDocumentCreated(
     const body = data.body || "";
     const payload = data.payload || {};
 
-    const usersSnap = await admin
-      .firestore()
+    const usersSnap = await db
       .collection("Users")
       .where("uid", "==", targetUid)
       .limit(1)
@@ -182,7 +190,7 @@ exports.onUserNotificationQueued = onDocumentCreated(
       dataPayload[key] = String(value);
     }
 
-    const response = await admin.messaging().sendEachForMulticast({
+    const response = await messaging.sendEachForMulticast({
       notification: { title, body },
       data: dataPayload,
       tokens,
@@ -256,7 +264,6 @@ exports.onCommunicationMessageCreated = onDocumentCreated(
       return;
     }
 
-    const db = admin.firestore();
     const userDocs = [];
     for (let i = 0; i < recipientUids.length; i += UID_QUERY_CHUNK_SIZE) {
       const chunk = recipientUids.slice(i, i + UID_QUERY_CHUNK_SIZE);
@@ -299,7 +306,7 @@ exports.onCommunicationMessageCreated = onDocumentCreated(
     const staleTokens = []; // { token, ref }
     for (let i = 0; i < outbound.length; i += MESSAGING_CHUNK_SIZE) {
       const chunk = outbound.slice(i, i + MESSAGING_CHUNK_SIZE);
-      const response = await admin.messaging().sendEach(chunk.map((o) => o.message));
+      const response = await messaging.sendEach(chunk.map((o) => o.message));
       response.responses.forEach((r, idx) => {
         if (
           !r.success &&
@@ -336,7 +343,6 @@ exports.onCommunicationMessageCreated = onDocumentCreated(
 exports.sendBookingReminders = onSchedule(
   { schedule: "0 7 * * *", timeZone: "Africa/Nairobi" },
   async () => {
-    const db = admin.firestore();
     const tomorrowStart = new Date();
     tomorrowStart.setDate(tomorrowStart.getDate() + 1);
     tomorrowStart.setHours(0, 0, 0, 0);
@@ -379,7 +385,7 @@ exports.sendBookingReminders = onSchedule(
           assetId: booking.assetId,
           bookingId: doc.id,
         },
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
       sent += 1;
     }

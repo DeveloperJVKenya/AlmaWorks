@@ -1258,10 +1258,19 @@
       ]
     },
     {
+      "collectionGroup": "UserNotificationQueue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "targetUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "Communication",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "participantUids", "arrayConfig": "CONTAINS" },
         { "fieldPath": "sentAt", "order": "DESCENDING" }
       ]
     },
@@ -1271,6 +1280,7 @@
       "fields": [
         { "fieldPath": "projectId", "order": "ASCENDING" },
         { "fieldPath": "from.uid", "order": "ASCENDING" },
+        { "fieldPath": "participantUids", "arrayConfig": "CONTAINS" },
         { "fieldPath": "sentAt", "order": "DESCENDING" }
       ]
     },
@@ -1279,6 +1289,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "threadId", "order": "ASCENDING" },
+        { "fieldPath": "participantUids", "arrayConfig": "CONTAINS" },
         { "fieldPath": "sentAt", "order": "ASCENDING" }
       ]
     },

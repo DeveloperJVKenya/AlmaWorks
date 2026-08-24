@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(node -p \"require\\('firebase-admin/package.json' , \\)\")",
+      "Bash(firebase functions:log --only onAdminNotificationQueued,onUserNotificationQueued --project almaworks-b9a2e -n 60)",
+      "Bash(gcloud firestore *)"
+    ]
+  }
+}

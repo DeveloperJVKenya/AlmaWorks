@@ -51,7 +51,8 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
     super.initState();
     _initData();
     _searchCtrl.addListener(
-        () => setState(() => _searchQuery = _searchCtrl.text.toLowerCase()));
+      () => setState(() => _searchQuery = _searchCtrl.text.toLowerCase()),
+    );
   }
 
   Future<void> _initData() async {
@@ -138,8 +139,8 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
       child: _isLoadingUsers
           ? const Center(child: CircularProgressIndicator())
           : isMobile
-              ? _buildMobileLayout()
-              : _buildDesktopLayout(),
+          ? _buildMobileLayout()
+          : _buildDesktopLayout(),
     );
   }
 
@@ -166,138 +167,150 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
 
   // ─── Sidebar (desktop) ────────────────────────────────────────────────────
   Widget _buildSidebar() {
-    return Container(
-      width: 220,
+    return Material(
       color: Colors.white,
-      child: Column(
-        children: [
-          const SizedBox(height: 16),
+      child: SizedBox(
+        width: 220,
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
 
-          // Compose button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: ElevatedButton.icon(
-              onPressed: _openCompose,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: Text('Compose',
-                  style: GoogleFonts.poppins(fontSize: 13)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0A2E5A),
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 44),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                elevation: 2,
+            // Compose button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: ElevatedButton.icon(
+                onPressed: _openCompose,
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: Text(
+                  'Compose',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0A2E5A),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  elevation: 2,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          _folderTile(
-            icon: Icons.inbox_outlined,
-            label: 'Inbox',
-            folder: _Folder.inbox,
-            badge: _unreadStream,
-          ),
-          _folderTile(
-            icon: Icons.send_outlined,
-            label: 'Sent',
-            folder: _Folder.sent,
-          ),
-          _folderTile(
-            icon: Icons.drafts_outlined,
-            label: 'Drafts',
-            folder: _Folder.drafts,
-          ),
-          _folderTile(
-            icon: Icons.delete_outline,
-            label: 'Trash',
-            folder: _Folder.trash,
-          ),
+            _folderTile(
+              icon: Icons.inbox_outlined,
+              label: 'Inbox',
+              folder: _Folder.inbox,
+              badge: _unreadStream,
+            ),
+            _folderTile(
+              icon: Icons.send_outlined,
+              label: 'Sent',
+              folder: _Folder.sent,
+            ),
+            _folderTile(
+              icon: Icons.drafts_outlined,
+              label: 'Drafts',
+              folder: _Folder.drafts,
+            ),
+            _folderTile(
+              icon: Icons.delete_outline,
+              label: 'Trash',
+              folder: _Folder.trash,
+            ),
 
-          const Divider(height: 32),
+            const Divider(height: 32),
 
-          // Project label
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'PROJECT',
-                  style: GoogleFonts.poppins(
+            // Project label
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PROJECT',
+                    style: GoogleFonts.poppins(
                       fontSize: 10,
                       color: Colors.grey[400],
                       fontWeight: FontWeight.w600,
-                      letterSpacing: 1.0),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.project.name,
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: const Color(0xFF0A2E5A),
-                      fontWeight: FontWeight.w500),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-
-          const Spacer(),
-
-          // Current user info footer
-          if (_currentUser != null)
-            Container(
-              margin: const EdgeInsets.all(12),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: const Color(0xFF0A2E5A),
-                    child: Text(
-                      _currentUser!.username.isNotEmpty
-                          ? _currentUser!.username[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 13),
+                      letterSpacing: 1.0,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _currentUser!.username,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          _currentUser!.email,
-                          style: GoogleFonts.poppins(
-                              fontSize: 10, color: Colors.grey[500]),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.project.name,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF0A2E5A),
+                      fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
 
-          const SizedBox(height: 8),
-        ],
+            const Spacer(),
+
+            // Current user info footer
+            if (_currentUser != null)
+              Container(
+                margin: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: const Color(0xFF0A2E5A),
+                      child: Text(
+                        _currentUser!.username.isNotEmpty
+                            ? _currentUser!.username[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _currentUser!.username,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            _currentUser!.email,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: Colors.grey[500],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -323,20 +336,14 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
           label,
           style: GoogleFonts.poppins(
             fontSize: 13,
-            fontWeight:
-                isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected
-                ? const Color(0xFF0A2E5A)
-                : Colors.grey[700],
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            color: isSelected ? const Color(0xFF0A2E5A) : Colors.grey[700],
           ),
         ),
         selected: isSelected,
-        selectedTileColor:
-            const Color(0xFF0A2E5A).withValues(alpha: 0.08),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+        selectedTileColor: const Color(0xFF0A2E5A).withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         onTap: () => setState(() => _activeFolder = folder),
         trailing: badge != null
             ? StreamBuilder<int>(
@@ -346,15 +353,16 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                   if (count == 0) return const SizedBox.shrink();
                   return Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF0A2E5A),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '$count',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 11),
+                      style: const TextStyle(color: Colors.white, fontSize: 11),
                     ),
                   );
                 },
@@ -383,8 +391,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         style: GoogleFonts.poppins(fontSize: 13),
         decoration: InputDecoration(
           hintText: 'Search messages…',
-          hintStyle:
-              GoogleFonts.poppins(fontSize: 13, color: Colors.grey[400]),
+          hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[400]),
           prefixIcon: const Icon(Icons.search, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -392,7 +399,8 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                   onPressed: () {
                     _searchCtrl.clear();
                     setState(() => _searchQuery = '');
-                  })
+                  },
+                )
               : null,
           filled: true,
           fillColor: Colors.white,
@@ -408,8 +416,10 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF0A2E5A)),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 10,
+            horizontal: 14,
+          ),
           isDense: true,
         ),
       ),
@@ -472,9 +482,11 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         msg.bodyPlainText.toLowerCase().contains(_searchQuery) ||
         msg.from.email.toLowerCase().contains(_searchQuery) ||
         msg.from.username.toLowerCase().contains(_searchQuery) ||
-        msg.to.any((p) =>
-            p.email.toLowerCase().contains(_searchQuery) ||
-            p.username.toLowerCase().contains(_searchQuery));
+        msg.to.any(
+          (p) =>
+              p.email.toLowerCase().contains(_searchQuery) ||
+              p.username.toLowerCase().contains(_searchQuery),
+        );
   }
 
   Widget _streamList<T>({
@@ -493,6 +505,19 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+        // Surface stream errors instead of silently falling back to an
+        // empty/stale list — a denied or failing query used to look
+        // identical to "no messages", which is exactly what made this class
+        // of bug invisible from the UI (see communication_service.dart's
+        // query-shape note for why a permission error here almost always
+        // means a query is missing its `participantUids` filter).
+        if (snap.hasError) {
+          widget.logger.e(
+            'CommunicationScreen: stream error',
+            error: snap.error,
+          );
+          return _errorState(snap.error);
+        }
         final items = (snap.data ?? []).where(filter).toList();
         if (items.isEmpty) {
           return _emptyState(emptyLabel, emptyIcon);
@@ -508,6 +533,35 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
     );
   }
 
+  Widget _errorState(Object? error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+            const SizedBox(height: 12),
+            Text(
+              'Could not load messages',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$error',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _draftList() {
     if (_draftsStream == null) {
       return const Center(child: CircularProgressIndicator());
@@ -517,6 +571,13 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          widget.logger.e(
+            'CommunicationScreen: drafts stream error',
+            error: snap.error,
+          );
+          return _errorState(snap.error);
         }
         final drafts = snap.data ?? [];
         if (drafts.isEmpty) {
@@ -556,8 +617,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
           const SizedBox(height: 12),
           Text(
             label,
-            style: GoogleFonts.poppins(
-                fontSize: 15, color: Colors.grey[400]),
+            style: GoogleFonts.poppins(fontSize: 15, color: Colors.grey[400]),
           ),
         ],
       ),
@@ -568,8 +628,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
   Widget _buildMobileBottomBar() {
     return BottomNavigationBar(
       currentIndex: _Folder.values.indexOf(_activeFolder),
-      onTap: (i) =>
-          setState(() => _activeFolder = _Folder.values[i]),
+      onTap: (i) => setState(() => _activeFolder = _Folder.values[i]),
       selectedLabelStyle: GoogleFonts.poppins(fontSize: 11),
       unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11),
       selectedItemColor: const Color(0xFF0A2E5A),
@@ -577,13 +636,18 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
       type: BottomNavigationBarType.fixed,
       items: const [
         BottomNavigationBarItem(
-            icon: Icon(Icons.inbox_outlined), label: 'Inbox'),
+          icon: Icon(Icons.inbox_outlined),
+          label: 'Inbox',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.send_outlined), label: 'Sent'),
         BottomNavigationBarItem(
-            icon: Icon(Icons.send_outlined), label: 'Sent'),
+          icon: Icon(Icons.drafts_outlined),
+          label: 'Drafts',
+        ),
         BottomNavigationBarItem(
-            icon: Icon(Icons.drafts_outlined), label: 'Drafts'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.delete_outline), label: 'Trash'),
+          icon: Icon(Icons.delete_outline),
+          label: 'Trash',
+        ),
       ],
     );
   }
@@ -655,8 +719,7 @@ class _MessageTile extends StatelessWidget {
           color: _isUnread && !isSent
               ? const Color(0xFF0A2E5A).withValues(alpha: 0.03)
               : Colors.transparent,
-          padding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               // Avatar
@@ -664,11 +727,8 @@ class _MessageTile extends StatelessWidget {
                 radius: 20,
                 backgroundColor: _avatarColor(),
                 child: Text(
-                  displayName.isNotEmpty
-                      ? displayName[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(
-                      color: Colors.white, fontSize: 15),
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
                 ),
               ),
               const SizedBox(width: 12),
@@ -727,7 +787,9 @@ class _MessageTile extends StatelessWidget {
                           Container(
                             margin: const EdgeInsets.only(left: 6),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 1),
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.grey[200],
                               borderRadius: BorderRadius.circular(4),
@@ -744,8 +806,11 @@ class _MessageTile extends StatelessWidget {
                         if (message.attachments.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(left: 6),
-                            child: Icon(Icons.attach_file,
-                                size: 14, color: Colors.grey[400]),
+                            child: Icon(
+                              Icons.attach_file,
+                              size: 14,
+                              color: Colors.grey[400],
+                            ),
                           ),
                       ],
                     ),
@@ -753,7 +818,9 @@ class _MessageTile extends StatelessWidget {
                     Text(
                       message.bodyPlainText,
                       style: GoogleFonts.poppins(
-                          fontSize: 12, color: Colors.grey[500]),
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -776,9 +843,7 @@ class _MessageTile extends StatelessWidget {
               // Restore button (trash folder only)
               if (isTrash && onRestore != null)
                 IconButton(
-                  icon: const Icon(
-                      Icons.restore_from_trash_outlined,
-                      size: 18),
+                  icon: const Icon(Icons.restore_from_trash_outlined, size: 18),
                   color: Colors.grey[500],
                   onPressed: onRestore,
                   tooltip: 'Restore',
@@ -796,8 +861,7 @@ class _MessageTile extends StatelessWidget {
 
   String _recipientLabel() {
     final names = message.to
-        .map((p) =>
-            p.username.isNotEmpty ? p.username : p.email)
+        .map((p) => p.username.isNotEmpty ? p.username : p.email)
         .toList();
     if (names.isEmpty) return 'No recipients';
     if (names.length == 1) return 'To: ${names.first}';
@@ -812,18 +876,15 @@ class _MessageTile extends StatelessWidget {
       Color(0xFF0288D1),
       Color(0xFF0097A7),
     ];
-    final idx = (message.from.uid.isNotEmpty
-            ? message.from.uid.codeUnitAt(0)
-            : 0) %
+    final idx =
+        (message.from.uid.isNotEmpty ? message.from.uid.codeUnitAt(0) : 0) %
         colors.length;
     return colors[idx];
   }
 
   String _formatDate(DateTime dt) {
     final now = DateTime.now();
-    if (dt.year == now.year &&
-        dt.month == now.month &&
-        dt.day == now.day) {
+    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
       return DateFormat.jm().format(dt);
     }
     if (dt.year == now.year) {
@@ -854,15 +915,13 @@ class _DraftTile extends StatelessWidget {
     return InkWell(
       onTap: onOpen,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             const CircleAvatar(
               radius: 20,
               backgroundColor: Colors.grey,
-              child: Icon(Icons.drafts_outlined,
-                  color: Colors.white, size: 18),
+              child: Icon(Icons.drafts_outlined, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -884,30 +943,37 @@ class _DraftTile extends StatelessWidget {
                       Text(
                         DateFormat.MMMd().format(draft.savedAt),
                         style: GoogleFonts.poppins(
-                            fontSize: 11, color: Colors.grey[400]),
+                          fontSize: 11,
+                          color: Colors.grey[400],
+                        ),
                       ),
                     ],
                   ),
                   Text(
-                    draft.subject.isNotEmpty
-                        ? draft.subject
-                        : '(No subject)',
+                    draft.subject.isNotEmpty ? draft.subject : '(No subject)',
                     style: GoogleFonts.poppins(
-                        fontSize: 13, color: Colors.grey[700]),
+                      fontSize: 13,
+                      color: Colors.grey[700],
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     'To: $toLabel',
                     style: GoogleFonts.poppins(
-                        fontSize: 12, color: Colors.grey[500]),
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
             IconButton(
-              icon: Icon(Icons.delete_outline,
-                  size: 18, color: Colors.grey[400]),
+              icon: Icon(
+                Icons.delete_outline,
+                size: 18,
+                color: Colors.grey[400],
+              ),
               onPressed: onDelete,
               tooltip: 'Delete draft',
             ),
