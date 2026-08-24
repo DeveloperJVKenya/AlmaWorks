@@ -1,6 +1,9 @@
 import 'package:almaworks/models/inventory/asset_assignment_model.dart';
+import 'package:almaworks/models/inventory/asset_booking_model.dart';
+import 'package:almaworks/models/inventory/asset_maintenance_window_model.dart';
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/inventory/checkout_request_model.dart';
+import 'package:almaworks/models/inventory/material_fabrication_order_model.dart';
 import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:almaworks/rbacsystem/auth_service.dart';
@@ -112,7 +115,34 @@ final requestByIdProvider = StreamProvider.autoDispose.family<CheckoutRequestMod
   return ref.watch(inventoryServiceProvider).streamRequest(requestId);
 });
 
-/// All requests currently awaiting MainAdmin review.
+/// All requests currently awaiting MainAdmin/Admin review.
 final pendingRequestsProvider = StreamProvider.autoDispose<List<CheckoutRequestModel>>((ref) {
   return ref.watch(inventoryServiceProvider).streamPendingRequests();
+});
+
+/// Scheduled + active bookings for an asset — feeds the availability
+/// calendar and the "collect today" / "record return" actions.
+final assetBookingsProvider =
+    StreamProvider.autoDispose.family<List<AssetBookingModel>, String>((ref, assetId) {
+  return ref.watch(inventoryServiceProvider).streamAssetBookings(assetId);
+});
+
+/// Maintenance blackout windows for an asset.
+final assetMaintenanceWindowsProvider =
+    StreamProvider.autoDispose.family<List<AssetMaintenanceWindowModel>, String>((ref, assetId) {
+  return ref.watch(inventoryServiceProvider).streamAssetMaintenanceWindows(assetId);
+});
+
+/// Fabrication orders for a material — the paper-form chain-of-custody
+/// trail (Driver -> Fabricator -> Driver -> Technician).
+final materialFabricationOrdersProvider =
+    StreamProvider.autoDispose.family<List<MaterialFabricationOrderModel>, String>((ref, materialId) {
+  return ref.watch(inventoryServiceProvider).streamFabricationOrders(materialId);
+});
+
+/// Every fabrication order across all materials still awaiting a scan or
+/// flagged with a discrepancy — the admin worklist.
+final pendingFabricationOrdersProvider =
+    StreamProvider.autoDispose<List<MaterialFabricationOrderModel>>((ref) {
+  return ref.watch(inventoryServiceProvider).streamPendingFabricationOrders();
 });

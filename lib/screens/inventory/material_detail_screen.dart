@@ -2,6 +2,7 @@ import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/add_material_screen.dart';
+import 'package:almaworks/screens/inventory/fabrication_orders_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/record_material_movement_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -42,7 +43,7 @@ class MaterialDetailScreen extends ConsumerWidget {
       logger: logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      actions: userRole == 'MainAdmin'
+      actions: (userRole == 'MainAdmin' || userRole == 'Admin')
           ? [
               materialAsync.maybeWhen(
                 data: (material) => material == null
@@ -174,37 +175,62 @@ class MaterialDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildActionButtons(BuildContext context, MaterialModel material) {
-    final canAct = userRole == 'MainAdmin' || userRole == 'Admin';
-    if (!canAct) return const SizedBox.shrink();
+    final isManager = userRole == 'MainAdmin' || userRole == 'Admin';
+    final canView = isManager || userRole == 'Technician';
+    if (!canView) return const SizedBox.shrink();
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _navigateToMovement(context, MaterialMovementMode.receive, material),
-            icon: const Icon(Icons.call_received),
-            label: Text('Record Receipt', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
+        if (isManager)
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _navigateToMovement(context, MaterialMovementMode.receive, material),
+                  icon: const Icon(Icons.call_received),
+                  label: Text('Record Receipt', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: material.isOutOfStock
+                      ? null
+                      : () => _navigateToMovement(context, MaterialMovementMode.issue, material),
+                  icon: const Icon(Icons.call_made),
+                  label: Text('Record Issue', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1565C0),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FabricationOrdersScreen(
+                project: project,
+                logger: logger,
+                material: material,
+                userRole: userRole,
+                username: username,
+                currentUid: currentUid,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: material.isOutOfStock
-                ? null
-                : () => _navigateToMovement(context, MaterialMovementMode.issue, material),
-            icon: const Icon(Icons.call_made),
-            label: Text('Record Issue', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1565C0),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
+          icon: const Icon(Icons.precision_manufacturing_outlined),
+          label: Text('Fabrication Orders', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         ),
       ],
     );

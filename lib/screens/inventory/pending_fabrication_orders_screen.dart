@@ -1,7 +1,8 @@
-import 'package:almaworks/models/inventory/checkout_request_model.dart';
+import 'package:almaworks/models/inventory/material_fabrication_order_model.dart';
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/screens/inventory/inventory_colors.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
-import 'package:almaworks/screens/inventory/review_checkout_request_screen.dart';
+import 'package:almaworks/screens/inventory/material_detail_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:flutter/material.dart';
@@ -10,18 +11,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
-/// MainAdmin/Admin overview of every checkout request currently awaiting
-/// review, across all assets/tools — the discoverable entry point into the
-/// per-item "Review Request" flow (also reachable from an individual
-/// asset's detail screen).
-class PendingRequestsScreen extends ConsumerWidget {
+/// MainAdmin/Admin worklist: every fabrication order across all materials
+/// still awaiting its scanned paper form back, or flagged with a quantity
+/// discrepancy that needs follow-up — the discoverable entry point that
+/// used to be missing (previously an admin could only find these by
+/// opening materials one at a time via Material Detail → Fabrication
+/// Orders). Tapping an order jumps to its material's detail screen, which
+/// already has the full "Fabrication Orders" trail for that material.
+class PendingFabricationOrdersScreen extends ConsumerWidget {
   final ProjectModel project;
   final Logger logger;
   final String currentUid;
   final String username;
   final String userRole;
 
-  const PendingRequestsScreen({
+  const PendingFabricationOrdersScreen({
     super.key,
     required this.project,
     required this.logger,
@@ -32,10 +36,10 @@ class PendingRequestsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final requestsAsync = ref.watch(pendingRequestsProvider);
+    final ordersAsync = ref.watch(pendingFabricationOrdersProvider);
 
     return BaseLayout(
-      title: 'Pending Requests',
+      title: 'Fabrication Orders',
       project: project,
       logger: logger,
       selectedMenuItem: 'Inventory',
@@ -53,16 +57,16 @@ class PendingRequestsScreen extends ConsumerWidget {
                     color: inventoryNavy.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.pending_actions, color: inventoryNavy),
+                  child: const Icon(Icons.precision_manufacturing_outlined, color: inventoryNavy),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Pending Requests', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text('Fabrication Orders', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
                       Text(
-                        'Awaiting your approval before checkout',
+                        'Awaiting a scanned form, or flagged with a discrepancy',
                         style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
@@ -73,14 +77,14 @@ class PendingRequestsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Expanded(
-            child: requestsAsync.when(
+            child: ordersAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) {
-                logger.e('❌ PendingRequestsScreen: stream error $err');
-                return Center(child: Text('Error loading requests', style: GoogleFonts.poppins()));
+                logger.e('❌ PendingFabricationOrdersScreen: stream error $err');
+                return Center(child: Text('Error loading orders', style: GoogleFonts.poppins()));
               },
-              data: (requests) {
-                if (requests.isEmpty) {
+              data: (orders) {
+                if (orders.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -91,9 +95,9 @@ class PendingRequestsScreen extends ConsumerWidget {
                           child: Icon(Icons.inbox_outlined, size: 40, color: inventoryNavy.withValues(alpha: 0.35)),
                         ),
                         const SizedBox(height: 14),
-                        Text('No pending requests', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[800])),
+                        Text('Nothing needs attention', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[800])),
                         const SizedBox(height: 4),
-                        Text('New checkout requests will show up here.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500])),
+                        Text('New fabrication orders will show up here.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500])),
                       ],
                     ),
                   );
@@ -104,8 +108,8 @@ class PendingRequestsScreen extends ConsumerWidget {
                     if (!isWide) {
                       return ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                        itemCount: requests.length,
-                        itemBuilder: (context, index) => _buildRequestCard(context, requests[index]),
+                        itemCount: orders.length,
+                        itemBuilder: (context, index) => _buildOrderCard(context, orders[index]),
                       );
                     }
                     return GridView.builder(
@@ -116,8 +120,8 @@ class PendingRequestsScreen extends ConsumerWidget {
                         crossAxisSpacing: 14,
                         mainAxisSpacing: 14,
                       ),
-                      itemCount: requests.length,
-                      itemBuilder: (context, index) => _buildRequestCard(context, requests[index]),
+                      itemCount: orders.length,
+                      itemBuilder: (context, index) => _buildOrderCard(context, orders[index]),
                     );
                   },
                 );
@@ -129,24 +133,17 @@ class PendingRequestsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRequestCard(BuildContext context, CheckoutRequestModel r) {
+  Widget _buildOrderCard(BuildContext context, MaterialFabricationOrderModel order) {
+    final isDiscrepancy = order.isDiscrepancy;
+    final color = isDiscrepancy ? InventoryColors.damaged : InventoryColors.pendingRequest;
+    final icon = isDiscrepancy ? Icons.warning_amber_outlined : Icons.hourglass_top;
+    final statusLabel = isDiscrepancy ? 'Discrepancy' : 'Awaiting Scan';
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ReviewCheckoutRequestScreen(
-              project: project,
-              logger: logger,
-              request: r,
-              respondedByUid: currentUid,
-              respondedByName: username,
-              respondedByRole: userRole,
-            ),
-          ),
-        ),
+        onTap: () => _openMaterial(context, order),
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(14),
@@ -161,30 +158,27 @@ class PendingRequestsScreen extends ConsumerWidget {
               Container(
                 width: 48,
                 height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE65100).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.hourglass_top, color: Color(0xFFE65100)),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: color),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(r.assetName,
+                    Text('${order.materialName} — ${order.quantityIssued} ${order.unit}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14)),
                     const SizedBox(height: 4),
                     Text(
-                      'Requested by ${r.requestedByName}${r.projectName != null ? ' • ${r.projectName}' : ''}',
+                      'Issued by ${order.issuedByName}${order.projectName != null ? ' • ${order.projectName}' : ''}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700]),
                     ),
                     const SizedBox(height: 2),
-                    Text(DateFormat('d MMM yyyy, HH:mm').format(r.requestedAt),
+                    Text(DateFormat('d MMM yyyy').format(order.issuedAt),
                         style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500])),
                   ],
                 ),
@@ -192,21 +186,27 @@ class PendingRequestsScreen extends ConsumerWidget {
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: inventoryNavy,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Review', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
-                    const SizedBox(width: 2),
-                    const Icon(Icons.chevron_right, size: 16, color: Colors.white),
-                  ],
-                ),
+                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+                child: Text(statusLabel, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _openMaterial(BuildContext context, MaterialFabricationOrderModel order) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MaterialDetailScreen(
+          project: project,
+          logger: logger,
+          materialId: order.materialId,
+          userRole: userRole,
+          username: username,
+          currentUid: currentUid,
         ),
       ),
     );

@@ -45,5 +45,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Required for background/terminated-app FCM push (Communication,
+	     client requests, schedule reminders) to actually wake the app on
+	     iOS — without this, APNs pushes are delivered to the OS but never
+	     reach firebase_notification_handler.dart's background handler. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

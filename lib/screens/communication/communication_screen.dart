@@ -622,6 +622,13 @@ class _MessageTile extends StatelessWidget {
 
   bool get _isUnread => !message.isReadBy(currentUid);
 
+  /// True when the current user was looped in via Cc rather than addressed
+  /// directly via To — mirrors email's "you were CC'd" distinction.
+  bool get _isCcOnly =>
+      !isSent &&
+      message.cc.any((p) => p.uid == currentUid) &&
+      !message.to.any((p) => p.uid == currentUid);
+
   @override
   Widget build(BuildContext context) {
     final displayName = isSent ? _recipientLabel() : _senderName();
@@ -716,9 +723,30 @@ class _MessageTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (_isCcOnly)
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Cc',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
                         if (message.attachments.isNotEmpty)
-                          Icon(Icons.attach_file,
-                              size: 14, color: Colors.grey[400]),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: Icon(Icons.attach_file,
+                                size: 14, color: Colors.grey[400]),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 2),

@@ -1,8 +1,11 @@
 import 'dart:typed_data';
 
 import 'package:almaworks/models/inventory/asset_assignment_model.dart';
+import 'package:almaworks/models/inventory/asset_booking_model.dart';
+import 'package:almaworks/models/inventory/asset_maintenance_window_model.dart';
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/inventory/checkout_request_model.dart';
+import 'package:almaworks/models/inventory/material_fabrication_order_model.dart';
 import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,8 +28,12 @@ class InventoryService {
   static const _assignmentsCollection = 'InventoryAssetAssignments';
   static const _materialsCollection = 'InventoryMaterials';
   static const _movementsCollection = 'InventoryMaterialMovements';
+  static const _fabricationOrdersCollection = 'InventoryMaterialFabricationOrders';
   static const _requestsCollection = 'InventoryCheckoutRequests';
+  static const _bookingsCollection = 'InventoryAssetBookings';
+  static const _maintenanceCollection = 'InventoryAssetMaintenanceWindows';
   static const _adminQueueCollection = 'AdminNotificationQueue';
+  static const _userQueueCollection = 'UserNotificationQueue';
 
   // ── Assets ────────────────────────────────────────────────────────────
 
@@ -390,9 +397,12 @@ class InventoryService {
     });
   }
 
-  /// Admin submits a request to check out an Available asset/tool. Locks
-  /// the asset (`pendingRequestId`) so no other Admin can request it and it
-  /// can't be checked out any other way until a MainAdmin approves/rejects.
+  /// Technician (or Admin/MainAdmin, though they normally use [createBooking]
+  /// directly) submits a request for a booking window. Locks the asset
+  /// (`pendingRequestId`) so no second request can be raised until a
+  /// MainAdmin/Admin approves/rejects this one. The window itself is
+  /// validated against existing bookings/maintenance the same way
+  /// [createBooking] is — approval just turns this into a real booking.
   Future<CheckoutRequestModel> createCheckoutRequest({
     required String assetId,
     required String assetName,
@@ -402,9 +412,13 @@ class InventoryService {
     String? projectId,
     String? projectName,
     required String reason,
+    required DateTime requestedStart,
+    required DateTime requestedEnd,
   }) async {
     try {
       _logger.i('📝 InventoryService: $requestedByName requesting checkout of $assetName');
+      await _assertNoOverlap(assetId: assetId, start: requestedStart, end: requestedEnd);
+
       final requestRef = _firestore.collection(_requestsCollection).doc();
       final now = DateTime.now();
       final request = CheckoutRequestModel(
@@ -417,6 +431,8 @@ class InventoryService {
         projectId: projectId,
         projectName: projectName,
         reason: reason,
+        requestedStart: requestedStart,
+        requestedEnd: requestedEnd,
         status: CheckoutRequestModel.statusPending,
         requestedAt: now,
       );
@@ -426,9 +442,6 @@ class InventoryService {
         final assetSnap = await transaction.get(assetRef);
         if (!assetSnap.exists) throw Exception('Asset $assetId no longer exists');
         final data = assetSnap.data()!;
-        if (data['status'] != AssetModel.statusAvailable) {
-          throw Exception('Asset is not available to request');
-        }
         if (data['pendingRequestId'] != null) {
           throw Exception('Asset already has a pending request');
         }
@@ -442,8 +455,8 @@ class InventoryService {
 
       await _notifyAdmins(
         title: '📦 Checkout Request',
-        body: '$requestedByName requested to check out "$assetName"'
-            '${projectName != null ? ' for $projectName' : ''}.',
+        body: '$requestedByName requested "$assetName" from ${_fmtDate(requestedStart)} '
+            'to ${_fmtDate(requestedEnd)}${projectName != null ? ' for $projectName' : ''}.',
         payload: {'type': 'inventory_checkout_request', 'requestId': requestRef.id, 'assetId': assetId},
       );
 
@@ -466,6 +479,7 @@ class InventoryService {
     try {
       _logger.i('🚫 InventoryService: Rejecting checkout request $requestId');
       final now = DateTime.now();
+      String requesterUid = '';
       String requesterName = '';
       String assetName = '';
 
@@ -477,6 +491,7 @@ class InventoryService {
         if (requestData['status'] != CheckoutRequestModel.statusPending) {
           throw Exception('Request has already been responded to');
         }
+        requesterUid = requestData['requestedByUid'] as String? ?? '';
         requesterName = requestData['requestedByName'] as String? ?? '';
         assetName = requestData['assetName'] as String? ?? '';
 
@@ -502,6 +517,16 @@ class InventoryService {
         payload: {'type': 'inventory_checkout_rejected', 'requestId': requestId, 'assetId': assetId},
       );
 
+      if (requesterUid.isNotEmpty) {
+        await _notifyUser(
+          targetUid: requesterUid,
+          title: '❌ Checkout Request Rejected',
+          body: 'Your request for "$assetName" was rejected'
+              '${rejectionReason != null ? ': $rejectionReason' : '.'}',
+          payload: {'type': 'inventory_checkout_rejected', 'requestId': requestId, 'assetId': assetId},
+        );
+      }
+
       _logger.i('✅ InventoryService: Request $requestId rejected');
     } catch (e) {
       _logger.e('❌ InventoryService: Failed to reject request $requestId', error: e);
@@ -509,11 +534,15 @@ class InventoryService {
     }
   }
 
-  /// MainAdmin approves a pending request — this IS the actual checkout:
-  /// condition + photos are captured here as the handover confirmation, in
-  /// the same transaction that creates the immutable ledger entry and
-  /// resolves the request.
-  Future<AssetAssignmentModel> approveCheckoutRequest({
+  /// MainAdmin/Admin approves a pending request — creates the real
+  /// [AssetBookingModel] for the requested window (immediately active if the
+  /// window starts today/earlier, capturing condition + photos as the
+  /// handover confirmation; otherwise left scheduled for collection later).
+  /// The approving admin is the traced actioning user on the booking, and
+  /// the same self-checkout guard applies (an Admin can't approve their own
+  /// request onto themself — though in practice Technician is the only role
+  /// still using the request flow; MainAdmin is always exempt).
+  Future<AssetBookingModel> approveCheckoutRequest({
     required CheckoutRequestModel request,
     required String conditionNotes,
     required List<Uint8List> photoBytesList,
@@ -524,25 +553,40 @@ class InventoryService {
   }) async {
     try {
       _logger.i('✅ InventoryService: Approving checkout request ${request.id}');
-      final assignmentRef = _firestore.collection(_assignmentsCollection).doc();
-
-      final photoUrls = await _uploadAssignmentPhotos(assignmentRef.id, photoBytesList, photoFileNames);
+      _assertNotSelfAssignment(
+        actingRole: respondedByRole,
+        actingUid: respondedByUid,
+        targetUid: request.requestedByUid,
+      );
 
       final now = DateTime.now();
-      final assignment = AssetAssignmentModel(
-        id: assignmentRef.id,
+      final startsNow = !request.requestedStart.isAfter(now);
+
+      final bookingRef = _firestore.collection(_bookingsCollection).doc();
+      final assignmentRef = startsNow ? _firestore.collection(_assignmentsCollection).doc() : null;
+
+      List<String> photoUrls = const [];
+      if (startsNow) {
+        photoUrls = await _uploadAssignmentPhotos(assignmentRef!.id, photoBytesList, photoFileNames);
+      }
+
+      final booking = AssetBookingModel(
+        id: bookingRef.id,
         assetId: request.assetId,
-        eventType: AssetAssignmentModel.eventCheckout,
-        assignedToUserId: request.requestedByUid,
-        assignedToName: request.requestedByName,
+        assetName: request.assetName,
+        itemType: request.itemType,
+        bookedForUid: request.requestedByUid,
+        bookedForName: request.requestedByName,
         projectId: request.projectId,
         projectName: request.projectName,
-        conditionNotes: conditionNotes,
-        photoUrls: photoUrls,
-        recordedByUid: respondedByUid,
-        recordedByName: respondedByName,
-        recordedByRole: respondedByRole,
-        eventAt: now,
+        scheduledStart: request.requestedStart,
+        scheduledEnd: request.requestedEnd,
+        status: startsNow ? AssetBookingModel.statusActive : AssetBookingModel.statusScheduled,
+        checkoutAssignmentId: assignmentRef?.id,
+        sourceRequestId: request.id,
+        createdByUid: respondedByUid,
+        createdByName: respondedByName,
+        createdByRole: respondedByRole,
         createdAt: now,
       );
 
@@ -558,22 +602,49 @@ class InventoryService {
         final assetSnap = await transaction.get(assetRef);
         if (!assetSnap.exists) throw Exception('Asset ${request.assetId} no longer exists');
         final assetData = assetSnap.data()!;
-        if (assetData['status'] != AssetModel.statusAvailable ||
-            assetData['pendingRequestId'] != request.id) {
+        if (assetData['pendingRequestId'] != request.id) {
           throw Exception('Asset state no longer matches this request');
         }
+        if (startsNow && assetData['status'] != AssetModel.statusAvailable) {
+          throw Exception('Asset is not available for an immediate checkout (status: ${assetData['status']})');
+        }
 
-        transaction.set(assignmentRef, assignment.toFirestore());
-        transaction.update(assetRef, {
-          'status': AssetModel.statusCheckedOut,
-          'currentHolderId': request.requestedByUid,
-          'currentHolderName': request.requestedByName,
-          'currentProjectId': request.projectId,
-          'currentProjectName': request.projectName,
-          'currentAssignmentId': assignmentRef.id,
-          'pendingRequestId': null,
-          'updatedAt': Timestamp.fromDate(now),
-        });
+        transaction.set(bookingRef, booking.toFirestore());
+        if (startsNow) {
+          final assignment = AssetAssignmentModel(
+            id: assignmentRef!.id,
+            assetId: request.assetId,
+            eventType: AssetAssignmentModel.eventCheckout,
+            bookingId: bookingRef.id,
+            assignedToUserId: request.requestedByUid,
+            assignedToName: request.requestedByName,
+            projectId: request.projectId,
+            projectName: request.projectName,
+            conditionNotes: conditionNotes,
+            photoUrls: photoUrls,
+            recordedByUid: respondedByUid,
+            recordedByName: respondedByName,
+            recordedByRole: respondedByRole,
+            eventAt: now,
+            createdAt: now,
+          );
+          transaction.set(assignmentRef, assignment.toFirestore());
+          transaction.update(assetRef, {
+            'status': AssetModel.statusCheckedOut,
+            'currentHolderId': request.requestedByUid,
+            'currentHolderName': request.requestedByName,
+            'currentProjectId': request.projectId,
+            'currentProjectName': request.projectName,
+            'currentAssignmentId': assignmentRef.id,
+            'pendingRequestId': null,
+            'updatedAt': Timestamp.fromDate(now),
+          });
+        } else {
+          transaction.update(assetRef, {
+            'pendingRequestId': null,
+            'updatedAt': Timestamp.fromDate(now),
+          });
+        }
         transaction.update(requestRef, {
           'status': CheckoutRequestModel.statusApproved,
           'respondedByUid': respondedByUid,
@@ -582,18 +653,633 @@ class InventoryService {
         });
       });
 
+      await _refreshNextBooking(request.assetId);
+
       await _notifyAdmins(
         title: '✅ Checkout Approved',
         body: '$respondedByName approved ${request.requestedByName}\'s request for "${request.assetName}".',
         payload: {'type': 'inventory_checkout_approved', 'requestId': request.id, 'assetId': request.assetId},
       );
 
-      _logger.i('✅ InventoryService: Request ${request.id} approved (assignment ${assignmentRef.id})');
-      return assignment;
+      await _notifyUser(
+        targetUid: request.requestedByUid,
+        title: '✅ Checkout Approved',
+        body: 'Your request for "${request.assetName}" was approved by $respondedByName'
+            '${startsNow ? ' — it\'s checked out to you now.' : ' — booked for ${_fmtDate(request.requestedStart)}.'}',
+        payload: {'type': 'inventory_checkout_approved', 'requestId': request.id, 'assetId': request.assetId},
+      );
+
+      _logger.i('✅ InventoryService: Request ${request.id} approved (booking ${bookingRef.id})');
+      return booking;
     } catch (e) {
       _logger.e('❌ InventoryService: Failed to approve request ${request.id}', error: e);
       rethrow;
     }
+  }
+
+  // ── Bookings (scheduled checkout/return windows) ────────────────────────
+
+  Stream<List<AssetBookingModel>> streamAssetBookings(String assetId) {
+    return _firestore
+        .collection(_bookingsCollection)
+        .where('assetId', isEqualTo: assetId)
+        .where('status', whereIn: [AssetBookingModel.statusScheduled, AssetBookingModel.statusActive])
+        .orderBy('scheduledStart')
+        .snapshots()
+        .map((qs) => qs.docs.map(AssetBookingModel.fromFirestore).toList())
+        .handleError((e) {
+      _logger.e('❌ InventoryService: Error streaming bookings for asset $assetId', error: e);
+      throw e;
+    });
+  }
+
+  /// Direct MainAdmin/Admin booking. If [scheduledStart] is today or earlier,
+  /// the physical handover happens immediately (condition/photos captured
+  /// now, asset flips to Checked Out); otherwise this only reserves the
+  /// window — the asset stays Available until [recordCollection] is called
+  /// on the day.
+  Future<AssetBookingModel> createBooking({
+    required String assetId,
+    required String assetName,
+    required String itemType,
+    required String bookedForUid,
+    required String bookedForName,
+    String? projectId,
+    String? projectName,
+    required DateTime scheduledStart,
+    required DateTime scheduledEnd,
+    required String conditionNotes,
+    required List<Uint8List> photoBytesList,
+    required List<String> photoFileNames,
+    String deliveryMethod = AssetBookingModel.deliveryDirect,
+    String? driverName,
+    required String createdByUid,
+    required String createdByName,
+    required String createdByRole,
+  }) async {
+    try {
+      _logger.i('📅 InventoryService: Creating booking for asset $assetId ($bookedForName)');
+      _assertNotSelfAssignment(actingRole: createdByRole, actingUid: createdByUid, targetUid: bookedForUid);
+      await _assertNoOverlap(assetId: assetId, start: scheduledStart, end: scheduledEnd);
+
+      final now = DateTime.now();
+      final startsNow = !scheduledStart.isAfter(now);
+      final viaDriver = deliveryMethod == AssetBookingModel.deliveryDriver;
+
+      final bookingRef = _firestore.collection(_bookingsCollection).doc();
+      final assignmentRef = startsNow ? _firestore.collection(_assignmentsCollection).doc() : null;
+
+      List<String> photoUrls = const [];
+      if (startsNow) {
+        photoUrls = await _uploadAssignmentPhotos(assignmentRef!.id, photoBytesList, photoFileNames);
+      }
+
+      final booking = AssetBookingModel(
+        id: bookingRef.id,
+        assetId: assetId,
+        assetName: assetName,
+        itemType: itemType,
+        bookedForUid: bookedForUid,
+        bookedForName: bookedForName,
+        projectId: projectId,
+        projectName: projectName,
+        scheduledStart: scheduledStart,
+        scheduledEnd: scheduledEnd,
+        status: startsNow ? AssetBookingModel.statusActive : AssetBookingModel.statusScheduled,
+        checkoutAssignmentId: assignmentRef?.id,
+        deliveryMethod: deliveryMethod,
+        driverName: viaDriver ? driverName : null,
+        dispatchedAt: (startsNow && viaDriver) ? now : null,
+        dispatchedByUid: (startsNow && viaDriver) ? createdByUid : null,
+        dispatchedByName: (startsNow && viaDriver) ? createdByName : null,
+        createdByUid: createdByUid,
+        createdByName: createdByName,
+        createdByRole: createdByRole,
+        createdAt: now,
+      );
+
+      String? conflictingHolderId;
+      await _firestore.runTransaction((transaction) async {
+        final assetRef = _firestore.collection(_assetsCollection).doc(assetId);
+        final assetSnap = await transaction.get(assetRef);
+        if (!assetSnap.exists) throw Exception('Asset $assetId no longer exists');
+        final assetData = assetSnap.data()!;
+
+        if (startsNow) {
+          final currentStatus = assetData['status'] as String?;
+          if (currentStatus != AssetModel.statusAvailable) {
+            throw Exception('Asset is not available for an immediate checkout (status: $currentStatus)');
+          }
+        } else {
+          conflictingHolderId = assetData['currentHolderId'] as String?;
+        }
+
+        transaction.set(bookingRef, booking.toFirestore());
+        if (startsNow) {
+          final assignment = AssetAssignmentModel(
+            id: assignmentRef!.id,
+            assetId: assetId,
+            eventType: AssetAssignmentModel.eventCheckout,
+            bookingId: bookingRef.id,
+            assignedToUserId: bookedForUid,
+            assignedToName: bookedForName,
+            projectId: projectId,
+            projectName: projectName,
+            conditionNotes: conditionNotes,
+            photoUrls: photoUrls,
+            recordedByUid: createdByUid,
+            recordedByName: createdByName,
+            recordedByRole: createdByRole,
+            eventAt: now,
+            createdAt: now,
+          );
+          transaction.set(assignmentRef, assignment.toFirestore());
+          transaction.update(assetRef, {
+            'status': AssetModel.statusCheckedOut,
+            'currentHolderId': bookedForUid,
+            'currentHolderName': bookedForName,
+            'currentProjectId': projectId,
+            'currentProjectName': projectName,
+            'currentAssignmentId': assignmentRef.id,
+            'updatedAt': Timestamp.fromDate(now),
+          });
+        }
+      });
+
+      await _refreshNextBooking(assetId);
+
+      // A future booking on an asset someone else already holds — warn them
+      // immediately so they can plan the return; the day-before reminder is
+      // handled separately by the sendBookingReminders scheduled function.
+      if (!startsNow && conflictingHolderId != null && conflictingHolderId != bookedForUid) {
+        await _notifyUser(
+          targetUid: conflictingHolderId!,
+          title: '📅 "$assetName" has been booked',
+          body: '$bookedForName has booked "$assetName" starting ${_fmtDate(scheduledStart)}. '
+              'Please plan to return it in time.',
+          payload: {'type': 'inventory_upcoming_booking', 'assetId': assetId, 'bookingId': bookingRef.id},
+        );
+      }
+
+      if (startsNow && viaDriver) {
+        await _notifyUser(
+          targetUid: bookedForUid,
+          title: '🚚 "$assetName" is on the way',
+          body: '${driverName != null ? '$driverName is bringing' : 'A driver is bringing'} '
+              '"$assetName" to you — tap Acknowledge Receipt once it arrives.',
+          payload: {'type': 'inventory_delivery_dispatched', 'assetId': assetId, 'bookingId': bookingRef.id},
+        );
+      }
+
+      _logger.i('✅ InventoryService: Booking created (ID: ${bookingRef.id})');
+      return booking;
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to create booking for asset $assetId', error: e);
+      rethrow;
+    }
+  }
+
+  /// Technician confirms a driver-delivered item has physically arrived —
+  /// deliberately does NOT touch condition/photos or any custody-pointer
+  /// field (those were already captured by the dispatching admin); this is
+  /// only ever a receipt-confirmation timestamp, so a holder can never
+  /// self-assess their own item's condition.
+  Future<void> acknowledgeDelivery({
+    required String bookingId,
+    required String acknowledgedByUid,
+    // The signed physical handover form (see asset_handover_form_pdf.dart),
+    // photographed/scanned by the recipient — optional supporting evidence
+    // alongside their real, in-app acknowledgment above; uploaded first (out
+    // of the transaction, same pattern as _uploadAssignmentPhotos) so its
+    // download URL can be written in the same update as the ack fields.
+    Uint8List? scanBytes,
+    String? scanFileName,
+  }) async {
+    try {
+      _logger.i('📬 InventoryService: Acknowledging delivery for booking $bookingId');
+      final now = DateTime.now();
+      String assetName = '';
+      String bookedForName = '';
+
+      String? scanUrl;
+      if (scanBytes != null && scanFileName != null) {
+        final urls = await _uploadPhotos('Inventory/AssetBookings/$bookingId/handoverForm', [scanBytes], [scanFileName]);
+        scanUrl = urls.isNotEmpty ? urls.first : null;
+      }
+
+      await _firestore.runTransaction((transaction) async {
+        final bookingRef = _firestore.collection(_bookingsCollection).doc(bookingId);
+        final bookingSnap = await transaction.get(bookingRef);
+        if (!bookingSnap.exists) throw Exception('Booking $bookingId no longer exists');
+        final data = bookingSnap.data()!;
+        if (data['bookedForUid'] != acknowledgedByUid) {
+          throw Exception('Only the person this item is booked for can acknowledge delivery');
+        }
+        if (data['deliveryMethod'] != AssetBookingModel.deliveryDriver) {
+          throw Exception('This booking is not a driver delivery');
+        }
+        assetName = data['assetName'] as String? ?? '';
+        bookedForName = data['bookedForName'] as String? ?? '';
+
+        transaction.update(bookingRef, {
+          'deliveryAcknowledgedAt': Timestamp.fromDate(now),
+          'deliveryAcknowledgedByUid': acknowledgedByUid,
+          'handoverFormScanUrl': ?scanUrl,
+        });
+      });
+
+      await _notifyAdmins(
+        title: '📬 Delivery Acknowledged',
+        body: '$bookedForName confirmed receipt of "$assetName".',
+        payload: {'type': 'inventory_delivery_acknowledged', 'bookingId': bookingId},
+      );
+
+      _logger.i('✅ InventoryService: Delivery acknowledged for booking $bookingId');
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to acknowledge delivery for booking $bookingId', error: e);
+      rethrow;
+    }
+  }
+
+  /// Physically hands over an item whose scheduled booking date has
+  /// arrived — moves the booking scheduled → active and the asset to
+  /// Checked Out. Same self-checkout guard as [createBooking].
+  Future<AssetAssignmentModel> recordCollection({
+    required AssetBookingModel booking,
+    required String conditionNotes,
+    required List<Uint8List> photoBytesList,
+    required List<String> photoFileNames,
+    required String recordedByUid,
+    required String recordedByName,
+    required String recordedByRole,
+  }) async {
+    try {
+      _logger.i('📤 InventoryService: Recording collection for booking ${booking.id}');
+      _assertNotSelfAssignment(
+        actingRole: recordedByRole,
+        actingUid: recordedByUid,
+        targetUid: booking.bookedForUid,
+      );
+
+      final assignmentRef = _firestore.collection(_assignmentsCollection).doc();
+      final photoUrls = await _uploadAssignmentPhotos(assignmentRef.id, photoBytesList, photoFileNames);
+      final now = DateTime.now();
+      final assignment = AssetAssignmentModel(
+        id: assignmentRef.id,
+        assetId: booking.assetId,
+        eventType: AssetAssignmentModel.eventCheckout,
+        bookingId: booking.id,
+        assignedToUserId: booking.bookedForUid,
+        assignedToName: booking.bookedForName,
+        projectId: booking.projectId,
+        projectName: booking.projectName,
+        conditionNotes: conditionNotes,
+        photoUrls: photoUrls,
+        recordedByUid: recordedByUid,
+        recordedByName: recordedByName,
+        recordedByRole: recordedByRole,
+        eventAt: now,
+        createdAt: now,
+      );
+
+      await _firestore.runTransaction((transaction) async {
+        final bookingRef = _firestore.collection(_bookingsCollection).doc(booking.id);
+        final bookingSnap = await transaction.get(bookingRef);
+        if (!bookingSnap.exists) throw Exception('Booking ${booking.id} no longer exists');
+        if (bookingSnap.data()!['status'] != AssetBookingModel.statusScheduled) {
+          throw Exception('Booking is no longer scheduled');
+        }
+        final assetRef = _firestore.collection(_assetsCollection).doc(booking.assetId);
+        final assetSnap = await transaction.get(assetRef);
+        if (!assetSnap.exists) throw Exception('Asset ${booking.assetId} no longer exists');
+        if (assetSnap.data()!['status'] != AssetModel.statusAvailable) {
+          throw Exception('Asset is not available for collection (status: ${assetSnap.data()!['status']})');
+        }
+
+        transaction.set(assignmentRef, assignment.toFirestore());
+        transaction.update(bookingRef, {
+          'status': AssetBookingModel.statusActive,
+          'checkoutAssignmentId': assignmentRef.id,
+          if (booking.isViaDriver) ...{
+            'dispatchedAt': Timestamp.fromDate(now),
+            'dispatchedByUid': recordedByUid,
+            'dispatchedByName': recordedByName,
+          },
+        });
+        transaction.update(assetRef, {
+          'status': AssetModel.statusCheckedOut,
+          'currentHolderId': booking.bookedForUid,
+          'currentHolderName': booking.bookedForName,
+          'currentProjectId': booking.projectId,
+          'currentProjectName': booking.projectName,
+          'currentAssignmentId': assignmentRef.id,
+          'updatedAt': Timestamp.fromDate(now),
+        });
+      });
+
+      await _refreshNextBooking(booking.assetId);
+
+      if (booking.isViaDriver) {
+        await _notifyUser(
+          targetUid: booking.bookedForUid,
+          title: '🚚 "${booking.assetName}" is on the way',
+          body: '${booking.driverName != null ? '${booking.driverName} is bringing' : 'A driver is bringing'} '
+              '"${booking.assetName}" to you — tap Acknowledge Receipt once it arrives.',
+          payload: {'type': 'inventory_delivery_dispatched', 'assetId': booking.assetId, 'bookingId': booking.id},
+        );
+      }
+
+      _logger.i('✅ InventoryService: Collection recorded for booking ${booking.id}');
+      return assignment;
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to record collection for booking ${booking.id}', error: e);
+      rethrow;
+    }
+  }
+
+  /// Closes an active booking: writes the return ledger entry (with a
+  /// structured [conditionRating] so mishandling is traceable back to
+  /// [AssetBookingModel.bookedForName], not just narrative notes), frees the
+  /// asset, and refreshes the next-upcoming-booking pointer.
+  Future<AssetAssignmentModel> recordBookingReturn({
+    required AssetBookingModel booking,
+    required String conditionNotes,
+    required String conditionRating,
+    required List<Uint8List> photoBytesList,
+    required List<String> photoFileNames,
+    required String recordedByUid,
+    required String recordedByName,
+    required String recordedByRole,
+  }) async {
+    try {
+      _logger.i('📥 InventoryService: Recording return for booking ${booking.id}');
+      final assignmentRef = _firestore.collection(_assignmentsCollection).doc();
+      final photoUrls = await _uploadAssignmentPhotos(assignmentRef.id, photoBytesList, photoFileNames);
+      final now = DateTime.now();
+      final assignment = AssetAssignmentModel(
+        id: assignmentRef.id,
+        assetId: booking.assetId,
+        eventType: AssetAssignmentModel.eventReturn,
+        previousAssignmentId: booking.checkoutAssignmentId,
+        bookingId: booking.id,
+        assignedToUserId: booking.bookedForUid,
+        assignedToName: booking.bookedForName,
+        projectId: booking.projectId,
+        projectName: booking.projectName,
+        conditionNotes: conditionNotes,
+        conditionRating: conditionRating,
+        photoUrls: photoUrls,
+        recordedByUid: recordedByUid,
+        recordedByName: recordedByName,
+        recordedByRole: recordedByRole,
+        eventAt: now,
+        createdAt: now,
+      );
+
+      await _firestore.runTransaction((transaction) async {
+        final bookingRef = _firestore.collection(_bookingsCollection).doc(booking.id);
+        final bookingSnap = await transaction.get(bookingRef);
+        if (!bookingSnap.exists) throw Exception('Booking ${booking.id} no longer exists');
+        if (bookingSnap.data()!['status'] != AssetBookingModel.statusActive) {
+          throw Exception('Booking is not currently active');
+        }
+        final assetRef = _firestore.collection(_assetsCollection).doc(booking.assetId);
+
+        transaction.set(assignmentRef, assignment.toFirestore());
+        transaction.update(bookingRef, {
+          'status': AssetBookingModel.statusCompleted,
+          'returnAssignmentId': assignmentRef.id,
+        });
+        transaction.update(assetRef, {
+          'status': AssetModel.statusAvailable,
+          'currentHolderId': null,
+          'currentHolderName': null,
+          'currentProjectId': null,
+          'currentProjectName': null,
+          'currentAssignmentId': null,
+          'updatedAt': Timestamp.fromDate(now),
+        });
+      });
+
+      await _refreshNextBooking(booking.assetId);
+
+      _logger.i('✅ InventoryService: Return recorded for booking ${booking.id}');
+      return assignment;
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to record return for booking ${booking.id}', error: e);
+      rethrow;
+    }
+  }
+
+  /// Cancels a not-yet-collected booking (MainAdmin/Admin, or the original
+  /// requester before their scheduled start date).
+  Future<void> cancelBooking({
+    required String bookingId,
+    required String assetId,
+    required String cancelledByUid,
+    required String cancelledByName,
+    String? cancellationReason,
+  }) async {
+    try {
+      _logger.i('🚫 InventoryService: Cancelling booking $bookingId');
+      await _firestore.runTransaction((transaction) async {
+        final bookingRef = _firestore.collection(_bookingsCollection).doc(bookingId);
+        final bookingSnap = await transaction.get(bookingRef);
+        if (!bookingSnap.exists) throw Exception('Booking $bookingId no longer exists');
+        if (bookingSnap.data()!['status'] != AssetBookingModel.statusScheduled) {
+          throw Exception('Only a scheduled (not yet collected) booking can be cancelled');
+        }
+        transaction.update(bookingRef, {
+          'status': AssetBookingModel.statusCancelled,
+          'cancelledByUid': cancelledByUid,
+          'cancelledByName': cancelledByName,
+          'cancelledAt': Timestamp.fromDate(DateTime.now()),
+          'cancellationReason': ?cancellationReason,
+        });
+      });
+      await _refreshNextBooking(assetId);
+      _logger.i('✅ InventoryService: Booking $bookingId cancelled');
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to cancel booking $bookingId', error: e);
+      rethrow;
+    }
+  }
+
+  // ── Maintenance windows (MainAdmin/Admin blackout dates) ────────────────
+
+  Stream<List<AssetMaintenanceWindowModel>> streamAssetMaintenanceWindows(String assetId) {
+    return _firestore
+        .collection(_maintenanceCollection)
+        .where('assetId', isEqualTo: assetId)
+        .orderBy('startDate')
+        .snapshots()
+        .map((qs) => qs.docs.map(AssetMaintenanceWindowModel.fromFirestore).toList())
+        .handleError((e) {
+      _logger.e('❌ InventoryService: Error streaming maintenance windows for asset $assetId', error: e);
+      throw e;
+    });
+  }
+
+  Future<AssetMaintenanceWindowModel> createMaintenanceWindow({
+    required String assetId,
+    required String assetName,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String reason,
+    required String createdByUid,
+    required String createdByName,
+  }) async {
+    try {
+      _logger.i('🛠️ InventoryService: Creating maintenance window for asset $assetId');
+      await _assertNoOverlap(assetId: assetId, start: startDate, end: endDate);
+
+      final ref = _firestore.collection(_maintenanceCollection).doc();
+      final window = AssetMaintenanceWindowModel(
+        id: ref.id,
+        assetId: assetId,
+        assetName: assetName,
+        startDate: startDate,
+        endDate: endDate,
+        reason: reason,
+        createdByUid: createdByUid,
+        createdByName: createdByName,
+        createdAt: DateTime.now(),
+      );
+      await ref.set(window.toFirestore());
+      _logger.i('✅ InventoryService: Maintenance window created (ID: ${ref.id})');
+      return window;
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to create maintenance window for asset $assetId', error: e);
+      rethrow;
+    }
+  }
+
+  Future<void> cancelMaintenanceWindow(String windowId) async {
+    try {
+      _logger.i('🚫 InventoryService: Cancelling maintenance window $windowId');
+      await _firestore.collection(_maintenanceCollection).doc(windowId).delete();
+      _logger.i('✅ InventoryService: Maintenance window $windowId cancelled');
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to cancel maintenance window $windowId', error: e);
+      rethrow;
+    }
+  }
+
+  // ── Booking/maintenance internals ────────────────────────────────────────
+
+  /// MainAdmin is exempt (has unlimited access); an Admin may never book/
+  /// check an asset out to themself — a different Admin or MainAdmin must
+  /// process it, so custody assignment always has a second traced actor.
+  void _assertNotSelfAssignment({
+    required String actingRole,
+    required String actingUid,
+    required String targetUid,
+  }) {
+    if (actingRole == 'Admin' && actingUid == targetUid) {
+      throw Exception(
+        'An Admin cannot check an asset out to themself — ask another Admin or MainAdmin to process this.',
+      );
+    }
+  }
+
+  bool _rangesOverlap(DateTime aStart, DateTime aEnd, DateTime bStart, DateTime bEnd) {
+    return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
+  }
+
+  /// Best-effort pre-check (Firestore transactions can't run multi-doc
+  /// queries) that a requested window doesn't collide with an existing
+  /// scheduled/active booking or a maintenance blackout for the asset.
+  Future<void> _assertNoOverlap({
+    required String assetId,
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    final bookingsSnap = await _firestore
+        .collection(_bookingsCollection)
+        .where('assetId', isEqualTo: assetId)
+        .where('status', whereIn: [AssetBookingModel.statusScheduled, AssetBookingModel.statusActive])
+        .get();
+    for (final doc in bookingsSnap.docs) {
+      final b = AssetBookingModel.fromFirestore(doc);
+      if (_rangesOverlap(start, end, b.scheduledStart, b.scheduledEnd)) {
+        throw Exception(
+          'This window overlaps an existing booking for "${b.assetName}" '
+          '(${b.bookedForName}, ${_fmtDate(b.scheduledStart)} - ${_fmtDate(b.scheduledEnd)}).',
+        );
+      }
+    }
+
+    final maintenanceSnap =
+        await _firestore.collection(_maintenanceCollection).where('assetId', isEqualTo: assetId).get();
+    for (final doc in maintenanceSnap.docs) {
+      final m = AssetMaintenanceWindowModel.fromFirestore(doc);
+      if (_rangesOverlap(start, end, m.startDate, m.endDate)) {
+        throw Exception(
+          'This window overlaps a scheduled maintenance period '
+          '(${_fmtDate(m.startDate)} - ${_fmtDate(m.endDate)}).',
+        );
+      }
+    }
+  }
+
+  /// Recomputes the asset's denormalized "what's coming next" fields from
+  /// the soonest remaining `scheduled` booking. Called after any
+  /// create/collect/return/cancel booking operation. Best-effort outside a
+  /// transaction (display data only — the bookings collection stays the
+  /// source of truth for actual conflict checks).
+  Future<void> _refreshNextBooking(String assetId) async {
+    try {
+      final qs = await _firestore
+          .collection(_bookingsCollection)
+          .where('assetId', isEqualTo: assetId)
+          .where('status', isEqualTo: AssetBookingModel.statusScheduled)
+          .orderBy('scheduledStart')
+          .limit(1)
+          .get();
+      final assetRef = _firestore.collection(_assetsCollection).doc(assetId);
+      if (qs.docs.isEmpty) {
+        await assetRef.update({
+          'nextBookingId': null,
+          'nextBookingStart': null,
+          'nextBookingEnd': null,
+          'nextBookingByName': null,
+        });
+      } else {
+        final b = AssetBookingModel.fromFirestore(qs.docs.first);
+        await assetRef.update({
+          'nextBookingId': b.id,
+          'nextBookingStart': Timestamp.fromDate(b.scheduledStart),
+          'nextBookingEnd': Timestamp.fromDate(b.scheduledEnd),
+          'nextBookingByName': b.bookedForName,
+        });
+      }
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to refresh nextBooking for asset $assetId', error: e);
+    }
+  }
+
+  String _fmtDate(DateTime d) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', //
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+
+  /// A non-manager holder (Technician) signals that they're bringing an
+  /// item back. Deliberately does NOT change any state or capture
+  /// condition/photos — that stays an admin-only reception judgment call
+  /// (see [recordBookingReturn]), so a holder can never self-certify their
+  /// own return condition. Just notifies MainAdmin/Admin to go record it.
+  Future<void> notifyReturnIntent({
+    required String assetId,
+    required String assetName,
+    required String holderName,
+  }) async {
+    await _notifyAdmins(
+      title: '📥 Return Incoming',
+      body: '$holderName is returning "$assetName" — please record its reception.',
+      payload: {'type': 'inventory_return_intent', 'assetId': assetId},
+    );
   }
 
   /// Writes to the shared AdminNotificationQueue collection that every
@@ -618,6 +1304,32 @@ class InventoryService {
       });
     } catch (e) {
       _logger.e('❌ InventoryService: Failed to write admin notification', error: e);
+    }
+  }
+
+  /// Writes to `UserNotificationQueue`, targeted at a single user via
+  /// `targetUid` — the counterpart to [_notifyAdmins]'s broadcast, used when
+  /// the recipient (e.g. the current holder of a newly-booked asset) isn't
+  /// necessarily an Admin/MainAdmin. Delivered the same way: every device
+  /// running `NotificationService.setupUserNotificationListener(uid)` picks
+  /// it up in real time, plus an FCM push via the `onUserNotificationQueued`
+  /// Cloud Function for devices where the app isn't open.
+  Future<void> _notifyUser({
+    required String targetUid,
+    required String title,
+    required String body,
+    Map<String, dynamic>? payload,
+  }) async {
+    try {
+      await _firestore.collection(_userQueueCollection).add({
+        'targetUid': targetUid,
+        'title': title,
+        'body': body,
+        'payload': ?payload,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to write user notification', error: e);
     }
   }
 
@@ -928,6 +1640,209 @@ class InventoryService {
       _logger.e('❌ InventoryService: Failed to record issue for material $materialId', error: e);
       rethrow;
     }
+  }
+
+  // ── Fabrication orders (paper-form chain of custody) ────────────────────
+  //
+  // Decided per issue, not a fixed material property: an Admin/MainAdmin
+  // issuing a material can choose to route it through fabrication. Unlike
+  // a plain material issue (recordMaterialIssue, above — one-shot, no
+  // multi-party trail), the Driver and Fabricator here have no app account
+  // (per the user's explicit choice), so the chain travels on a printed
+  // paper form (see fabrication_form_pdf.dart) carrying this order's id as
+  // its human-matchable Form ID. Only the final Technician leg is digital —
+  // they scan the completed form back in and confirm/correct OCR's
+  // best-effort pre-fill before it becomes the authoritative record.
+
+  Stream<List<MaterialFabricationOrderModel>> streamFabricationOrders(String materialId) {
+    return _firestore
+        .collection(_fabricationOrdersCollection)
+        .where('materialId', isEqualTo: materialId)
+        .orderBy('issuedAt', descending: true)
+        .snapshots()
+        .map((qs) => qs.docs.map(MaterialFabricationOrderModel.fromFirestore).toList())
+        .handleError((e) {
+      _logger.e('❌ InventoryService: Error streaming fabrication orders for material $materialId', error: e);
+      throw e;
+    });
+  }
+
+  /// Orders needing admin attention: still awaiting their scanned form
+  /// (issued, not yet uploaded — `statusScanUploaded` is included too for
+  /// forward-compatibility, though [submitFabricationFormScan] currently
+  /// jumps straight from issued to verified/discrepancy in one step), or
+  /// flagged with a quantity mismatch that needs follow-up
+  /// (`statusDiscrepancy`) — the admin-facing worklist across every
+  /// material, surfaced via [pending_fabrication_orders_screen.dart].
+  Stream<List<MaterialFabricationOrderModel>> streamPendingFabricationOrders() {
+    return _firestore
+        .collection(_fabricationOrdersCollection)
+        .where('status', whereIn: [
+          MaterialFabricationOrderModel.statusIssued,
+          MaterialFabricationOrderModel.statusScanUploaded,
+          MaterialFabricationOrderModel.statusDiscrepancy,
+        ])
+        .orderBy('issuedAt', descending: true)
+        .snapshots()
+        .map((qs) => qs.docs.map(MaterialFabricationOrderModel.fromFirestore).toList())
+        .handleError((e) {
+      _logger.e('❌ InventoryService: Error streaming pending fabrication orders', error: e);
+      throw e;
+    });
+  }
+
+  Stream<MaterialFabricationOrderModel?> streamFabricationOrder(String orderId) {
+    return _firestore
+        .collection(_fabricationOrdersCollection)
+        .doc(orderId)
+        .snapshots()
+        .map((doc) => doc.exists ? MaterialFabricationOrderModel.fromFirestore(doc) : null)
+        .handleError((e) {
+      _logger.e('❌ InventoryService: Error streaming fabrication order $orderId', error: e);
+      throw e;
+    });
+  }
+
+  /// Admin/MainAdmin issues a quantity of a material for fabrication —
+  /// decrements `quantityInStorage` transactionally the same way
+  /// [recordMaterialIssue] does, and creates the order doc that the printed
+  /// form (see fabrication_form_pdf.dart) and later the scan-upload review
+  /// both key off of.
+  Future<MaterialFabricationOrderModel> createFabricationOrder({
+    required String materialId,
+    required String materialName,
+    required String unit,
+    required double quantity,
+    String? projectId,
+    String? projectName,
+    String? expectedFabricatorName,
+    required String issuedByUid,
+    required String issuedByName,
+  }) async {
+    try {
+      _logger.i('🏗️ InventoryService: Creating fabrication order for material $materialId ($quantity $unit)');
+      final orderRef = _firestore.collection(_fabricationOrdersCollection).doc();
+      final now = DateTime.now();
+      final order = MaterialFabricationOrderModel(
+        id: orderRef.id,
+        materialId: materialId,
+        materialName: materialName,
+        unit: unit,
+        quantityIssued: quantity,
+        projectId: projectId,
+        projectName: projectName,
+        expectedFabricatorName: expectedFabricatorName,
+        issuedByUid: issuedByUid,
+        issuedByName: issuedByName,
+        issuedAt: now,
+        status: MaterialFabricationOrderModel.statusIssued,
+      );
+
+      await _firestore.runTransaction((transaction) async {
+        final materialRef = _firestore.collection(_materialsCollection).doc(materialId);
+        final materialSnap = await transaction.get(materialRef);
+        if (!materialSnap.exists) throw Exception('Material $materialId no longer exists');
+        final currentQty = (materialSnap.data()?['quantityInStorage'] as num?)?.toDouble() ?? 0;
+        if (quantity > currentQty) {
+          throw Exception('Cannot issue $quantity — only $currentQty remaining in storage');
+        }
+
+        transaction.set(orderRef, order.toFirestore());
+        transaction.update(materialRef, {
+          'quantityInStorage': currentQty - quantity,
+          'updatedAt': Timestamp.fromDate(now),
+        });
+      });
+
+      _logger.i('✅ InventoryService: Fabrication order created (ID: ${orderRef.id})');
+      return order;
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to create fabrication order for material $materialId', error: e);
+      rethrow;
+    }
+  }
+
+  /// Technician scans the completed paper form back in. Every field here
+  /// (except the technician's own live acknowledgment) is a human-reviewed
+  /// value the technician confirmed or corrected after reading the physical
+  /// form — OCR only ever pre-filled the review screen, it never writes
+  /// here directly. Flags `discrepancy` instead of `verified` if the final
+  /// received quantity doesn't reconcile with what was issued/fabricated,
+  /// within a small tolerance, so an admin can follow up.
+  Future<MaterialFabricationOrderModel> submitFabricationFormScan({
+    required MaterialFabricationOrderModel order,
+    required Uint8List scanBytes,
+    required String scanFileName,
+    String? ocrRawText,
+    Map<String, dynamic>? ocrExtractedFields,
+    required double driverAckQuantityAtPickup,
+    required String fabricatorName,
+    required double fabricatorAckQuantityReceived,
+    required String fabricatorAckCondition,
+    String? fabricatorDamageNotes,
+    required double fabricatorAckQuantityOutput,
+    required double driverAckQuantityFromFabricator,
+    required double technicianAckQuantityReceived,
+    required String technicianAckByUid,
+    required String technicianAckByName,
+  }) async {
+    try {
+      _logger.i('📄 InventoryService: Submitting scanned form for fabrication order ${order.id}');
+      final scanUrl = await _uploadFabricationScan(order.id, scanBytes, scanFileName);
+
+      const tolerance = 0.01;
+      final expectedOutput = order.quantityIssued;
+      final hasDiscrepancy =
+          (fabricatorAckQuantityReceived - driverAckQuantityAtPickup).abs() > tolerance ||
+              (driverAckQuantityFromFabricator - fabricatorAckQuantityOutput).abs() > tolerance ||
+              (technicianAckQuantityReceived - driverAckQuantityFromFabricator).abs() > tolerance ||
+              (driverAckQuantityAtPickup - expectedOutput).abs() > tolerance;
+
+      final now = DateTime.now();
+      final orderRef = _firestore.collection(_fabricationOrdersCollection).doc(order.id);
+      await orderRef.update({
+        'status': hasDiscrepancy
+            ? MaterialFabricationOrderModel.statusDiscrepancy
+            : MaterialFabricationOrderModel.statusVerified,
+        'scannedFormUrl': scanUrl,
+        'ocrRawText': ?ocrRawText,
+        'ocrExtractedFields': ?ocrExtractedFields,
+        'driverAckQuantityAtPickup': driverAckQuantityAtPickup,
+        'fabricatorName': fabricatorName,
+        'fabricatorAckQuantityReceived': fabricatorAckQuantityReceived,
+        'fabricatorAckCondition': fabricatorAckCondition,
+        'fabricatorDamageNotes': ?fabricatorDamageNotes,
+        'fabricatorAckQuantityOutput': fabricatorAckQuantityOutput,
+        'driverAckQuantityFromFabricator': driverAckQuantityFromFabricator,
+        'technicianAckQuantityReceived': technicianAckQuantityReceived,
+        'technicianAckByUid': technicianAckByUid,
+        'technicianAckByName': technicianAckByName,
+        'technicianAckAt': Timestamp.fromDate(now),
+        'verifiedByUid': technicianAckByUid,
+        'verifiedByName': technicianAckByName,
+        'verifiedAt': Timestamp.fromDate(now),
+      });
+
+      await _notifyAdmins(
+        title: hasDiscrepancy ? '⚠️ Fabrication Form: Discrepancy' : '📄 Fabrication Form Received',
+        body: '$technicianAckByName uploaded the completed form for "${order.materialName}"'
+            '${hasDiscrepancy ? ' — quantities don\'t reconcile, please review.' : '.'}',
+        payload: {'type': 'inventory_fabrication_scan', 'orderId': order.id},
+      );
+
+      _logger.i('✅ InventoryService: Fabrication order ${order.id} ${hasDiscrepancy ? 'flagged (discrepancy)' : 'verified'}');
+
+      final saved = await orderRef.get();
+      return MaterialFabricationOrderModel.fromFirestore(saved);
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to submit scan for fabrication order ${order.id}', error: e);
+      rethrow;
+    }
+  }
+
+  Future<String> _uploadFabricationScan(String orderId, Uint8List scanBytes, String scanFileName) async {
+    final urls = await _uploadPhotos('Inventory/FabricationOrders/$orderId', [scanBytes], [scanFileName]);
+    return urls.first;
   }
 
   String _contentTypeFor(String fileName) {

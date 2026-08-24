@@ -5,11 +5,12 @@ import 'dart:typed_data';
 import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
 import 'package:almaworks/services/inventory_service.dart';
-import 'package:almaworks/services/project_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -49,7 +50,6 @@ class RecordMaterialMovementScreen extends StatefulWidget {
 
 class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScreen> {
   final InventoryService _inventoryService = InventoryService();
-  final ProjectService _projectService = ProjectService();
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final _notesController = TextEditingController();
@@ -75,8 +75,9 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
   // `initialValue` on its very first build.
   List<ProjectModel> _projects = [];
   bool _projectsLoaded = false;
+  String? _projectsError;
   String? _selectedProjectId;
-  StreamSubscription<List<ProjectModel>>? _projectsSub;
+  StreamSubscription<QuerySnapshot>? _projectsSub;
 
   ProjectModel? get _selectedProject {
     if (_selectedProjectId == null) return null;
@@ -89,15 +90,37 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
   @override
   void initState() {
     super.initState();
-    if (!_isReceive) {
-      _projectsSub = _projectService.getAllProjects().listen((projects) {
+    if (!_isReceive) _subscribeProjects();
+  }
+
+  // Deliberately NOT ProjectService.getAllProjects(): that method caches one
+  // shared broadcast StreamController per process, and broadcast streams
+  // never replay their most recent value to a late subscriber — a screen
+  // that subscribes after another screen already consumed the latest
+  // snapshot gets nothing until Firestore emits a brand-new one, which for
+  // the rarely-changing `Projects` collection can mean an indefinitely
+  // stuck spinner. Querying Firestore directly avoids that entirely.
+  void _subscribeProjects() {
+    _projectsSub?.cancel();
+    setState(() => _projectsError = null);
+    _projectsSub = FirebaseFirestore.instance.collection('Projects').snapshots().listen(
+      (snapshot) {
         if (!mounted) return;
         setState(() {
-          _projects = projects;
+          _projects = snapshot.docs.map(ProjectModel.fromFirestore).toList();
           _projectsLoaded = true;
+          _projectsError = null;
         });
-      });
-    }
+      },
+      onError: (e) {
+        widget.logger.e('❌ RecordMaterialMovementScreen: Projects stream error', error: e);
+        if (!mounted) return;
+        setState(() {
+          _projectsLoaded = true;
+          _projectsError = 'Could not load projects: $e';
+        });
+      },
+    );
   }
 
   @override
@@ -205,7 +228,7 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
       widget.logger.e('❌ RecordMaterialMovementScreen: Failed to submit', error: e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
+        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -374,6 +397,24 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+    if (_projectsError != null) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text(_projectsError!, style: GoogleFonts.poppins(fontSize: 12, color: Colors.red[800]))),
+            TextButton(onPressed: _subscribeProjects, child: const Text('Retry')),
+          ],
+        ),
       );
     }
     return DropdownButtonFormField<String>(

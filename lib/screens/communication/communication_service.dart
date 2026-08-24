@@ -313,6 +313,7 @@ class CommunicationService {
   Stream<List<DraftMessage>> draftsStream(String projectId) {
     return _draftsCol
         .where('projectId', isEqualTo: projectId)
+        .where('ownerUid', isEqualTo: _currentUid)
         .orderBy('savedAt', descending: true)
         .snapshots()
         .map((snap) =>

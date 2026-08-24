@@ -46,10 +46,20 @@ class AssetModel {
   final String? currentProjectName;
   final String? currentAssignmentId;
 
-  /// Set while a checkout request is awaiting MainAdmin review — blocks any
-  /// other Admin from requesting the same asset in the meantime. Cleared on
-  /// approval (asset moves to Checked Out) or rejection (back to Available).
+  /// Set while a checkout request is awaiting MainAdmin/Admin review — blocks
+  /// any other Admin from requesting the same asset in the meantime. Cleared
+  /// on approval (asset moves to Checked Out) or rejection (back to Available).
   final String? pendingRequestId;
+
+  /// Denormalized snapshot of the soonest upcoming *scheduled* booking (see
+  /// AssetBookingModel/InventoryAssetBookings) — lets list/detail screens
+  /// show "Booked from 14 Aug by J. Otieno" without a per-asset query. Kept
+  /// in sync by InventoryService whenever a booking is created/cancelled/
+  /// activated. Not the source of truth — that's the bookings collection.
+  final String? nextBookingId;
+  final DateTime? nextBookingStart;
+  final DateTime? nextBookingEnd;
+  final String? nextBookingByName;
 
   final String createdByUid;
   final String createdByName;
@@ -72,6 +82,10 @@ class AssetModel {
     this.currentProjectName,
     this.currentAssignmentId,
     this.pendingRequestId,
+    this.nextBookingId,
+    this.nextBookingStart,
+    this.nextBookingEnd,
+    this.nextBookingByName,
     required this.createdByUid,
     required this.createdByName,
     required this.createdAt,
@@ -81,6 +95,7 @@ class AssetModel {
   bool get isAvailable => status == statusAvailable && pendingRequestId == null;
   bool get isCheckedOut => status == statusCheckedOut;
   bool get hasPendingRequest => pendingRequestId != null;
+  bool get hasUpcomingBooking => nextBookingId != null;
 
   factory AssetModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? <String, dynamic>{};
@@ -100,6 +115,10 @@ class AssetModel {
       currentProjectName: data['currentProjectName'] as String?,
       currentAssignmentId: data['currentAssignmentId'] as String?,
       pendingRequestId: data['pendingRequestId'] as String?,
+      nextBookingId: data['nextBookingId'] as String?,
+      nextBookingStart: (data['nextBookingStart'] as Timestamp?)?.toDate(),
+      nextBookingEnd: (data['nextBookingEnd'] as Timestamp?)?.toDate(),
+      nextBookingByName: data['nextBookingByName'] as String?,
       createdByUid: data['createdByUid'] ?? '',
       createdByName: data['createdByName'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -123,6 +142,10 @@ class AssetModel {
       'currentProjectName': currentProjectName,
       'currentAssignmentId': currentAssignmentId,
       'pendingRequestId': pendingRequestId,
+      'nextBookingId': nextBookingId,
+      if (nextBookingStart != null) 'nextBookingStart': Timestamp.fromDate(nextBookingStart!),
+      if (nextBookingEnd != null) 'nextBookingEnd': Timestamp.fromDate(nextBookingEnd!),
+      'nextBookingByName': nextBookingByName,
       'createdByUid': createdByUid,
       'createdByName': createdByName,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -144,6 +167,11 @@ class AssetModel {
     String? currentProjectName,
     String? currentAssignmentId,
     String? pendingRequestId,
+    String? nextBookingId,
+    DateTime? nextBookingStart,
+    DateTime? nextBookingEnd,
+    String? nextBookingByName,
+    bool clearNextBooking = false,
     DateTime? updatedAt,
   }) {
     return AssetModel(
@@ -162,6 +190,10 @@ class AssetModel {
       currentProjectName: currentProjectName ?? this.currentProjectName,
       currentAssignmentId: currentAssignmentId ?? this.currentAssignmentId,
       pendingRequestId: pendingRequestId ?? this.pendingRequestId,
+      nextBookingId: clearNextBooking ? null : (nextBookingId ?? this.nextBookingId),
+      nextBookingStart: clearNextBooking ? null : (nextBookingStart ?? this.nextBookingStart),
+      nextBookingEnd: clearNextBooking ? null : (nextBookingEnd ?? this.nextBookingEnd),
+      nextBookingByName: clearNextBooking ? null : (nextBookingByName ?? this.nextBookingByName),
       createdByUid: createdByUid,
       createdByName: createdByName,
       createdAt: createdAt,

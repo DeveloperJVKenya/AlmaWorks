@@ -19,6 +19,12 @@ class CheckoutRequestModel {
   final String? projectId;
   final String? projectName;
   final String reason;
+
+  /// Wanted booking window — may start today or on a future date; approval
+  /// creates an AssetBookingModel for exactly this range.
+  final DateTime requestedStart;
+  final DateTime requestedEnd;
+
   final String status;
   final DateTime requestedAt;
   final String? respondedByUid;
@@ -36,6 +42,8 @@ class CheckoutRequestModel {
     this.projectId,
     this.projectName,
     required this.reason,
+    required this.requestedStart,
+    required this.requestedEnd,
     required this.status,
     required this.requestedAt,
     this.respondedByUid,
@@ -60,6 +68,8 @@ class CheckoutRequestModel {
       projectId: data['projectId'] as String?,
       projectName: data['projectName'] as String?,
       reason: data['reason'] ?? '',
+      requestedStart: (data['requestedStart'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      requestedEnd: (data['requestedEnd'] as Timestamp?)?.toDate() ?? DateTime.now(),
       status: data['status'] ?? statusPending,
       requestedAt: (data['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       respondedByUid: data['respondedByUid'] as String?,
@@ -79,6 +89,8 @@ class CheckoutRequestModel {
       if (projectId != null) 'projectId': projectId,
       if (projectName != null) 'projectName': projectName,
       'reason': reason,
+      'requestedStart': Timestamp.fromDate(requestedStart),
+      'requestedEnd': Timestamp.fromDate(requestedEnd),
       'status': status,
       'requestedAt': Timestamp.fromDate(requestedAt),
       if (respondedByUid != null) 'respondedByUid': respondedByUid,

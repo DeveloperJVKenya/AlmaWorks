@@ -155,7 +155,13 @@ class CommunicationMessage {
   /// UIDs of users who soft-deleted this message from their view.
   final List<String> deletedByUids;
 
-  const CommunicationMessage({
+  /// Flat uid list — {from.uid, ...to.uid, ...cc.uid} — kept in sync at
+  /// construction so Firestore security rules can check membership without
+  /// having to reach into the `to`/`cc` map arrays (rules can't query map
+  /// fields inside an array element directly).
+  final List<String> participantUids;
+
+  CommunicationMessage({
     required this.id,
     required this.projectId,
     required this.threadId,
@@ -171,7 +177,10 @@ class CommunicationMessage {
     required this.type,
     required this.readByUids,
     required this.deletedByUids,
-  });
+    List<String>? participantUids,
+  }) : participantUids = participantUids ??
+            <String>{from.uid, ...to.map((p) => p.uid), ...cc.map((p) => p.uid)}
+                .toList();
 
   bool isReadBy(String uid) => readByUids.contains(uid);
   bool isDeletedBy(String uid) => deletedByUids.contains(uid);
@@ -196,6 +205,7 @@ class CommunicationMessage {
         'type': type.value,
         'readByUids': readByUids,
         'deletedByUids': deletedByUids,
+        'participantUids': participantUids,
       };
 
   factory CommunicationMessage.fromDoc(DocumentSnapshot doc) {
@@ -225,6 +235,7 @@ class CommunicationMessage {
       type: MessageTypeExt.fromString(m['type'] as String? ?? 'original'),
       readByUids: List<String>.from(m['readByUids'] ?? []),
       deletedByUids: List<String>.from(m['deletedByUids'] ?? []),
+      participantUids: (m['participantUids'] as List?)?.cast<String>(),
     );
   }
 
@@ -248,6 +259,7 @@ class CommunicationMessage {
         type: type,
         readByUids: readByUids ?? this.readByUids,
         deletedByUids: deletedByUids ?? this.deletedByUids,
+        participantUids: participantUids,
       );
 }
 
@@ -268,6 +280,7 @@ List<dynamic> parseDeltaJson(String raw) {
 class DraftMessage {
   final String id;
   final String projectId;
+  final String ownerUid;
   final List<MessageParticipant> to;
   final List<MessageParticipant> cc;
   final String subject;
@@ -278,6 +291,7 @@ class DraftMessage {
   const DraftMessage({
     required this.id,
     required this.projectId,
+    required this.ownerUid,
     required this.to,
     required this.cc,
     required this.subject,
@@ -289,6 +303,7 @@ class DraftMessage {
   Map<String, dynamic> toMap() => {
         'id': id,
         'projectId': projectId,
+        'ownerUid': ownerUid,
         'to': to.map((p) => p.toMap()).toList(),
         'cc': cc.map((p) => p.toMap()).toList(),
         'subject': subject,
@@ -302,6 +317,7 @@ class DraftMessage {
     return DraftMessage(
       id: m['id'] as String? ?? doc.id,
       projectId: m['projectId'] as String? ?? '',
+      ownerUid: m['ownerUid'] as String? ?? '',
       to: ((m['to'] as List?) ?? [])
           .map((e) => MessageParticipant.fromMap(e as Map<String, dynamic>))
           .toList(),

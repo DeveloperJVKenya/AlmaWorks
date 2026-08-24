@@ -65,19 +65,28 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     final data  = message.data;
     final docId = data['docId'];
 
+    // Communication pushes (onCommunicationMessageCreated Cloud Function)
+    // use their own channel and are deduped by messageId rather than docId,
+    // since there is no AdminNotificationQueue/UserNotificationQueue doc
+    // backing them — see main.dart's payload['type'] == 'communication' tap
+    // route and CommunicationNotificationService's matching foreground path.
+    final isCommunication = data['type'] == 'communication';
+    final dedupeKey = isCommunication ? data['messageId'] : docId;
+
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         // AdminNotificationQueue-sourced messages carry docId, giving a
         // stable id shared with the live Firestore listener path (see
         // notification_service.dart) so this can never show as a second,
         // duplicate entry if both paths happen to fire for the same event.
-        id: docId != null ? stableNotificationId(docId) : DateTime.now().millisecondsSinceEpoch ~/ 1000,
-        channelKey: 'client_requests',
+        id: dedupeKey != null ? stableNotificationId(dedupeKey) : DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        channelKey: isCommunication ? 'communication_channel' : 'client_requests',
         title: title,
         body: body,
         // Forward the FCM data payload so tapping the notification can route
         // the admin to ClientAccessRequestsScreen (handled in main.dart's
-        // onActionReceivedMethod via payload['type'] == 'client_request').
+        // onActionReceivedMethod via payload['type'] == 'client_request'),
+        // or a Communication message via payload['type'] == 'communication'.
         payload: data.map((key, value) => MapEntry(key, value.toString())),
         notificationLayout: NotificationLayout.Default,
         wakeUpScreen: true,

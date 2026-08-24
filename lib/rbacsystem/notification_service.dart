@@ -5,7 +5,24 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
+
+/// A device's own FCM token is unique to itself, so a user signed in on both
+/// web and mobile needs both remembered — see Users.fcmTokens in
+/// _persistFcmToken. `fcmToken` (singular) is kept alongside it purely as a
+/// legacy fallback for any Cloud Function code path not yet reading the map.
+String get _currentPlatformLabel {
+  if (kIsWeb) return 'web';
+  switch (defaultTargetPlatform) {
+    case TargetPlatform.android:
+      return 'android';
+    case TargetPlatform.iOS:
+      return 'ios';
+    default:
+      return 'other';
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // How cross-device admin notifications work (no Cloud Functions required):
@@ -38,6 +55,7 @@ class NotificationService {
 
   // Active Firestore listener subscriptions — cancelled on logout.
   StreamSubscription<QuerySnapshot>? _adminQueueSubscription;
+  StreamSubscription<QuerySnapshot>? _userQueueSubscription;
 
   // Tracks which notification document IDs have already been shown so we
   // never display the same notification twice across sessions.
@@ -150,10 +168,14 @@ class NotificationService {
 
       if (query.docs.isEmpty) return;
 
-      await _firestore
-          .collection('Users')
-          .doc(query.docs.first.id)
-          .update({'fcmToken': token, 'fcmUpdatedAt': FieldValue.serverTimestamp()});
+      await _firestore.collection('Users').doc(query.docs.first.id).update({
+        'fcmToken': token,
+        'fcmUpdatedAt': FieldValue.serverTimestamp(),
+        'fcmTokens.$token': {
+          'platform': _currentPlatformLabel,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      });
 
       _logger.i('✅ FCM token persisted to Firestore');
     } catch (e) {
@@ -223,6 +245,67 @@ class NotificationService {
     _adminQueueSubscription = null;
     _shownNotificationIds.clear();
     _logger.i('🛑 AdminNotificationQueue listener cancelled');
+  }
+
+  /// Call once at login for every user, regardless of role — the
+  /// counterpart to [setupAdminNotificationListener] for notifications
+  /// targeted at one specific person (e.g. "your booked asset is needed
+  /// back soon") rather than broadcast to every Admin/MainAdmin. Written by
+  /// InventoryService._notifyUser() to `UserNotificationQueue` with a
+  /// `targetUid` field; delivered the same way (live listener here, FCM push
+  /// via the `onUserNotificationQueued` Cloud Function for closed apps).
+  Future<void> setupUserNotificationListener(String uid) async {
+    await _userQueueSubscription?.cancel();
+
+    _logger.i('👂 Setting up UserNotificationQueue listener for $uid');
+
+    final cutoff = Timestamp.fromDate(
+      DateTime.now().subtract(const Duration(hours: 24)),
+    );
+
+    _userQueueSubscription = _firestore
+        .collection('UserNotificationQueue')
+        .where('targetUid', isEqualTo: uid)
+        .where('createdAt', isGreaterThan: cutoff)
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        for (final change in snapshot.docChanges) {
+          if (change.type == DocumentChangeType.added) {
+            final docId = change.doc.id;
+            if (_shownNotificationIds.contains(docId)) continue;
+            _shownNotificationIds.add(docId);
+
+            final data = change.doc.data() as Map<String, dynamic>;
+            final title = data['title'] as String? ?? '🔔 New Notification';
+            final body = data['body'] as String? ?? '';
+            final payload =
+                (data['payload'] as Map<String, dynamic>?)?.map(
+                  (k, v) => MapEntry(k, v.toString()),
+                ) ??
+                {};
+
+            _showLocalNotificationWithActions(
+              title: title,
+              body: body,
+              payload: payload,
+              id: stableNotificationId(docId),
+            );
+
+            _logger.i('🔔 User notification shown: $title');
+          }
+        }
+      },
+      onError: (e) => _logger.e('❌ UserNotificationQueue listener error: $e'),
+    );
+  }
+
+  /// Cancel the per-user listener (call on logout).
+  Future<void> cancelUserNotificationListener() async {
+    await _userQueueSubscription?.cancel();
+    _userQueueSubscription = null;
+    _logger.i('🛑 UserNotificationQueue listener cancelled');
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -329,14 +412,15 @@ class NotificationService {
 
       _logger.i('✅ AdminNotificationQueue document written');
 
-      // ── Also show local notification on the current device ────────────────
-      await _showLocalNotificationWithActions(
-        title: title,
-        body: body,
-        payload: payload,
-      );
-
-      _logger.i('✅ Admin notification sent');
+      // NOTE: deliberately no direct local notification here — this method
+      // runs on the SUBMITTING CLIENT's device (called from
+      // ClientRequestService.submitClientRequest), so calling
+      // AwesomeNotifications().createNotification() here would show the
+      // "new client request" message to the client themselves, not to any
+      // admin. Every admin device already gets this via its own
+      // AdminNotificationQueue listener (setupAdminNotificationListener) and
+      // the onAdminNotificationQueued Cloud Function for closed apps.
+      _logger.i('✅ Admin notification queued');
     } catch (e) {
       _logger.e('❌ Error sending admin notifications: $e');
     }
@@ -345,72 +429,75 @@ class NotificationService {
   // ──────────────────────────────────────────────────────────────────────────
   // Client-facing notifications
   // ──────────────────────────────────────────────────────────────────────────
+  //
+  // These are called by ClientRequestService on the ADMIN's device (the one
+  // approving/denying/revoking), so they must NEVER show a local
+  // notification directly — that would display the client's message on the
+  // admin's own screen instead of reaching the client. Instead they enqueue
+  // a targeted `UserNotificationQueue` document (targetUid = the client's
+  // uid), the same mechanism InventoryService._notifyUser() uses. Delivery
+  // to the actual target happens via:
+  //   • setupUserNotificationListener(uid) — live Firestore listener, shows
+  //     a local notification on the TARGET's device while it's foreground/
+  //     background and online (attached for every role at dashboard load).
+  //   • onUserNotificationQueued Cloud Function — FCM push, covers the
+  //     target's device being fully closed/terminated.
 
   Future<void> notifyClientOfApproval({
+    required String clientUid,
     required String clientUsername,
     required List<String> projectNames,
   }) async {
-    if (!await NotificationPreferences.isEnabled()) return;
     try {
       final projectList = projectNames.join(', ');
-      await AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          channelKey: 'client_requests',
-          title: '✅ Access Granted',
-          body:
-              'Your request has been approved! You now have access to: $projectList',
-          payload: {
-            'type': 'client_request',
-            'route': 'dashboard',
-            'status': 'approved',
-          },
-          notificationLayout: NotificationLayout.BigText,
-          wakeUpScreen: true,
-          category: NotificationCategory.Message,
-        ),
-      );
-      _logger.i('✅ Client approval notification sent');
+      await _firestore.collection('UserNotificationQueue').add({
+        'targetUid': clientUid,
+        'title': '✅ Access Granted',
+        'body':
+            'Your request has been approved! You now have access to: $projectList',
+        'payload': {
+          'type': 'client_request',
+          'route': 'dashboard',
+          'status': 'approved',
+        },
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      _logger.i('✅ Client approval notification queued for $clientUsername');
     } catch (e) {
-      _logger.e('❌ Error sending client approval notification: $e');
+      _logger.e('❌ Error queuing client approval notification: $e');
     }
   }
 
   Future<void> notifyClientOfDenial({
+    required String clientUid,
     required String clientUsername,
     String? reason,
   }) async {
-    if (!await NotificationPreferences.isEnabled()) return;
     try {
-      await AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          channelKey: 'client_requests',
-          title: '❌ Request Denied',
-          body:
-              reason ?? 'Your access request was denied by an administrator.',
-          payload: {
-            'type': 'client_request',
-            'route': 'dashboard',
-            'status': 'denied',
-          },
-          notificationLayout: NotificationLayout.Default,
-          wakeUpScreen: true,
-          category: NotificationCategory.Message,
-        ),
-      );
-      _logger.i('✅ Client denial notification sent');
+      await _firestore.collection('UserNotificationQueue').add({
+        'targetUid': clientUid,
+        'title': '❌ Request Denied',
+        'body':
+            reason ?? 'Your access request was denied by an administrator.',
+        'payload': {
+          'type': 'client_request',
+          'route': 'dashboard',
+          'status': 'denied',
+        },
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      _logger.i('✅ Client denial notification queued for $clientUsername');
     } catch (e) {
-      _logger.e('❌ Error sending client denial notification: $e');
+      _logger.e('❌ Error queuing client denial notification: $e');
     }
   }
 
   Future<void> notifyClientOfProjectUpdate({
+    required String clientUid,
     required String clientUsername,
     required List<String> addedProjects,
     required List<String> revokedProjects,
   }) async {
-    if (!await NotificationPreferences.isEnabled()) return;
     try {
       String body;
       if (addedProjects.isNotEmpty && revokedProjects.isNotEmpty) {
@@ -425,24 +512,19 @@ class NotificationService {
             'Your access to the following projects has been revoked: ${revokedProjects.join(', ')}.';
       }
 
-      await AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          channelKey: 'client_requests',
-          title: '🔄 Project Access Updated',
-          body: body,
-          payload: {
-            'type': 'project_update',
-            'route': 'dashboard',
-          },
-          notificationLayout: NotificationLayout.BigText,
-          wakeUpScreen: true,
-          category: NotificationCategory.Message,
-        ),
-      );
-      _logger.i('✅ Client project update notification sent');
+      await _firestore.collection('UserNotificationQueue').add({
+        'targetUid': clientUid,
+        'title': '🔄 Project Access Updated',
+        'body': body,
+        'payload': {
+          'type': 'project_update',
+          'route': 'dashboard',
+        },
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      _logger.i('✅ Client project update notification queued for $clientUsername');
     } catch (e) {
-      _logger.e('❌ Error sending project update notification: $e');
+      _logger.e('❌ Error queuing project update notification: $e');
     }
   }
 }

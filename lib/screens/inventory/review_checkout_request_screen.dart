@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:almaworks/models/inventory/checkout_request_model.dart';
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
@@ -13,7 +14,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 
-/// MainAdmin-only screen: review a pending checkout request. Approving
+/// MainAdmin/Admin screen: review a pending checkout request. Approving
 /// captures condition notes + photos as the actual handover confirmation
 /// (this action IS the checkout — it writes the immutable custody ledger
 /// entry). Rejecting unlocks the asset back to Available with no ledger
@@ -98,7 +99,7 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
       widget.logger.e('❌ ReviewCheckoutRequestScreen: Approve failed', error: e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
+        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -151,7 +152,7 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
       widget.logger.e('❌ ReviewCheckoutRequestScreen: Reject failed', error: e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
+        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);

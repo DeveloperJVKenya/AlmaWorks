@@ -7,8 +7,7 @@ import 'package:almaworks/providers/theme_provider.dart';
 import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:almaworks/screens/communication/communication_message_detail_screen.dart';
 import 'package:almaworks/screens/communication/communication_models.dart';
-import 'package:almaworks/screens/communication/communication_notification_service.dart'
-    hide firebaseMessagingBackgroundHandler;
+import 'package:almaworks/screens/communication/communication_notification_service.dart';
 import 'package:almaworks/screens/communication/communication_screen.dart';
 import 'package:almaworks/screens/communication/communication_service.dart';
 import 'package:almaworks/screens/utils/app_theme.dart';
@@ -74,9 +73,8 @@ void main() async {
     logger.i('✅ Firestore settings configured');
 
     // ── Awesome Notifications ────────────────────────────────────────────────
-    // The communication_channel is registered here alongside the existing
-    // channels so that Awesome Notifications remains the single notification
-    // manager on Android, avoiding conflicts with flutter_local_notifications.
+    // Single notification manager app-wide — every channel (schedule,
+    // client requests, Communication) is registered here.
     await AwesomeNotifications().initialize(
       null, // Use default app icon
       [
@@ -125,11 +123,10 @@ void main() async {
           enableVibration: true,
         ),
         // ── Communication channel ─────────────────────────────────────────
-        // Handles in-app message notifications (new messages, replies).
-        // Registered here so Awesome Notifications owns all channels and
-        // there is no conflict with the separate flutter_local_notifications
-        // instance used by CommunicationNotificationService for foreground
-        // pop-ups triggered by FCM.
+        // Handles in-app message notifications (new messages, replies), both
+        // foreground (CommunicationNotificationService) and background/
+        // terminated (firebase_notification_handler.dart) — Awesome
+        // Notifications is the single notification manager app-wide.
         NotificationChannel(
           channelKey: 'communication_channel',
           channelName: 'Messages',

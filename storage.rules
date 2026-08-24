@@ -16,11 +16,12 @@ service firebase.storage {
       allow read, write: if topLevel != 'Inventory';
     }
 
-    // Asset catalog photos — MainAdmin only, matching InventoryAssets'
-    // create/update restriction in firestore.rules.
+    // Asset catalog photos — MainAdmin/Admin, matching InventoryAssets'
+    // create/update restriction in firestore.rules (widened from
+    // MainAdmin-only alongside that Admin-parity change).
     match /Inventory/Assets/{assetId}/{allPaths=**} {
       allow read: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin'];
-      allow write: if request.auth != null && inventoryRole() == 'MainAdmin';
+      allow write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin'];
     }
 
     // Custody event (checkout/return) condition photos — MainAdmin or Admin.
@@ -31,17 +32,38 @@ service firebase.storage {
       allow delete: if false;
     }
 
-    // Material catalog photos — MainAdmin only, matching InventoryMaterials'
-    // create restriction in firestore.rules.
+    // Material catalog photos — MainAdmin/Admin, matching InventoryMaterials'
+    // create restriction in firestore.rules (widened alongside Admin parity).
     match /Inventory/Materials/{materialId}/{allPaths=**} {
       allow read: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin'];
-      allow write: if request.auth != null && inventoryRole() == 'MainAdmin';
+      allow write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin'];
     }
 
     // Stock movement (receipt/issue) photos — MainAdmin or Admin. No delete,
     // same reasoning as AssetAssignments above.
     match /Inventory/MaterialMovements/{movementId}/{allPaths=**} {
       allow read, write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin'];
+      allow delete: if false;
+    }
+
+    // Scanned fabrication chain-of-custody forms — a Technician is the one
+    // uploading these (see InventoryService._uploadFabricationScan), so
+    // write includes Technician alongside MainAdmin/Admin, matching the
+    // matching InventoryMaterialFabricationOrders update rule in
+    // firestore.rules. No delete: the scan is the permanent physical-record
+    // evidence backing the verified digital fields.
+    match /Inventory/FabricationOrders/{orderId}/{allPaths=**} {
+      allow read, write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin', 'Technician'];
+      allow delete: if false;
+    }
+
+    // Scanned driver-delivery handover forms (see asset_handover_form_pdf.dart
+    // / InventoryService.acknowledgeDelivery) — the recipient uploading this
+    // could be any role (Technician, Admin, or MainAdmin), matching the
+    // matching InventoryAssetBookings delivery-acknowledgment update rule in
+    // firestore.rules. No delete: permanent physical-record evidence.
+    match /Inventory/AssetBookings/{bookingId}/{allPaths=**} {
+      allow read, write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin', 'Technician'];
       allow delete: if false;
     }
   }

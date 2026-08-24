@@ -50,6 +50,13 @@
     document.addEventListener('contextmenu', function(e) {
       e.preventDefault();
     });
+
+    // Required for closed-tab / background-tab push (FCM) to work on web —
+    // see firebase-messaging-sw.js. Registered at the site root so the
+    // default FCM scope covers the whole app.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('firebase-messaging-sw.js');
+    }
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

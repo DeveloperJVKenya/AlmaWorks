@@ -5,8 +5,10 @@ import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/add_asset_screen.dart';
 import 'package:almaworks/screens/inventory/add_material_screen.dart';
 import 'package:almaworks/screens/inventory/asset_detail_screen.dart';
+import 'package:almaworks/screens/inventory/inventory_colors.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/material_detail_screen.dart';
+import 'package:almaworks/screens/inventory/pending_fabrication_orders_screen.dart';
 import 'package:almaworks/screens/inventory/pending_requests_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart' show inventoryInputDecoration;
@@ -15,7 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 
-const _navy = Color(0xFF0A2E5A);
+const _navy = InventoryColors.navy;
 
 /// Company-wide Inventory: three tabs (Assets / Tools / Materials), each
 /// with its own filters, list, detail navigation, and "Add" action — tabbed
@@ -78,13 +80,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
 
     final role = roleAsync.value ?? 'Client';
     final username = usernameAsync.value ?? '';
-    // Technician reads + requests checkouts same as Admin (see
-    // asset_detail_screen.dart's action-button split, which already
-    // routes any non-MainAdmin role into the "request only" path) but
-    // never registers new items or approves requests — both stay
-    // MainAdmin-only via isMainAdmin below.
+    // MainAdmin and Admin share full inventory management + direct booking/
+    // approval powers (see asset_detail_screen.dart's action-button split);
+    // Technician reads + requests checkouts only, via isAuthorized below.
     final isAuthorized = role == 'MainAdmin' || role == 'Admin' || role == 'Technician';
-    final isMainAdmin = role == 'MainAdmin';
+    final isManager = role == 'MainAdmin' || role == 'Admin';
     final uid = ref.watch(currentUidProvider);
 
     if (!isAuthorized) {
@@ -109,8 +109,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      actions: isMainAdmin ? [_buildPendingRequestsAction(context, uid, username)] : null,
-      floatingActionButton: isMainAdmin ? _buildFab(uid, username) : null,
+      actions: isManager
+          ? [
+              _buildPendingFabricationOrdersAction(context, uid, username, role),
+              _buildPendingRequestsAction(context, uid, username, role),
+            ]
+          : null,
+      floatingActionButton: isManager ? _buildFab(uid, username) : null,
       child: Column(
         children: [
           Container(
@@ -233,7 +238,37 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
     );
   }
 
-  Widget _buildPendingRequestsAction(BuildContext context, String uid, String username) {
+  Widget _buildPendingFabricationOrdersAction(BuildContext context, String uid, String username, String role) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final ordersAsync = ref.watch(pendingFabricationOrdersProvider);
+        final count = ordersAsync.valueOrNull?.length ?? 0;
+        return IconButton(
+          tooltip: 'Fabrication Orders',
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PendingFabricationOrdersScreen(
+                project: widget.project,
+                logger: widget.logger,
+                currentUid: uid,
+                username: username,
+                userRole: role,
+              ),
+            ),
+          ),
+          icon: Badge(
+            label: Text('$count'),
+            isLabelVisible: count > 0,
+            backgroundColor: InventoryColors.damaged,
+            child: const Icon(Icons.precision_manufacturing_outlined),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPendingRequestsAction(BuildContext context, String uid, String username, String role) {
     return Consumer(
       builder: (context, ref, _) {
         final requestsAsync = ref.watch(pendingRequestsProvider);
@@ -248,6 +283,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
                 logger: widget.logger,
                 currentUid: uid,
                 username: username,
+                userRole: role,
               ),
             ),
           ),
@@ -567,7 +603,7 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
   }
 
   Widget _buildItemCard(AssetModel item, Map<String, ({int total, int available})> quantityAgg) {
-    final statusColor = _statusColor(item.status);
+    final statusColor = InventoryColors.forAsset(item);
     final agg = quantityAgg[item.name.trim().toLowerCase()];
     final showQuantity = widget.itemType == AssetModel.typeTool && agg != null && agg.total > 1;
     return Card(
@@ -593,6 +629,11 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
   }
 
   Widget _buildItemCardBody(AssetModel item, Color statusColor, ({int total, int available})? quantity) {
+    final statusLabel = item.hasPendingRequest
+        ? 'Request Pending'
+        : (item.status == AssetModel.statusAvailable && item.hasUpcomingBooking)
+            ? 'Booked'
+            : item.status;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -667,7 +708,7 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(item.status,
+                child: Text(statusLabel,
                     style: GoogleFonts.poppins(fontSize: 10, color: statusColor, fontWeight: FontWeight.w700)),
               ),
               Icon(Icons.chevron_right, size: 18, color: Colors.grey[400]),
@@ -676,21 +717,6 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
         ),
       ),
     );
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case AssetModel.statusAvailable:
-        return const Color(0xFF2E7D32);
-      case AssetModel.statusCheckedOut:
-        return const Color(0xFF1565C0);
-      case AssetModel.statusUnderMaintenance:
-        return const Color(0xFFE65100);
-      case AssetModel.statusRetired:
-        return Colors.grey;
-      default:
-        return Colors.grey;
-    }
   }
 }
 

@@ -87,7 +87,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             '🔔 DashboardScreen: Admin notification listener started for $role (uid: ${user.uid})',
           );
         }
-        
+
+        // ── Every role: attach the per-user targeted listener — e.g. a
+        // Technician or Admin holding a booked asset needs to be notified
+        // directly when someone else books it for an upcoming date,
+        // regardless of their own role's broadcast-queue access. ──
+        await NotificationService().setupUserNotificationListener(user.uid);
+
+
         setState(() {
           _userRole = role;
           _grantedProjectIds = grantedIds;
@@ -145,8 +152,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
-    // Check if client has access
-    if (_userRole == 'Client') {
+    // Check if the account has access — Technician goes through the exact
+    // same request/approval flow as Client (see ClientRequestService) and is
+    // just as capable of having every project revoked, so it needs the same
+    // "no access yet / pending / all revoked" gate, not just Client.
+    if (_userRole == 'Client' || _userRole == 'Technician') {
       return StreamBuilder<ClientRequest?>(
         stream: _requestService.getClientRequestStatus(
           FirebaseAuth.instance.currentUser!.uid
@@ -809,10 +819,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _logger.i('🧹 DashboardScreen: Disposing resources');
-    // Cancel the AdminNotificationQueue Firestore listener so it does not
-    // fire after logout or when the widget is removed from the tree.
-    // Safe to call for non-admin users — the service ignores no-op cancels.
+    // Cancel the AdminNotificationQueue/UserNotificationQueue Firestore
+    // listeners so they do not fire after logout or when the widget is
+    // removed from the tree. Safe to call regardless of role — the service
+    // ignores no-op cancels.
     NotificationService().cancelAdminNotificationListener();
+    NotificationService().cancelUserNotificationListener();
     super.dispose();
   }
 }

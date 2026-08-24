@@ -10,7 +10,6 @@ import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 
 import 'communication_models.dart';
-import 'communication_notification_service.dart';
 import 'communication_service.dart';
 
 // ─── Module-level logger (mirrors the pattern used in BaseLayout) ─────────────
@@ -598,26 +597,10 @@ class _CommunicationComposeDialogState
 
       if (messageId != null) {
         _log.i('✅ ComposeDialog._send: Firestore write succeeded — id=$messageId');
-        final msg = CommunicationMessage(
-          id: messageId,
-          projectId: widget.projectId,
-          threadId: widget.threadId ?? messageId,
-          parentId: widget.replyToMessageId,
-          subject: _subjectCtrl.text.trim(),
-          bodyDelta: bodyDelta,
-          bodyPlainText: bodyPlain,
-          from: widget.currentUser,
-          to: _toList,
-          cc: _ccList,
-          attachments: uploaded,
-          sentAt: DateTime.now(),
-          type: widget.messageType,
-          readByUids: [widget.currentUser.uid],
-          deletedByUids: [],
-        );
-        await CommunicationNotificationService()
-            .enqueueNotificationsForMessage(msg);
-        _log.i('🔔 ComposeDialog._send: notifications enqueued');
+        // Push delivery is handled server-side by the
+        // onCommunicationMessageCreated Cloud Function, which triggers
+        // directly off this new Communication document — no client-side
+        // notification enqueue needed.
 
         if (mounted) {
           Navigator.of(context).pop();
@@ -645,6 +628,7 @@ class _CommunicationComposeDialogState
     final draft = DraftMessage(
       id: _uuid.v4(),
       projectId: widget.projectId,
+      ownerUid: widget.currentUser.uid,
       to: _toList,
       cc: _ccList,
       subject: _subjectCtrl.text,

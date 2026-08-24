@@ -138,6 +138,7 @@ class ClientRequestService {
 
       final projectNames = await _getProjectNames(projectIds);
       await _notificationService.notifyClientOfApproval(
+        clientUid: request.clientUid,
         clientUsername: request.clientUsername,
         projectNames: projectNames,
       );
@@ -181,6 +182,7 @@ class ClientRequestService {
       });
 
       await _notificationService.notifyClientOfDenial(
+        clientUid: request.clientUid,
         clientUsername: request.clientUsername,
         reason: reason,
       );
@@ -235,6 +237,7 @@ class ClientRequestService {
 
       final newNames = await _getProjectNames(newProjectIds);
       await _notificationService.notifyClientOfProjectUpdate(
+        clientUid: clientUid,
         clientUsername: clientUsername,
         addedProjects: newNames,
         revokedProjects: [],
@@ -291,6 +294,7 @@ class ClientRequestService {
 
       final revokedNames = await _getProjectNames(projectIdsToRevoke);
       await _notificationService.notifyClientOfProjectUpdate(
+        clientUid: clientUid,
         clientUsername: clientUsername,
         addedProjects: [],
         revokedProjects: revokedNames,
@@ -392,6 +396,7 @@ class ClientRequestService {
 
       final projectNames = await _getProjectNames(projectIds);
       await _notificationService.notifyClientOfApproval(
+        clientUid: request.clientUid,
         clientUsername: request.clientUsername,
         projectNames: projectNames,
       );
@@ -432,6 +437,7 @@ class ClientRequestService {
       });
 
       await _notificationService.notifyClientOfDenial(
+        clientUid: request.clientUid,
         clientUsername: request.clientUsername,
         reason: newReason,
       );

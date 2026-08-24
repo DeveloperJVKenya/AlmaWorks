@@ -173,12 +173,45 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    match /Communication/{messageId} {
+    // Targeted counterpart to AdminNotificationQueue (see
+    // lib/rbacsystem/notification_service.dart's setupUserNotificationListener
+    // and lib/services/inventory_service.dart's _notifyUser) — same
+    // permissiveness as AdminNotificationQueue for consistency.
+    match /UserNotificationQueue/{itemId} {
       allow read, write: if true;
     }
 
+    // Messages are readable/writable only by their participants (sender +
+    // To + Cc), tracked via the flat `participantUids` array kept in sync
+    // with `from`/`to`/`cc` at send time (see CommunicationMessage in
+    // communication_models.dart — rules can't reach into map fields nested
+    // inside an array element, hence the separate flat uid list). Only
+    // `readByUids`/`deletedByUids` may be mutated post-send (mark read/
+    // unread, soft delete/restore) — everything else about a sent message
+    // is immutable, and messages are never hard-deleted (soft delete only).
+    match /Communication/{messageId} {
+      allow read: if request.auth != null
+                   && request.auth.uid in resource.data.participantUids;
+
+      allow create: if request.auth != null
+                     && request.resource.data.from.uid == request.auth.uid
+                     && request.auth.uid in request.resource.data.participantUids;
+
+      allow update: if request.auth != null
+                     && request.auth.uid in resource.data.participantUids
+                     && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['readByUids', 'deletedByUids']);
+
+      allow delete: if false;
+    }
+
+    // Drafts are private to the user who saved them.
     match /CommunicationDrafts/{draftId} {
-      allow read, write: if true;
+      allow read, update, delete: if request.auth != null
+                     && request.auth.uid == resource.data.ownerUid;
+
+      allow create: if request.auth != null
+                     && request.auth.uid == request.resource.data.ownerUid;
     }
 
     match /ScheduleMonitor/{docId} {
@@ -194,10 +227,6 @@ service cloud.firestore {
     }
 
     match /Photos/{photoId} {
-      allow read, write: if true;
-    }
-
-    match /NotificationQueue/{itemId} {
       allow read, write: if true;
     }
 
@@ -256,25 +285,27 @@ service cloud.firestore {
 
     match /InventoryAssets/{assetId} {
       // Technician reads + requests checkouts (see InventoryCheckoutRequests
-      // below) same as Admin, but never registers new items and never
-      // performs the custody-pointer update directly (see the `update`
-      // block below) — that stays MainAdmin, or MainAdmin/Admin via the
-      // approval transaction only.
+      // below) same as MainAdmin/Admin, but never registers new items and
+      // never performs the custody-pointer update directly (see the
+      // `update` block below) — that stays MainAdmin/Admin, whether direct
+      // or via the approval transaction.
       allow read: if request.auth != null
                    && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
 
-      // Only MainAdmin may register new assets.
+      // MainAdmin/Admin may register new assets.
       allow create: if request.auth != null
-                     && inventoryUserRole() == 'MainAdmin'
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
                      && request.resource.data.createdByUid == request.auth.uid;
 
-      // Two distinct, narrowly-scoped update paths:
-      //  (a) MainAdmin correcting descriptive fields.
-      //  (b) MainAdmin OR Admin's checkout/return transaction updating only
+      // Three distinct, narrowly-scoped update paths:
+      //  (a) MainAdmin/Admin correcting descriptive fields.
+      //  (b) MainAdmin/Admin's checkout/return transaction updating only
       //      the custody-pointer fields (paired with a new, immutable
       //      InventoryAssetAssignments doc in the same transaction).
+      //  (c) MainAdmin/Admin's booking mutation refreshing the denormalized
+      //      "next upcoming booking" pointer (InventoryService._refreshNextBooking).
       allow update: if request.auth != null && (
-        (inventoryUserRole() == 'MainAdmin' &&
+        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['name', 'category', 'description', 'serialNumber', 'photoUrl', 'updatedAt']))
         ||
@@ -283,6 +314,25 @@ service cloud.firestore {
             .hasOnly(['status', 'currentHolderId', 'currentHolderName',
                       'currentProjectId', 'currentProjectName',
                       'currentAssignmentId', 'pendingRequestId', 'updatedAt']))
+        ||
+        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['nextBookingId', 'nextBookingStart', 'nextBookingEnd', 'nextBookingByName']))
+        ||
+        // The other half of InventoryService.createCheckoutRequest's atomic
+        // transaction: a Technician (or an Admin, via "Request for Myself")
+        // locks the asset with their OWN new pending request at the same
+        // time the InventoryCheckoutRequests doc is created. Without this,
+        // that write — and therefore the whole transaction, including the
+        // request doc itself — was rejected for Technician, since the
+        // clause above it is MainAdmin/Admin only. Narrowly scoped: only
+        // sets pendingRequestId, and only from unset (null) to a value —
+        // never clears it and never touches custody/status fields.
+        (inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'] &&
+          resource.data.pendingRequestId == null &&
+          request.resource.data.pendingRequestId != null &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['pendingRequestId', 'updatedAt']))
       );
 
       // No delete — assets anchor their custody ledger; retire via status
@@ -306,21 +356,88 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ── InventoryAssetBookings: scheduled checkout/return windows ─────────
+    // MainAdmin/Admin book directly, or a Technician's approved request
+    // turns into one (createdByUid is always the actioning admin in both
+    // cases — see InventoryService.createBooking/approveCheckoutRequest).
+    // An Admin can never book an asset out to themself — MainAdmin is
+    // exempt (has unlimited access); enforced here as the authoritative
+    // check (InventoryService's client-side guard is UX only).
+    match /InventoryAssetBookings/{bookingId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && request.resource.data.createdByUid == request.auth.uid
+                     && !(inventoryUserRole() == 'Admin' &&
+                          request.resource.data.bookedForUid == request.auth.uid);
+
+      // (a) Collection: scheduled -> active, stamping the checkout ledger link
+      //     (plus dispatch-by-driver fields, when this booking's delivery is
+      //     via a Driver/Transporter rather than a direct handoff).
+      // (b) Return: active -> completed, stamping the return ledger link.
+      // (c) Cancellation: scheduled -> cancelled.
+      // (d) Delivery acknowledgment: only the booking's own bookedForUid,
+      //     only when deliveryMethod is 'driver', and only those fields
+      //     — never condition/photos, so a holder can never self-assess
+      //     their own item's condition (see InventoryService.acknowledgeDelivery).
+      //     handoverFormScanUrl is optional supporting evidence (the scanned
+      //     signed paper form) uploaded alongside the same real ack.
+      allow update: if request.auth != null && (
+        (inventoryUserRole() in ['MainAdmin', 'Admin'] && (
+          (resource.data.status == 'scheduled' && request.resource.data.status == 'active' &&
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'checkoutAssignmentId', 'dispatchedAt', 'dispatchedByUid', 'dispatchedByName']))
+          ||
+          (resource.data.status == 'active' && request.resource.data.status == 'completed' &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAssignmentId']))
+          ||
+          (resource.data.status == 'scheduled' && request.resource.data.status == 'cancelled' &&
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'cancelledByUid', 'cancelledByName', 'cancelledAt', 'cancellationReason']))
+        ))
+        ||
+        (resource.data.bookedForUid == request.auth.uid
+          && resource.data.deliveryMethod == 'driver'
+          && request.resource.data.deliveryAcknowledgedByUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['deliveryAcknowledgedAt', 'deliveryAcknowledgedByUid', 'handoverFormScanUrl']))
+      );
+
+      allow delete: if false;
+    }
+
+    // ── InventoryAssetMaintenanceWindows: MainAdmin/Admin blackout dates ──
+    // Plain scheduling data, not an audit ledger — may be cancelled outright.
+    match /InventoryAssetMaintenanceWindows/{windowId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && request.resource.data.createdByUid == request.auth.uid;
+
+      allow update: if false;
+
+      allow delete: if request.auth != null && inventoryUserRole() in ['MainAdmin', 'Admin'];
+    }
+
     // ── InventoryMaterials — same shape/permissions as InventoryAssets ────
     match /InventoryMaterials/{materialId} {
       allow read: if request.auth != null
                    && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() == 'MainAdmin'
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
                      && request.resource.data.createdByUid == request.auth.uid;
 
-      // (a) MainAdmin correcting descriptive fields.
-      // (b) MainAdmin OR Admin's receipt/issue transaction updating only the
+      // (a) MainAdmin/Admin correcting descriptive fields.
+      // (b) MainAdmin/Admin's receipt/issue transaction updating only the
       //     running quantity balance (paired with a new, immutable
       //     InventoryMaterialMovements doc in the same transaction).
       allow update: if request.auth != null && (
-        (inventoryUserRole() == 'MainAdmin' &&
+        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['name', 'category', 'unit', 'source', 'description',
                       'photoUrl', 'reorderLevel', 'updatedAt']))
@@ -347,11 +464,48 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ── InventoryCheckoutRequests: Admin requests, MainAdmin approves/rejects ─
+    // ── InventoryMaterialFabricationOrders: paper-form chain of custody ───
+    // Decided per issue, not a fixed material property. The Driver and
+    // Fabricator legs have no app account (by design — see
+    // InventoryService's fabrication-order doc comment) and travel on a
+    // printed form instead; only the Technician's final scan-upload is a
+    // digital write, and it's a single atomic transition (issued ->
+    // verified/discrepancy) carrying every human-reviewed field from that
+    // upload — never partial, never from anyone but the technician who
+    // actually performed it.
+    match /InventoryMaterialFabricationOrders/{orderId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && request.resource.data.issuedByUid == request.auth.uid
+                     && request.resource.data.status == 'issued';
+
+      allow update: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician']
+                     && resource.data.status == 'issued'
+                     && request.resource.data.status in ['verified', 'discrepancy']
+                     && request.resource.data.technicianAckByUid == request.auth.uid
+                     && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['status', 'scannedFormUrl', 'ocrRawText', 'ocrExtractedFields',
+                                    'driverAckQuantityAtPickup', 'fabricatorName',
+                                    'fabricatorAckQuantityReceived', 'fabricatorAckCondition',
+                                    'fabricatorDamageNotes', 'fabricatorAckQuantityOutput',
+                                    'driverAckQuantityFromFabricator', 'technicianAckQuantityReceived',
+                                    'technicianAckByUid', 'technicianAckByName', 'technicianAckAt',
+                                    'verifiedByUid', 'verifiedByName', 'verifiedAt']);
+
+      allow delete: if false;
+    }
+
+    // ── InventoryCheckoutRequests: Technician requests, MainAdmin/Admin
+    // approve/reject ──────────────────────────────────────────────────────
     // A request starts 'pending' and can only ever move to 'approved' or
-    // 'rejected' — never back, and never edited further after that. Only
-    // MainAdmin may resolve a request (approve/reject); either role may
-    // read them (Admins need to see their own request's status).
+    // 'rejected' — never back, and never edited further after that. The
+    // same self-checkout guard as InventoryAssetBookings applies: an Admin
+    // can't approve a request onto themself (MainAdmin exempt) — though in
+    // practice only Technician still uses this flow.
     match /InventoryCheckoutRequests/{requestId} {
       allow read: if request.auth != null
                    && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
@@ -362,9 +516,11 @@ service cloud.firestore {
                      && request.resource.data.status == 'pending';
 
       allow update: if request.auth != null
-                     && inventoryUserRole() == 'MainAdmin'
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
                      && resource.data.status == 'pending'
                      && request.resource.data.status in ['approved', 'rejected']
+                     && !(inventoryUserRole() == 'Admin' &&
+                          request.auth.uid == resource.data.requestedByUid)
                      && request.resource.data.diff(resource.data).affectedKeys()
                           .hasOnly(['status', 'respondedByUid', 'respondedByName',
                                     'respondedAt', 'rejectionReason']);

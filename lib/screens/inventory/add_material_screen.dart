@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:almaworks/models/inventory/inventory_categories.dart';
 import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
@@ -192,7 +193,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to save material: $e', style: GoogleFonts.poppins()),
+          content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()),
           backgroundColor: Colors.red,
         ),
       );
