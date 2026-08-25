@@ -4,7 +4,24 @@
       "Bash(node -e ' *)",
       "Bash(node -p \"require\\('firebase-admin/package.json' , \\)\")",
       "Bash(firebase functions:log --only onAdminNotificationQueued,onUserNotificationQueued --project almaworks-b9a2e -n 60)",
-      "Bash(gcloud firestore *)"
+      "Bash(gcloud firestore *)",
+      "Bash(firebase functions:log --only onCommunicationMessageCreated --project almaworks-b9a2e -n 30)",
+      "Bash(awk '/^  cloud_firestore:$/,/version:/{print} /^  cloud_firestore_web:$/,/version:/{print} /^  cloud_firestore_platform_interface:$/,/version:/{print} /^  firebase_core_web:$/,/version:/{print} /^  plugin_platform_interface:$/,/version:/{print}' pubspec.lock)",
+      "Bash(node -e \"console.log\\(require\\('firebase-admin/package.json'\\).version\\)\")",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' https://firebaserules.googleapis.com/v1/projects/almaworks-b9a2e/releases/cloud.firestore)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' -H 'X-Goog-User-Project: almaworks-b9a2e' https://firebaserules.googleapis.com/v1/projects/almaworks-b9a2e/releases/cloud.firestore)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' -H 'X-Goog-User-Project: almaworks-b9a2e' https://firebaserules.googleapis.com/v1/projects/almaworks-b9a2e/rulesets/0a18a129-dab0-4564-8932-82dd2f40076e)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' -H 'X-Goog-User-Project: almaworks-b9a2e' https://firebaserules.googleapis.com/v1/projects/almaworks-b9a2e/rulesets/0a18a129-dab0-4564-8932-82dd2f40076e -o C:/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrator-PROJECTFlutter-JVA-Projects-almaworks/dda34464-8031-4ba5-95ee-e49e72e21548/scratchpad/deployed_rules.json)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' -H 'X-Goog-User-Project: almaworks-b9a2e' https://firebaserules.googleapis.com/v1/projects/almaworks-b9a2e/releases)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' -H 'X-Goog-User-Project: almaworks-b9a2e' https://firebaserules.googleapis.com/v1/projects/almaworks-b9a2e/releases/firebase.storage%2Falmaworks-b9a2e.firebasestorage.app)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' -H 'X-Goog-User-Project: almaworks-b9a2e' https://firebaserules.googleapis.com/v1/projects/almaworks-b9a2e/rulesets/a77cbfbc-1632-4a89-aef6-ecbc04a91a9d -o C:/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrator-PROJECTFlutter-JVA-Projects-almaworks/dda34464-8031-4ba5-95ee-e49e72e21548/scratchpad/deployed_storage.json)",
+      "Bash(gcloud logging *)",
+      "Bash(node \"C:/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrator-PROJECTFlutter-JVA-Projects-almaworks/dda34464-8031-4ba5-95ee-e49e72e21548/scratchpad/check_prado.js\")",
+      "Bash(node \"C:/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrator-PROJECTFlutter-JVA-Projects-almaworks/dda34464-8031-4ba5-95ee-e49e72e21548/scratchpad/check_fabronlubanga.js\")",
+      "Bash(node \"C:/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrator-PROJECTFlutter-JVA-Projects-almaworks/dda34464-8031-4ba5-95ee-e49e72e21548/scratchpad/check_fire_ext.js\")",
+      "Bash(firebase emulators:exec \"node test.js\" --project almaworks-rules-test)",
+      "Bash(sed -i 's/8090/8091/' firebase.json)",
+      "Bash(firebase emulators:exec \"node test_legacy_return.js\" --project almaworks-rules-test-2)"
     ]
   }
 }

@@ -20,19 +20,29 @@ enum CustodyEventMode { collection, returnEvent }
 
 /// Records the physical handover of a *scheduled* booking (mode: collection
 /// — the booking's date has arrived, hand the item over now) or the return
-/// of an *active* booking (mode: returnEvent — item comes back to storage).
+/// of a checked-out item (mode: returnEvent — item comes back to storage).
 /// One screen, mode-driven, to avoid duplicating the photo-picker/condition-
 /// notes/confirm-dialog scaffolding twice.
 ///
 /// The return path additionally captures a structured [AssetModel]
 /// condition rating (not just free-text notes) — this is what makes
-/// mishandling traceable back to [AssetBookingModel.bookedForName] in
-/// reporting, rather than only living in prose.
+/// mishandling traceable back to whoever held it in reporting, rather than
+/// only living in prose.
+///
+/// [booking] is required for collection (a handover always starts from a
+/// scheduled booking) but nullable for returnEvent: an asset checked out
+/// via the pre-booking direct-checkout path (or any other route that leaves
+/// a custody ledger entry with no paired booking — see
+/// [AssetAssignmentModel.bookingId]) has no [AssetBookingModel] to close.
+/// When null, holder/project details come from [asset]'s own custody
+/// pointer fields instead, and submission calls
+/// [InventoryService.recordLegacyReturn] rather than
+/// [InventoryService.recordBookingReturn].
 class RecordCustodyEventScreen extends StatefulWidget {
   final ProjectModel project;
   final Logger logger;
   final AssetModel asset;
-  final AssetBookingModel booking;
+  final AssetBookingModel? booking;
   final CustodyEventMode mode;
   final String recordedByUid;
   final String recordedByName;
@@ -48,7 +58,10 @@ class RecordCustodyEventScreen extends StatefulWidget {
     required this.recordedByUid,
     required this.recordedByName,
     required this.recordedByRole,
-  });
+  }) : assert(
+          booking != null || mode == CustodyEventMode.returnEvent,
+          'booking is required for CustodyEventMode.collection',
+        );
 
   @override
   State<RecordCustodyEventScreen> createState() => _RecordCustodyEventScreenState();
@@ -78,9 +91,10 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
 
   Future<void> _submit() async {
     final title = _isCollection ? 'Record Collection' : 'Record Return';
+    final returningFrom = widget.booking?.bookedForName ?? widget.asset.currentHolderName ?? 'storage';
     final message = _isCollection
-        ? 'Confirm "${widget.asset.name}" is being handed over to ${widget.booking.bookedForName} now?'
-        : 'Record the return of "${widget.asset.name}" to storage?';
+        ? 'Confirm "${widget.asset.name}" is being handed over to ${widget.booking!.bookedForName} now?'
+        : 'Record the return of "${widget.asset.name}" from $returningFrom?';
 
     final confirmed = await showConfirmDialog(context, title: title, message: message, confirmLabel: title);
     if (!confirmed || !mounted) return;
@@ -98,7 +112,7 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
 
       if (_isCollection) {
         await _inventoryService.recordCollection(
-          booking: widget.booking,
+          booking: widget.booking!,
           conditionNotes: _conditionController.text.trim(),
           photoBytesList: photoBytesList,
           photoFileNames: photoFileNames,
@@ -106,9 +120,20 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
           recordedByName: widget.recordedByName,
           recordedByRole: widget.recordedByRole,
         );
-      } else {
+      } else if (widget.booking != null) {
         await _inventoryService.recordBookingReturn(
-          booking: widget.booking,
+          booking: widget.booking!,
+          conditionNotes: _conditionController.text.trim(),
+          conditionRating: _conditionRating,
+          photoBytesList: photoBytesList,
+          photoFileNames: photoFileNames,
+          recordedByUid: widget.recordedByUid,
+          recordedByName: widget.recordedByName,
+          recordedByRole: widget.recordedByRole,
+        );
+      } else {
+        await _inventoryService.recordLegacyReturn(
+          asset: widget.asset,
           conditionNotes: _conditionController.text.trim(),
           conditionRating: _conditionRating,
           photoBytesList: photoBytesList,
@@ -164,10 +189,15 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
                     title: _isCollection ? 'Handover' : 'Return',
                     icon: _isCollection ? Icons.logout : Icons.login,
                     children: [
-                      _buildReadOnlyRow(_isCollection ? 'Handing over to' : 'Returning from',
-                          widget.booking.bookedForName),
-                      if (widget.booking.projectName != null)
-                        _buildReadOnlyRow('Project', widget.booking.projectName!),
+                      _buildReadOnlyRow(
+                        _isCollection ? 'Handing over to' : 'Returning from',
+                        widget.booking?.bookedForName ?? widget.asset.currentHolderName ?? 'Unknown',
+                      ),
+                      if ((widget.booking?.projectName ?? widget.asset.currentProjectName) != null)
+                        _buildReadOnlyRow(
+                          'Project',
+                          widget.booking?.projectName ?? widget.asset.currentProjectName!,
+                        ),
                     ],
                   ),
                   inventoryFormSection(

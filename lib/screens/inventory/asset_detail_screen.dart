@@ -571,7 +571,11 @@ class AssetDetailScreen extends ConsumerWidget {
           break;
         }
       }
-      if (activeBooking == null) return const SizedBox.shrink();
+      // Checked out with no matching active booking means this custody
+      // event predates (or otherwise bypassed) the booking system — e.g. a
+      // direct legacy checkout. There's still a real holder to get the item
+      // back from, so fall through to the booking-less return path instead
+      // of leaving the manager with no action at all.
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -580,7 +584,7 @@ class AssetDetailScreen extends ConsumerWidget {
               context,
               mode: CustodyEventMode.returnEvent,
               asset: asset,
-              booking: activeBooking!,
+              booking: activeBooking,
             ),
             icon: const Icon(Icons.login),
             label: Text('Record Return', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
@@ -727,7 +731,7 @@ class AssetDetailScreen extends ConsumerWidget {
     BuildContext context, {
     required CustodyEventMode mode,
     required AssetModel asset,
-    required AssetBookingModel booking,
+    required AssetBookingModel? booking,
   }) {
     Navigator.push(
       context,

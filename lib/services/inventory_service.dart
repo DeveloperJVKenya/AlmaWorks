@@ -1071,6 +1071,87 @@ class InventoryService {
     }
   }
 
+  /// Closes out an asset that's Checked Out with no [AssetBookingModel] to
+  /// link the return to — an item checked out via the pre-booking direct
+  /// checkout path (or any other way a custody ledger entry ever gets
+  /// written without a paired booking; [AssetAssignmentModel.bookingId] has
+  /// always been nullable for exactly this reason). Without this, such an
+  /// asset had no return path at all: [recordBookingReturn] requires a real,
+  /// active booking, so the UI had nothing to call and silently showed no
+  /// action button once the only fitting one — assuming a booking existed —
+  /// turned up empty. Mirrors recordBookingReturn's ledger write and asset
+  /// field reset exactly, just without a booking to close.
+  Future<AssetAssignmentModel> recordLegacyReturn({
+    required AssetModel asset,
+    required String conditionNotes,
+    required String conditionRating,
+    required List<Uint8List> photoBytesList,
+    required List<String> photoFileNames,
+    required String recordedByUid,
+    required String recordedByName,
+    required String recordedByRole,
+  }) async {
+    try {
+      _logger.i('📥 InventoryService: Recording legacy return for asset ${asset.id}');
+      final assignmentRef = _firestore.collection(_assignmentsCollection).doc();
+      final photoUrls = await _uploadAssignmentPhotos(assignmentRef.id, photoBytesList, photoFileNames);
+      final now = DateTime.now();
+      final assignment = AssetAssignmentModel(
+        id: assignmentRef.id,
+        assetId: asset.id,
+        eventType: AssetAssignmentModel.eventReturn,
+        previousAssignmentId: asset.currentAssignmentId,
+        assignedToUserId: asset.currentHolderId ?? '',
+        assignedToName: asset.currentHolderName ?? '',
+        projectId: asset.currentProjectId,
+        projectName: asset.currentProjectName,
+        conditionNotes: conditionNotes,
+        conditionRating: conditionRating,
+        photoUrls: photoUrls,
+        recordedByUid: recordedByUid,
+        recordedByName: recordedByName,
+        recordedByRole: recordedByRole,
+        eventAt: now,
+        createdAt: now,
+      );
+
+      await _firestore.runTransaction((transaction) async {
+        final assetRef = _firestore.collection(_assetsCollection).doc(asset.id);
+        final assetSnap = await transaction.get(assetRef);
+        if (!assetSnap.exists) throw Exception('Asset ${asset.id} no longer exists');
+        final assetData = assetSnap.data()!;
+        if (assetData['status'] != AssetModel.statusCheckedOut) {
+          throw Exception('Asset is not currently checked out');
+        }
+        // Guards against a booking having been created for this asset
+        // between the UI reading "no active booking" and this write —
+        // if one now exists, recordBookingReturn is the correct path.
+        if (assetData['currentAssignmentId'] != asset.currentAssignmentId) {
+          throw Exception('This item\'s custody record changed — please refresh and try again');
+        }
+
+        transaction.set(assignmentRef, assignment.toFirestore());
+        transaction.update(assetRef, {
+          'status': AssetModel.statusAvailable,
+          'currentHolderId': null,
+          'currentHolderName': null,
+          'currentProjectId': null,
+          'currentProjectName': null,
+          'currentAssignmentId': null,
+          'updatedAt': Timestamp.fromDate(now),
+        });
+      });
+
+      await _refreshNextBooking(asset.id);
+
+      _logger.i('✅ InventoryService: Legacy return recorded for asset ${asset.id}');
+      return assignment;
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to record legacy return for asset ${asset.id}', error: e);
+      rethrow;
+    }
+  }
+
   /// Cancels a not-yet-collected booking (MainAdmin/Admin, or the original
   /// requester before their scheduled start date).
   Future<void> cancelBooking({

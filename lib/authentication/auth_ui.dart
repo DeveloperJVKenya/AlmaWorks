@@ -19,7 +19,7 @@ class AuthColors {
   static const Color navyDeep = Color(0xFF071F3D);
   static const Color accent = Color(0xFF1565C0);
   static const Color accentLight = Color(0xFF4C8DD9);
-  static const Color canvas = Color(0xFFF4F6F9);
+  static const Color canvas = Color(0xFFDDE2E8);
 }
 
 /// Width the form content is capped at regardless of viewport — this is the

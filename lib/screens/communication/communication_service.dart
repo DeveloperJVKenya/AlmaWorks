@@ -37,10 +37,16 @@ class CommunicationService {
           .where('role', whereIn: ['Admin', 'MainAdmin'])
           .get();
 
-      // Clients explicitly granted this project
-      final clientSnap = await _db
+      // Client / Technician accounts explicitly granted this project.
+      // Access grants live directly on the user doc as `grantedProjects`
+      // (written by ClientRequestService on approval) — NOT in a
+      // `ClientAccessRequests` collection, which nothing in the app ever
+      // writes to. Querying that dead collection was silently excluding
+      // every Client and Technician from the recipient list regardless of
+      // their actual project access.
+      final grantedSnap = await _db
           .collection('Users')
-          .where('role', isEqualTo: 'Client')
+          .where('grantedProjects', arrayContains: projectId)
           .get();
 
       final List<MessageParticipant> participants = [];
@@ -60,23 +66,20 @@ class CommunicationService {
         );
       }
 
-      for (final doc in clientSnap.docs) {
+      for (final doc in grantedSnap.docs) {
         final data = doc.data();
         final uid = data['uid'] as String? ?? doc.id;
         if (uid == myUid) continue;
+        if (participants.any((p) => p.uid == uid)) continue; // dedupe
 
-        // Check if this client is granted this project
-        final granted = await _getClientGrantedProjects(uid);
-        if (granted.contains(projectId)) {
-          participants.add(
-            MessageParticipant(
-              uid: uid,
-              email: data['email'] as String? ?? '',
-              username:
-                  data['username'] as String? ?? data['email'] as String? ?? '',
-            ),
-          );
-        }
+        participants.add(
+          MessageParticipant(
+            uid: uid,
+            email: data['email'] as String? ?? '',
+            username:
+                data['username'] as String? ?? data['email'] as String? ?? '',
+          ),
+        );
       }
 
       _log.i(
@@ -85,22 +88,6 @@ class CommunicationService {
       return participants;
     } catch (e) {
       _log.e('❌ CommunicationService.getProjectUsers: $e');
-      return [];
-    }
-  }
-
-  Future<List<String>> _getClientGrantedProjects(String uid) async {
-    try {
-      final snap = await _db
-          .collection('ClientAccessRequests')
-          .where('clientUid', isEqualTo: uid)
-          .where('status', isEqualTo: 'approved')
-          .get();
-      return snap.docs
-          .map((d) => d.data()['projectId'] as String? ?? '')
-          .where((id) => id.isNotEmpty)
-          .toList();
-    } catch (_) {
       return [];
     }
   }
