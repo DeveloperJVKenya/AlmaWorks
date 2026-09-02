@@ -51,6 +51,14 @@ class AssetModel {
   /// on approval (asset moves to Checked Out) or rejection (back to Available).
   final String? pendingRequestId;
 
+  /// Set when the current holder taps "Return Asset/Tool" (see
+  /// InventoryService.notifyReturnIntent) — gates the MainAdmin/SystemAdmin
+  /// "Record Return" action in the UI so it stays disabled/faint until the
+  /// holder has actually signalled they're returning it, with an explicit
+  /// override available for when the holder is unreachable. Cleared once the
+  /// return is actually recorded.
+  final DateTime? returnRequestedAt;
+
   /// Denormalized snapshot of the soonest upcoming *scheduled* booking (see
   /// AssetBookingModel/InventoryAssetBookings) — lets list/detail screens
   /// show "Booked from 14 Aug by J. Otieno" without a per-asset query. Kept
@@ -82,6 +90,7 @@ class AssetModel {
     this.currentProjectName,
     this.currentAssignmentId,
     this.pendingRequestId,
+    this.returnRequestedAt,
     this.nextBookingId,
     this.nextBookingStart,
     this.nextBookingEnd,
@@ -115,6 +124,7 @@ class AssetModel {
       currentProjectName: data['currentProjectName'] as String?,
       currentAssignmentId: data['currentAssignmentId'] as String?,
       pendingRequestId: data['pendingRequestId'] as String?,
+      returnRequestedAt: (data['returnRequestedAt'] as Timestamp?)?.toDate(),
       nextBookingId: data['nextBookingId'] as String?,
       nextBookingStart: (data['nextBookingStart'] as Timestamp?)?.toDate(),
       nextBookingEnd: (data['nextBookingEnd'] as Timestamp?)?.toDate(),
@@ -142,6 +152,7 @@ class AssetModel {
       'currentProjectName': currentProjectName,
       'currentAssignmentId': currentAssignmentId,
       'pendingRequestId': pendingRequestId,
+      if (returnRequestedAt != null) 'returnRequestedAt': Timestamp.fromDate(returnRequestedAt!),
       'nextBookingId': nextBookingId,
       if (nextBookingStart != null) 'nextBookingStart': Timestamp.fromDate(nextBookingStart!),
       if (nextBookingEnd != null) 'nextBookingEnd': Timestamp.fromDate(nextBookingEnd!),
@@ -167,6 +178,8 @@ class AssetModel {
     String? currentProjectName,
     String? currentAssignmentId,
     String? pendingRequestId,
+    DateTime? returnRequestedAt,
+    bool clearReturnRequestedAt = false,
     String? nextBookingId,
     DateTime? nextBookingStart,
     DateTime? nextBookingEnd,
@@ -190,6 +203,7 @@ class AssetModel {
       currentProjectName: currentProjectName ?? this.currentProjectName,
       currentAssignmentId: currentAssignmentId ?? this.currentAssignmentId,
       pendingRequestId: pendingRequestId ?? this.pendingRequestId,
+      returnRequestedAt: clearReturnRequestedAt ? null : (returnRequestedAt ?? this.returnRequestedAt),
       nextBookingId: clearNextBooking ? null : (nextBookingId ?? this.nextBookingId),
       nextBookingStart: clearNextBooking ? null : (nextBookingStart ?? this.nextBookingStart),
       nextBookingEnd: clearNextBooking ? null : (nextBookingEnd ?? this.nextBookingEnd),

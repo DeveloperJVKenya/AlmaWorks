@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:almaworks/models/inventory/asset_booking_model.dart';
 import 'package:almaworks/models/inventory/checkout_request_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
@@ -14,11 +15,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 
-/// MainAdmin/Admin screen: review a pending checkout request. Approving
-/// captures condition notes + photos as the actual handover confirmation
-/// (this action IS the checkout — it writes the immutable custody ledger
-/// entry). Rejecting unlocks the asset back to Available with no ledger
-/// entry created.
+/// MainAdmin/SystemAdmin screen: review a pending checkout request.
+/// Approving captures condition notes + photos as the actual handover
+/// confirmation (this action IS the checkout — it writes the immutable
+/// custody ledger entry), plus the delivery method (direct handoff or via
+/// driver) — the only place that choice is made now that "Book For" no
+/// longer exists. Rejecting unlocks the asset back to Available with no
+/// ledger entry created.
 class ReviewCheckoutRequestScreen extends StatefulWidget {
   final ProjectModel project;
   final Logger logger;
@@ -44,12 +47,15 @@ class ReviewCheckoutRequestScreen extends StatefulWidget {
 class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScreen> {
   final InventoryService _inventoryService = InventoryService();
   final _conditionController = TextEditingController();
+  final _driverNameController = TextEditingController();
   final List<XFile> _selectedPhotos = [];
   bool _isSaving = false;
+  String _deliveryMethod = AssetBookingModel.deliveryDirect;
 
   @override
   void dispose() {
     _conditionController.dispose();
+    _driverNameController.dispose();
     super.dispose();
   }
 
@@ -88,6 +94,10 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
         respondedByUid: widget.respondedByUid,
         respondedByName: widget.respondedByName,
         respondedByRole: widget.respondedByRole,
+        deliveryMethod: _deliveryMethod,
+        driverName: _deliveryMethod == AssetBookingModel.deliveryDriver
+            ? _driverNameController.text.trim()
+            : null,
       );
 
       if (!mounted) return;
@@ -201,6 +211,32 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
                       maxLines: 3,
                       decoration: inventoryInputDecoration(label: 'Condition notes', icon: Icons.fact_check_outlined),
                     ),
+                    const SizedBox(height: 16),
+                    Text('Delivery', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[700])),
+                    const SizedBox(height: 8),
+                    SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment(
+                          value: AssetBookingModel.deliveryDirect,
+                          label: Text('Direct handoff', style: GoogleFonts.poppins(fontSize: 12.5)),
+                          icon: const Icon(Icons.handshake_outlined, size: 16),
+                        ),
+                        ButtonSegment(
+                          value: AssetBookingModel.deliveryDriver,
+                          label: Text('Via Driver/Transporter', style: GoogleFonts.poppins(fontSize: 12.5)),
+                          icon: const Icon(Icons.local_shipping_outlined, size: 16),
+                        ),
+                      ],
+                      selected: {_deliveryMethod},
+                      onSelectionChanged: (s) => setState(() => _deliveryMethod = s.first),
+                    ),
+                    if (_deliveryMethod == AssetBookingModel.deliveryDriver) ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _driverNameController,
+                        decoration: inventoryInputDecoration(label: 'Driver name', icon: Icons.person_outline),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: _isSaving ? null : _pickPhotos,

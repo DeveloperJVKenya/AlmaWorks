@@ -21,7 +21,8 @@
       "Bash(node \"C:/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrator-PROJECTFlutter-JVA-Projects-almaworks/dda34464-8031-4ba5-95ee-e49e72e21548/scratchpad/check_fire_ext.js\")",
       "Bash(firebase emulators:exec \"node test.js\" --project almaworks-rules-test)",
       "Bash(sed -i 's/8090/8091/' firebase.json)",
-      "Bash(firebase emulators:exec \"node test_legacy_return.js\" --project almaworks-rules-test-2)"
+      "Bash(firebase emulators:exec \"node test_legacy_return.js\" --project almaworks-rules-test-2)",
+      "Bash(node -e \"console.log\\(require\\('./functions/package.json'\\).engines\\)\")"
     ]
   }
 }

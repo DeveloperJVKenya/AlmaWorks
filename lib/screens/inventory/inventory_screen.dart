@@ -80,11 +80,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
 
     final role = roleAsync.value ?? 'Client';
     final username = usernameAsync.value ?? '';
-    // MainAdmin and Admin share full inventory management + direct booking/
-    // approval powers (see asset_detail_screen.dart's action-button split);
-    // Technician reads + requests checkouts only, via isAuthorized below.
-    final isAuthorized = role == 'MainAdmin' || role == 'Admin' || role == 'Technician';
-    final isManager = role == 'MainAdmin' || role == 'Admin';
+    // MainAdmin/Admin/SystemAdmin can add new catalog items; Technician
+    // reads + requests checkouts only, via isAuthorized below. Reviewing
+    // pending requests/fabrication orders is narrower — MainAdmin/SystemAdmin
+    // only (see asset_detail_screen.dart's canApproveAndIssue split).
+    final isAuthorized = role == 'MainAdmin' || role == 'Admin' || role == 'SystemAdmin' || role == 'Technician';
+    final canAddCatalogItems = role == 'MainAdmin' || role == 'Admin' || role == 'SystemAdmin';
+    final canApproveAndIssue = role == 'MainAdmin' || role == 'SystemAdmin';
     final uid = ref.watch(currentUidProvider);
 
     if (!isAuthorized) {
@@ -109,13 +111,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      actions: isManager
+      actions: canApproveAndIssue
           ? [
               _buildPendingFabricationOrdersAction(context, uid, username, role),
               _buildPendingRequestsAction(context, uid, username, role),
             ]
           : null,
-      floatingActionButton: isManager ? _buildFab(uid, username) : null,
+      floatingActionButton: canAddCatalogItems ? _buildFab(uid, username) : null,
       child: Column(
         children: [
           Container(

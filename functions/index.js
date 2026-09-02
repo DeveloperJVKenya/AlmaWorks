@@ -77,10 +77,17 @@ exports.onAdminNotificationQueued = onDocumentCreated(
     const title = data.title || "🔔 New Notification";
     const body = data.body || "";
     const payload = data.payload || {};
+    // Defaults to the pre-targetRoles audience for any doc queued before
+    // this field existed (see InventoryService._notifyAdmins /
+    // NotificationService.notifyAdminsOfClientRequest, which now always set
+    // it explicitly).
+    const targetRoles = Array.isArray(data.targetRoles) && data.targetRoles.length > 0
+      ? data.targetRoles
+      : ["MainAdmin", "Admin"];
 
     const usersSnap = await db
       .collection("Users")
-      .where("role", "in", ["MainAdmin", "Admin"])
+      .where("role", "in", targetRoles)
       .get();
 
     const tokens = [];
@@ -391,5 +398,41 @@ exports.sendBookingReminders = onSchedule(
     }
 
     logger.info(`sendBookingReminders: sent ${sent} reminder(s)`);
+
+    // Overdue returns: an active booking whose scheduledEnd has already
+    // passed with nobody having recorded the return yet. Re-notifies the
+    // holder daily (this function already runs once a day) for as long as
+    // it stays overdue, so they keep seeing it against whatever new
+    // checkout/maintenance is coming up next.
+    const now = new Date();
+    const overdueSnap = await db
+      .collection("InventoryAssetBookings")
+      .where("status", "==", "active")
+      .where("scheduledEnd", "<", now)
+      .get();
+
+    let overdueSent = 0;
+    for (const doc of overdueSnap.docs) {
+      const booking = doc.data();
+      const daysOverdue = Math.max(
+        1,
+        Math.floor((now - booking.scheduledEnd.toDate()) / (1000 * 60 * 60 * 24))
+      );
+      await db.collection("UserNotificationQueue").add({
+        targetUid: booking.bookedForUid,
+        title: "⚠️ Overdue Return",
+        body: `"${booking.assetName}" was due back ${daysOverdue} day${daysOverdue === 1 ? "" : "s"} ago — `
+          + "please return it as soon as possible, especially if anyone else has it booked or it's due for maintenance.",
+        payload: {
+          type: "inventory_overdue_return",
+          assetId: booking.assetId,
+          bookingId: doc.id,
+        },
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      overdueSent += 1;
+    }
+
+    logger.info(`sendBookingReminders: sent ${overdueSent} overdue-return reminder(s)`);
   }
 );

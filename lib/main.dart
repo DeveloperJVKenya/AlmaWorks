@@ -10,12 +10,16 @@ import 'package:almaworks/screens/communication/communication_models.dart';
 import 'package:almaworks/screens/communication/communication_notification_service.dart';
 import 'package:almaworks/screens/communication/communication_screen.dart';
 import 'package:almaworks/screens/communication/communication_service.dart';
+import 'package:almaworks/models/inventory/checkout_request_model.dart';
+import 'package:almaworks/screens/inventory/asset_detail_screen.dart';
+import 'package:almaworks/screens/inventory/review_checkout_request_screen.dart';
 import 'package:almaworks/screens/utils/app_theme.dart';
 import 'package:almaworks/services/notification_service.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -238,6 +242,31 @@ class _AlmaWorksAppState extends State<AlmaWorksApp> {
             widget.logger.d('Client request notification tapped');
           }
 
+          // ── Inventory notifications (checkout requests, returns, etc.) ──
+          // Covers every InventoryService._notifyAdmins / _notifyUser type
+          // (inventory_return_intent, inventory_checkout_request,
+          // inventory_checkout_approved/rejected, inventory_overdue_return,
+          // inventory_delivery_dispatched, inventory_booking_*,
+          // inventory_return_for_maintenance, etc.) — previously none of
+          // these had a tap route at all, so tapping just opened the app
+          // with no navigation. A pending checkout request opens straight
+          // into its review screen; everything else (which always carries
+          // an assetId) opens that asset's detail screen, where the
+          // relevant action (Record Return, Acknowledge Receipt, etc.)
+          // lives.
+          else if (notificationType.startsWith('inventory_')) {
+            final assetId = receivedAction.payload!['assetId'];
+            final requestId = receivedAction.payload!['requestId'];
+            widget.logger.d(
+                'Inventory notification tapped: type=$notificationType, assetId=$assetId, requestId=$requestId');
+
+            if (notificationType == 'inventory_checkout_request' && requestId != null) {
+              await _navigateToInventoryRequest(requestId: requestId, assetId: assetId);
+            } else if (assetId != null) {
+              await _navigateToInventoryAsset(assetId: assetId);
+            }
+          }
+
           // ── Communication (message) notifications ───────────────────────
           else if (notificationType == 'communication') {
             final messageId = receivedAction.payload!['messageId'];
@@ -363,6 +392,163 @@ class _AlmaWorksAppState extends State<AlmaWorksApp> {
         const SnackBar(
             content: Text('Could not open message. Please try again.')),
       );
+    }
+  }
+
+  /// Inventory is company-wide, not project-scoped — `project` only exists
+  /// so BaseLayout can render its header/project-switcher chrome (see
+  /// base_layout.dart's Inventory menu entry). Prefers the asset's own
+  /// `currentProjectId` when it has one, falling back to any project so
+  /// navigation never dead-ends just because the asset happens to be sitting
+  /// unassigned in storage.
+  Future<ProjectModel?> _resolveProjectForInventory(String? projectId) async {
+    final db = FirebaseFirestore.instance;
+    if (projectId != null) {
+      final doc = await db.collection('Projects').doc(projectId).get();
+      if (doc.exists) return ProjectModel.fromFirestore(doc);
+    }
+    final anySnap = await db.collection('Projects').limit(1).get();
+    if (anySnap.docs.isEmpty) return null;
+    return ProjectModel.fromFirestore(anySnap.docs.first);
+  }
+
+  /// Resolves the signed-in user's role/username the same way
+  /// dashboard_screen.dart does, for screens reached via a notification tap
+  /// rather than normal in-app navigation (where these are already
+  /// available from a provider).
+  Future<({String role, String username})?> _resolveCurrentUser() async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null) return null;
+    final snap = await FirebaseFirestore.instance
+        .collection('Users')
+        .where('uid', isEqualTo: authUser.uid)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return (role: snap.docs.first.data()['role'] as String? ?? 'Client', username: snap.docs.first.id);
+  }
+
+  /// Opens the asset's detail screen — where Record Return, Acknowledge
+  /// Receipt, and every other Inventory action actually lives — from an
+  /// `inventory_*` notification tap.
+  Future<void> _navigateToInventoryAsset({required String assetId, String? projectId}) async {
+    final navState = navigatorKey.currentState;
+    if (navState == null) {
+      widget.logger.w('⚠️ _navigateToInventoryAsset: navigatorKey has no current state — app not yet ready');
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(navigatorKey.currentContext!);
+    messenger.showSnackBar(const SnackBar(content: Text('Opening asset…'), duration: Duration(seconds: 2)));
+
+    try {
+      final authUser = FirebaseAuth.instance.currentUser;
+      final currentUser = await _resolveCurrentUser();
+      if (authUser == null || currentUser == null) {
+        widget.logger.w('⚠️ _navigateToInventoryAsset: could not resolve current user');
+        messenger.hideCurrentSnackBar();
+        return;
+      }
+
+      final assetDoc = await FirebaseFirestore.instance.collection('InventoryAssets').doc(assetId).get();
+      if (!assetDoc.exists) {
+        widget.logger.w('⚠️ _navigateToInventoryAsset: asset $assetId not found');
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(const SnackBar(content: Text('Asset not found or has been removed.')));
+        return;
+      }
+
+      final project = await _resolveProjectForInventory(projectId ?? assetDoc.data()?['currentProjectId'] as String?);
+      if (project == null) {
+        widget.logger.w('⚠️ _navigateToInventoryAsset: no project available for chrome context');
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(const SnackBar(content: Text('Could not open Inventory right now.')));
+        return;
+      }
+
+      messenger.hideCurrentSnackBar();
+      navState.push(
+        MaterialPageRoute(
+          builder: (_) => AssetDetailScreen(
+            project: project,
+            logger: widget.logger,
+            assetId: assetId,
+            userRole: currentUser.role,
+            username: currentUser.username,
+            currentUid: authUser.uid,
+          ),
+        ),
+      );
+      widget.logger.i('✅ _navigateToInventoryAsset: navigated to asset $assetId');
+    } catch (e, stack) {
+      widget.logger.e('❌ _navigateToInventoryAsset failed', error: e, stackTrace: stack);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(const SnackBar(content: Text('Could not open asset. Please try again.')));
+    }
+  }
+
+  /// Opens a pending checkout request straight into its review screen —
+  /// this is the direct "review and take an action" surface for
+  /// MainAdmin/SystemAdmin tapping an `inventory_checkout_request` push.
+  /// Falls back to the asset's detail screen if the request has already
+  /// been handled by the time it's tapped.
+  Future<void> _navigateToInventoryRequest({required String requestId, String? assetId}) async {
+    final navState = navigatorKey.currentState;
+    if (navState == null) {
+      widget.logger.w('⚠️ _navigateToInventoryRequest: navigatorKey has no current state — app not yet ready');
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(navigatorKey.currentContext!);
+    messenger.showSnackBar(const SnackBar(content: Text('Opening request…'), duration: Duration(seconds: 2)));
+
+    try {
+      final requestDoc =
+          await FirebaseFirestore.instance.collection('InventoryCheckoutRequests').doc(requestId).get();
+      if (!requestDoc.exists || requestDoc.data()?['status'] != CheckoutRequestModel.statusPending) {
+        widget.logger.i('ℹ️ _navigateToInventoryRequest: request $requestId no longer pending');
+        messenger.hideCurrentSnackBar();
+        if (assetId != null) {
+          await _navigateToInventoryAsset(assetId: assetId);
+        } else {
+          messenger.showSnackBar(const SnackBar(content: Text('This request has already been handled.')));
+        }
+        return;
+      }
+      final request = CheckoutRequestModel.fromFirestore(requestDoc);
+
+      final authUser = FirebaseAuth.instance.currentUser;
+      final currentUser = await _resolveCurrentUser();
+      if (authUser == null || currentUser == null) {
+        widget.logger.w('⚠️ _navigateToInventoryRequest: could not resolve current user');
+        messenger.hideCurrentSnackBar();
+        return;
+      }
+
+      final project = await _resolveProjectForInventory(request.projectId);
+      if (project == null) {
+        widget.logger.w('⚠️ _navigateToInventoryRequest: no project available for chrome context');
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(const SnackBar(content: Text('Could not open Inventory right now.')));
+        return;
+      }
+
+      messenger.hideCurrentSnackBar();
+      navState.push(
+        MaterialPageRoute(
+          builder: (_) => ReviewCheckoutRequestScreen(
+            project: project,
+            logger: widget.logger,
+            request: request,
+            respondedByUid: authUser.uid,
+            respondedByName: currentUser.username,
+            respondedByRole: currentUser.role,
+          ),
+        ),
+      );
+      widget.logger.i('✅ _navigateToInventoryRequest: navigated to request $requestId');
+    } catch (e, stack) {
+      widget.logger.e('❌ _navigateToInventoryRequest failed', error: e, stackTrace: stack);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(const SnackBar(content: Text('Could not open request. Please try again.')));
     }
   }
 

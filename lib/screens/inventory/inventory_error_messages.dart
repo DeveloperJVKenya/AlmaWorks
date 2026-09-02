@@ -14,6 +14,14 @@ String friendlyInventoryError(Object error) {
   if (raw.contains('already has a pending request')) {
     return 'This item already has a pending request — someone else is waiting on a decision first.';
   }
+  if (raw.contains('overlaps an existing booking') || raw.contains('overlaps a scheduled maintenance period')) {
+    // These already carry the specific conflicting dates/holder — that
+    // detail is exactly what the user needs to pick a different window, so
+    // surface it as-is rather than falling back to a generic message.
+    final message = error.toString();
+    final withoutPrefix = message.startsWith('Exception: ') ? message.substring('Exception: '.length) : message;
+    return withoutPrefix;
+  }
   if (raw.contains('not available for an immediate checkout') || raw.contains('is not available')) {
     return "This item isn't available right now — someone may have just checked it out or booked it.";
   }

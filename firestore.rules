@@ -284,55 +284,63 @@ service cloud.firestore {
     }
 
     match /InventoryAssets/{assetId} {
-      // Technician reads + requests checkouts (see InventoryCheckoutRequests
-      // below) same as MainAdmin/Admin, but never registers new items and
-      // never performs the custody-pointer update directly (see the
-      // `update` block below) — that stays MainAdmin/Admin, whether direct
-      // or via the approval transaction.
+      // Technician/Admin read + request checkouts same as MainAdmin/SystemAdmin,
+      // but never register new items and never perform the custody-pointer
+      // update directly (see the `update` block below) — that's
+      // MainAdmin/SystemAdmin only, via the approval transaction.
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
-      // MainAdmin/Admin may register new assets.
+      // MainAdmin/Admin/SystemAdmin may register new assets — Admin keeps
+      // this one catalog power even though it lost edit/approve/return.
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin']
                      && request.resource.data.createdByUid == request.auth.uid;
 
-      // Three distinct, narrowly-scoped update paths:
-      //  (a) MainAdmin/Admin correcting descriptive fields.
-      //  (b) MainAdmin/Admin's checkout/return transaction updating only
-      //      the custody-pointer fields (paired with a new, immutable
-      //      InventoryAssetAssignments doc in the same transaction).
-      //  (c) MainAdmin/Admin's booking mutation refreshing the denormalized
-      //      "next upcoming booking" pointer (InventoryService._refreshNextBooking).
+      // Five distinct, narrowly-scoped update paths:
+      //  (a) MainAdmin-only: correcting descriptive fields.
+      //  (b) MainAdmin/SystemAdmin's checkout/return transaction updating
+      //      only the custody-pointer fields (paired with a new, immutable
+      //      InventoryAssetAssignments doc in the same transaction) —
+      //      includes clearing returnRequestedAt on return.
+      //  (c) MainAdmin/SystemAdmin's booking mutation refreshing the
+      //      denormalized "next upcoming booking" pointer
+      //      (InventoryService._refreshNextBooking).
+      //  (d) anyone requesting locks the asset with their OWN new pending
+      //      request (see below).
+      //  (e) the current holder — any role — signals return intent
+      //      (InventoryService.notifyReturnIntent), only from unset to set.
       allow update: if request.auth != null && (
-        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
+        (inventoryUserRole() == 'MainAdmin' &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['name', 'category', 'description', 'serialNumber', 'photoUrl', 'updatedAt']))
         ||
-        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
+        (inventoryUserRole() in ['MainAdmin', 'SystemAdmin'] &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['status', 'currentHolderId', 'currentHolderName',
                       'currentProjectId', 'currentProjectName',
-                      'currentAssignmentId', 'pendingRequestId', 'updatedAt']))
+                      'currentAssignmentId', 'pendingRequestId', 'returnRequestedAt', 'updatedAt']))
         ||
-        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
+        (inventoryUserRole() in ['MainAdmin', 'SystemAdmin'] &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['nextBookingId', 'nextBookingStart', 'nextBookingEnd', 'nextBookingByName']))
         ||
         // The other half of InventoryService.createCheckoutRequest's atomic
-        // transaction: a Technician (or an Admin, via "Request for Myself")
-        // locks the asset with their OWN new pending request at the same
-        // time the InventoryCheckoutRequests doc is created. Without this,
-        // that write — and therefore the whole transaction, including the
-        // request doc itself — was rejected for Technician, since the
-        // clause above it is MainAdmin/Admin only. Narrowly scoped: only
+        // transaction: everyone now requests for themself (including
+        // MainAdmin/SystemAdmin — nobody self-approves), locking the asset
+        // with their OWN new pending request at the same time the
+        // InventoryCheckoutRequests doc is created. Narrowly scoped: only
         // sets pendingRequestId, and only from unset (null) to a value —
         // never clears it and never touches custody/status fields.
-        (inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'] &&
+        (inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'] &&
           resource.data.pendingRequestId == null &&
           request.resource.data.pendingRequestId != null &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['pendingRequestId', 'updatedAt']))
+        ||
+        (resource.data.currentHolderId == request.auth.uid &&
+          resource.data.get('returnRequestedAt', null) == null &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['returnRequestedAt']))
       );
 
       // No delete — assets anchor their custody ledger; retire via status
@@ -340,13 +348,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Append-only custody ledger: checkout / return events.
+    // Append-only custody ledger: checkout / return events. Only
+    // MainAdmin/SystemAdmin ever write one now — approve/collect/return are
+    // all MainAdmin/SystemAdmin actions; Technician/Admin only request.
     match /InventoryAssetAssignments/{assignmentId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician']
+                     && inventoryUserRole() in ['MainAdmin', 'SystemAdmin']
                      && request.resource.data.recordedByUid == request.auth.uid
                      && request.resource.data.recordedByRole == inventoryUserRole();
 
@@ -357,27 +367,28 @@ service cloud.firestore {
     }
 
     // ── InventoryAssetBookings: scheduled checkout/return windows ─────────
-    // MainAdmin/Admin book directly, or a Technician's approved request
-    // turns into one (createdByUid is always the actioning admin in both
-    // cases — see InventoryService.createBooking/approveCheckoutRequest).
-    // An Admin can never book an asset out to themself — MainAdmin is
-    // exempt (has unlimited access); enforced here as the authoritative
-    // check (InventoryService's client-side guard is UX only).
+    // Only ever created by MainAdmin/SystemAdmin approving a checkout
+    // request (createdByUid is always the approving admin — see
+    // InventoryService.approveCheckoutRequest). Nobody — not even
+    // MainAdmin — may create a booking naming themself as the recipient;
+    // a different MainAdmin/SystemAdmin must always process it (enforced
+    // here as the authoritative check; InventoryService's
+    // _assertNotSelfAssignment is UX-only).
     match /InventoryAssetBookings/{bookingId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() in ['MainAdmin', 'SystemAdmin']
                      && request.resource.data.createdByUid == request.auth.uid
-                     && !(inventoryUserRole() == 'Admin' &&
-                          request.resource.data.bookedForUid == request.auth.uid);
+                     && request.resource.data.bookedForUid != request.auth.uid;
 
       // (a) Collection: scheduled -> active, stamping the checkout ledger link
       //     (plus dispatch-by-driver fields, when this booking's delivery is
       //     via a Driver/Transporter rather than a direct handoff).
       // (b) Return: active -> completed, stamping the return ledger link.
-      // (c) Cancellation: scheduled -> cancelled.
+      // (c) Cancellation: scheduled -> cancelled (includes maintenance-
+      //     priority auto-cancellation — see InventoryService.createMaintenanceWindow).
       // (d) Delivery acknowledgment: only the booking's own bookedForUid,
       //     only when deliveryMethod is 'driver', and only those fields
       //     — never condition/photos, so a holder can never self-assess
@@ -385,7 +396,7 @@ service cloud.firestore {
       //     handoverFormScanUrl is optional supporting evidence (the scanned
       //     signed paper form) uploaded alongside the same real ack.
       allow update: if request.auth != null && (
-        (inventoryUserRole() in ['MainAdmin', 'Admin'] && (
+        (inventoryUserRole() in ['MainAdmin', 'SystemAdmin'] && (
           (resource.data.status == 'scheduled' && request.resource.data.status == 'active' &&
             request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['status', 'checkoutAssignmentId', 'dispatchedAt', 'dispatchedByUid', 'dispatchedByName']))
@@ -408,41 +419,44 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ── InventoryAssetMaintenanceWindows: MainAdmin/Admin blackout dates ──
+    // ── InventoryAssetMaintenanceWindows: MainAdmin-only blackout dates ───
     // Plain scheduling data, not an audit ledger — may be cancelled outright.
+    // MainAdmin is the only role that may schedule or cancel maintenance.
     match /InventoryAssetMaintenanceWindows/{windowId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() == 'MainAdmin'
                      && request.resource.data.createdByUid == request.auth.uid;
 
       allow update: if false;
 
-      allow delete: if request.auth != null && inventoryUserRole() in ['MainAdmin', 'Admin'];
+      allow delete: if request.auth != null && inventoryUserRole() == 'MainAdmin';
     }
 
     // ── InventoryMaterials — same shape/permissions as InventoryAssets ────
     match /InventoryMaterials/{materialId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
+      // MainAdmin/Admin/SystemAdmin may register new materials — Admin
+      // keeps this one catalog power even though it lost edit/issue.
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin']
                      && request.resource.data.createdByUid == request.auth.uid;
 
-      // (a) MainAdmin/Admin correcting descriptive fields.
-      // (b) MainAdmin/Admin's receipt/issue transaction updating only the
-      //     running quantity balance (paired with a new, immutable
+      // (a) MainAdmin-only: correcting descriptive fields.
+      // (b) MainAdmin/SystemAdmin's receipt/issue transaction updating only
+      //     the running quantity balance (paired with a new, immutable
       //     InventoryMaterialMovements doc in the same transaction).
       allow update: if request.auth != null && (
-        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
+        (inventoryUserRole() == 'MainAdmin' &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['name', 'category', 'unit', 'source', 'description',
                       'photoUrl', 'reorderLevel', 'updatedAt']))
         ||
-        (inventoryUserRole() in ['MainAdmin', 'Admin'] &&
+        (inventoryUserRole() in ['MainAdmin', 'SystemAdmin'] &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['quantityInStorage', 'updatedAt']))
       );
@@ -453,10 +467,10 @@ service cloud.firestore {
     // Append-only stock ledger: receipt / issue events.
     match /InventoryMaterialMovements/{movementId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician']
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician']
                      && request.resource.data.recordedByUid == request.auth.uid
                      && request.resource.data.recordedByRole == inventoryUserRole();
 
@@ -475,15 +489,17 @@ service cloud.firestore {
     // actually performed it.
     match /InventoryMaterialFabricationOrders/{orderId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
+      // Issuing material for fabrication is a canApproveAndIssue action —
+      // MainAdmin/SystemAdmin only.
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() in ['MainAdmin', 'SystemAdmin']
                      && request.resource.data.issuedByUid == request.auth.uid
                      && request.resource.data.status == 'issued';
 
       allow update: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician']
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician']
                      && resource.data.status == 'issued'
                      && request.resource.data.status in ['verified', 'discrepancy']
                      && request.resource.data.technicianAckByUid == request.auth.uid
@@ -499,28 +515,26 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ── InventoryCheckoutRequests: Technician requests, MainAdmin/Admin
+    // ── InventoryCheckoutRequests: everyone requests, MainAdmin/SystemAdmin
     // approve/reject ──────────────────────────────────────────────────────
     // A request starts 'pending' and can only ever move to 'approved' or
-    // 'rejected' — never back, and never edited further after that. The
-    // same self-checkout guard as InventoryAssetBookings applies: an Admin
-    // can't approve a request onto themself (MainAdmin exempt) — though in
-    // practice only Technician still uses this flow.
+    // 'rejected' — never back, and never edited further after that. Nobody
+    // — not even MainAdmin — may approve/reject their own request; a
+    // different MainAdmin/SystemAdmin must always process it.
     match /InventoryCheckoutRequests/{requestId} {
       allow read: if request.auth != null
-                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician'];
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
       allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'Technician']
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician']
                      && request.resource.data.requestedByUid == request.auth.uid
                      && request.resource.data.status == 'pending';
 
       allow update: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && inventoryUserRole() in ['MainAdmin', 'SystemAdmin']
                      && resource.data.status == 'pending'
                      && request.resource.data.status in ['approved', 'rejected']
-                     && !(inventoryUserRole() == 'Admin' &&
-                          request.auth.uid == resource.data.requestedByUid)
+                     && request.auth.uid != resource.data.requestedByUid
                      && request.resource.data.diff(resource.data).affectedKeys()
                           .hasOnly(['status', 'respondedByUid', 'respondedByName',
                                     'respondedAt', 'rejectionReason']);

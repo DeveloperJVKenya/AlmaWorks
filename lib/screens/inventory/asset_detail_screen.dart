@@ -9,7 +9,6 @@ import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/add_asset_screen.dart';
 import 'package:almaworks/screens/inventory/add_maintenance_window_screen.dart';
 import 'package:almaworks/screens/inventory/asset_availability_calendar.dart';
-import 'package:almaworks/screens/inventory/create_booking_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
 import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
@@ -48,9 +47,19 @@ class AssetDetailScreen extends ConsumerWidget {
     required this.currentUid,
   });
 
-  /// MainAdmin and Admin share full inventory management + direct booking/
-  /// approval powers; only Technician stays on the request→approval flow.
-  bool get isManager => userRole == 'MainAdmin' || userRole == 'Admin';
+  /// MainAdmin/Admin/SystemAdmin share full catalog visibility and can add
+  /// new items; Technician stays on the request-only flow.
+  bool get isFullAccess => userRole == 'MainAdmin' || userRole == 'Admin' || userRole == 'SystemAdmin';
+
+  /// Approve/reject checkout requests, record collections/returns, issue
+  /// materials — MainAdmin + System Admin only. Nobody self-approves, so a
+  /// MainAdmin/SystemAdmin who currently holds an item never sees these for
+  /// their own custody (see the self-holder branch in [_buildActionButton]).
+  bool get canApproveAndIssue => userRole == 'MainAdmin' || userRole == 'SystemAdmin';
+
+  /// Edit an existing asset/tool and schedule/cancel maintenance —
+  /// MainAdmin only.
+  bool get canManageCatalog => userRole == 'MainAdmin';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,7 +71,7 @@ class AssetDetailScreen extends ConsumerWidget {
       logger: logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      actions: isManager
+      actions: canManageCatalog
           ? [
               assetAsync.maybeWhen(
                 data: (asset) => asset == null
@@ -147,9 +156,9 @@ class AssetDetailScreen extends ConsumerWidget {
                   return AssetAvailabilityCalendar(
                     bookings: bookings,
                     maintenanceWindows: maintenance,
-                    onCancelBooking: isManager ? (booking) => _cancelBooking(context, ref, booking) : null,
+                    onCancelBooking: canApproveAndIssue ? (booking) => _cancelBooking(context, ref, booking) : null,
                     onCancelMaintenance:
-                        isManager ? (window) => _cancelMaintenance(context, ref, window) : null,
+                        canManageCatalog ? (window) => _cancelMaintenance(context, ref, window) : null,
                   );
                 },
               ),
@@ -240,7 +249,15 @@ class AssetDetailScreen extends ConsumerWidget {
                 children: [
                   const Icon(Icons.person_outline, size: 18, color: Colors.blueGrey),
                   const SizedBox(width: 6),
-                  Text('Held by ${asset.currentHolderName ?? 'Unknown'}', style: GoogleFonts.poppins(fontSize: 13)),
+                  Expanded(
+                    child: Text(
+                      asset.currentHolderId == currentUid
+                          ? 'In my possession'
+                          : 'Held by ${asset.currentHolderName ?? 'Unknown'}',
+                      style: GoogleFonts.poppins(fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
               if (asset.currentProjectName != null) ...[
@@ -249,7 +266,13 @@ class AssetDetailScreen extends ConsumerWidget {
                   children: [
                     const Icon(Icons.location_on_outlined, size: 18, color: Colors.blueGrey),
                     const SizedBox(width: 6),
-                    Text(asset.currentProjectName!, style: GoogleFonts.poppins(fontSize: 13)),
+                    Expanded(
+                      child: Text(
+                        asset.currentProjectName!,
+                        style: GoogleFonts.poppins(fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -266,30 +289,17 @@ class AssetDetailScreen extends ConsumerWidget {
     AssetModel asset,
     List<AssetBookingModel> bookings,
   ) {
-    final canAct = userRole == 'MainAdmin' || userRole == 'Admin' || userRole == 'Technician';
+    final canAct = userRole == 'MainAdmin' || userRole == 'Admin' || userRole == 'SystemAdmin' || userRole == 'Technician';
     if (!canAct) return const SizedBox.shrink();
 
     // A pending request locks the asset — nobody else can request/check it
-    // out until a manager resolves it.
+    // out until a MainAdmin/SystemAdmin resolves it.
     if (asset.hasPendingRequest) {
-      if (!isManager) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            color: InventoryColors.pendingRequest.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: InventoryColors.pendingRequest.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.hourglass_top, color: InventoryColors.pendingRequest, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text('A checkout request for this item is awaiting review.',
-                    style: GoogleFonts.poppins(fontSize: 12, color: InventoryColors.pendingRequest)),
-              ),
-            ],
-          ),
+      if (!canApproveAndIssue) {
+        return _infoBanner(
+          icon: Icons.hourglass_top,
+          color: InventoryColors.pendingRequest,
+          message: 'A checkout request for this item is awaiting review.',
         );
       }
       return Consumer(
@@ -300,37 +310,18 @@ class AssetDetailScreen extends ConsumerWidget {
             error: (err, _) => Text('Error loading request', style: GoogleFonts.poppins(color: Colors.red)),
             data: (req) {
               if (req == null) return const SizedBox.shrink();
-              // A manager (MainAdmin or Admin) can approve any OTHER
-              // manager's or Technician's request — MainAdmin approving an
-              // Admin's self-request, or a different Admin approving it, both
-              // work fine (the self-assignment guard only blocks acting on
-              // your OWN request). But if this viewer IS the requester
-              // (reachable via the "Request for Myself" fallback above),
-              // reviewing/approving it themselves would just be rejected
-              // server-side — show a waiting state instead of a dead-end button.
+              // Nobody approves their own request — not even MainAdmin. If
+              // this viewer IS the requester, reviewing/approving it
+              // themselves would just be rejected server-side — show a
+              // waiting state instead of a dead-end button.
               if (req.requestedByUid == currentUid) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: InventoryColors.pendingRequest.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: InventoryColors.pendingRequest.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.hourglass_top, color: InventoryColors.pendingRequest, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Your request is awaiting review by another Admin/MainAdmin.',
-                          style: GoogleFonts.poppins(fontSize: 12, color: InventoryColors.pendingRequest),
-                        ),
-                      ),
-                    ],
-                  ),
+                return _infoBanner(
+                  icon: Icons.hourglass_top,
+                  color: InventoryColors.pendingRequest,
+                  message: 'Your request is awaiting review by a different MainAdmin/System Admin.',
                 );
               }
-              return ElevatedButton.icon(
+              return _actionButton(
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -344,14 +335,9 @@ class AssetDetailScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                icon: const Icon(Icons.fact_check_outlined),
-                label: Text('Review Request from ${req.requestedByName}',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: InventoryColors.pendingRequest,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(46),
-                ),
+                icon: Icons.fact_check_outlined,
+                label: 'Review Request from ${req.requestedByName}',
+                color: InventoryColors.pendingRequest,
               );
             },
           );
@@ -359,8 +345,8 @@ class AssetDetailScreen extends ConsumerWidget {
       );
     }
 
-    // A scheduled booking whose date has arrived — a manager can hand the
-    // item over now.
+    // A scheduled booking whose date has arrived — MainAdmin/SystemAdmin can
+    // hand the item over now.
     AssetBookingModel? dueBooking;
     for (final b in bookings) {
       if (b.isScheduled && !b.scheduledStart.isAfter(DateTime.now())) {
@@ -368,87 +354,25 @@ class AssetDetailScreen extends ConsumerWidget {
         break;
       }
     }
-    if (asset.isAvailable && dueBooking != null && isManager) {
-      return ElevatedButton.icon(
+    if (asset.isAvailable && dueBooking != null && canApproveAndIssue) {
+      return _actionButton(
         onPressed: () => _navigateToCustodyEvent(
           context,
           mode: CustodyEventMode.collection,
           asset: asset,
           booking: dueBooking!,
         ),
-        icon: const Icon(Icons.logout),
-        label: Text('Record Collection — ${dueBooking.bookedForName}',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: InventoryColors.checkedOut,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(46),
-        ),
+        icon: Icons.logout,
+        label: 'Record Collection — ${dueBooking.bookedForName}',
+        color: InventoryColors.checkedOut,
       );
     }
 
+    // Available: everyone — including MainAdmin/SystemAdmin — requests it
+    // for themself; there's no direct "book for someone" path anymore. A
+    // different MainAdmin/SystemAdmin always processes the request.
     if (asset.isAvailable) {
-      if (isManager) {
-        final bookButton = ElevatedButton.icon(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CreateBookingScreen(
-                project: project,
-                logger: logger,
-                asset: asset,
-                createdByUid: currentUid,
-                createdByName: username,
-                createdByRole: userRole,
-              ),
-            ),
-          ),
-          icon: const Icon(Icons.event_available),
-          label: Text('Book / Check Out', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: InventoryColors.checkedOut,
-            foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(46),
-          ),
-        );
-        // An Admin (not MainAdmin) can never book/check an asset out to
-        // themself directly — the booking screen's "Book For" picker
-        // excludes their own uid. Without this, an Admin who wants the item
-        // for themself has no path at all: "Book/Check Out" only lets them
-        // pick someone else, and "Request Checkout" is otherwise hidden from
-        // every manager. So Admin also gets the same request→approval
-        // fallback Technician uses, requiring a *different* Admin/MainAdmin
-        // to approve (self-approval is blocked server-side too).
-        if (userRole == 'Admin') {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              bookButton,
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RequestCheckoutScreen(
-                      project: project,
-                      logger: logger,
-                      asset: asset,
-                      requestedByUid: currentUid,
-                      requestedByName: username,
-                    ),
-                  ),
-                ),
-                icon: const Icon(Icons.person_outline),
-                label: Text('Request for Myself', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
-              ),
-            ],
-          );
-        }
-        return bookButton;
-      }
-      // Technician: request only — a manager must approve before it's booked.
-      return ElevatedButton.icon(
+      return _actionButton(
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(
@@ -461,15 +385,12 @@ class AssetDetailScreen extends ConsumerWidget {
             ),
           ),
         ),
-        icon: const Icon(Icons.send_outlined),
-        label: Text('Request Checkout', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: InventoryColors.checkedOut,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(46),
-        ),
+        icon: Icons.send_outlined,
+        label: 'Request Checkout',
+        color: InventoryColors.checkedOut,
       );
     }
+
     AssetBookingModel? activeBookingForCurrentUser;
     if (asset.isCheckedOut && asset.currentHolderId == currentUid) {
       for (final b in bookings) {
@@ -487,83 +408,66 @@ class AssetDetailScreen extends ConsumerWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: InventoryColors.booked.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: InventoryColors.booked.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.local_shipping_outlined, color: InventoryColors.booked, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${booking.driverName ?? 'A driver'} is bringing this to you.',
-                    style: GoogleFonts.poppins(fontSize: 12, color: InventoryColors.booked),
-                  ),
-                ),
-              ],
-            ),
+          _infoBanner(
+            icon: Icons.local_shipping_outlined,
+            color: InventoryColors.booked,
+            message: '${booking.driverName ?? 'A driver'} is bringing this to you.',
           ),
           const SizedBox(height: 10),
-          ElevatedButton.icon(
+          _actionButton(
             onPressed: () => _acknowledgeDelivery(context, booking),
-            icon: const Icon(Icons.check_circle_outline),
-            label: Text('Acknowledge Receipt', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: InventoryColors.checkedOut,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(46),
-            ),
+            icon: Icons.check_circle_outline,
+            label: 'Acknowledge Receipt',
+            color: InventoryColors.checkedOut,
           ),
         ],
       );
     }
+
     // Being checked out to someone else right now doesn't mean the item's
     // calendar is fully occupied — a future, non-overlapping window can
-    // still be booked/requested for later (InventoryService only checks
-    // date-range conflicts for a future start, not the asset's current
-    // status). This secondary action is offered alongside whatever primary
-    // action the viewer's role/relationship to the current holder gives them.
-    final bookFutureButton = OutlinedButton.icon(
-      onPressed: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CreateBookingScreen(
-            project: project,
-            logger: logger,
-            asset: asset,
-            createdByUid: currentUid,
-            createdByName: username,
-            createdByRole: userRole,
+    // still be requested for later (InventoryService only checks date-range
+    // conflicts for a future start, not the asset's current status).
+    Widget requestFutureButton() => _actionButton(
+          outlined: true,
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RequestCheckoutScreen(
+                project: project,
+                logger: logger,
+                asset: asset,
+                requestedByUid: currentUid,
+                requestedByName: username,
+              ),
+            ),
           ),
-        ),
-      ),
-      icon: const Icon(Icons.event_available_outlined),
-      label: Text('Book a Future Date', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
-    );
-    final requestFutureForMyselfButton = OutlinedButton.icon(
-      onPressed: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => RequestCheckoutScreen(
-            project: project,
-            logger: logger,
-            asset: asset,
-            requestedByUid: currentUid,
-            requestedByName: username,
-          ),
-        ),
-      ),
-      icon: const Icon(Icons.person_outline),
-      label: Text('Request for Myself', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
-    );
+          icon: Icons.event_available_outlined,
+          label: 'Request a Future Date',
+        );
 
-    if (asset.isCheckedOut && isManager) {
+    // Whoever currently holds the item — Technician, Admin, MainAdmin, or
+    // SystemAdmin alike — never records their own return. They only signal
+    // intent; a different MainAdmin/SystemAdmin performs the actual return
+    // (condition assessment is always someone else's call, never a
+    // self-assessment).
+    if (asset.isCheckedOut && asset.currentHolderId == currentUid) {
+      if (asset.returnRequestedAt != null) {
+        return _infoBanner(
+          icon: Icons.hourglass_top,
+          color: InventoryColors.pendingRequest,
+          message: 'Return notified — waiting for a MainAdmin/System Admin to confirm reception.',
+        );
+      }
+      return _actionButton(
+        onPressed: () => _sendReturnIntent(context, asset),
+        icon: Icons.login,
+        label: '${asset.itemType == AssetModel.typeTool ? 'Tool' : 'Asset'} Return',
+        color: InventoryColors.available,
+      );
+    }
+
+    if (asset.isCheckedOut && canApproveAndIssue) {
       AssetBookingModel? activeBooking;
       for (final b in bookings) {
         if (b.isActive) {
@@ -571,60 +475,113 @@ class AssetDetailScreen extends ConsumerWidget {
           break;
         }
       }
+      final returnRequested = asset.returnRequestedAt != null;
       // Checked out with no matching active booking means this custody
       // event predates (or otherwise bypassed) the booking system — e.g. a
       // direct legacy checkout. There's still a real holder to get the item
       // back from, so fall through to the booking-less return path instead
-      // of leaving the manager with no action at all.
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      // of leaving no action at all.
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
         children: [
-          ElevatedButton.icon(
-            onPressed: () => _navigateToCustodyEvent(
-              context,
-              mode: CustodyEventMode.returnEvent,
-              asset: asset,
-              booking: activeBooking,
+          if (returnRequested)
+            _actionButton(
+              onPressed: () => _navigateToCustodyEvent(
+                context,
+                mode: CustodyEventMode.returnEvent,
+                asset: asset,
+                booking: activeBooking,
+              ),
+              icon: Icons.login,
+              label: 'Record Return',
+              color: InventoryColors.available,
+            )
+          else ...[
+            // Faint/disabled-looking until the holder has actually
+            // triggered a return from their own side — kept reachable only
+            // via the explicit override below, for when the holder is
+            // offline or otherwise unreachable.
+            Opacity(
+              opacity: 0.4,
+              child: IgnorePointer(
+                child: _actionButton(
+                  onPressed: () {},
+                  icon: Icons.login,
+                  label: 'Record Return',
+                  color: InventoryColors.available,
+                ),
+              ),
             ),
-            icon: const Icon(Icons.login),
-            label: Text('Record Return', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: InventoryColors.available,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(46),
+            _actionButton(
+              outlined: true,
+              onPressed: () => _confirmOverrideReturn(context, asset, activeBooking),
+              icon: Icons.admin_panel_settings_outlined,
+              label: 'Override & Record Return',
             ),
-          ),
-          const SizedBox(height: 8),
-          bookFutureButton,
-          if (userRole == 'Admin') ...[
-            const SizedBox(height: 8),
-            requestFutureForMyselfButton,
           ],
+          requestFutureButton(),
         ],
       );
     }
-    // Non-manager holder: a plain "Return" signal only — notifies
-    // MainAdmin/Admin to come perform the actual reception (condition
-    // assessment stays their call, never the holder's own self-assessment).
-    if (asset.isCheckedOut && !isManager && asset.currentHolderId == currentUid) {
-      return ElevatedButton.icon(
-        onPressed: () => _sendReturnIntent(context, asset),
-        icon: const Icon(Icons.login),
-        label: Text('Return', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: InventoryColors.available,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(46),
-        ),
-      );
-    }
-    // Technician (or an Admin not currently holding it) viewing an item
-    // that's out with someone else — previously a dead end with no action
-    // at all. They can still request it for a later, non-conflicting date.
-    if (asset.isCheckedOut && !isManager && asset.currentHolderId != currentUid) {
-      return requestFutureForMyselfButton;
+    // Technician/Admin (or a MainAdmin/SystemAdmin not currently holding it)
+    // viewing an item that's out with someone else — request it for a
+    // later, non-conflicting date.
+    if (asset.isCheckedOut) {
+      return requestFutureButton();
     }
     return const SizedBox.shrink();
+  }
+
+  /// Content-sized action button — sizes to its own label/padding instead of
+  /// stretching to the available width.
+  Widget _actionButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    Color? color,
+    bool outlined = false,
+  }) {
+    final child = Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5));
+    final padding = const EdgeInsets.symmetric(horizontal: 18, vertical: 13);
+    if (outlined) {
+      return OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: child,
+        style: OutlinedButton.styleFrom(padding: padding),
+      );
+    }
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: child,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: padding,
+      ),
+    );
+  }
+
+  Widget _infoBanner({required IconData icon, required Color color, required String message}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(message, style: GoogleFonts.poppins(fontSize: 12, color: color)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _acknowledgeDelivery(BuildContext context, AssetBookingModel booking) async {
@@ -698,7 +655,7 @@ class AssetDetailScreen extends ConsumerWidget {
     final confirmed = await showConfirmDialog(
       context,
       title: 'Return Asset',
-      message: 'Notify an Admin/MainAdmin that you\'re returning "${asset.name}"? '
+      message: 'Notify a MainAdmin/System Admin that you\'re returning "${asset.name}"? '
           'They will confirm receipt and record its condition.',
       confirmLabel: 'Notify',
     );
@@ -712,7 +669,7 @@ class AssetDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Admin/MainAdmin notified — they\'ll confirm receipt', style: GoogleFonts.poppins()),
+            content: Text('MainAdmin/System Admin notified — they\'ll confirm receipt', style: GoogleFonts.poppins()),
             backgroundColor: Colors.green,
           ),
         );
@@ -725,6 +682,23 @@ class AssetDetailScreen extends ConsumerWidget {
         );
       }
     }
+  }
+
+  /// Record Return normally stays disabled until the holder themself
+  /// triggers a return (see _sendReturnIntent) — this is the explicit,
+  /// deliberate override for when they're offline or otherwise unreachable,
+  /// so a MainAdmin/System Admin isn't permanently blocked.
+  Future<void> _confirmOverrideReturn(BuildContext context, AssetModel asset, AssetBookingModel? booking) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Override Return',
+      message: '${asset.currentHolderName ?? 'The current holder'} hasn\'t signalled they\'re returning '
+          '"${asset.name}" yet. Only proceed if they\'re unreachable (offline, account issues, etc.) and '
+          'you\'ve confirmed the item is physically back.',
+      confirmLabel: 'Override & Continue',
+    );
+    if (!confirmed || !context.mounted) return;
+    _navigateToCustodyEvent(context, mode: CustodyEventMode.returnEvent, asset: asset, booking: booking);
   }
 
   void _navigateToCustodyEvent(

@@ -183,15 +183,22 @@ class NotificationService {
     }
   }
 
-  /// Call this after verifying the logged-in user is an Admin / MainAdmin.
-  /// It attaches a real-time listener to `AdminNotificationQueue`, shows a
-  /// local notification for every new document, and handles the
+  /// Call this after verifying the logged-in user is an Admin / MainAdmin /
+  /// SystemAdmin. It attaches a real-time listener to `AdminNotificationQueue`,
+  /// shows a local notification for every new document, and handles the
   /// offline → online reconnect case automatically via Firestore persistence.
-  Future<void> setupAdminNotificationListener(String adminUid) async {
+  ///
+  /// [role] is the caller's own role — a doc may carry a `targetRoles` list
+  /// (see InventoryService._notifyAdmins / notifyAdminsOfClientRequest below)
+  /// scoping it to a subset of Admin-tier roles (e.g. Inventory
+  /// approvals/returns now go to MainAdmin+SystemAdmin only, not plain
+  /// Admin). A doc with no `targetRoles` field is shown to everyone, for
+  /// backward compatibility with anything queued before this field existed.
+  Future<void> setupAdminNotificationListener(String adminUid, {required String role}) async {
     // Cancel any previous subscription first.
     await _adminQueueSubscription?.cancel();
 
-    _logger.i('👂 Setting up AdminNotificationQueue listener for $adminUid');
+    _logger.i('👂 Setting up AdminNotificationQueue listener for $adminUid ($role)');
 
     // We only listen for notifications created in the last 24 hours to avoid
     // flooding the admin with old notifications on first login.
@@ -215,6 +222,10 @@ class NotificationService {
             _shownNotificationIds.add(docId);
 
             final data = change.doc.data() as Map<String, dynamic>;
+
+            final targetRoles = (data['targetRoles'] as List?)?.cast<String>();
+            if (targetRoles != null && !targetRoles.contains(role)) continue;
+
             final title = data['title'] as String? ?? '🔔 New Notification';
             final body = data['body'] as String? ?? '';
             final payload =
@@ -400,6 +411,9 @@ class NotificationService {
       };
 
       // ── Write to Firestore queue so every admin device is notified ────────
+      // Explicit targetRoles keeps this reaching every Admin-tier role even
+      // though InventoryService._notifyAdmins (same collection) now scopes
+      // its own notifications down to MainAdmin+SystemAdmin only.
       await _firestore.collection('AdminNotificationQueue').add({
         'title': title,
         'body': body,
@@ -408,6 +422,7 @@ class NotificationService {
         'clientUsername': clientUsername,
         'createdAt': FieldValue.serverTimestamp(),
         'type': 'new_client_request',
+        'targetRoles': const ['MainAdmin', 'Admin', 'SystemAdmin'],
       });
 
       _logger.i('✅ AdminNotificationQueue document written');

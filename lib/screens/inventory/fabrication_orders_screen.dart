@@ -12,8 +12,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
-/// The fabrication-order trail for a single material: MainAdmin/Admin can
-/// issue new orders; a Technician can upload the completed scanned form
+/// The fabrication-order trail for a single material: MainAdmin/SystemAdmin
+/// can issue new orders; a Technician can upload the completed scanned form
 /// for an order still awaiting one. Tools never appear here — fabrication
 /// only ever applies to Materials, and only when chosen at issue time.
 class FabricationOrdersScreen extends ConsumerWidget {
@@ -34,7 +34,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
     required this.currentUid,
   });
 
-  bool get _isManager => userRole == 'MainAdmin' || userRole == 'Admin';
+  bool get _canApproveAndIssue => userRole == 'MainAdmin' || userRole == 'SystemAdmin';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,7 +46,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
       logger: logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      floatingActionButton: _isManager
+      floatingActionButton: _canApproveAndIssue
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.push(
                 context,
@@ -103,7 +103,9 @@ class FabricationOrdersScreen extends ConsumerWidget {
                 ? 'Scan Uploaded'
                 : 'Awaiting Scan';
 
-    final canUpload = !_isManager && order.isIssued;
+    // Only the Technician performs the scan-upload — never MainAdmin/
+    // SystemAdmin (who issue orders) and never plain Admin either.
+    final canUpload = userRole == 'Technician' && order.isIssued;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),

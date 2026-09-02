@@ -80,9 +80,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _logger.i('✅ DashboardScreen: $role granted project IDs: $grantedIds');
         }
 
-        // ── Admin / MainAdmin: attach the AdminNotificationQueue listener ──
-        if (role == 'Admin' || role == 'MainAdmin') {
-          await NotificationService().setupAdminNotificationListener(user.uid);
+        // ── Admin / MainAdmin / SystemAdmin: attach the AdminNotificationQueue listener ──
+        if (role == 'Admin' || role == 'MainAdmin' || role == 'SystemAdmin') {
+          await NotificationService().setupAdminNotificationListener(user.uid, role: role);
           _logger.i(
             '🔔 DashboardScreen: Admin notification listener started for $role (uid: ${user.uid})',
           );
@@ -723,7 +723,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (Navigator.canPop(context)) Navigator.pop(context);
           },
         ),
-        if (_userRole == 'MainAdmin' || _userRole == 'Admin')
+        if (_userRole == 'MainAdmin' || _userRole == 'Admin' || _userRole == 'SystemAdmin')
           ListTile(
             leading: const Icon(Icons.supervised_user_circle),
             title: const Text('Client Access Requests'),
@@ -761,7 +761,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 (_userRole == 'Client' || _userRole == 'Technician') ? _grantedProjectIds : null,
           );
         case 2:
-          if (_userRole == 'MainAdmin' || _userRole == 'Admin') {
+          if (_userRole == 'MainAdmin' || _userRole == 'Admin' || _userRole == 'SystemAdmin') {
             _logger.d('✅ DashboardScreen: Returning ClientAccessRequestsScreen');
             return ClientAccessRequestsScreen(logger: _logger);
           } else {

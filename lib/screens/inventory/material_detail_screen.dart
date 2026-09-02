@@ -43,7 +43,7 @@ class MaterialDetailScreen extends ConsumerWidget {
       logger: logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      actions: (userRole == 'MainAdmin' || userRole == 'Admin')
+      actions: userRole == 'MainAdmin'
           ? [
               materialAsync.maybeWhen(
                 data: (material) => material == null
@@ -175,46 +175,41 @@ class MaterialDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildActionButtons(BuildContext context, MaterialModel material) {
-    final isManager = userRole == 'MainAdmin' || userRole == 'Admin';
-    final canView = isManager || userRole == 'Technician';
+    // Issuing/receiving stock is a canApproveAndIssue action — MainAdmin
+    // and System Admin only; plain Admin can still add new materials but no
+    // longer records movements.
+    final canApproveAndIssue = userRole == 'MainAdmin' || userRole == 'SystemAdmin';
+    final canView = canApproveAndIssue || userRole == 'Admin' || userRole == 'Technician';
     if (!canView) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
       children: [
-        if (isManager)
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _navigateToMovement(context, MaterialMovementMode.receive, material),
-                  icon: const Icon(Icons.call_received),
-                  label: Text('Record Receipt', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: material.isOutOfStock
-                      ? null
-                      : () => _navigateToMovement(context, MaterialMovementMode.issue, material),
-                  icon: const Icon(Icons.call_made),
-                  label: Text('Record Issue', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1565C0),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-            ],
+        if (canApproveAndIssue) ...[
+          ElevatedButton.icon(
+            onPressed: () => _navigateToMovement(context, MaterialMovementMode.receive, material),
+            icon: const Icon(Icons.call_received),
+            label: Text('Record Receipt', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2E7D32),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+            ),
           ),
-        const SizedBox(height: 10),
+          ElevatedButton.icon(
+            onPressed: material.isOutOfStock
+                ? null
+                : () => _navigateToMovement(context, MaterialMovementMode.issue, material),
+            icon: const Icon(Icons.call_made),
+            label: Text('Record Issue', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1565C0),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+            ),
+          ),
+        ],
         OutlinedButton.icon(
           onPressed: () => Navigator.push(
             context,
@@ -230,7 +225,8 @@ class MaterialDetailScreen extends ConsumerWidget {
             ),
           ),
           icon: const Icon(Icons.precision_manufacturing_outlined),
-          label: Text('Fabrication Orders', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          label: Text('Fabrication Orders', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5)),
+          style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13)),
         ),
       ],
     );

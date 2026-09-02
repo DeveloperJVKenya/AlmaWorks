@@ -1,24 +1,32 @@
 import 'dart:async';
 
+import 'package:almaworks/models/inventory/asset_booking_model.dart';
+import 'package:almaworks/models/inventory/asset_maintenance_window_model.dart';
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/screens/inventory/asset_availability_calendar.dart';
 import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_providers.dart';
+import 'package:almaworks/screens/inventory/relative_date_label.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
-/// Technician-side screen: request a booking window for an asset/tool. Does
-/// NOT perform the checkout itself — a MainAdmin/Admin must review and
-/// approve (capturing condition/photos as the actual handover confirmation
-/// if the window starts today) before the asset is checked out. While this
-/// request is pending, the asset is locked from any other request.
-class RequestCheckoutScreen extends StatefulWidget {
+/// Everyone — Technician, Admin, MainAdmin, or SystemAdmin alike — requests
+/// a booking window for an asset/tool here; nobody books directly for
+/// someone else anymore. Does NOT perform the checkout itself: a MainAdmin
+/// or System Admin must review and approve (capturing condition/photos as
+/// the actual handover confirmation if the window starts today, plus the
+/// delivery method) before the asset is checked out. While this request is
+/// pending, the asset is locked from any other request.
+class RequestCheckoutScreen extends ConsumerStatefulWidget {
   final ProjectModel project;
   final Logger logger;
   final AssetModel asset;
@@ -35,10 +43,10 @@ class RequestCheckoutScreen extends StatefulWidget {
   });
 
   @override
-  State<RequestCheckoutScreen> createState() => _RequestCheckoutScreenState();
+  ConsumerState<RequestCheckoutScreen> createState() => _RequestCheckoutScreenState();
 }
 
-class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
+class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
   final InventoryService _inventoryService = InventoryService();
@@ -135,6 +143,32 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
     });
   }
 
+  bool _rangesOverlap(DateTime aStart, DateTime aEnd, DateTime bStart, DateTime bEnd) {
+    return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
+  }
+
+  /// Client-side preview only — highlights a selection that collides with an
+  /// existing booking or maintenance window so the requester sees it before
+  /// submitting, rather than only finding out after a rejection.
+  /// `InventoryService.createCheckoutRequest`'s server-side `_assertNoOverlap`
+  /// remains the actual source of truth.
+  String? _findConflict(List<AssetBookingModel> bookings, List<AssetMaintenanceWindowModel> maintenance) {
+    for (final b in bookings) {
+      if (!b.blocksCalendar) continue;
+      if (_rangesOverlap(_startDate, _endDate, b.scheduledStart, b.scheduledEnd)) {
+        return 'This overlaps an existing booking for ${b.bookedForName} '
+            '(${DateFormat('d MMM').format(b.scheduledStart)} - ${DateFormat('d MMM yyyy').format(b.scheduledEnd)}).';
+      }
+    }
+    for (final m in maintenance) {
+      if (_rangesOverlap(_startDate, _endDate, m.startDate, m.endDate)) {
+        return 'This overlaps scheduled maintenance '
+            '(${DateFormat('d MMM').format(m.startDate)} - ${DateFormat('d MMM yyyy').format(m.endDate)}).';
+      }
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -143,7 +177,7 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
       title: 'Request Checkout',
       message: 'Send a checkout request for "${widget.asset.name}" '
           '(${DateFormat('d MMM').format(_startDate)} - ${DateFormat('d MMM yyyy').format(_endDate)}) '
-          'to an Admin/MainAdmin for approval?',
+          'to a MainAdmin/System Admin for approval?',
       confirmLabel: 'Send Request',
     );
     if (!confirmed || !mounted) return;
@@ -166,7 +200,7 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Request sent — waiting for Admin/MainAdmin approval', style: GoogleFonts.poppins()),
+          content: Text('Request sent — waiting for MainAdmin/System Admin approval', style: GoogleFonts.poppins()),
           backgroundColor: Colors.green,
         ),
       );
@@ -224,7 +258,7 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => _pickDate(isStart: true),
                               icon: const Icon(Icons.event_outlined, size: 18),
-                              label: Text('From ${DateFormat('d MMM yyyy').format(_startDate)}',
+                              label: Text('From ${relativeDayLabelWithDate(_startDate)}',
                                   style: GoogleFonts.poppins(fontSize: 12.5)),
                             ),
                           ),
@@ -233,11 +267,58 @@ class _RequestCheckoutScreenState extends State<RequestCheckoutScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => _pickDate(isStart: false),
                               icon: const Icon(Icons.event_outlined, size: 18),
-                              label: Text('To ${DateFormat('d MMM yyyy').format(_endDate)}',
+                              label: Text('To ${relativeDayLabelWithDate(_endDate)}',
                                   style: GoogleFonts.poppins(fontSize: 12.5)),
                             ),
                           ),
                         ],
+                      ),
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final bookingsAsync = ref.watch(assetBookingsProvider(widget.asset.id));
+                          final maintenanceAsync = ref.watch(assetMaintenanceWindowsProvider(widget.asset.id));
+                          final bookings = bookingsAsync.valueOrNull ?? const <AssetBookingModel>[];
+                          final maintenance = maintenanceAsync.valueOrNull ?? const <AssetMaintenanceWindowModel>[];
+
+                          final conflict = _findConflict(bookings, maintenance);
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (conflict != null) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(conflict,
+                                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.red[800])),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              if (bookings.isNotEmpty || maintenance.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Text('Already on the calendar',
+                                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                                const SizedBox(height: 8),
+                                AssetAvailabilityCalendar(
+                                  bookings: bookings,
+                                  maintenanceWindows: maintenance,
+                                ),
+                              ],
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),

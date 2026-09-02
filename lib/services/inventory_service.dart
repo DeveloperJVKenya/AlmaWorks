@@ -340,6 +340,7 @@ class InventoryService {
           'currentProjectId': null,
           'currentProjectName': null,
           'currentAssignmentId': null,
+          'returnRequestedAt': FieldValue.delete(),
           'updatedAt': Timestamp.fromDate(now),
         });
       });
@@ -421,6 +422,7 @@ class InventoryService {
 
       final requestRef = _firestore.collection(_requestsCollection).doc();
       final now = DateTime.now();
+      final startsNow = !requestedStart.isAfter(now);
       final request = CheckoutRequestModel(
         id: requestRef.id,
         assetId: assetId,
@@ -441,16 +443,30 @@ class InventoryService {
         final assetRef = _firestore.collection(_assetsCollection).doc(assetId);
         final assetSnap = await transaction.get(assetRef);
         if (!assetSnap.exists) throw Exception('Asset $assetId no longer exists');
-        final data = assetSnap.data()!;
-        if (data['pendingRequestId'] != null) {
-          throw Exception('Asset already has a pending request');
-        }
 
         transaction.set(requestRef, request.toFirestore());
-        transaction.update(assetRef, {
-          'pendingRequestId': requestRef.id,
-          'updatedAt': Timestamp.fromDate(now),
-        });
+
+        // Only an immediate request locks the asset's single
+        // pending-request slot — it wants the item claimed right now, so a
+        // second immediate request racing for the same idle item must be
+        // blocked. A future request doesn't affect the asset's current
+        // state at all: the current holder (if any) keeps their normal
+        // status/actions completely untouched until the day the window
+        // actually starts. Several non-overlapping future requests can
+        // coexist — conflict prevention for those is _assertNoOverlap above,
+        // not this lock. (Approving still goes through the same
+        // review/Pending Requests screen either way — that list streams by
+        // request status, not this field.)
+        if (startsNow) {
+          final data = assetSnap.data()!;
+          if (data['pendingRequestId'] != null) {
+            throw Exception('Asset already has a pending request');
+          }
+          transaction.update(assetRef, {
+            'pendingRequestId': requestRef.id,
+            'updatedAt': Timestamp.fromDate(now),
+          });
+        }
       });
 
       await _notifyAdmins(
@@ -550,6 +566,8 @@ class InventoryService {
     required String respondedByUid,
     required String respondedByName,
     required String respondedByRole,
+    String deliveryMethod = AssetBookingModel.deliveryDirect,
+    String? driverName,
   }) async {
     try {
       _logger.i('✅ InventoryService: Approving checkout request ${request.id}');
@@ -561,6 +579,16 @@ class InventoryService {
 
       final now = DateTime.now();
       final startsNow = !request.requestedStart.isAfter(now);
+      // A future-dated request was never locked to the asset (see
+      // createCheckoutRequest) — re-check here, right before approving,
+      // that nothing else has since claimed this exact window. Best-effort,
+      // same caveat as _assertNoOverlap generally (Firestore transactions
+      // can't run multi-doc queries, so this can't be inside the
+      // transaction below).
+      if (!startsNow) {
+        await _assertNoOverlap(assetId: request.assetId, start: request.requestedStart, end: request.requestedEnd);
+      }
+      final viaDriver = deliveryMethod == AssetBookingModel.deliveryDriver;
 
       final bookingRef = _firestore.collection(_bookingsCollection).doc();
       final assignmentRef = startsNow ? _firestore.collection(_assignmentsCollection).doc() : null;
@@ -583,6 +611,11 @@ class InventoryService {
         scheduledEnd: request.requestedEnd,
         status: startsNow ? AssetBookingModel.statusActive : AssetBookingModel.statusScheduled,
         checkoutAssignmentId: assignmentRef?.id,
+        deliveryMethod: deliveryMethod,
+        driverName: viaDriver ? driverName : null,
+        dispatchedAt: (startsNow && viaDriver) ? now : null,
+        dispatchedByUid: (startsNow && viaDriver) ? respondedByUid : null,
+        dispatchedByName: (startsNow && viaDriver) ? respondedByName : null,
         sourceRequestId: request.id,
         createdByUid: respondedByUid,
         createdByName: respondedByName,
@@ -602,11 +635,16 @@ class InventoryService {
         final assetSnap = await transaction.get(assetRef);
         if (!assetSnap.exists) throw Exception('Asset ${request.assetId} no longer exists');
         final assetData = assetSnap.data()!;
-        if (assetData['pendingRequestId'] != request.id) {
-          throw Exception('Asset state no longer matches this request');
-        }
-        if (startsNow && assetData['status'] != AssetModel.statusAvailable) {
-          throw Exception('Asset is not available for an immediate checkout (status: ${assetData['status']})');
+        // Only an immediate request ever locked the asset's pendingRequestId
+        // (see createCheckoutRequest) — a future request never touched it,
+        // so there's nothing to reconcile here for that case.
+        if (startsNow) {
+          if (assetData['pendingRequestId'] != request.id) {
+            throw Exception('Asset state no longer matches this request');
+          }
+          if (assetData['status'] != AssetModel.statusAvailable) {
+            throw Exception('Asset is not available for an immediate checkout (status: ${assetData['status']})');
+          }
         }
 
         transaction.set(bookingRef, booking.toFirestore());
@@ -639,12 +677,13 @@ class InventoryService {
             'pendingRequestId': null,
             'updatedAt': Timestamp.fromDate(now),
           });
-        } else {
-          transaction.update(assetRef, {
-            'pendingRequestId': null,
-            'updatedAt': Timestamp.fromDate(now),
-          });
         }
+        // Future-dated approval: this only schedules a booking (see
+        // `transaction.set(bookingRef, ...)` above) — the asset's current
+        // status/holder/pendingRequestId is untouched, since a future
+        // request never locked it and the current holder's custody isn't
+        // affected until the day the window actually starts (recordCollection
+        // performs the real handover then).
         transaction.update(requestRef, {
           'status': CheckoutRequestModel.statusApproved,
           'respondedByUid': respondedByUid,
@@ -668,6 +707,16 @@ class InventoryService {
             '${startsNow ? ' — it\'s checked out to you now.' : ' — booked for ${_fmtDate(request.requestedStart)}.'}',
         payload: {'type': 'inventory_checkout_approved', 'requestId': request.id, 'assetId': request.assetId},
       );
+
+      if (startsNow && viaDriver) {
+        await _notifyUser(
+          targetUid: request.requestedByUid,
+          title: '🚚 "${request.assetName}" is on the way',
+          body: '${driverName != null ? '$driverName is bringing' : 'A driver is bringing'} '
+              '"${request.assetName}" to you — tap Acknowledge Receipt once it arrives.',
+          payload: {'type': 'inventory_delivery_dispatched', 'assetId': request.assetId, 'bookingId': bookingRef.id},
+        );
+      }
 
       _logger.i('✅ InventoryService: Request ${request.id} approved (booking ${bookingRef.id})');
       return booking;
@@ -1013,6 +1062,11 @@ class InventoryService {
   }) async {
     try {
       _logger.i('📥 InventoryService: Recording return for booking ${booking.id}');
+      if (recordedByUid == booking.bookedForUid) {
+        throw Exception(
+          'You cannot record your own return — ask a different MainAdmin or System Admin to record it.',
+        );
+      }
       final assignmentRef = _firestore.collection(_assignmentsCollection).doc();
       final photoUrls = await _uploadAssignmentPhotos(assignmentRef.id, photoBytesList, photoFileNames);
       final now = DateTime.now();
@@ -1057,6 +1111,7 @@ class InventoryService {
           'currentProjectId': null,
           'currentProjectName': null,
           'currentAssignmentId': null,
+          'returnRequestedAt': FieldValue.delete(),
           'updatedAt': Timestamp.fromDate(now),
         });
       });
@@ -1093,6 +1148,11 @@ class InventoryService {
   }) async {
     try {
       _logger.i('📥 InventoryService: Recording legacy return for asset ${asset.id}');
+      if (recordedByUid == asset.currentHolderId) {
+        throw Exception(
+          'You cannot record your own return — ask a different MainAdmin or System Admin to record it.',
+        );
+      }
       final assignmentRef = _firestore.collection(_assignmentsCollection).doc();
       final photoUrls = await _uploadAssignmentPhotos(assignmentRef.id, photoBytesList, photoFileNames);
       final now = DateTime.now();
@@ -1138,6 +1198,7 @@ class InventoryService {
           'currentProjectId': null,
           'currentProjectName': null,
           'currentAssignmentId': null,
+          'returnRequestedAt': FieldValue.delete(),
           'updatedAt': Timestamp.fromDate(now),
         });
       });
@@ -1201,6 +1262,13 @@ class InventoryService {
     });
   }
 
+  /// Maintenance always takes priority over a booking: unlike
+  /// `_assertNoOverlap` (used by createCheckoutRequest), this does NOT
+  /// reject on an overlapping booking — it cancels a conflicting *scheduled*
+  /// one (notifying whoever it was for) and asks the current holder of a
+  /// conflicting *active* one to return early, instead of blocking the
+  /// maintenance window. It still refuses to overlap another maintenance
+  /// window — two blackout periods can't be auto-resolved against each other.
   Future<AssetMaintenanceWindowModel> createMaintenanceWindow({
     required String assetId,
     required String assetName,
@@ -1212,7 +1280,18 @@ class InventoryService {
   }) async {
     try {
       _logger.i('🛠️ InventoryService: Creating maintenance window for asset $assetId');
-      await _assertNoOverlap(assetId: assetId, start: startDate, end: endDate);
+
+      final maintenanceSnap =
+          await _firestore.collection(_maintenanceCollection).where('assetId', isEqualTo: assetId).get();
+      for (final doc in maintenanceSnap.docs) {
+        final m = AssetMaintenanceWindowModel.fromFirestore(doc);
+        if (_rangesOverlap(startDate, endDate, m.startDate, m.endDate)) {
+          throw Exception(
+            'This window overlaps a scheduled maintenance period '
+            '(${_fmtDate(m.startDate)} - ${_fmtDate(m.endDate)}).',
+          );
+        }
+      }
 
       final ref = _firestore.collection(_maintenanceCollection).doc();
       final window = AssetMaintenanceWindowModel(
@@ -1227,6 +1306,62 @@ class InventoryService {
         createdAt: DateTime.now(),
       );
       await ref.set(window.toFirestore());
+
+      final bookingsSnap = await _firestore
+          .collection(_bookingsCollection)
+          .where('assetId', isEqualTo: assetId)
+          .where('status', whereIn: [AssetBookingModel.statusScheduled, AssetBookingModel.statusActive])
+          .get();
+
+      var holderNotifiedViaBooking = false;
+      for (final doc in bookingsSnap.docs) {
+        final b = AssetBookingModel.fromFirestore(doc);
+        if (!_rangesOverlap(startDate, endDate, b.scheduledStart, b.scheduledEnd)) continue;
+
+        if (b.isScheduled) {
+          await doc.reference.update({
+            'status': AssetBookingModel.statusCancelled,
+            'cancelledByUid': createdByUid,
+            'cancelledByName': createdByName,
+            'cancelledAt': Timestamp.fromDate(DateTime.now()),
+            'cancellationReason': 'Cancelled for planned maintenance ($reason).',
+          });
+          await _notifyUser(
+            targetUid: b.bookedForUid,
+            title: '🛠️ Booking Cancelled — Maintenance',
+            body: 'Your booked "$assetName" will not be available '
+                '${_fmtDate(startDate)} - ${_fmtDate(endDate)} due to planned maintenance ($reason).',
+            payload: {'type': 'inventory_booking_cancelled_maintenance', 'assetId': assetId, 'bookingId': b.id},
+          );
+        } else {
+          // Active — the item is already out; can't cancel a live checkout,
+          // so ask the current holder to bring it back in time instead.
+          await _notifyUser(
+            targetUid: b.bookedForUid,
+            title: '🛠️ Return Needed for Maintenance',
+            body: 'Please return "$assetName" by ${_fmtDate(startDate)} — it\'s scheduled for maintenance ($reason).',
+            payload: {'type': 'inventory_return_for_maintenance', 'assetId': assetId},
+          );
+          holderNotifiedViaBooking = true;
+        }
+      }
+
+      // Legacy-checkout case: currently held with no matching booking at
+      // all (see recordLegacyReturn) — still worth telling the holder.
+      if (!holderNotifiedViaBooking) {
+        final assetSnap = await _firestore.collection(_assetsCollection).doc(assetId).get();
+        final assetData = assetSnap.data();
+        final holderId = assetData?['currentHolderId'] as String?;
+        if (assetData?['status'] == AssetModel.statusCheckedOut && holderId != null) {
+          await _notifyUser(
+            targetUid: holderId,
+            title: '🛠️ Return Needed for Maintenance',
+            body: 'Please return "$assetName" by ${_fmtDate(startDate)} — it\'s scheduled for maintenance ($reason).',
+            payload: {'type': 'inventory_return_for_maintenance', 'assetId': assetId},
+          );
+        }
+      }
+
       _logger.i('✅ InventoryService: Maintenance window created (ID: ${ref.id})');
       return window;
     } catch (e) {
@@ -1248,17 +1383,19 @@ class InventoryService {
 
   // ── Booking/maintenance internals ────────────────────────────────────────
 
-  /// MainAdmin is exempt (has unlimited access); an Admin may never book/
-  /// check an asset out to themself — a different Admin or MainAdmin must
-  /// process it, so custody assignment always has a second traced actor.
+  /// Nobody — not even MainAdmin — may approve/book/collect an asset onto
+  /// themself; a different MainAdmin/SystemAdmin must always process it, so
+  /// custody assignment always has a second traced actor. [actingRole] is
+  /// unused now (kept so call sites don't need to change) but retained for
+  /// logging/future use.
   void _assertNotSelfAssignment({
     required String actingRole,
     required String actingUid,
     required String targetUid,
   }) {
-    if (actingRole == 'Admin' && actingUid == targetUid) {
+    if (actingUid == targetUid) {
       throw Exception(
-        'An Admin cannot check an asset out to themself — ask another Admin or MainAdmin to process this.',
+        'You cannot process this for yourself — ask a different MainAdmin or System Admin to handle it.',
       );
     }
   }
@@ -1351,11 +1488,24 @@ class InventoryService {
   /// condition/photos — that stays an admin-only reception judgment call
   /// (see [recordBookingReturn]), so a holder can never self-certify their
   /// own return condition. Just notifies MainAdmin/Admin to go record it.
+  /// Marks the asset's `returnRequestedAt` (the current holder signalling
+  /// intent) alongside the existing admin broadcast — this is what lets the
+  /// MainAdmin/SystemAdmin "Record Return" button stay disabled/faint until
+  /// the holder has actually triggered a return, with an explicit override
+  /// for when they're unreachable. Firestore rules allow this one-field
+  /// write from whoever `currentHolderId` currently is, regardless of role.
   Future<void> notifyReturnIntent({
     required String assetId,
     required String assetName,
     required String holderName,
   }) async {
+    try {
+      await _firestore.collection(_assetsCollection).doc(assetId).update({
+        'returnRequestedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to mark return intent for asset $assetId', error: e);
+    }
     await _notifyAdmins(
       title: '📥 Return Incoming',
       body: '$holderName is returning "$assetName" — please record its reception.',
@@ -1363,14 +1513,16 @@ class InventoryService {
     );
   }
 
-  /// Writes to the shared AdminNotificationQueue collection that every
-  /// Admin/MainAdmin already listens to at login (see
+  /// Writes to the shared AdminNotificationQueue collection that
+  /// MainAdmin/SystemAdmin listen to at login (see
   /// rbacsystem/notification_service.dart) — reuses the existing "no Cloud
   /// Functions required" broadcast pattern already used for client-request
   /// notifications, rather than building a parallel notification system.
-  /// Note: this broadcasts to ALL currently-listening Admin/MainAdmin
-  /// devices (there's no per-user-targeted push in this app), so both the
-  /// requester and other admins may see each notification.
+  /// `targetRoles` scopes delivery to MainAdmin+SystemAdmin only — a plain
+  /// Admin no longer approves/returns/issues Inventory items, so they no
+  /// longer need (or get) these notifications; client-request notifications
+  /// (NotificationService.notifyAdminsOfClientRequest) set their own broader
+  /// targetRoles on the same collection and are unaffected by this default.
   Future<void> _notifyAdmins({
     required String title,
     required String body,
@@ -1382,6 +1534,7 @@ class InventoryService {
         'body': body,
         'payload': ?payload,
         'createdAt': FieldValue.serverTimestamp(),
+        'targetRoles': const ['MainAdmin', 'SystemAdmin'],
       });
     } catch (e) {
       _logger.e('❌ InventoryService: Failed to write admin notification', error: e);

@@ -1044,7 +1044,8 @@ class _ClientAccessRequestsScreenState
   /// having to revoke and re-approve the request.
   Future<void> _showEditRoleDialog(ClientRequest request) async {
     final canGrantAdmin = _currentUserRole == 'MainAdmin';
-    String selectedRole = canGrantAdmin || request.grantedRole != 'Admin'
+    final isAdminTierRole = request.grantedRole == 'Admin' || request.grantedRole == 'SystemAdmin';
+    String selectedRole = canGrantAdmin || !isAdminTierRole
         ? request.grantedRole
         : 'Technician';
 
@@ -1118,6 +1119,20 @@ class _ClientAccessRequestsScreenState
                               style: GoogleFonts.poppins(
                                   fontSize: 12, color: Colors.grey[600])),
                           value: 'Admin',
+                          activeColor: const Color(0xFF0A2E5A),
+                        ),
+                      if (canGrantAdmin)
+                        RadioListTile<String>(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text('System Admin',
+                              style: GoogleFonts.poppins(fontSize: 14)),
+                          subtitle: Text(
+                              'Full Admin access, plus the only role (with MainAdmin) that can '
+                              'approve checkout requests, record returns, and issue materials',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, color: Colors.grey[600])),
+                          value: 'SystemAdmin',
                           activeColor: const Color(0xFF0A2E5A),
                         ),
                     ],
