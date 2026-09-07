@@ -14,6 +14,7 @@ import 'package:almaworks/screens/drawings_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_screen.dart';
 import 'package:almaworks/screens/quality_and_safety_screen.dart';
 import 'package:almaworks/screens/reports/reports_screen.dart';
+import 'package:almaworks/screens/safety_training/safety_training_screen.dart';
 import 'package:almaworks/screens/schedule/schedule_screen.dart';
 import 'package:almaworks/screens/schedule/task_progress_monitor_screen.dart'; // ← ADDED
 import 'package:flutter/material.dart';
@@ -455,6 +456,25 @@ class _BaseLayoutState extends State<BaseLayout> {
                   logger: widget.logger,
                 ),
               ),
+
+              // ── Safety Training (gamified worker safety awareness) ────────
+              // Same visibility as Task Progress/Photo Gallery below —
+              // Admin/MainAdmin/SystemAdmin/Technician (on-site workers),
+              // excluded for Client the same way those are.
+              if (!isClient)
+                _buildProtectedMenuItem(
+                  context: context,
+                  icon: Icons.health_and_safety,
+                  iconColor: Colors.redAccent,
+                  title: 'Safety Training',
+                  selectedItem: 'Safety Training',
+                  isMobile: isMobile,
+                  isClient: isRestrictedRole,
+                  onNavigate: () => SafetyTrainingScreen(
+                    project: widget.project!,
+                    logger: widget.logger,
+                  ),
+                ),
 
               // ── Reports ───────────────────────────────────────────────────
               // Admins see all tabs + can create/upload.

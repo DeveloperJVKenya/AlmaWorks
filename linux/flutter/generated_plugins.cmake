@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_linux
   open_file_linux
   printing
+  rive_common
   syncfusion_pdfviewer_linux
   url_launcher_linux
 )

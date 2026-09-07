@@ -9,11 +9,21 @@ service firebase.storage {
     }
 
     // Preserve current (pre-existing) behavior for every path outside
-    // Inventory/ — this project has never had a storage.rules file before,
-    // so this file is additive; everything Documents/Drawings/PhotoGallery/
-    // Photos/Reports/etc. already do keeps working unchanged.
+    // Inventory/ and SafetyTraining/ — this project has never had a
+    // storage.rules file before, so this file is additive; everything
+    // Documents/Drawings/PhotoGallery/Photos/Reports/etc. already do keeps
+    // working unchanged.
     match /{topLevel}/{allPaths=**} {
-      allow read, write: if topLevel != 'Inventory';
+      allow read, write: if topLevel != 'Inventory' && topLevel != 'SafetyTraining';
+    }
+
+    // Safety Training scenario media (scene photo, and optional Lottie
+    // .json / Rive .riv animation files) — matches the
+    // SafetyTrainingScenarios Firestore rule: read by any authenticated
+    // Admin/Technician role, write (author/edit) restricted to admin roles.
+    match /SafetyTraining/Scenarios/{scenarioId}/{allPaths=**} {
+      allow read: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
+      allow write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin', 'SystemAdmin'];
     }
 
     // Asset catalog photos — MainAdmin/Admin/SystemAdmin, matching

@@ -571,5 +571,45 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // ── Safety Training: gamified worker safety-awareness module ─────────
+    // Content (scenarios) is admin-authored; results (sessions) are an
+    // append-only per-worker ledger, same shape as the Inventory custody
+    // ledger above — reuses inventoryUserRole() since it's the same
+    // UserRoles/{uid} mirror, not an Inventory-specific concept.
+    match /SafetyTrainingScenarios/{scenarioId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
+
+      // create: the authoring admin must self-attest as createdByUid.
+      // update: any admin role may edit content or toggle isActive —
+      // scenario authorship doesn't restrict who can maintain it, unlike
+      // the append-only session ledger below.
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin']
+                     && request.resource.data.createdByUid == request.auth.uid;
+
+      allow update: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin'];
+
+      allow delete: if false;
+    }
+
+    // Append-only: a worker's completed attempt, once recorded, is never
+    // edited or deleted — including by the worker themself — so a
+    // trainer's view of past reasoning answers can't be altered after the
+    // fact.
+    match /SafetyTrainingSessions/{sessionId} {
+      allow read: if request.auth != null
+                   && (resource.data.workerUid == request.auth.uid
+                       || inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin']);
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician']
+                     && request.resource.data.workerUid == request.auth.uid;
+
+      allow update: if false;
+      allow delete: if false;
+    }
   }
 }

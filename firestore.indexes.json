@@ -1315,6 +1315,22 @@
         { "fieldPath": "ownerUid", "order": "ASCENDING" },
         { "fieldPath": "savedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "SafetyTrainingScenarios",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "SafetyTrainingSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "workerUid", "order": "ASCENDING" },
+        { "fieldPath": "completedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

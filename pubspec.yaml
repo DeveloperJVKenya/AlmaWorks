@@ -66,6 +66,8 @@ dependencies:
   excel: ^4.0.6
   weather: ^3.2.1
   crop_your_image: ^2.0.0
+  lottie: ^3.3.0
+  rive: 0.13.20
 
 dev_dependencies:
   flutter_test:
