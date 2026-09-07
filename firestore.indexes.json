@@ -464,6 +464,20 @@
       ]
     },
     {
+      "collectionGroup": "DocumentAuditLog",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "projectId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "ProjectDocuments",
       "queryScope": "COLLECTION",
       "fields": [

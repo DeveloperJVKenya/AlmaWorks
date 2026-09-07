@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/models/document_audit_model.dart';
 import 'package:almaworks/screens/projects/edit_project_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -46,9 +47,42 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
   String? _selectedSupplier;
   String? _userRole;
   bool _isLoadingUserData = true;
+  String _actorUid = '';
+  String _actorName = '';
+
+  // When the project's team has members whose role is neither
+  // 'subcontractor' nor 'supplier' (e.g. 'technician', or a free-text
+  // custom role defined via edit_project_screen.dart's "Define New" option),
+  // the Supplier tab exposes a dropdown to switch to one of those roles
+  // instead. Null means the tab is showing Supplier (the default).
+  String? _selectedOtherRole;
+  String? _selectedOtherRoleMember;
 
   final List<String> _mainTabs = ['Client', 'Sub-Contractor', 'Supplier'];
   final List<String> _subSections = ['Contract', 'Communication'];
+
+  // Only Admin/Technician/SystemAdmin/MainAdmin may upload or delete
+  // documents; Client is view-only everywhere, including their own tab.
+  bool get _canManageDocuments =>
+      _userRole == 'Admin' ||
+      _userRole == 'Technician' ||
+      _userRole == 'SystemAdmin' ||
+      _userRole == 'MainAdmin';
+
+  // Distinct team-member roles other than subcontractor/supplier, in
+  // first-seen order, case-insensitively de-duplicated.
+  List<String> get _otherRoles {
+    final seen = <String>{};
+    final result = <String>[];
+    for (final m in _currentProject.teamMembers) {
+      final role = m.role.trim();
+      if (role.isEmpty) continue;
+      final lower = role.toLowerCase();
+      if (lower == 'subcontractor' || lower == 'supplier') continue;
+      if (seen.add(lower)) result.add(role);
+    }
+    return result;
+  }
 
   // Client tab has an extra "Access Requests" sub-tab that Sub-Contractor
   // and Supplier tabs do not expose.
@@ -95,12 +129,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         ),
       ),
     ).then((_) async {
-      final doc = await FirebaseFirestore.instance.collection('projects').doc(_currentProject.id).get();
+      final doc = await FirebaseFirestore.instance.collection('Projects').doc(_currentProject.id).get();
       if (doc.exists) {
         setState(() {
           _currentProject = ProjectModel.fromFirestore(doc);
           _selectedSubcontractor = null;
           _selectedSupplier = null;
+          _selectedOtherRole = null;
+          _selectedOtherRoleMember = null;
         });
       }
     });
@@ -133,57 +169,65 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       logger: widget.logger,
       selectedMenuItem: 'Documents',
       onMenuItemSelected: (_) {},
-      floatingActionButton: FloatingActionButton(
-        onPressed: _isLoading ? null : () {
-          String role;
-          TabController subController;
-          String? memberName;
-          
-          if (isClient) {
-            // Client can only access Client tab
-            role = 'Client';
-            subController = _clientSubTabController;
-            memberName = null;
-          } else {
-            // Admin/MainAdmin can access all tabs
-            role = _mainTabs[_mainTabController.index];
-            switch (role) {
-              case 'Client':
-                subController = _clientSubTabController;
-                memberName = null;
-                break;
-              case 'Sub-Contractor':
-                subController = _subContractorSubTabController;
-                memberName = _selectedSubcontractor;
-                break;
-              case 'Supplier':
-                subController = _supplierSubTabController;
-                memberName = _selectedSupplier;
-                break;
-              default:
-                return;
-            }
-          }
-          
-          if ((role == 'Sub-Contractor' || role == 'Supplier') && memberName == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Please select a $role first', style: GoogleFonts.poppins()),
-              ),
-            );
-            return;
-          }
-          // Resolve which sections list to index into so that the
-          // third Client sub-tab ('Access Requests') maps correctly.
-          final List<String> activeSections =
-              (role == 'Client') ? _clientSubSections : _subSections;
-          String section = activeSections[subController.index];
-          _addDocument(role, section, teamMemberName: memberName);
-        },
-        backgroundColor: const Color(0xFF0A2E5A),
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.file_upload),
-      ),
+      actions: [
+        if (_canManageDocuments)
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Document activity history',
+            onPressed: _showAuditHistory,
+          ),
+      ],
+      floatingActionButton: !_canManageDocuments
+          ? null
+          : FloatingActionButton(
+              onPressed: _isLoading ? null : () {
+                String role;
+                TabController subController;
+                String? memberName;
+
+                // Admin/Technician/SystemAdmin/MainAdmin can access all tabs.
+                role = _mainTabs[_mainTabController.index];
+                switch (role) {
+                  case 'Client':
+                    subController = _clientSubTabController;
+                    memberName = null;
+                    break;
+                  case 'Sub-Contractor':
+                    subController = _subContractorSubTabController;
+                    memberName = _selectedSubcontractor;
+                    break;
+                  case 'Supplier':
+                    subController = _supplierSubTabController;
+                    if (_selectedOtherRole != null) {
+                      role = _selectedOtherRole!;
+                      memberName = _selectedOtherRoleMember;
+                    } else {
+                      memberName = _selectedSupplier;
+                    }
+                    break;
+                  default:
+                    return;
+                }
+
+                if (role != 'Client' && memberName == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Please select a $role first', style: GoogleFonts.poppins()),
+                    ),
+                  );
+                  return;
+                }
+                // Resolve which sections list to index into so that the
+                // third Client sub-tab ('Access Requests') maps correctly.
+                final List<String> activeSections =
+                    (role == 'Client') ? _clientSubSections : _subSections;
+                String section = activeSections[subController.index];
+                _addDocument(role, section, teamMemberName: memberName);
+              },
+              backgroundColor: const Color(0xFF0A2E5A),
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.file_upload),
+            ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -200,7 +244,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                       if (!isClient)
                         TabBar(
                           controller: _mainTabController,
-                          tabs: _mainTabs.map((tab) => Tab(text: tab)).toList(),
+                          tabs: [
+                            const Tab(text: 'Client'),
+                            const Tab(text: 'Sub-Contractor'),
+                            Tab(child: _buildSupplierTabLabel()),
+                          ],
                           labelColor: const Color(0xFF0A2E5A),
                           unselectedLabelColor: Colors.grey,
                           labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
@@ -318,7 +366,51 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     }
   }
 
+  // The last main tab's label: plain "Supplier" text when the project has no
+  // team members in any role other than subcontractor/supplier, otherwise a
+  // dropdown that lets the user switch this tab between Supplier and any of
+  // those other roles.
+  // Sentinel for the "Supplier" menu entry — PopupMenuButton treats a
+  // selection that resolves to `null` as the menu being dismissed with no
+  // selection (it calls onCanceled instead of onSelected in that case), so
+  // Supplier can never use a literal `null` value or picking it back after
+  // switching away would silently do nothing.
+  static const _supplierSentinel = '__supplier__';
+
+  Widget _buildSupplierTabLabel() {
+    final otherRoles = _otherRoles;
+    final label = _selectedOtherRole == null ? 'Supplier' : _selectedOtherRole!.capitalize();
+    if (otherRoles.isEmpty) {
+      return Text(label);
+    }
+    return PopupMenuButton<String>(
+      tooltip: 'Switch role',
+      onSelected: (value) {
+        setState(() {
+          _selectedOtherRole = value == _supplierSentinel ? null : value;
+          _selectedOtherRoleMember = null;
+        });
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem<String>(value: _supplierSentinel, child: Text('Supplier')),
+        ...otherRoles.map(
+          (role) => PopupMenuItem<String>(value: role, child: Text(role.capitalize())),
+        ),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          const Icon(Icons.arrow_drop_down, size: 18),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSupplierContent() {
+    if (_selectedOtherRole != null) {
+      return _buildOtherRoleContent(_selectedOtherRole!);
+    }
     final suppliers = _currentProject.teamMembers.where((m) => m.role == 'supplier').toList();
     if (suppliers.isEmpty) {
       return Center(
@@ -333,6 +425,31 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         _supplierSubTabController,
         _selectedSupplier!,
         () => setState(() => _selectedSupplier = null),
+      );
+    }
+  }
+
+  // Mirrors _buildSupplierContent's member-picker flow, scoped to whichever
+  // "other" role was chosen from the Supplier tab's dropdown. Only the
+  // Contract and Communication sub-tabs are offered for these roles — no
+  // "Access Requests" sub-tab, that stays Client-only.
+  Widget _buildOtherRoleContent(String role) {
+    final members = _currentProject.teamMembers
+        .where((m) => m.role.toLowerCase() == role.toLowerCase())
+        .toList();
+    if (members.isEmpty) {
+      return Center(
+        child: _buildEmptyMemberSection(role.capitalize(), _navigateToEditProject),
+      );
+    }
+    if (_selectedOtherRoleMember == null) {
+      return _buildMembersList(members, (name) => setState(() => _selectedOtherRoleMember = name));
+    } else {
+      return _buildSelectedMemberSection(
+        role,
+        _supplierSubTabController,
+        _selectedOtherRoleMember!,
+        () => setState(() => _selectedOtherRoleMember = null),
       );
     }
   }
@@ -485,7 +602,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                       } else if (value == 'download') {
                         _downloadDocument(url, fileName);
                       } else if (value == 'delete') {
-                        _deleteDocument(docId, url);
+                        _deleteDocument(
+                          docId,
+                          url,
+                          role: role,
+                          section: section,
+                          memberName: memberName ?? '',
+                          title: title,
+                        );
                       }
                     },
                     itemBuilder: (context) => [
@@ -509,7 +633,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                           ],
                         ),
                       ),
-                      if (_userRole != 'Client')
+                      if (_canManageDocuments)
                         PopupMenuItem(
                           value: 'delete',
                           child: Row(
@@ -528,6 +652,120 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         );
       },
     );
+  }
+
+  Future<void> _logAuditEntry({
+    required String action,
+    required String role,
+    required String section,
+    required String memberName,
+    required String documentId,
+    required String documentTitle,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('DocumentAuditLog').add(
+            DocumentAuditEntry(
+              id: '',
+              projectId: _currentProject.id,
+              mainTab: role,
+              section: section,
+              teamMemberName: memberName,
+              documentId: documentId,
+              documentTitle: documentTitle,
+              action: action,
+              actorUid: _actorUid,
+              actorName: _actorName,
+              actorRole: _userRole ?? '',
+              createdAt: DateTime.now(),
+            ).toFirestore(),
+          );
+    } catch (e) {
+      widget.logger.e('❌ DocumentsScreen: Failed to write audit entry', error: e);
+    }
+  }
+
+  Future<void> _showAuditHistory() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.history, color: Color(0xFF0A2E5A)),
+            const SizedBox(width: 10),
+            Text('Document Activity', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          ],
+        ),
+        content: SizedBox(
+          width: 420,
+          height: 480,
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('DocumentAuditLog')
+                .where('projectId', isEqualTo: _currentProject.id)
+                .orderBy('createdAt', descending: true)
+                .limit(100)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error loading activity', style: GoogleFonts.poppins(color: Colors.red[600])),
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final entries = snapshot.data!.docs
+                  .map((d) => DocumentAuditEntry.fromFirestore(d))
+                  .toList();
+              if (entries.isEmpty) {
+                return Center(
+                  child: Text('No activity recorded yet', style: GoogleFonts.poppins(color: Colors.grey[600])),
+                );
+              }
+              return ListView.separated(
+                itemCount: entries.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final e = entries[index];
+                  final scope = e.teamMemberName.isNotEmpty
+                      ? '${e.mainTab.capitalize()} · ${e.teamMemberName} · ${e.section}'
+                      : '${e.mainTab.capitalize()} · ${e.section}';
+                  return ListTile(
+                    dense: true,
+                    leading: Icon(
+                      e.isUpload ? Icons.upload_file : Icons.delete_outline,
+                      color: e.isUpload ? Colors.green[600] : Colors.red[600],
+                    ),
+                    title: Text(
+                      '${e.actorName} (${e.actorRole}) ${e.isUpload ? 'uploaded' : 'deleted'} "${e.documentTitle}"',
+                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      '$scope\n${_formatDateTime(e.createdAt)}',
+                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600]),
+                    ),
+                    isThreeLine: true,
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close', style: GoogleFonts.poppins()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime date) {
+    final h = date.hour.toString().padLeft(2, '0');
+    final m = date.minute.toString().padLeft(2, '0');
+    return '${date.day}/${date.month}/${date.year} $h:$m';
   }
 
   Future<void> _fetchUserRole() async {
@@ -551,14 +789,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       if (querySnapshot.docs.isNotEmpty) {
         final userData = querySnapshot.docs.first.data();
         final role = userData['role'] as String? ?? 'Client';
-        
+        final username = querySnapshot.docs.first.id;
+
         if (mounted) {
           setState(() {
             _userRole = role;
+            _actorUid = user.uid;
+            _actorName = username;
             _isLoadingUserData = false;
           });
         }
-        
+
         widget.logger.i('✅ DocumentsScreen: User role fetched: $role');
       } else {
         widget.logger.w('⚠️ DocumentsScreen: User document not found');
@@ -694,7 +935,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         final url = await storageRef.getDownloadURL();
         widget.logger.d('📤 DocumentsScreen: Upload complete, URL obtained');
 
-        await FirebaseFirestore.instance
+        final docRef = await FirebaseFirestore.instance
             .collection('ProjectDocuments')
             .add({
           'projectId': _currentProject.id,
@@ -707,6 +948,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           'teamMemberName': teamMemberName ?? '',
           'uploadedAt': Timestamp.now(),
         });
+
+        unawaited(_logAuditEntry(
+          action: DocumentAuditEntry.actionUpload,
+          role: role,
+          section: section,
+          memberName: teamMemberName ?? '',
+          documentId: docRef.id,
+          documentTitle: title,
+        ));
 
         if (mounted) {
           Navigator.pop(context);
@@ -1031,7 +1281,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     }
   }
 
-  Future<void> _deleteDocument(String docId, String url) async {
+  Future<void> _deleteDocument(
+    String docId,
+    String url, {
+    required String role,
+    required String section,
+    required String memberName,
+    required String title,
+  }) async {
     widget.logger.i('🗑️ DocumentsScreen: Deleting document: $docId');
     try {
       widget.logger.d('🗑️ DocumentsScreen: Deleting from storage');
@@ -1042,6 +1299,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           .collection('ProjectDocuments')
           .doc(docId)
           .delete();
+
+      unawaited(_logAuditEntry(
+        action: DocumentAuditEntry.actionDelete,
+        role: role,
+        section: section,
+        memberName: memberName,
+        documentId: docId,
+        documentTitle: title,
+      ));
+
       if (mounted) {
         widget.logger.i('✅ DocumentsScreen: Document deleted successfully');
         ScaffoldMessenger.of(context).showSnackBar(

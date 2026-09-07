@@ -142,21 +142,51 @@ service cloud.firestore {
       allow read, write: if true;
     }
     
-    // Rules for ProjectDocuments collection (top-level)
+    // Rules for ProjectDocuments collection (top-level).
+    // Client is view-only everywhere, including their own tab — only
+    // Admin/Technician/SystemAdmin/MainAdmin may upload, edit, or delete.
+    // documents_screen.dart pairs every create/delete here with an append-
+    // only DocumentAuditLog entry (see below) for accountability.
     match /ProjectDocuments/{docId} {
-      allow read, write: if true;
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null
+        && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
     }
-    
-    // Rules for QualityDocuments collection
+
+    // Rules for QualityDocuments collection — same access model as
+    // ProjectDocuments for consistency.
     match /QualityDocuments/{docId} {
-      allow read, write: if true;
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null
+        && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
     }
-    
-    // Rules for SafetyDocuments collection
+
+    // Rules for SafetyDocuments collection — same access model as
+    // ProjectDocuments for consistency.
     match /SafetyDocuments/{docId} {
-      allow read, write: if true;
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null
+        && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
     }
-    
+
+    // Append-only accountability trail for the whole Documents section (all
+    // main tabs and sub-tabs: Client/Sub-Contractor/Supplier/dynamic other-
+    // role, Contract/Communication/Access Requests). A caller can't forge
+    // who they claim to be — actorUid/actorRole are cross-checked against
+    // the caller's own auth uid and their UserRoles/{uid} mirror.
+    match /DocumentAuditLog/{entryId} {
+      allow read: if request.auth != null
+        && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
+
+      allow create: if request.auth != null
+        && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician']
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.actorRole == inventoryUserRole();
+
+      allow update: if false;
+      allow delete: if false;
+    }
+
     // Rules for Drawings collection
     match /Drawings/{drawingId} {
       allow read, write: if true;

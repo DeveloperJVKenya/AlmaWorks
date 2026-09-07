@@ -34,10 +34,22 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
   final NotificationService _notificationService =
       NotificationService(logger: Logger());
 
+  // Local, refreshable copy of the project — widget.project is a snapshot
+  // taken at navigation time and never changes, so every read in this
+  // screen goes through this field instead, which _navigateToEditProject
+  // refetches from Firestore after Edit Project closes.
+  late ProjectModel _currentProject;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentProject = widget.project;
+  }
+
   // ── Single TPM stream reused by both the metrics row and header card ──
   late final Stream<DocumentSnapshot> _tpmStream = FirebaseFirestore.instance
       .collection('TaskProgressMonitor')
-      .doc(widget.project.id)
+      .doc(_currentProject.id)
       .snapshots();
 
   // ─────────────────────────────────────────────────────────────────
@@ -178,17 +190,17 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
   @override
   Widget build(BuildContext context) {
     widget.logger.d(
-        '🎨 ProjectSummaryScreen: Building for: ${widget.project.name}');
+        '🎨 ProjectSummaryScreen: Building for: ${_currentProject.name}');
 
     return BaseLayout(
-      title: widget.project.name,
-      project: widget.project,
+      title: _currentProject.name,
+      project: _currentProject,
       logger: widget.logger,
       selectedMenuItem: 'Overview',
       onMenuItemSelected: _handleMenuNavigation,
       actions: [
         StreamBuilder<int>(
-          stream: _notificationService.getUnreadCount(widget.project.id),
+          stream: _notificationService.getUnreadCount(_currentProject.id),
           builder: (context, snapshot) {
             final count = snapshot.data ?? 0;
             return Stack(
@@ -201,7 +213,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => NotificationCenterScreen(
-                          projectId: widget.project.id,
+                          projectId: _currentProject.id,
                           notificationService: _notificationService,
                           logger: widget.logger,
                         ),
@@ -280,13 +292,24 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
     if (!mounted) return;
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => EditProjectScreen(
-            project: widget.project, logger: widget.logger)))
-        .then((result) {
+            project: _currentProject, logger: widget.logger)))
+        .then((result) async {
       if (result == true && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Project updated successfully'),
-          backgroundColor: Colors.green,
-        ));
+        final doc = await FirebaseFirestore.instance
+            .collection('Projects')
+            .doc(_currentProject.id)
+            .get();
+        if (doc.exists && mounted) {
+          setState(() {
+            _currentProject = ProjectModel.fromFirestore(doc);
+          });
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Project updated successfully'),
+            backgroundColor: Colors.green,
+          ));
+        }
       }
     });
   }
@@ -294,13 +317,13 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
   void _navigateToDocuments() {
     if (!mounted) return;
     Navigator.push(context, MaterialPageRoute(builder: (_) =>
-        DocumentsScreen(project: widget.project, logger: widget.logger)));
+        DocumentsScreen(project: _currentProject, logger: widget.logger)));
   }
 
   void _navigateToDrawings() {
     if (!mounted) return;
     Navigator.push(context, MaterialPageRoute(builder: (_) =>
-        DrawingsScreen(project: widget.project, logger: widget.logger)));
+        DrawingsScreen(project: _currentProject, logger: widget.logger)));
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -373,14 +396,14 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                       snapshot.data!.data() as Map<String, dynamic>? ?? {});
                   isLive = true;
                 } else {
-                  progress = widget.project.progress / 100.0;
+                  progress = _currentProject.progress / 100.0;
                 }
 
                 final pct = (progress * 100).toStringAsFixed(0);
                 final color = isLive
                     ? (progress >= 1.0
                         ? Colors.green
-                        : widget.project.isActive
+                        : _currentProject.isActive
                             ? Colors.blue
                             : Colors.grey)
                     : Colors.grey;
@@ -400,7 +423,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
           Expanded(
             child: DashboardCard(
               title: 'Team Members',
-              value: '${widget.project.teamMembers.length}',
+              value: '${_currentProject.teamMembers.length}',
               icon: Icons.people,
               color: Colors.purple,
               onTap: () {
@@ -435,7 +458,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
         stream: _tpmStream,
         builder: (context, snapshot) {
           // ── Resolve live values ─────────────────────────────
-          double progress = widget.project.progress / 100.0;
+          double progress = _currentProject.progress / 100.0;
           DateTime? tpmStart, tpmEnd;
 
           if (snapshot.hasData && snapshot.data!.exists) {
@@ -447,14 +470,14 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
             tpmEnd   = r.end;
           }
 
-          tpmStart ??= widget.project.startDate;
-          tpmEnd   ??= widget.project.endDate;
+          tpmStart ??= _currentProject.startDate;
+          tpmEnd   ??= _currentProject.endDate;
 
           int? daysRemaining;
           if (tpmEnd != null) {
             daysRemaining = tpmEnd.difference(DateTime.now()).inDays;
           } else {
-            daysRemaining = widget.project.daysRemaining;
+            daysRemaining = _currentProject.daysRemaining;
           }
 
           final health = _deriveHealth(
@@ -463,7 +486,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
             end: tpmEnd,
           );
 
-          final statusColor = _getStatusColor(widget.project.status);
+          final statusColor = _getStatusColor(_currentProject.status);
 
           // ── Card ────────────────────────────────────────────
           return Card(
@@ -499,7 +522,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            widget.project.name
+                            _currentProject.name
                                 .substring(0, 1)
                                 .toUpperCase(),
                             style: const TextStyle(
@@ -520,7 +543,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                             const SizedBox(width: 3),
                             Expanded(
                               child: Text(
-                                widget.project.location,
+                                _currentProject.location,
                                 style: GoogleFonts.poppins(
                                   color: Colors.grey[600],
                                   fontSize: 13,
@@ -533,15 +556,15 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      _buildStatusChip(widget.project.status, statusColor),
+                      _buildStatusChip(_currentProject.status, statusColor),
                     ],
                   ),
 
                   // ── Description ──────────────────────────────
-                  if (widget.project.description.isNotEmpty) ...[
+                  if (_currentProject.description.isNotEmpty) ...[
                     const SizedBox(height: 14),
                     Text(
-                      widget.project.description,
+                      _currentProject.description,
                       style: GoogleFonts.poppins(
                         color: Colors.grey[700],
                         fontSize: 13,
@@ -560,10 +583,10 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                     children: [
                       Expanded(child: _buildInfoItem(
                           'Project Manager',
-                          widget.project.projectManager)),
+                          _currentProject.projectManager)),
                       Expanded(child: _buildInfoItem(
                           'Team Size',
-                          '${widget.project.teamMembers.length} members')),
+                          '${_currentProject.teamMembers.length} members')),
                     ],
                   ),
 
@@ -733,7 +756,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final members = widget.project.teamMembers;
+        final members = _currentProject.teamMembers;
         return DraggableScrollableSheet(
           initialChildSize: 0.60,
           minChildSize: 0.35,
@@ -799,7 +822,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                     itemBuilder: (_, idx) {
                       final member    = members[idx];
                       final isManager =
-                          member.name == widget.project.projectManager;
+                          member.name == _currentProject.projectManager;
                       final initials  = member.name
                           .trim()
                           .split(' ')
@@ -950,7 +973,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
         width: availableWidth,
         height: widgetHeight,
         child: TaskProgressWidget(
-          projectId: widget.project.id,
+          projectId: _currentProject.id,
           showAllProjects: false,
           logger: widget.logger,
           maxInitialDisplay: 5,
@@ -960,7 +983,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       SizedBox(
         width: availableWidth,
         height: widgetHeight,
-        child: WeatherWidget(projectLocation: widget.project.location),
+        child: WeatherWidget(projectLocation: _currentProject.location),
       ),
     ];
 

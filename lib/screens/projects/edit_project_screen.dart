@@ -74,6 +74,22 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
       selectedMenuItem: 'Edit Project', // No specific menu item selected
       logger: _logger,
       onMenuItemSelected: _handleMenuNavigation,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isLoading ? null : _updateProject,
+        backgroundColor: const Color(0xFF0A2E5A),
+        foregroundColor: Colors.white,
+        icon: _isLoading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Icon(Icons.save),
+        label: Text(_isLoading ? 'Updating...' : 'Update Project'),
+      ),
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -90,9 +106,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                     _buildTimelineCard(false),
                     const SizedBox(height: 16),
                     _buildTeamMembersCard(false),
-                    const SizedBox(height: 32),
-                    _buildUpdateButton(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 96),
                   ],
                 ),
               ),
@@ -520,44 +534,6 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     );
   }
 
-  Widget _buildUpdateButton() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _updateProject,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0A2E5A),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: _isLoading
-            ? const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Text('Updating Project...', style: TextStyle(fontSize: 16)),
-                ],
-              )
-            : const Text(
-                'Update Project',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-      ),
-    );
-  }
-
   Widget _buildFooter(BuildContext context, bool isMobile) {
     return Container(
       width: double.infinity,
@@ -669,7 +645,22 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
 
   void _updateProject() async {
     _logger.i('💾 EditProjectScreen: Update project initiated');
-    
+
+    // The floating Update Project button is always on screen, so it's easy
+    // to press it right after typing a team member's name/role and forget
+    // the separate "Add" step in the Team Members card. Rather than
+    // silently saving without that member, add it now — or, if it can't be
+    // added (e.g. no role picked), stop and let _addTeamMember's own
+    // snackbar explain why instead of discarding what was typed.
+    if (_teamMemberController.text.trim().isNotEmpty) {
+      final countBefore = _teamMembers.length;
+      _addTeamMember();
+      if (_teamMembers.length == countBefore) {
+        _logger.w('⚠️ EditProjectScreen: Update blocked — pending team member could not be added');
+        return;
+      }
+    }
+
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;

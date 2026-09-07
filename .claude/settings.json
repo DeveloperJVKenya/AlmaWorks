@@ -22,7 +22,12 @@
       "Bash(firebase emulators:exec \"node test.js\" --project almaworks-rules-test)",
       "Bash(sed -i 's/8090/8091/' firebase.json)",
       "Bash(firebase emulators:exec \"node test_legacy_return.js\" --project almaworks-rules-test-2)",
-      "Bash(node -e \"console.log\\(require\\('./functions/package.json'\\).engines\\)\")"
+      "Bash(node -e \"console.log\\(require\\('./functions/package.json'\\).engines\\)\")",
+      "Bash(netstat -ano)",
+      "Bash(powershell -Command \"Get-Process -Id 21592 | Select-Object Id,ProcessName,Path\")",
+      "Bash(powershell -Command \"Stop-Process -Id 21592 -Force\")",
+      "Bash(cd \"c:/Users/Administrator/PROJECTFlutter/JVA Projects/almaworks\" && find / -maxdepth 6 -iname \"rules-unit-testing\" -type d 2>/dev/null; npm ls @firebase/rules-unit-testing 2>&1 | head -5; ls functions/node_modules/@firebase 2>/dev/null | grep -i rules)",
+      "Read(//c//**)"
     ]
   }
 }

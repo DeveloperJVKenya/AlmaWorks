@@ -77,7 +77,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
         ),
       ),
     ).then((_) async {
-      final doc = await FirebaseFirestore.instance.collection('projects').doc(_currentProject.id).get();
+      final doc = await FirebaseFirestore.instance.collection('Projects').doc(_currentProject.id).get();
       if (doc.exists) {
         setState(() {
           _currentProject = ProjectModel.fromFirestore(doc);
