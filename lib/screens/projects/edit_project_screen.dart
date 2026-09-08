@@ -1,6 +1,7 @@
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/services/project_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
@@ -31,6 +32,13 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   String? _selectedStatus;
   DateTime _startDate = DateTime.now();
   DateTime? _endDate;
+
+  // Linked Project Manager account (task date-extension approvals target
+  // this uid) — separate from _projectManagerController's free-text name.
+  String? _selectedPmUid;
+  String? _selectedPmName;
+  List<({String uid, String name})> _pmCandidates = [];
+  bool _pmCandidatesLoading = true;
   final List<TeamMember> _teamMembers = [];
   final TextEditingController _teamMemberController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
@@ -48,6 +56,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     _logger = widget.logger;
     _projectService = ProjectService();
     _populateFields();
+    _loadPmCandidates();
     _logger.i('🏗️ EditProjectScreen: Initialized for project: ${widget.project.name}');
   }
 
@@ -61,7 +70,36 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     _selectedStatus = widget.project.status;
     _startDate = widget.project.startDate;
     _endDate = widget.project.endDate;
+    _selectedPmUid = widget.project.projectManagerUid;
+    _selectedPmName = widget.project.projectManagerAccountName;
     _teamMembers.addAll(widget.project.teamMembers);
+  }
+
+  /// MainAdmin/Admin accounts eligible to be linked as this project's PM —
+  /// approval rights for task date-extension requests go to whoever is
+  /// linked here (or any MainAdmin, regardless of link) plus this drives
+  /// who a request actually gets a notification sent to.
+  Future<void> _loadPmCandidates() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('role', whereIn: ['MainAdmin', 'Admin'])
+          .get();
+      final candidates = snap.docs
+          .map((d) => (uid: d.data()['uid'] as String? ?? '', name: d.id))
+          .where((c) => c.uid.isNotEmpty)
+          .toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
+      if (mounted) {
+        setState(() {
+          _pmCandidates = candidates;
+          _pmCandidatesLoading = false;
+        });
+      }
+    } catch (e) {
+      _logger.e('❌ EditProjectScreen: Failed to load PM candidates', error: e);
+      if (mounted) setState(() => _pmCandidatesLoading = false);
+    }
   }
 
   @override
@@ -310,6 +348,31 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String?>(
+              initialValue: _selectedPmUid,
+              decoration: const InputDecoration(
+                labelText: 'Linked PM Account (optional)',
+                helperText: 'Enables this person to receive and approve task date-extension requests',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.verified_user_outlined, color: Colors.blue),
+              ),
+              hint: Text(_pmCandidatesLoading ? 'Loading accounts…' : 'No linked account'),
+              items: [
+                const DropdownMenuItem<String?>(value: null, child: Text('No linked account')),
+                ..._pmCandidates.map((c) => DropdownMenuItem<String?>(value: c.uid, child: Text(c.name))),
+              ],
+              onChanged: _pmCandidatesLoading
+                  ? null
+                  : (uid) {
+                      setState(() {
+                        _selectedPmUid = uid;
+                        _selectedPmName = uid == null
+                            ? null
+                            : _pmCandidates.firstWhere((c) => c.uid == uid).name;
+                      });
+                    },
             ),
           ],
         ),
@@ -680,6 +743,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
           startDate: _startDate,
           endDate: _endDate,
           projectManager: _projectManagerController.text.trim(),
+          projectManagerUid: _selectedPmUid,
+          projectManagerAccountName: _selectedPmName,
           teamMembers: _teamMembers,
           createdAt: widget.project.createdAt,
           updatedAt: DateTime.now(),

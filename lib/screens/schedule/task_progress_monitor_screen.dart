@@ -2,13 +2,16 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/models/task_date_extension_request_model.dart';
+import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:excel/excel.dart' hide Border;
+import 'package:excel/excel.dart' hide Border, TextSpan;
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, compute;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 
@@ -341,6 +344,23 @@ class _TaskProgressMonitorScreenState
   final _dfDisplay = DateFormat('d MMM yy');
   final _dfKey     = DateFormat('yyyyMMdd');
 
+  // ── Current user + task date-extension requests ──────────────────
+  // Defaults are the most-restrictive assumption until the real role
+  // loads, matching the _fetchUserRole pattern used elsewhere in the app
+  // (e.g. QualityAndSafetyScreen) — never briefly grant edit rights.
+  String? _currentUid;
+  String  _currentUserName = '';
+  String  _currentUserRole = 'Client';
+  List<TaskDateExtensionRequestModel> _extensionRequests = [];
+  StreamSubscription<QuerySnapshot>? _extensionRequestsSub;
+
+  /// Editing task dates and marking day-status is Admin/MainAdmin only —
+  /// every other role that can open this screen (SystemAdmin, Technician)
+  /// is view-only here now. See firestore.rules' TaskProgressMonitor write
+  /// clause for the same restriction enforced server-side.
+  bool get _canEditDatesAndStatus =>
+      _currentUserRole == 'MainAdmin' || _currentUserRole == 'Admin';
+
   // ─────────────────────────────────────────────────────────────────
   // LIFECYCLE
   // ─────────────────────────────────────────────────────────────────
@@ -354,6 +374,8 @@ class _TaskProgressMonitorScreenState
     _hScrollData.addListener(_onHorizontalManualScroll);
     _vScrollData.addListener(_onVerticalScroll);
     _loadFromFirestore();
+    _fetchCurrentUser();
+    _subscribeExtensionRequests();
   }
 
   @override
@@ -368,11 +390,70 @@ class _TaskProgressMonitorScreenState
     _hScrollHeader.dispose();
     _hScrollData.dispose();
     _vScrollData.dispose();
+    _extensionRequestsSub?.cancel();
     for (final c in _nameCtrlMap.values) {
       c.dispose();
     }
     super.dispose();
   }
+
+  Future<void> _fetchCurrentUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('uid', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+      if (snap.docs.isNotEmpty && mounted) {
+        setState(() {
+          _currentUid = user.uid;
+          _currentUserName = snap.docs.first.id;
+          _currentUserRole = snap.docs.first.data()['role'] as String? ?? 'Client';
+        });
+      }
+    } catch (e) {
+      widget.logger.e('TaskProgressMonitor: failed to fetch current user', error: e);
+    }
+  }
+
+  void _subscribeExtensionRequests() {
+    _extensionRequestsSub = FirebaseFirestore.instance
+        .collection('TaskDateExtensionRequests')
+        .where('projectId', isEqualTo: widget.project.id)
+        .orderBy('requestedAt', descending: true)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      setState(() {
+        _extensionRequests =
+            snap.docs.map(TaskDateExtensionRequestModel.fromFirestore).toList();
+      });
+    }, onError: (e) {
+      widget.logger.e('TaskProgressMonitor: extension requests stream error', error: e);
+    });
+  }
+
+  List<TaskDateExtensionRequestModel> _requestsForRow(String rowId) =>
+      _extensionRequests.where((r) => r.taskRowId == rowId).toList();
+
+  TaskDateExtensionRequestModel? _pendingRequestForRow(String rowId) {
+    for (final r in _extensionRequests) {
+      if (r.taskRowId == rowId && r.isPending) return r;
+    }
+    return null;
+  }
+
+  int get _pendingExtensionCount =>
+      _extensionRequests.where((r) => r.isPending).length;
+
+  /// The project's linked PM (see ProjectModel.projectManagerUid) or any
+  /// MainAdmin may resolve a request — matches firestore.rules'
+  /// TaskDateExtensionRequests update clause.
+  bool _canApprove(TaskDateExtensionRequestModel req) =>
+      _currentUserRole == 'MainAdmin' ||
+      (_currentUid != null && _currentUid == req.projectManagerUid);
 
   // ── Scroll sync ─────────────────────────────────────────────────
   void _syncHeaderToData() {
@@ -697,13 +778,20 @@ class _TaskProgressMonitorScreenState
     }
 
     try {
+      // Deliberately does NOT include 'dailyStatuses' — that field is owned
+      // exclusively by _flushDirtyStatuses' per-key dot-path update() calls.
+      // Writing the whole local _dailyStatuses map here (as this used to)
+      // meant any full save — add/remove a row, rename a task, re-import —
+      // clobbered every daily tick made by another open session since this
+      // one last loaded, with no conflict detection. SetOptions(merge:true)
+      // on top so this call only ever touches the fields listed below,
+      // leaving 'dailyStatuses' (and anything else) exactly as-is.
       await _docRef.set({
         'projectId'   : widget.project.id,
         'projectName' : widget.project.name,
         'updatedAt'   : Timestamp.now(),
         'rows'        : _rows.map((r) => r.toMap()).toList(),
-        'dailyStatuses': _dailyStatuses,
-      });
+      }, SetOptions(merge: true));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Progress monitor saved!', style: GoogleFonts.poppins()),
@@ -805,6 +893,17 @@ class _TaskProgressMonitorScreenState
         return;
       }
 
+      // Re-attach each new row to its previous row's id wherever they look
+      // like the same task (same type + same trimmed name), instead of
+      // always keeping the fresh UUID the isolate assigned. dailyStatuses
+      // entries are keyed by row id ('{rowId}_{yyyyMMdd}'), so without this
+      // every re-import of an updated schedule — the normal way someone
+      // keeps a project's plan current — silently orphaned every previously
+      // ticked day: the old ids would still be sitting in Firestore but no
+      // row would ever reference them again. Only genuinely new rows (no
+      // match in the old table) keep a fresh id.
+      final matchedCount = _reconcileRowIdsWithPrevious(newRows);
+
       // ── 3. Confirm replace ──────────────────────────────────────
       step('Found ${newRows.length} rows — awaiting confirmation…', 0.70);
       if (!mounted) return;
@@ -816,8 +915,10 @@ class _TaskProgressMonitorScreenState
           title: Text('Import from Excel',
               style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
           content: Text(
-            'Found ${newRows.length} rows.\nThis will replace the current table. Continue?',
-            style: GoogleFonts.poppins(fontSize: 13),
+            'Found ${newRows.length} rows.\nThis will replace the current table.\n\n'
+            '$matchedCount row${matchedCount == 1 ? '' : 's'} matched an existing task by name and will '
+            'keep ${matchedCount == 1 ? 'its' : 'their'} recorded progress marks; any other row starts with no marks. Continue?',
+            style: GoogleFonts.poppins(fontSize: 13, height: 1.4),
           ),
           actions: [
             TextButton(
@@ -891,7 +992,52 @@ class _TaskProgressMonitorScreenState
       if (mounted) setState(() { _isImporting = false; _importProgress = 0; _importStep = ''; });
     }
   }
-  
+
+  /// Matches freshly-parsed rows against the current [_rows] by (type,
+  /// trimmed name) and, for each match, replaces the new row's freshly
+  /// generated id with the previous row's id — so any dailyStatuses entries
+  /// keyed off that id (see [_statusKey]) stay attached instead of becoming
+  /// orphaned. Duplicate names match positionally (first unmatched old row
+  /// with that key), not all onto the same one. Also fixes up parentPhaseId
+  /// references on task rows whose parent phase itself got remapped, since
+  /// that link is set during isolate parsing using the phase's *pre-remap*
+  /// id. Returns how many rows were matched, purely for the confirmation
+  /// dialog's copy.
+  int _reconcileRowIdsWithPrevious(List<TaskProgressRowData> newRows) {
+    String keyOf(TaskRowType type, String name) => '${type.name}|${name.trim().toLowerCase()}';
+
+    final oldByKey = <String, List<TaskProgressRowData>>{};
+    for (final old in _rows) {
+      oldByKey.putIfAbsent(keyOf(old.type, old.taskName), () => []).add(old);
+    }
+
+    // freshly-generated id -> id to actually use
+    final idRemap = <String, String>{};
+    var matchedCount = 0;
+    for (final row in newRows) {
+      final candidates = oldByKey[keyOf(row.type, row.taskName)];
+      if (candidates != null && candidates.isNotEmpty) {
+        idRemap[row.id] = candidates.removeAt(0).id;
+        matchedCount++;
+      }
+    }
+
+    for (final row in newRows) {
+      final finalId = idRemap[row.id];
+      if (finalId != null) row.id = finalId;
+    }
+    // Second pass (after every row.id is finalized above) so a task's
+    // parentPhaseId is repointed at its phase's *final* id, not the phase's
+    // discarded freshly-generated one.
+    for (final row in newRows) {
+      final parent = row.parentPhaseId;
+      final remappedParent = parent != null ? idRemap[parent] : null;
+      if (remappedParent != null) row.parentPhaseId = remappedParent;
+    }
+
+    return matchedCount;
+  }
+
   // ─────────────────────────────────────────────────────────────────
   // ROW MANIPULATION
   // ─────────────────────────────────────────────────────────────────
@@ -922,15 +1068,26 @@ class _TaskProgressMonitorScreenState
     if (_rows.isEmpty) return;
     for (int i = _rows.length - 1; i >= 0; i--) {
       if (_rows[i].type == TaskRowType.task) {
-        final id = _rows[i].id;
-        setState(() {
-          _rows.removeAt(i);
-          _invalidatePhaseCache();
-        });
-        _nameCtrlMap.remove(id)?.dispose();
+        _removeRow(_rows[i]);
         return;
       }
     }
+  }
+
+  /// Deletes a single task row wherever it sits in the table — previously
+  /// the only way to remove a row at all was _removeLastRow (the most
+  /// recently added task, from the bottom), so fixing a mistaken row added
+  /// earlier meant deleting and re-adding everything after it. Restricted
+  /// to TaskRowType.task: removing a phase/category row would orphan any
+  /// task rows whose parentPhaseId still points at it, breaking the
+  /// phase-column date grouping in _buildPhaseColumns.
+  void _removeRow(TaskProgressRowData row) {
+    if (row.type != TaskRowType.task) return;
+    setState(() {
+      _rows.remove(row);
+      _invalidatePhaseCache();
+    });
+    _nameCtrlMap.remove(row.id)?.dispose();
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -964,10 +1121,16 @@ class _TaskProgressMonitorScreenState
   // Batches all taps within 1.5 s into a single Firestore update()
   // instead of one network round-trip per tap.
   // ─────────────────────────────────────────────────────────────────
-  void _scheduleAutosave() {
+  // Consecutive-failure counter driving retry backoff (reset to 0 on any
+  // successful flush). Capped rather than retrying instantly forever, so a
+  // sustained outage doesn't hammer Firestore once a second.
+  int _flushFailureStreak = 0;
+  bool _flushErrorNoticeShown = false;
+
+  void _scheduleAutosave({Duration? delay}) {
     _autosaveDebounce?.cancel();
     _autosaveDebounce = Timer(
-      const Duration(milliseconds: 1500),
+      delay ?? const Duration(milliseconds: 1500),
       _flushDirtyStatuses,
     );
   }
@@ -984,7 +1147,33 @@ class _TaskProgressMonitorScreenState
         updates['dailyStatuses.$k'] = v ?? FieldValue.delete();
       }
       await _docRef.update(updates);
-    } catch (_) {}
+      _flushFailureStreak = 0;
+      _flushErrorNoticeShown = false;
+    } catch (e) {
+      widget.logger.e('TaskProgressMonitor: status flush failed, will retry', error: e);
+      // Put the failed keys back (merged with anything ticked while this
+      // request was in flight) instead of losing them — a prior version
+      // swallowed this error and dropped the write permanently, so a marked
+      // day could silently vanish on reload after a network blip.
+      _dirtyStatusKeys.addAll(keysToFlush);
+      _flushFailureStreak++;
+      // Guard against dispose(): it calls this method directly (unawaited)
+      // as a best-effort final flush on unmount, after already cancelling
+      // _autosaveDebounce — rescheduling a new Timer here would outlive the
+      // State object and fire against a disposed screen.
+      if (!mounted) return;
+      final backoffSeconds = [2, 5, 15, 30][(_flushFailureStreak - 1).clamp(0, 3)];
+      _scheduleAutosave(delay: Duration(seconds: backoffSeconds));
+      if (!_flushErrorNoticeShown) {
+        _flushErrorNoticeShown = true;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Some progress marks couldn\'t sync — retrying automatically…',
+              style: GoogleFonts.poppins()),
+          backgroundColor: Colors.orange[800],
+          duration: const Duration(seconds: 4),
+        ));
+      }
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -1173,14 +1362,25 @@ class _TaskProgressMonitorScreenState
     // differences, border widths, and the badge gap.
     final availW = (colW - indent - badgeW - 28.0).clamp(30.0, double.infinity);
 
-    // Poppins 11 px – use a slightly conservative char-width (6.8 px) so we
-    // never undercount lines on narrow columns.
-    final charsPerLine = (availW / 6.8).floor().clamp(5, 500);
-    final linesNeeded  = (name.length / charsPerLine).ceil().clamp(1, 10);
-
-    // 11 px font × 1.45 line-height = 15.95 px; add 2 px for EditableText
-    // baseline offset and font-metric headroom → 18 px per line.
-    const lineH = 18.0;
+    // Measure the *actual* wrapped height with a TextPainter, using the
+    // exact same font/size/weight/line-height the TextField renders with —
+    // replaces a previous char-count-per-line estimate (name.length /
+    // (availW/6.8)) that assumed characters distribute evenly across lines.
+    // Real word-boundary wrapping rarely does that, and the gap between
+    // estimate and reality grew with every extra line, so names landing on
+    // 3+ lines reliably came out under-measured by a line's worth of height
+    // — that's what surfaced as "overflowed by 0.5px" on longer task names.
+    final fontSize   = row.type == TaskRowType.task ? 11.0 : 11.5;
+    final fontWeight = row.type == TaskRowType.task ? FontWeight.w400 : FontWeight.w700;
+    final painter = TextPainter(
+      text: TextSpan(
+        text: name,
+        style: GoogleFonts.poppins(fontSize: fontSize, fontWeight: fontWeight, height: 1.45),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 10,
+    )..layout(maxWidth: availW);
+    final textH = painter.height;
 
     // Badge section (task rows only):
     //   4 px SizedBox gap + 3 px indicator track + ~13 px stat-text row
@@ -1191,11 +1391,25 @@ class _TaskProgressMonitorScreenState
     //   top: 6 px; bottom: 8 px for tasks, 6 px for others.
     final padV = row.type == TaskRowType.task ? 14.0 : 12.0;
 
-    final textH      = linesNeeded * lineH;
     final extraBadge = row.type == TaskRowType.task ? badgeH : 0.0;
 
-    // +1 px so sub-pixel rounding never triggers a 0.5 px overflow.
-    final computed = padV + textH + extraBadge + 1.0;
+    // A live EditableText inside a TextField consistently renders taller
+    // than a bare TextPainter measures for the *same* style/text — it
+    // reserves room for cursor/strut metrics TextPainter doesn't account
+    // for — and that gap compounds per wrapped line rather than being a
+    // single fixed offset (confirmed against the real overflow: a flat
+    // +1.5px safety margin left 2-line names overflowing by 4.0px). Scale
+    // the safety margin with the actual line count instead of guessing one
+    // constant that only happens to fit one case.
+    final lineCount = (textH / (fontSize * 1.45)).round().clamp(1, 10);
+    final safetyMargin = 6.0 + (lineCount - 1) * 3.0;
+    // The "Pending Extension" tag adds its own row below the progress
+    // badge (see _buildPendingExtensionTag) — same height class as
+    // extraBadge, so account for it the same way or it's the exact same
+    // overflow bug all over again for any task that happens to have one.
+    final extraExtensionTag =
+        (row.type == TaskRowType.task && _pendingRequestForRow(row.id) != null) ? 17.0 : 0.0;
+    final computed = padV + textH + extraBadge + extraExtensionTag + safetyMargin;
 
     return computed.clamp(base, double.infinity);
   }
@@ -1574,22 +1788,44 @@ class _TaskProgressMonitorScreenState
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: Center(
-                child: SizedBox(
-                    width: 18, height: 18,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white)),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                onPressed: _showPendingExtensionsList,
+                icon: const Icon(Icons.event_note_rounded),
+                tooltip: 'Pending date extensions',
               ),
-            )
-          else
-            IconButton(
-              onPressed: _saveToFirestore,
-              icon: const Icon(Icons.save_rounded),
-              tooltip: 'Save',
-            ),
+              if (_pendingExtensionCount > 0)
+                Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(color: Colors.orange[800], borderRadius: BorderRadius.circular(8)),
+                    child: Text('$_pendingExtensionCount',
+                        style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ),
+                ),
+            ],
+          ),
+          if (_canEditDatesAndStatus)
+            if (_isSaving)
+              const Padding(
+                padding: EdgeInsets.only(right: 16),
+                child: Center(
+                  child: SizedBox(
+                      width: 18, height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white)),
+                ),
+              )
+            else
+              IconButton(
+                onPressed: _saveToFirestore,
+                icon: const Icon(Icons.save_rounded),
+                tooltip: 'Save',
+              ),
         ],
       );
 
@@ -1710,19 +1946,22 @@ class _TaskProgressMonitorScreenState
           onTap: () => setState(() => _showRowNumbers = !_showRowNumbers),
         ),
         const SizedBox(width: 6),
-        _toolBtn(
-          icon: Icons.add_box_outlined,
-          label: 'Add Row',
-          color: Colors.green[700],
-          onTap: _addRow,
-        ),
-        const SizedBox(width: 6),
-        _toolBtn(
-          icon: Icons.indeterminate_check_box_outlined,
-          label: 'Remove Last',
-          color: Colors.orange[700],
-          onTap: _removeLastRow,
-        ),
+        if (_canEditDatesAndStatus) ...[
+          _toolBtn(
+            icon: Icons.add_box_outlined,
+            label: 'Add Row',
+            color: Colors.green[700],
+            onTap: _addRow,
+          ),
+          const SizedBox(width: 6),
+          _toolBtn(
+            icon: Icons.indeterminate_check_box_outlined,
+            label: 'Remove Last',
+            color: Colors.orange[700],
+            onTap: _removeLastRow,
+          ),
+          const SizedBox(width: 6),
+        ],
         const Spacer(),
         _legendChip(DayStatus.done),
         const SizedBox(width: 4),
@@ -1730,6 +1969,7 @@ class _TaskProgressMonitorScreenState
         const SizedBox(width: 4),
         _legendChip(DayStatus.badWeather),
         const SizedBox(width: 8),
+        if (_canEditDatesAndStatus)
         SizedBox(
           height: 32,
           child: ElevatedButton.icon(
@@ -2317,6 +2557,7 @@ class _TaskProgressMonitorScreenState
               children: [
                 TextField(
                   controller: _nameCtrl(row.id),
+                  readOnly: !_canEditDatesAndStatus,
                   onChanged: (v) {
                     row.taskName = v;
                     // Trigger rebuild so _computeRowH re-evaluates
@@ -2342,10 +2583,37 @@ class _TaskProgressMonitorScreenState
                 if (row.type == TaskRowType.task) ...[
                   const SizedBox(height: 4),
                   _buildTaskProgressBadge(row),
+                  if (_pendingRequestForRow(row.id) != null) ...[
+                    const SizedBox(height: 3),
+                    _buildPendingExtensionTag(row),
+                  ],
                 ],
               ],
             ),
           ),
+
+          // Delete this specific row — task rows only (see _removeRow: a
+          // phase/category delete would orphan its children's
+          // parentPhaseId). Previously the only removal affordance was
+          // "remove last row" on the toolbar.
+          if (row.type == TaskRowType.task && _canEditDatesAndStatus)
+            Padding(
+              padding: const EdgeInsets.only(left: 2, top: 1),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(4),
+                onTap: () async {
+                  final confirmed = await showConfirmDialog(
+                    context,
+                    title: 'Delete task row?',
+                    message: '"${row.taskName.trim()}" and its recorded progress marks will be removed.',
+                    confirmLabel: 'Delete',
+                    isDestructive: true,
+                  );
+                  if (confirmed) _removeRow(row);
+                },
+                child: Icon(Icons.close_rounded, size: 14, color: fg.withValues(alpha: 0.35)),
+              ),
+            ),
         ],
       ),
     );
@@ -2393,6 +2661,32 @@ class _TaskProgressMonitorScreenState
     );
   }
 
+  /// "Pending Extension" chip shown under a task's progress bar whenever it
+  /// has an unresolved date-change request — tap opens the same
+  /// detail/approve dialog reachable from the AppBar's pending-list.
+  Widget _buildPendingExtensionTag(TaskProgressRowData task) {
+    return InkWell(
+      onTap: () => _showExtensionDetailDialog(task),
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+        decoration: BoxDecoration(
+          color: Colors.orange[700],
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.hourglass_top_rounded, size: 8, color: Colors.white),
+            const SizedBox(width: 3),
+            Text('Pending Extension',
+                style: GoogleFonts.poppins(fontSize: 7.5, fontWeight: FontWeight.w700, color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDateCell(
       TaskProgressRowData row,
       {required bool isStart,
@@ -2400,9 +2694,11 @@ class _TaskProgressMonitorScreenState
       required Color accent}) {
     final date = isStart ? row.startDate : row.endDate;
     return GestureDetector(
-      onTap: row.type == TaskRowType.task || row.type == TaskRowType.phase
-          ? () => _pickDate(row, isStart: isStart)
-          : null,
+      onTap: row.type == TaskRowType.task
+          ? () => _onTaskDateTap(row, isStart: isStart)
+          : row.type == TaskRowType.phase
+              ? () => _pickDate(row, isStart: isStart)
+              : null,
       child: Container(
         width: _kDateW,
         // No height/minHeight needed – the parent Row(stretch)+SizedBox(height:h)
@@ -2464,6 +2760,534 @@ class _TaskProgressMonitorScreenState
       }
       _invalidatePhaseCache(); // date changes rebuild phase columns
     });
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // TASK DATE EXTENSIONS
+  // ─────────────────────────────────────────────────────────────────
+  // A task's start/end date is no longer edited directly once both are
+  // set — editing goes through a reasoned, approvable request instead
+  // (see TaskDateExtensionRequestModel). Only Admin/MainAdmin may raise
+  // one; the row's live dates never change until the project's linked PM
+  // or a MainAdmin approves it.
+
+  /// Entry point for tapping a task row's date cell.
+  Future<void> _onTaskDateTap(TaskProgressRowData row, {required bool isStart}) async {
+    if (!_canEditDatesAndStatus) return; // view-only roles: no-op, not even an error toast
+    if (_pendingRequestForRow(row.id) != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('This task already has a pending extension request — resolve it first.',
+            style: GoogleFonts.poppins()),
+        backgroundColor: Colors.orange[800],
+      ));
+      return;
+    }
+    // Nothing live to protect yet (row just added, dates never set) — plain
+    // direct edit, same as before this feature existed.
+    if (row.startDate == null || row.endDate == null) {
+      await _pickDate(row, isStart: isStart);
+      return;
+    }
+    await _showRequestExtensionDialog(row, focusStart: isStart);
+  }
+
+  Future<void> _showRequestExtensionDialog(TaskProgressRowData row, {required bool focusStart}) async {
+    DateTime newStart = row.startDate!;
+    DateTime newEnd = row.endDate!;
+    final reasonCtrl = TextEditingController();
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          Future<void> pick(bool isStart) async {
+            final picked = await showDatePicker(
+              context: ctx,
+              initialDate: isStart ? newStart : newEnd,
+              firstDate: isStart ? DateTime(2020) : newStart,
+              lastDate: DateTime(2100),
+              builder: (c, child) => Theme(
+                data: Theme.of(c).copyWith(
+                    colorScheme: const ColorScheme.light(primary: _navy, onPrimary: Colors.white)),
+                child: child!,
+              ),
+            );
+            if (picked == null) return;
+            setDialogState(() {
+              if (isStart) {
+                newStart = picked;
+                if (newEnd.isBefore(newStart)) newEnd = newStart;
+              } else {
+                newEnd = picked;
+              }
+            });
+          }
+
+          final changed = newStart != row.startDate || newEnd != row.endDate;
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            title: Text('Request Date Extension', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(row.taskName.trim(), style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _extensionDateField('Start', newStart, () => pick(true)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _extensionDateField('Finish', newEnd, () => pick(false)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: reasonCtrl,
+                    maxLines: 3,
+                    onChanged: (_) => setDialogState(() {}),
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: 'Reason for extension *',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      hintText: 'Why do the dates need to change?',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This won\'t take effect until the Project Manager or a MainAdmin approves it. '
+                    'The task keeps its current dates until then.',
+                    style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey[600], height: 1.4),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text('Cancel', style: GoogleFonts.poppins()),
+              ),
+              ElevatedButton(
+                onPressed: (changed && reasonCtrl.text.trim().isNotEmpty)
+                    ? () => Navigator.pop(ctx, true)
+                    : null,
+                style: ElevatedButton.styleFrom(backgroundColor: _navy, foregroundColor: Colors.white),
+                child: Text('Submit Request', style: GoogleFonts.poppins()),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (submitted == true) {
+      await _submitExtensionRequest(row, newStart: newStart, newEnd: newEnd, reason: reasonCtrl.text.trim());
+    }
+    reasonCtrl.dispose();
+  }
+
+  Widget _extensionDateField(String label, DateTime date, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        ),
+        child: Text(_dfDisplay.format(date), style: GoogleFonts.poppins(fontSize: 13)),
+      ),
+    );
+  }
+
+  Future<void> _submitExtensionRequest(
+    TaskProgressRowData row, {
+    required DateTime newStart,
+    required DateTime newEnd,
+    required String reason,
+  }) async {
+    if (_currentUid == null) return;
+    try {
+      final req = TaskDateExtensionRequestModel(
+        id: '',
+        projectId: widget.project.id,
+        projectName: widget.project.name,
+        projectManagerUid: widget.project.projectManagerUid,
+        projectManagerName: widget.project.projectManagerAccountName,
+        taskRowId: row.id,
+        taskName: row.taskName.trim(),
+        originalStartDate: row.startDate!,
+        originalEndDate: row.endDate!,
+        requestedStartDate: newStart,
+        requestedEndDate: newEnd,
+        reason: reason,
+        requestedByUid: _currentUid!,
+        requestedByName: _currentUserName,
+        requestedByRole: _currentUserRole,
+        requestedAt: DateTime.now(),
+      );
+      await FirebaseFirestore.instance.collection('TaskDateExtensionRequests').add(req.toFirestore());
+
+      final title = 'Date extension requested — ${widget.project.name}';
+      final body = '${_currentUserName.isEmpty ? 'A user' : _currentUserName} requested new dates for '
+          '"${row.taskName.trim()}": ${_dfDisplay.format(newStart)} – ${_dfDisplay.format(newEnd)}.';
+      final payload = {
+        'type': 'task_date_extension_requested',
+        'projectId': widget.project.id,
+        'taskRowId': row.id,
+      };
+      if (widget.project.projectManagerUid != null) {
+        await _notifyUser(uid: widget.project.projectManagerUid!, title: title, body: body, payload: payload);
+      }
+      await _notifyAdmins(title: title, body: body, payload: payload, targetRoles: const ['MainAdmin']);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Extension requested — pending approval.', style: GoogleFonts.poppins()),
+          backgroundColor: Colors.green[700],
+        ));
+      }
+    } catch (e) {
+      widget.logger.e('TaskProgressMonitor: failed to submit extension request', error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to submit request: $e', style: GoogleFonts.poppins()),
+          backgroundColor: Colors.red[700],
+        ));
+      }
+    }
+  }
+
+  Future<void> _respondToExtension(
+    TaskDateExtensionRequestModel req, {
+    required bool approve,
+    String? rejectionReason,
+  }) async {
+    if (_currentUid == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('TaskDateExtensionRequests').doc(req.id).update({
+        'status': approve ? TaskDateExtensionRequestModel.statusApproved : TaskDateExtensionRequestModel.statusRejected,
+        'respondedByUid': _currentUid,
+        'respondedByName': _currentUserName,
+        'respondedAt': Timestamp.now(),
+        if (!approve && rejectionReason != null && rejectionReason.isNotEmpty) 'rejectionReason': rejectionReason,
+      });
+
+      if (approve) {
+        final idx = _rows.indexWhere((r) => r.id == req.taskRowId);
+        if (idx != -1) {
+          setState(() {
+            _rows[idx].startDate = req.requestedStartDate;
+            _rows[idx].endDate = req.requestedEndDate;
+            _invalidatePhaseCache();
+          });
+          await _saveToFirestore();
+        }
+      }
+
+      final title = approve
+          ? 'Date extension approved — ${widget.project.name}'
+          : 'Date extension rejected — ${widget.project.name}';
+      final body = approve
+          ? '"${req.taskName}" is now ${_dfDisplay.format(req.requestedStartDate)} – ${_dfDisplay.format(req.requestedEndDate)}.'
+          : '"${req.taskName}" keeps its current dates.${rejectionReason != null && rejectionReason.isNotEmpty ? ' Reason: $rejectionReason' : ''}';
+      await _notifyUser(
+        uid: req.requestedByUid,
+        title: title,
+        body: body,
+        payload: {
+          'type': approve ? 'task_date_extension_approved' : 'task_date_extension_rejected',
+          'projectId': widget.project.id,
+          'taskRowId': req.taskRowId,
+        },
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(approve ? 'Extension approved.' : 'Extension rejected.', style: GoogleFonts.poppins()),
+          backgroundColor: approve ? Colors.green[700] : Colors.grey[700],
+        ));
+      }
+    } catch (e) {
+      widget.logger.e('TaskProgressMonitor: failed to respond to extension request', error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to record response: $e', style: GoogleFonts.poppins()),
+          backgroundColor: Colors.red[700],
+        ));
+      }
+    }
+  }
+
+  /// Same UserNotificationQueue/AdminNotificationQueue pattern used by
+  /// InventoryService (see _notifyUser/_notifyAdmins there) — a real-time
+  /// listener set up at login delivers these in-app; a Cloud Function
+  /// handles the FCM push for terminated/backgrounded apps.
+  Future<void> _notifyUser({
+    required String uid,
+    required String title,
+    required String body,
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('UserNotificationQueue').add({
+        'targetUid': uid,
+        'title': title,
+        'body': body,
+        'payload': payload,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      widget.logger.e('TaskProgressMonitor: failed to queue user notification', error: e);
+    }
+  }
+
+  Future<void> _notifyAdmins({
+    required String title,
+    required String body,
+    required Map<String, dynamic> payload,
+    required List<String> targetRoles,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('AdminNotificationQueue').add({
+        'title': title,
+        'body': body,
+        'payload': payload,
+        'targetRoles': targetRoles,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      widget.logger.e('TaskProgressMonitor: failed to queue admin notification', error: e);
+    }
+  }
+
+  /// Detail/approve/reject dialog for one task's extension history — opened
+  /// from the "Pending Extension" tag on its name cell.
+  Future<void> _showExtensionDetailDialog(TaskProgressRowData row) async {
+    final requests = _requestsForRow(row.id);
+    if (requests.isEmpty) return;
+    final pending = requests.firstWhere((r) => r.isPending, orElse: () => requests.first);
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final rejectCtrl = TextEditingController();
+          bool showRejectField = false;
+
+          Widget buildRequestCard(TaskDateExtensionRequestModel r) {
+            final statusColor = r.isPending
+                ? Colors.orange[800]!
+                : r.isApproved
+                    ? Colors.green[700]!
+                    : Colors.grey[600]!;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        r.isPending ? Icons.hourglass_top_rounded : r.isApproved ? Icons.check_circle : Icons.cancel,
+                        size: 14,
+                        color: statusColor,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(r.status.toUpperCase(),
+                          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor)),
+                      const Spacer(),
+                      Text(_dfDisplay.format(r.requestedAt),
+                          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600])),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text('${_dfDisplay.format(r.originalStartDate)} – ${_dfDisplay.format(r.originalEndDate)}  →  '
+                      '${_dfDisplay.format(r.requestedStartDate)} – ${_dfDisplay.format(r.requestedEndDate)}',
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text('Requested by ${r.requestedByName} (${r.requestedByRole})',
+                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[700])),
+                  const SizedBox(height: 6),
+                  Text(r.reason, style: GoogleFonts.poppins(fontSize: 12.5, height: 1.4)),
+                  if (r.respondedByName != null) ...[
+                    const SizedBox(height: 6),
+                    Text('${r.status == TaskDateExtensionRequestModel.statusApproved ? 'Approved' : 'Rejected'} by ${r.respondedByName}',
+                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[700])),
+                    if (r.rejectionReason != null && r.rejectionReason!.isNotEmpty)
+                      Text('Reason: ${r.rejectionReason}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[700])),
+                  ],
+                  if (r.isPending && _canApprove(r)) ...[
+                    const SizedBox(height: 10),
+                    if (!showRejectField)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => setDialogState(() => showRejectField = true),
+                              style: OutlinedButton.styleFrom(foregroundColor: Colors.red[700]),
+                              child: Text('Reject', style: GoogleFonts.poppins(fontSize: 12)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _respondToExtension(r, approve: true);
+                              },
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700], foregroundColor: Colors.white),
+                              child: Text('Approve', style: GoogleFonts.poppins(fontSize: 12)),
+                            ),
+                          ),
+                        ],
+                      )
+                    else ...[
+                      TextField(
+                        controller: rejectCtrl,
+                        maxLines: 2,
+                        style: GoogleFonts.poppins(fontSize: 12),
+                        decoration: InputDecoration(
+                          hintText: 'Reason for rejection (optional)',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => setDialogState(() => showRejectField = false),
+                              child: Text('Back', style: GoogleFonts.poppins(fontSize: 12)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _respondToExtension(r, approve: false, rejectionReason: rejectCtrl.text.trim());
+                              },
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red[700], foregroundColor: Colors.white),
+                              child: Text('Confirm Reject', style: GoogleFonts.poppins(fontSize: 12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            );
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            title: Text(row.taskName.trim(),
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15)),
+            content: SizedBox(
+              width: 380,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (pending.isPending && !_canApprove(pending))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Text('Awaiting approval from the Project Manager or a MainAdmin.',
+                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                      ),
+                    ...requests.map(buildRequestCard),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Close', style: GoogleFonts.poppins()),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Bottom sheet listing every pending extension request across the whole
+  /// project — the AppBar badge's target, for a PM/MainAdmin to triage
+  /// without hunting through the grid row by row.
+  Future<void> _showPendingExtensionsList() async {
+    final pending = _extensionRequests.where((r) => r.isPending).toList();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Pending Date Extensions', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+              const SizedBox(height: 12),
+              if (pending.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: Text('Nothing pending.', style: GoogleFonts.poppins(color: Colors.grey[600]))),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: pending.length,
+                    separatorBuilder: (_, _) => const Divider(height: 16),
+                    itemBuilder: (_, i) {
+                      final r = pending[i];
+                      return InkWell(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          final row = _rows.firstWhere((row) => row.id == r.taskRowId, orElse: () => _rows.first);
+                          _showExtensionDetailDialog(row);
+                        },
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(r.taskName, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  Text('${_dfDisplay.format(r.requestedStartDate)} – ${_dfDisplay.format(r.requestedEndDate)} · ${r.requestedByName}',
+                                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -2572,7 +3396,42 @@ class _TaskProgressMonitorScreenState
                     inPlannedRange &&
                     status == DayStatus.none;
 
+                // Once the task's live end date has actually passed with no
+                // approved extension, block *new* marks past it — approval
+                // always advances endDate directly (see
+                // _respondToExtension), so "no covering approved extension"
+                // reduces to just "today is past the current endDate".
+                // Never blocks anything at/before endDate, and never blocks
+                // a day that's already been marked (only isOverrun +
+                // DayStatus.none), regardless of how the deadline sits.
+                final now = DateTime.now();
+                final deadlinePassed = taskEnd != null &&
+                    now.isAfter(DateTime(taskEnd.year, taskEnd.month, taskEnd.day));
+                final blockedByDeadline =
+                    isOverrun && deadlinePassed && status == DayStatus.none;
+
                 void onCellTap() {
+                  if (!_canEditDatesAndStatus) return; // view-only roles: no-op
+                  if (blockedByDeadline) {
+                    ScaffoldMessenger.of(context)
+                      ..clearSnackBars()
+                      ..showSnackBar(SnackBar(
+                        content: Text(
+                          '${row.taskName.trim()}\'s deadline has passed — request a date extension to continue.',
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                        ),
+                        backgroundColor: Colors.orange[800],
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 4),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        action: SnackBarAction(
+                          label: 'Request',
+                          textColor: Colors.white,
+                          onPressed: () => _onTaskDateTap(row, isStart: false),
+                        ),
+                      ));
+                    return;
+                  }
                   if (isAfterCompletion) {
                     ScaffoldMessenger.of(context)
                       ..clearSnackBars()
@@ -2778,6 +3637,7 @@ class _TaskProgressMonitorScreenState
             style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[400]),
           ),
           const SizedBox(height: 20),
+          if (_canEditDatesAndStatus)
           Row(mainAxisSize: MainAxisSize.min, children: [
             ElevatedButton.icon(
               onPressed: _addRow,

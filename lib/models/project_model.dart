@@ -51,6 +51,16 @@ class ProjectModel {
   final DateTime startDate;
   final DateTime? endDate;
   final String projectManager;
+
+  /// Links [projectManager] to a real Users account, so the system can
+  /// actually notify/authorize them (e.g. task date-extension approvals) —
+  /// [projectManager] itself stays a free-text display name with no
+  /// account behind it. Null on any project created before this field
+  /// existed, or where nobody has linked an account yet; nothing reads this
+  /// as required, so existing projects keep working unchanged.
+  final String? projectManagerUid;
+  final String? projectManagerAccountName;
+
   final List<TeamMember> teamMembers;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -66,6 +76,8 @@ class ProjectModel {
     required this.startDate,
     this.endDate,
     required this.projectManager,
+    this.projectManagerUid,
+    this.projectManagerAccountName,
     required this.teamMembers,
     required this.createdAt,
     required this.updatedAt,
@@ -102,6 +114,8 @@ class ProjectModel {
       startDate: (data['startDate'] as Timestamp).toDate(),
       endDate: data['endDate'] != null ? (data['endDate'] as Timestamp).toDate() : null,
       projectManager: data['projectManager'] ?? '',
+      projectManagerUid: data['projectManagerUid'] as String?,
+      projectManagerAccountName: data['projectManagerAccountName'] as String?,
       teamMembers: teamMembers,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
@@ -120,6 +134,13 @@ class ProjectModel {
       'startDate': Timestamp.fromDate(startDate),
       'endDate': endDate != null ? Timestamp.fromDate(endDate!) : null,
       'projectManager': projectManager,
+      // Unconditional (unlike most other optional fields' if-null guards
+      // above) — this goes through ProjectService.updateProject's partial
+      // .update() call, so omitting the field when null would leave a
+      // previously-linked PM account silently un-clearable instead of
+      // actually unlinking it.
+      'projectManagerUid': projectManagerUid,
+      'projectManagerAccountName': projectManagerAccountName,
       'teamMembers': teamMembers.map((m) => m.toMap()).toList(),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -136,6 +157,8 @@ class ProjectModel {
     DateTime? startDate,
     DateTime? endDate,
     String? projectManager,
+    String? projectManagerUid,
+    String? projectManagerAccountName,
     List<TeamMember>? teamMembers,
     DateTime? updatedAt,
   }) {
@@ -150,6 +173,8 @@ class ProjectModel {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       projectManager: projectManager ?? this.projectManager,
+      projectManagerUid: projectManagerUid ?? this.projectManagerUid,
+      projectManagerAccountName: projectManagerAccountName ?? this.projectManagerAccountName,
       teamMembers: teamMembers ?? this.teamMembers,
       createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),

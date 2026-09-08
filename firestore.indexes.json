@@ -1331,6 +1331,14 @@
         { "fieldPath": "workerUid", "order": "ASCENDING" },
         { "fieldPath": "completedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "TaskDateExtensionRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "requestedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

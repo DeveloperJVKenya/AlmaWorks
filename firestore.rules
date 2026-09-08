@@ -248,8 +248,61 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // One doc per project (docId == project id) holding the full task-progress
+    // grid (rows + daily status ticks). Read stays open to the same roles the
+    // "Task Progress" sidebar item is shown to in base_layout.dart (everyone
+    // except Client) so non-admin roles can still view it. Write is narrower
+    // than that: editing dates/marking status is Admin/MainAdmin only (task
+    // date-extension feature), except that the project's own linked Project
+    // Manager (see Projects/{docId}.projectManagerUid — docId here IS the
+    // project id) may also write, purely so they can apply their own
+    // approved TaskDateExtensionRequests onto the live row even when their
+    // account role isn't Admin/MainAdmin.
     match /TaskProgressMonitor/{docId} {
-      allow read, write: if true;
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
+
+      allow write: if request.auth != null && (
+        inventoryUserRole() in ['MainAdmin', 'Admin']
+        || (
+          // Scoped narrowly to exactly the {rows, updatedAt} shape
+          // _saveToFirestore sends — the same write path used to apply an
+          // approved extension onto the live row. A non-Admin/MainAdmin PM
+          // still can't touch dailyStatuses (that's a different write path,
+          // dotted 'dailyStatuses.$key' keys via _flushDirtyStatuses) —
+          // day-status marking stays Admin/MainAdmin only, no PM exception.
+          get(/databases/$(database)/documents/Projects/$(docId)).data.projectManagerUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rows', 'updatedAt'])
+        )
+      );
+    }
+
+    // Task date-extension requests: an Admin/MainAdmin proposes new
+    // start/end dates for a TaskProgressMonitor row; the change only takes
+    // effect once approved. Read stays as open as TaskProgressMonitor
+    // itself (everyone who can see the grid can see why a task shows an
+    // "extension pending" tag). Only the project's linked PM or a
+    // MainAdmin may resolve (approve/reject) a pending request, and only
+    // the response fields — never the original request's own data.
+    match /TaskDateExtensionRequests/{requestId} {
+      allow read: if request.auth != null
+                   && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'Admin']
+                     && request.resource.data.requestedByUid == request.auth.uid
+                     && request.resource.data.status == 'pending';
+
+      allow update: if request.auth != null
+                     && (inventoryUserRole() == 'MainAdmin'
+                         || request.auth.uid == resource.data.projectManagerUid)
+                     && resource.data.status == 'pending'
+                     && request.resource.data.status in ['approved', 'rejected']
+                     && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['status', 'respondedByUid', 'respondedByName',
+                                    'respondedAt', 'rejectionReason']);
+
+      allow delete: if false;
     }
 
     match /ClientAccessRequests/{requestId} {
