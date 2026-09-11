@@ -13,6 +13,7 @@ import 'package:almaworks/screens/communication/communication_service.dart';
 import 'package:almaworks/models/inventory/checkout_request_model.dart';
 import 'package:almaworks/screens/inventory/asset_detail_screen.dart';
 import 'package:almaworks/screens/inventory/review_checkout_request_screen.dart';
+import 'package:almaworks/screens/schedule/task_progress_monitor_screen.dart';
 import 'package:almaworks/screens/utils/app_theme.dart';
 import 'package:almaworks/services/notification_service.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -267,6 +268,21 @@ class _AlmaWorksAppState extends State<AlmaWorksApp> {
             }
           }
 
+          // ── Task Progress date-extension notifications ──────────────────
+          // Covers TaskProgressMonitorScreen._notifyUser/_notifyAdmins'
+          // project_date_extension_requested/approved/rejected types — all
+          // three carry just a projectId (the approval surface lives on
+          // the Task Progress Monitor screen itself, not a separate
+          // review screen), so tapping any of them opens straight there.
+          else if (notificationType.startsWith('project_date_extension')) {
+            final projectId = receivedAction.payload!['projectId'];
+            widget.logger.d(
+                'Project date-extension notification tapped: type=$notificationType, projectId=$projectId');
+            if (projectId != null) {
+              await _navigateToTaskProgressMonitor(projectId: projectId);
+            }
+          }
+
           // ── Communication (message) notifications ───────────────────────
           else if (notificationType == 'communication') {
             final messageId = receivedAction.payload!['messageId'];
@@ -426,6 +442,40 @@ class _AlmaWorksAppState extends State<AlmaWorksApp> {
         .get();
     if (snap.docs.isEmpty) return null;
     return (role: snap.docs.first.data()['role'] as String? ?? 'Client', username: snap.docs.first.id);
+  }
+
+  /// Opens Task Progress Monitor for the given project — the destination
+  /// for every `project_date_extension_*` notification tap. That screen
+  /// itself surfaces the request's detail/approve UI via its AppBar badge
+  /// (see task_progress_monitor_screen.dart's _showProjectExtensionDetailDialog),
+  /// so there's no separate review screen to route into.
+  Future<void> _navigateToTaskProgressMonitor({required String projectId}) async {
+    final navState = navigatorKey.currentState;
+    if (navState == null) {
+      widget.logger.w('⚠️ _navigateToTaskProgressMonitor: navigatorKey has no current state — app not yet ready');
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(navigatorKey.currentContext!);
+    messenger.showSnackBar(const SnackBar(content: Text('Opening project…'), duration: Duration(seconds: 2)));
+
+    try {
+      final doc = await FirebaseFirestore.instance.collection('Projects').doc(projectId).get();
+      if (!doc.exists) {
+        widget.logger.w('⚠️ _navigateToTaskProgressMonitor: project $projectId not found');
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(const SnackBar(content: Text('That project no longer exists.')));
+        return;
+      }
+      final project = ProjectModel.fromFirestore(doc);
+      messenger.hideCurrentSnackBar();
+      navState.push(
+        MaterialPageRoute(builder: (_) => TaskProgressMonitorScreen(project: project, logger: widget.logger)),
+      );
+      widget.logger.i('✅ _navigateToTaskProgressMonitor: navigated to project $projectId');
+    } catch (e, stack) {
+      widget.logger.e('❌ _navigateToTaskProgressMonitor failed', error: e, stackTrace: stack);
+      messenger.hideCurrentSnackBar();
+    }
   }
 
   /// Opens the asset's detail screen — where Record Return, Acknowledge

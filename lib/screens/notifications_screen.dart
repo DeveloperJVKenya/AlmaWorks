@@ -1,10 +1,62 @@
-import 'package:almaworks/widgets/responsive_layout.dart';
+import 'dart:async';
+
+import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/screens/schedule/task_progress_monitor_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 
+/// One notification merged from either UserNotificationQueue (targeted at
+/// this uid) or AdminNotificationQueue (targeted at this role) — same
+/// shape either way (see InventoryService._notifyUser/_notifyAdmins and
+/// TaskProgressMonitorScreen._notifyUser/_notifyAdmins, which both write
+/// to these two collections).
+class _QueuedNotification {
+  final String id;
+  final String collection; // 'UserNotificationQueue' | 'AdminNotificationQueue'
+  final String title;
+  final String body;
+  final Map<String, dynamic> payload;
+  final DateTime createdAt;
+  final bool isRead;
+
+  const _QueuedNotification({
+    required this.id,
+    required this.collection,
+    required this.title,
+    required this.body,
+    required this.payload,
+    required this.createdAt,
+    required this.isRead,
+  });
+
+  factory _QueuedNotification.fromDoc(DocumentSnapshot doc, String collection) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    return _QueuedNotification(
+      id: doc.id,
+      collection: collection,
+      title: data['title'] ?? '',
+      body: data['body'] ?? '',
+      payload: Map<String, dynamic>.from(data['payload'] as Map? ?? {}),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isRead: data['isRead'] as bool? ?? false,
+    );
+  }
+}
+
+/// Real, Firestore-backed notification center — merges every notification
+/// queued for the signed-in user (UserNotificationQueue, by uid) or their
+/// role (AdminNotificationQueue, by targetRoles) into one chronological
+/// list. Tapping one marks it read and, where the payload names a known
+/// destination (currently: project date-extension requests/decisions),
+/// navigates straight there — the same deep-link a tap on the OS tray
+/// notification does (see main.dart's onActionReceivedMethod, which this
+/// mirrors for in-app taps).
 class NotificationsScreen extends StatefulWidget {
   final Logger? logger;
-  
+
   const NotificationsScreen({super.key, this.logger});
 
   @override
@@ -13,450 +65,243 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   late final Logger _logger;
-  final List<NotificationItem> _notifications = [
-    NotificationItem(
-      id: '1',
-      title: 'RFI Response Required',
-      message: 'Foundation clarification request needs your attention',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-      type: NotificationType.urgent,
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '2',
-      title: 'Weather Alert',
-      message: 'Heavy rain expected at Kilimani site tomorrow',
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      type: NotificationType.weather,
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '3',
-      title: 'Safety Inspection Completed',
-      message: 'Weekly safety inspection passed with score 9.2',
-      timestamp: DateTime.now().subtract(const Duration(hours: 4)),
-      type: NotificationType.safety,
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '4',
-      title: 'Budget Update',
-      message: 'Project budget updated for Downtown Office Complex',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      type: NotificationType.financial,
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '5',
-      title: 'Task Assignment',
-      message: 'New task assigned: Review Change Order #23',
-      timestamp: DateTime.now().subtract(const Duration(days: 2)),
-      type: NotificationType.task,
-      isRead: true,
-    ),
-  ];
+  String? _currentUid;
+  String _currentRole = 'Client';
+
+  List<_QueuedNotification> _userNotifications = [];
+  List<_QueuedNotification> _adminNotifications = [];
+  StreamSubscription<QuerySnapshot>? _userSub;
+  StreamSubscription<QuerySnapshot>? _adminSub;
+  bool _isLoading = true;
+
+  List<_QueuedNotification> get _all {
+    final combined = [..._userNotifications, ..._adminNotifications];
+    combined.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return combined;
+  }
+
+  int get _unreadCount => _all.where((n) => !n.isRead).length;
 
   @override
   void initState() {
     super.initState();
     _logger = widget.logger ?? Logger();
     _logger.i('🔔 NotificationsScreen: Initialized');
+    _init();
+  }
+
+  Future<void> _init() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+    _currentUid = user.uid;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('uid', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+      if (snap.docs.isNotEmpty) {
+        _currentRole = snap.docs.first.data()['role'] as String? ?? 'Client';
+      }
+    } catch (e) {
+      _logger.e('❌ NotificationsScreen: failed to resolve role', error: e);
+    }
+
+    _userSub = FirebaseFirestore.instance
+        .collection('UserNotificationQueue')
+        .where('targetUid', isEqualTo: _currentUid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      setState(() {
+        _userNotifications =
+            snap.docs.map((d) => _QueuedNotification.fromDoc(d, 'UserNotificationQueue')).toList();
+        _isLoading = false;
+      });
+    }, onError: (e) {
+      _logger.e('❌ NotificationsScreen: user queue stream error', error: e);
+      if (mounted) setState(() => _isLoading = false);
+    });
+
+    _adminSub = FirebaseFirestore.instance
+        .collection('AdminNotificationQueue')
+        .where('targetRoles', arrayContains: _currentRole)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      setState(() {
+        _adminNotifications =
+            snap.docs.map((d) => _QueuedNotification.fromDoc(d, 'AdminNotificationQueue')).toList();
+        _isLoading = false;
+      });
+    }, onError: (e) {
+      _logger.e('❌ NotificationsScreen: admin queue stream error', error: e);
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _userSub?.cancel();
+    _adminSub?.cancel();
+    _logger.i('🧹 NotificationsScreen: Disposing resources');
+    super.dispose();
+  }
+
+  Future<void> _markRead(_QueuedNotification n) async {
+    if (n.isRead) return;
+    try {
+      await FirebaseFirestore.instance.collection(n.collection).doc(n.id).update({'isRead': true});
+    } catch (e) {
+      _logger.e('❌ NotificationsScreen: failed to mark read', error: e);
+    }
+  }
+
+  Future<void> _markAllAsRead() async {
+    final unread = _all.where((n) => !n.isRead).toList();
+    if (unread.isEmpty) return;
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      for (final n in unread) {
+        batch.update(FirebaseFirestore.instance.collection(n.collection).doc(n.id), {'isRead': true});
+      }
+      await batch.commit();
+      _logger.i('✅ NotificationsScreen: All notifications marked as read');
+    } catch (e) {
+      _logger.e('❌ NotificationsScreen: failed to mark all read', error: e);
+    }
+  }
+
+  /// Mirrors main.dart's onActionReceivedMethod dispatch for the OS-tray
+  /// tap — same payload `type`/`projectId` fields, so a notification opens
+  /// the same place whether tapped here or from the system tray.
+  Future<void> _handleTap(_QueuedNotification n) async {
+    await _markRead(n);
+    final type = n.payload['type'] as String?;
+    final projectId = n.payload['projectId'] as String?;
+    if (type == null || projectId == null) return;
+
+    if (type.startsWith('project_date_extension') || type.startsWith('task_date_extension')) {
+      await _openProject(projectId);
+    }
+  }
+
+  Future<void> _openProject(String projectId) async {
+    if (!mounted) return;
+    try {
+      final doc = await FirebaseFirestore.instance.collection('Projects').doc(projectId).get();
+      if (!doc.exists) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('That project no longer exists.', style: GoogleFonts.poppins()),
+          ));
+        }
+        return;
+      }
+      final project = ProjectModel.fromFirestore(doc);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => TaskProgressMonitorScreen(project: project, logger: _logger)),
+      );
+    } catch (e) {
+      _logger.e('❌ NotificationsScreen: failed to open project', error: e);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth >= 600 && screenWidth < 1200;
-    
-    return ResponsiveLayout(
-      mobile: _buildMobileLayout(),
-      tablet: _buildTabletLayout(isTablet),
-      desktop: _buildDesktopLayout(),
-    );
-  }
-
-  Widget _buildMobileLayout() {
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          Expanded(child: _buildNotificationsList(true)),
-          _buildFooter(context, true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabletLayout(bool isTablet) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: Row(
-        children: [
-          _buildSidebar(context, isTablet),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(child: _buildNotificationsList(false)),
-                _buildFooter(context, false),
-              ],
+      appBar: AppBar(
+        title: Text('Notifications', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF0A2E5A),
+        foregroundColor: Colors.white,
+        actions: [
+          if (_unreadCount > 0)
+            TextButton(
+              onPressed: _markAllAsRead,
+              child: Text('Mark All Read', style: GoogleFonts.poppins(color: Colors.white)),
             ),
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: Row(
-        children: [
-          _buildSidebar(context, false),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(child: _buildNotificationsList(false)),
-                _buildFooter(context, false),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: const Text(
-        'Notifications',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-      centerTitle: true,
-      backgroundColor: const Color(0xFF0A2E5A),
-      foregroundColor: Colors.white,
-      actions: [
-        TextButton(
-          onPressed: _markAllAsRead,
-          child: const Text(
-            'Mark All Read',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSidebar(BuildContext context, bool isTablet) {
-    return Container(
-      width: isTablet ? 280 : 300,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(2, 0),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            height: 120,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Color(0xFF0A2E5A),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'AlmaWorks',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _all.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.notifications_none_rounded, size: 56, color: Colors.grey[300]),
+                      const SizedBox(height: 12),
+                      Text('No notifications yet', style: GoogleFonts.poppins(color: Colors.grey[500])),
+                    ],
                   ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: _all.length,
+                  itemBuilder: (context, index) => _buildNotificationItem(_all[index]),
                 ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Site Management',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.dashboard),
-                  title: const Text('Dashboard'),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.folder),
-                  title: const Text('Projects'),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.notifications),
-                  title: const Text('Notifications'),
-                  selected: true,
-                  onTap: () {},
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Text(
-                    'System Sections',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.description),
-                  title: const Text('Documents'),
-                  enabled: false,
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.architecture),
-                  title: const Text('Drawings'),
-                  enabled: false,
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.schedule),
-                  title: const Text('Schedule'),
-                  enabled: false,
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.security),
-                  title: const Text('Quality & Safety'),
-                  enabled: false,
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.analytics),
-                  title: const Text('Reports'),
-                  enabled: false,
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Photo Gallery'),
-                  enabled: false,
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.attach_money),
-                  title: const Text('Financials'),
-                  enabled: false,
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildNotificationsList(bool isMobile) {
-    return ListView.builder(
-      padding: EdgeInsets.all(isMobile ? 12 : 16),
-      itemCount: _notifications.length,
-      itemBuilder: (context, index) {
-        final notification = _notifications[index];
-        return _buildNotificationItem(notification);
-      },
-    );
-  }
-
-  Widget _buildNotificationItem(NotificationItem notification) {
+  Widget _buildNotificationItem(_QueuedNotification n) {
+    final icon = _iconFor(n.payload['type'] as String?);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: notification.isRead 
-          ? Colors.white 
-          : const Color(0xFF0A2E5A).withValues(alpha: 0.05),
+      color: n.isRead ? Colors.white : const Color(0xFF0A2E5A).withValues(alpha: 0.05),
       child: ListTile(
         leading: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: notification.getTypeColor().withValues(alpha: 0.1),
+            color: icon.$2.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Icon(
-            notification.getTypeIcon(),
-            color: notification.getTypeColor(),
-            size: 20,
-          ),
+          child: Icon(icon.$1, color: icon.$2, size: 20),
         ),
-        title: Text(
-          notification.title,
-          style: TextStyle(
-            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
-          ),
-        ),
+        title: Text(n.title,
+            style: GoogleFonts.poppins(fontWeight: n.isRead ? FontWeight.normal : FontWeight.w700, fontSize: 13.5)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(notification.message),
+            const SizedBox(height: 2),
+            Text(n.body, style: GoogleFonts.poppins(fontSize: 12.5)),
             const SizedBox(height: 4),
-            Text(
-              _formatTimestamp(notification.timestamp),
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
-            ),
+            Text(_formatTimestamp(n.createdAt), style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 11)),
           ],
         ),
-        trailing: notification.isRead 
-            ? null 
+        trailing: n.isRead
+            ? null
             : Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0A2E5A),
-                  shape: BoxShape.circle,
-                ),
+                width: 8, height: 8,
+                decoration: const BoxDecoration(color: Color(0xFF0A2E5A), shape: BoxShape.circle),
               ),
-        onTap: () {
-          setState(() {
-            notification.isRead = true;
-          });
-          _logger.i('📖 NotificationsScreen: Notification marked as read: ${notification.title}');
-        },
+        onTap: () => _handleTap(n),
       ),
     );
   }
 
-  Widget _buildFooter(BuildContext context, bool isMobile) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 12 : 16),
-      color: const Color(0xFF0A2E5A),
-      child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: isMobile ? 12 : 14,
-          fontWeight: FontWeight.w400,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
+  (IconData, Color) _iconFor(String? type) {
+    if (type == null) return (Icons.info_outline, Colors.grey);
+    if (type.startsWith('project_date_extension_requested')) return (Icons.hourglass_top_rounded, Colors.orange);
+    if (type.startsWith('project_date_extension_approved')) return (Icons.check_circle_outline, Colors.green);
+    if (type.startsWith('project_date_extension_rejected')) return (Icons.cancel_outlined, Colors.red);
+    if (type.startsWith('inventory')) return (Icons.inventory_2_outlined, Colors.brown);
+    if (type.startsWith('communication')) return (Icons.mail_outline, Colors.blueAccent);
+    return (Icons.info_outline, Colors.grey);
   }
 
   String _formatTimestamp(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-    
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else {
-      return '${difference.inDays}d ago';
-    }
+    final difference = DateTime.now().difference(timestamp);
+    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
+    if (difference.inHours < 24) return '${difference.inHours}h ago';
+    return '${difference.inDays}d ago';
   }
-
-  void _markAllAsRead() {
-    setState(() {
-      for (var notification in _notifications) {
-        notification.isRead = true;
-      }
-    });
-    _logger.i('✅ NotificationsScreen: All notifications marked as read');
-  }
-
-  @override
-  void dispose() {
-    _logger.i('🧹 NotificationsScreen: Disposing resources');
-    super.dispose();
-  }
-}
-
-class NotificationItem {
-  final String id;
-  final String title;
-  final String message;
-  final DateTime timestamp;
-  final NotificationType type;
-  bool isRead;
-
-  NotificationItem({
-    required this.id,
-    required this.title,
-    required this.message,
-    required this.timestamp,
-    required this.type,
-    required this.isRead,
-  });
-
-  IconData getTypeIcon() {
-    switch (type) {
-      case NotificationType.urgent:
-        return Icons.warning;
-      case NotificationType.weather:
-        return Icons.cloud;
-      case NotificationType.safety:
-        return Icons.security;
-      case NotificationType.financial:
-        return Icons.attach_money;
-      case NotificationType.task:
-        return Icons.assignment;
-      case NotificationType.general:
-        return Icons.info;
-    }
-  }
-
-  Color getTypeColor() {
-    switch (type) {
-      case NotificationType.urgent:
-        return Colors.red;
-      case NotificationType.weather:
-        return Colors.blue;
-      case NotificationType.safety:
-        return Colors.orange;
-      case NotificationType.financial:
-        return Colors.green;
-      case NotificationType.task:
-        return Colors.purple;
-      case NotificationType.general:
-        return Colors.grey;
-    }
-  }
-}
-
-enum NotificationType {
-  urgent,
-  weather,
-  safety,
-  financial,
-  task,
-  general,
 }

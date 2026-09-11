@@ -12,6 +12,7 @@ import 'package:almaworks/screens/projects/project_summary_screen.dart';
 import 'package:almaworks/screens/documents_screen.dart';
 import 'package:almaworks/screens/drawings_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_screen.dart';
+import 'package:almaworks/screens/notifications_screen.dart';
 import 'package:almaworks/screens/quality_and_safety_screen.dart';
 import 'package:almaworks/screens/reports/reports_screen.dart';
 import 'package:almaworks/screens/safety_training/safety_training_screen.dart';
@@ -76,12 +77,46 @@ class _BaseLayoutState extends State<BaseLayout> {
   final ClientRequestService _requestService = ClientRequestService();
   final AuthService _authService = AuthService();
 
+  // Bell icon badge — merges UserNotificationQueue (by uid) and
+  // AdminNotificationQueue (by role), same two collections
+  // NotificationsScreen itself reads (see notifications_screen.dart).
+  // Lives here (not per-screen) so the badge is correct everywhere, since
+  // BaseLayout wraps every screen in the app.
+  int _unreadUserCount = 0;
+  int _unreadAdminCount = 0;
+  StreamSubscription<QuerySnapshot>? _unreadUserSub;
+  StreamSubscription<QuerySnapshot>? _unreadAdminSub;
+
+  int get _unreadNotificationCount => _unreadUserCount + _unreadAdminCount;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _fetchUserRoleAndAccess();
     });
+  }
+
+  void _subscribeNotificationBadge(String uid, String role) {
+    _unreadUserSub?.cancel();
+    _unreadAdminSub?.cancel();
+    _unreadUserSub = FirebaseFirestore.instance
+        .collection('UserNotificationQueue')
+        .where('targetUid', isEqualTo: uid)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      setState(() => _unreadUserCount = snap.docs.where((d) => (d.data()['isRead'] as bool?) != true).length);
+    }, onError: (e) => widget.logger.e('❌ BaseLayout: user notification badge stream error', error: e));
+
+    _unreadAdminSub = FirebaseFirestore.instance
+        .collection('AdminNotificationQueue')
+        .where('targetRoles', arrayContains: role)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      setState(() => _unreadAdminCount = snap.docs.where((d) => (d.data()['isRead'] as bool?) != true).length);
+    }, onError: (e) => widget.logger.e('❌ BaseLayout: admin notification badge stream error', error: e));
   }
 
   Future<void> _fetchUserRoleAndAccess() async {
@@ -148,6 +183,7 @@ class _BaseLayoutState extends State<BaseLayout> {
             _isLoadingUserData = false;
           });
         }
+        _subscribeNotificationBadge(user.uid, role);
 
         widget.logger.i(
             '✅ BaseLayout: User role fetched: $role, Granted Projects: ${grantedIds.length}');
@@ -169,6 +205,13 @@ class _BaseLayoutState extends State<BaseLayout> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _unreadUserSub?.cancel();
+    _unreadAdminSub?.cancel();
+    super.dispose();
   }
 
   @override
@@ -211,7 +254,35 @@ class _BaseLayoutState extends State<BaseLayout> {
       centerTitle: true,
       backgroundColor: const Color(0xFF0A2E5A),
       foregroundColor: Colors.white,
-      actions: widget.actions,
+      actions: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => NotificationsScreen(logger: widget.logger)),
+              ),
+              icon: const Icon(Icons.notifications_outlined),
+              tooltip: 'Notifications',
+            ),
+            if (_unreadNotificationCount > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(8)),
+                  child: Text(
+                    _unreadNotificationCount > 99 ? '99+' : '$_unreadNotificationCount',
+                    style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        if (widget.actions != null) ...widget.actions!,
+      ],
     );
   }
 

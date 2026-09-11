@@ -5,10 +5,19 @@ class TeamMember {
   final String role; // 'subcontractor', 'supplier', 'technician', 'manager'
   final String? category;
 
+  /// Links this entry to a real Users account — set only for the entry
+  /// EditProjectScreen auto-manages for the project's linked PM (see
+  /// ProjectModel.projectManagerUid); every manually-added team member
+  /// leaves this null. Nothing else in the app sets or reads this field
+  /// today, so its presence is exactly how that one synced entry is told
+  /// apart from ordinary free-text team members.
+  final String? uid;
+
   TeamMember({
     required this.name,
     required this.role,
     this.category,
+    this.uid,
   });
 
   factory TeamMember.fromMap(Map<String, dynamic> map) {
@@ -16,6 +25,7 @@ class TeamMember {
       name: map['name'] ?? '',
       role: map['role'] ?? '',
       category: map['category'],
+      uid: map['uid'] as String?,
     );
   }
 
@@ -24,6 +34,7 @@ class TeamMember {
       'name': name,
       'role': role,
       if (category != null) 'category': category,
+      if (uid != null) 'uid': uid,
     };
   }
 
@@ -31,11 +42,13 @@ class TeamMember {
     String? name,
     String? role,
     String? category,
+    String? uid,
   }) {
     return TeamMember(
       name: name ?? this.name,
       role: role ?? this.role,
       category: category ?? this.category,
+      uid: uid ?? this.uid,
     );
   }
 }

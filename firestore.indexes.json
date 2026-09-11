@@ -1280,6 +1280,22 @@
       ]
     },
     {
+      "collectionGroup": "UserNotificationQueue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "targetUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "AdminNotificationQueue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "targetRoles", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "Communication",
       "queryScope": "COLLECTION",
       "fields": [
@@ -1333,7 +1349,7 @@
       ]
     },
     {
-      "collectionGroup": "TaskDateExtensionRequests",
+      "collectionGroup": "ProjectDateExtensionRequests",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "projectId", "order": "ASCENDING" },

@@ -252,12 +252,13 @@ service cloud.firestore {
     // grid (rows + daily status ticks). Read stays open to the same roles the
     // "Task Progress" sidebar item is shown to in base_layout.dart (everyone
     // except Client) so non-admin roles can still view it. Write is narrower
-    // than that: editing dates/marking status is Admin/MainAdmin only (task
-    // date-extension feature), except that the project's own linked Project
-    // Manager (see Projects/{docId}.projectManagerUid — docId here IS the
-    // project id) may also write, purely so they can apply their own
-    // approved TaskDateExtensionRequests onto the live row even when their
-    // account role isn't Admin/MainAdmin.
+    // than that: editing task dates/marking status is Admin/MainAdmin only,
+    // except that the project's own linked Project Manager (see
+    // Projects/{docId}.projectManagerUid — docId here IS the project id) may
+    // also write, purely so they can apply their own approved
+    // ProjectDateExtensionRequests (shifting phase/project-title rows whose
+    // date matched the old project boundary) even when their account role
+    // isn't Admin/MainAdmin.
     match /TaskProgressMonitor/{docId} {
       allow read: if request.auth != null
                    && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
@@ -267,24 +268,26 @@ service cloud.firestore {
         || (
           // Scoped narrowly to exactly the {rows, updatedAt} shape
           // _saveToFirestore sends — the same write path used to apply an
-          // approved extension onto the live row. A non-Admin/MainAdmin PM
-          // still can't touch dailyStatuses (that's a different write path,
-          // dotted 'dailyStatuses.$key' keys via _flushDirtyStatuses) —
-          // day-status marking stays Admin/MainAdmin only, no PM exception.
+          // approved project extension's phase-row shifts. A non-Admin/
+          // MainAdmin PM still can't touch dailyStatuses (that's a
+          // different write path, dotted 'dailyStatuses.$key' keys via
+          // _flushDirtyStatuses) — day-status marking stays Admin/MainAdmin
+          // only, no PM exception.
           get(/databases/$(database)/documents/Projects/$(docId)).data.projectManagerUid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rows', 'updatedAt'])
         )
       );
     }
 
-    // Task date-extension requests: an Admin/MainAdmin proposes new
-    // start/end dates for a TaskProgressMonitor row; the change only takes
-    // effect once approved. Read stays as open as TaskProgressMonitor
-    // itself (everyone who can see the grid can see why a task shows an
-    // "extension pending" tag). Only the project's linked PM or a
-    // MainAdmin may resolve (approve/reject) a pending request, and only
+    // Project date-extension requests: an Admin/MainAdmin proposes new
+    // start/end dates for the *project itself* (Projects/{projectId}) —
+    // the single top-level approval gate task dates are checked against
+    // (see TaskProgressMonitor's write rule below and
+    // task_progress_monitor_screen.dart's _onTaskDateTap). Read stays as
+    // open as TaskProgressMonitor itself. Only the project's linked PM or
+    // a MainAdmin may resolve (approve/reject) a pending request, and only
     // the response fields — never the original request's own data.
-    match /TaskDateExtensionRequests/{requestId} {
+    match /ProjectDateExtensionRequests/{requestId} {
       allow read: if request.auth != null
                    && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 

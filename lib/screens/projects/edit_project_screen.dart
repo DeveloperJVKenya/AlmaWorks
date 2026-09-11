@@ -73,6 +73,19 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     _selectedPmUid = widget.project.projectManagerUid;
     _selectedPmName = widget.project.projectManagerAccountName;
     _teamMembers.addAll(widget.project.teamMembers);
+
+    // Seed the dropdown's item list with the currently-linked PM (from the
+    // project doc's own snapshot name) *before* the async query below ever
+    // runs. DropdownButtonFormField asserts its initialValue matches
+    // exactly one item — on the very first frame, before _loadPmCandidates
+    // resolves, _pmCandidates would otherwise be empty while _selectedPmUid
+    // already holds a real uid, which throws immediately. Also covers the
+    // case where that account's role later changed away from Admin/
+    // MainAdmin (so the fresh query below would no longer include them) —
+    // without this, opening Edit Project for that project would crash.
+    if (_selectedPmUid != null) {
+      _pmCandidates = [(uid: _selectedPmUid!, name: _selectedPmName ?? _projectManagerController.text)];
+    }
   }
 
   /// MainAdmin/Admin accounts eligible to be linked as this project's PM —
@@ -88,8 +101,16 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
       final candidates = snap.docs
           .map((d) => (uid: d.data()['uid'] as String? ?? '', name: d.id))
           .where((c) => c.uid.isNotEmpty)
-          .toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
+          .toList();
+      // Keep the seeded currently-linked PM even if the fresh query didn't
+      // return them (role changed, account since removed, etc.) — dropping
+      // them here would reintroduce the same crash this seeding exists to
+      // prevent, just delayed until the query resolves instead of on the
+      // first frame.
+      if (_selectedPmUid != null && !candidates.any((c) => c.uid == _selectedPmUid)) {
+        candidates.add((uid: _selectedPmUid!, name: _selectedPmName ?? _projectManagerController.text));
+      }
+      candidates.sort((a, b) => a.name.compareTo(b.name));
       if (mounted) {
         setState(() {
           _pmCandidates = candidates;
@@ -650,6 +671,27 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     }
   }
 
+  /// Keeps the linked PM account (see _selectedPmUid) reflected as a real
+  /// entry in _teamMembers, role 'manager' — called right before saving.
+  /// Every _teamMembers entry set anywhere else in this screen always has
+  /// uid == null (see _addTeamMember/team member picker below, which never
+  /// sets it), so "has a uid" is exactly how the one entry this method
+  /// manages is told apart from anything the admin added manually — that's
+  /// what lets this safely remove-and-re-add its own entry on every save
+  /// (covers switching or clearing the linked PM) without ever touching a
+  /// manually-added member, even one also named 'manager'.
+  void _syncPmTeamMemberEntry() {
+    _teamMembers.removeWhere((m) => m.uid != null);
+    final pmUid = _selectedPmUid;
+    if (pmUid != null) {
+      _teamMembers.add(TeamMember(
+        name: _selectedPmName ?? _projectManagerController.text.trim(),
+        role: 'manager',
+        uid: pmUid,
+      ));
+    }
+  }
+
   void _addTeamMember() {
     if (_selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -730,7 +772,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
       });
       try {
         _logger.d('🏗️ EditProjectScreen: Creating updated project model');
-        
+        _syncPmTeamMemberEntry();
+
         final updatedProject = ProjectModel(
           id: widget.project.id,
           name: _nameController.text.trim(),

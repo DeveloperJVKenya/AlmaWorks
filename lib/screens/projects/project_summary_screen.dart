@@ -820,9 +820,18 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                     itemCount: members.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (_, idx) {
-                      final member    = members[idx];
-                      final isManager =
-                          member.name == _currentProject.projectManager;
+                      final member = members[idx];
+                      // Prefer the reliable uid match (set only on the one
+                      // entry EditProjectScreen auto-syncs for the linked PM
+                      // — see TeamMember.uid) over the old plain name-string
+                      // comparison, which silently drifts if the free-text
+                      // projectManager field and the linked account's name
+                      // ever differ. Falls back to the name match so a
+                      // project with a manager only ever set via the old
+                      // free-text field (no linked account) still badges.
+                      final isManager = _currentProject.projectManagerUid != null
+                          ? member.uid == _currentProject.projectManagerUid
+                          : member.name == _currentProject.projectManager;
                       final initials  = member.name
                           .trim()
                           .split(' ')

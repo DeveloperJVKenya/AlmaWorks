@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// A request to change a Task Progress Monitor row's start/end date —
-/// raised by an Admin/MainAdmin, approved or rejected by the project's
-/// linked Project Manager or any MainAdmin. The task's *live* dates (in
-/// TaskProgressMonitor/{projectId}.rows) only change once a request here
-/// is approved; a pending or rejected request never touches them.
-class TaskDateExtensionRequestModel {
+/// A request to change a PROJECT's own start/end date — raised by an
+/// Admin/MainAdmin, approved or rejected by the project's linked Project
+/// Manager or any MainAdmin. This is the single top-level approval gate:
+/// once approved, the project's live dates (Projects/{id}) move, any
+/// TaskProgressMonitor phase/project-title row whose date matched the old
+/// project boundary shifts with it, and individual task dates become
+/// freely editable by Admin/MainAdmin within the new project bounds —
+/// no separate per-task approval.
+class ProjectDateExtensionRequestModel {
   static const statusPending = 'pending';
   static const statusApproved = 'approved';
   static const statusRejected = 'rejected';
@@ -20,13 +23,10 @@ class TaskDateExtensionRequestModel {
   final String? projectManagerUid;
   final String? projectManagerName;
 
-  final String taskRowId;
-  final String taskName;
-
   final DateTime originalStartDate;
-  final DateTime originalEndDate;
+  final DateTime? originalEndDate;
   final DateTime requestedStartDate;
-  final DateTime requestedEndDate;
+  final DateTime? requestedEndDate;
   final String reason;
 
   final String status;
@@ -41,18 +41,16 @@ class TaskDateExtensionRequestModel {
   final DateTime? respondedAt;
   final String? rejectionReason;
 
-  const TaskDateExtensionRequestModel({
+  const ProjectDateExtensionRequestModel({
     required this.id,
     required this.projectId,
     required this.projectName,
     this.projectManagerUid,
     this.projectManagerName,
-    required this.taskRowId,
-    required this.taskName,
     required this.originalStartDate,
-    required this.originalEndDate,
+    this.originalEndDate,
     required this.requestedStartDate,
-    required this.requestedEndDate,
+    this.requestedEndDate,
     required this.reason,
     this.status = statusPending,
     required this.requestedByUid,
@@ -72,20 +70,18 @@ class TaskDateExtensionRequestModel {
   bool get changesStart => requestedStartDate != originalStartDate;
   bool get changesEnd => requestedEndDate != originalEndDate;
 
-  factory TaskDateExtensionRequestModel.fromFirestore(DocumentSnapshot doc) {
+  factory ProjectDateExtensionRequestModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? <String, dynamic>{};
-    return TaskDateExtensionRequestModel(
+    return ProjectDateExtensionRequestModel(
       id: doc.id,
       projectId: data['projectId'] ?? '',
       projectName: data['projectName'] ?? '',
       projectManagerUid: data['projectManagerUid'] as String?,
       projectManagerName: data['projectManagerName'] as String?,
-      taskRowId: data['taskRowId'] ?? '',
-      taskName: data['taskName'] ?? '',
       originalStartDate: (data['originalStartDate'] as Timestamp).toDate(),
-      originalEndDate: (data['originalEndDate'] as Timestamp).toDate(),
+      originalEndDate: (data['originalEndDate'] as Timestamp?)?.toDate(),
       requestedStartDate: (data['requestedStartDate'] as Timestamp).toDate(),
-      requestedEndDate: (data['requestedEndDate'] as Timestamp).toDate(),
+      requestedEndDate: (data['requestedEndDate'] as Timestamp?)?.toDate(),
       reason: data['reason'] ?? '',
       status: data['status'] ?? statusPending,
       requestedByUid: data['requestedByUid'] ?? '',
@@ -105,12 +101,10 @@ class TaskDateExtensionRequestModel {
       'projectName': projectName,
       'projectManagerUid': projectManagerUid,
       'projectManagerName': projectManagerName,
-      'taskRowId': taskRowId,
-      'taskName': taskName,
       'originalStartDate': Timestamp.fromDate(originalStartDate),
-      'originalEndDate': Timestamp.fromDate(originalEndDate),
+      if (originalEndDate != null) 'originalEndDate': Timestamp.fromDate(originalEndDate!),
       'requestedStartDate': Timestamp.fromDate(requestedStartDate),
-      'requestedEndDate': Timestamp.fromDate(requestedEndDate),
+      if (requestedEndDate != null) 'requestedEndDate': Timestamp.fromDate(requestedEndDate!),
       'reason': reason,
       'status': status,
       'requestedByUid': requestedByUid,
