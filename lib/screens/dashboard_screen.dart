@@ -71,14 +71,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final userData = querySnapshot.docs.first.data();
         final role = userData['role'] as String? ?? 'Client';
         
-        // Client and Technician are both restricted to their granted
-        // project list (Technician just sees Admin-equivalent sections
-        // once inside one — see BaseLayout for that split).
+        // Client, Technician, and SubContractor are all restricted to
+        // their granted project list — Technician sees Admin-equivalent
+        // sections once inside one, SubContractor sees Documents-only for
+        // their own uploads (see BaseLayout for that split).
         List<String> grantedIds = [];
-        if (role == 'Client' || role == 'Technician') {
+        if (role == 'Client' || role == 'Technician' || role == 'SubContractor') {
           grantedIds = await _requestService.getClientGrantedProjects(user.uid);
           _logger.i('✅ DashboardScreen: $role granted project IDs: $grantedIds');
         }
+
+        // Persists this device's FCM token to the signed-in user's Users
+        // doc (fcmToken/fcmTokens — see NotificationService._persistFcmToken)
+        // so the onAdminNotificationQueued/onUserNotificationQueued Cloud
+        // Functions have something to actually send a push to. This was
+        // never being called anywhere in the app — _persistFcmToken
+        // early-returns if FirebaseAuth.instance.currentUser is null, so
+        // calling it at cold app start (before login) wouldn't have worked
+        // either; here, right where `user` is already confirmed signed in,
+        // is the correct place. Root cause of Inventory checkout/return
+        // pushes never reaching devices: the queue docs and Cloud
+        // Functions were always correct, but every device's token field
+        // was empty, so there was never anything to send to.
+        await NotificationService().initialize();
 
         // ── Admin / MainAdmin / SystemAdmin: attach the AdminNotificationQueue listener ──
         if (role == 'Admin' || role == 'MainAdmin' || role == 'SystemAdmin') {
@@ -152,11 +167,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
-    // Check if the account has access — Technician goes through the exact
-    // same request/approval flow as Client (see ClientRequestService) and is
-    // just as capable of having every project revoked, so it needs the same
-    // "no access yet / pending / all revoked" gate, not just Client.
-    if (_userRole == 'Client' || _userRole == 'Technician') {
+    // Check if the account has access — Technician and SubContractor both
+    // go through the exact same request/approval flow as Client (see
+    // ClientRequestService) and are just as capable of having every
+    // project revoked, so they need the same "no access yet / pending /
+    // all revoked" gate, not just Client.
+    if (_userRole == 'Client' || _userRole == 'Technician' || _userRole == 'SubContractor') {
       return StreamBuilder<ClientRequest?>(
         stream: _requestService.getClientRequestStatus(
           FirebaseAuth.instance.currentUser!.uid
@@ -723,7 +739,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (Navigator.canPop(context)) Navigator.pop(context);
           },
         ),
-        if (_userRole == 'MainAdmin' || _userRole == 'Admin' || _userRole == 'SystemAdmin')
+        // SystemAdmin is deliberately excluded — role/access-request
+        // management is Admin/MainAdmin territory (Inventory approvals
+        // are SystemAdmin's own separate lane), and per requirement they
+        // shouldn't even see this section exists.
+        if (_userRole == 'MainAdmin' || _userRole == 'Admin')
           ListTile(
             leading: const Icon(Icons.supervised_user_circle),
             title: const Text('Client Access Requests'),
@@ -758,10 +778,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             logger: _logger,
             initialTabIndex: _projectsInitialTab,
             clientProjectIds:
-                (_userRole == 'Client' || _userRole == 'Technician') ? _grantedProjectIds : null,
+                (_userRole == 'Client' || _userRole == 'Technician' || _userRole == 'SubContractor')
+                    ? _grantedProjectIds
+                    : null,
           );
         case 2:
-          if (_userRole == 'MainAdmin' || _userRole == 'Admin' || _userRole == 'SystemAdmin') {
+          // SystemAdmin excluded — see the matching menu-tile guard above.
+          if (_userRole == 'MainAdmin' || _userRole == 'Admin') {
             _logger.d('✅ DashboardScreen: Returning ClientAccessRequestsScreen');
             return ClientAccessRequestsScreen(logger: _logger);
           } else {

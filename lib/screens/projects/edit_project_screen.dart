@@ -88,20 +88,31 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     }
   }
 
-  /// MainAdmin/Admin accounts eligible to be linked as this project's PM —
-  /// approval rights for task date-extension requests go to whoever is
-  /// linked here (or any MainAdmin, regardless of link) plus this drives
-  /// who a request actually gets a notification sent to.
+  /// Eligible to be linked as this project's PM — approval rights for
+  /// project date-extension requests go to whoever is linked here (or any
+  /// MainAdmin, regardless of link), and this also drives who a request
+  /// actually gets a notification sent to. Pool is the union of every
+  /// MainAdmin/Admin account (unchanged, backward-compatible with projects
+  /// linked before the PM-eligibility flag existed) plus anyone explicitly
+  /// granted "Project Manager eligible" via the Role Access Requests
+  /// screen's Change Role dialog (MainAdmin-only there) — that flag rides
+  /// on top of a person's existing role rather than replacing it, so it
+  /// can reach people this role-only query wouldn't otherwise include.
   Future<void> _loadPmCandidates() async {
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('Users')
-          .where('role', whereIn: ['MainAdmin', 'Admin'])
-          .get();
-      final candidates = snap.docs
-          .map((d) => (uid: d.data()['uid'] as String? ?? '', name: d.id))
-          .where((c) => c.uid.isNotEmpty)
-          .toList();
+      final results = await Future.wait([
+        FirebaseFirestore.instance.collection('Users').where('role', whereIn: ['MainAdmin', 'Admin']).get(),
+        FirebaseFirestore.instance.collection('Users').where('isProjectManager', isEqualTo: true).get(),
+      ]);
+      final seenUids = <String>{};
+      final candidates = <({String uid, String name})>[];
+      for (final snap in results) {
+        for (final d in snap.docs) {
+          final uid = d.data()['uid'] as String? ?? '';
+          if (uid.isEmpty || !seenUids.add(uid)) continue; // dedupe across the two queries
+          candidates.add((uid: uid, name: d.id));
+        }
+      }
       // Keep the seeded currently-linked PM even if the fresh query didn't
       // return them (role changed, account since removed, etc.) — dropping
       // them here would reintroduce the same crash this seeding exists to

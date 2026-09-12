@@ -325,7 +325,12 @@ class _BaseLayoutState extends State<BaseLayout> {
     // are the granted-project restriction (isRestrictedRole below) and the
     // Financials exclusion.
     final bool isTechnician = _userRole == 'Technician';
-    final bool isRestrictedRole = isClient || isTechnician;
+    // Sub-contractor: Documents-only (their own uploads, on their granted
+    // project(s)) per requirement — everything else in the sidebar below
+    // is hidden for them, and they share the same granted-project
+    // restriction Client/Technician already have.
+    final bool isSubContractor = _userRole == 'SubContractor';
+    final bool isRestrictedRole = isClient || isTechnician || isSubContractor;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ColoredBox(
@@ -411,7 +416,8 @@ class _BaseLayoutState extends State<BaseLayout> {
                 },
               ),
 
-              // ── Overview ──────────────────────────────────────────────────
+              // ── Overview (not Sub-contractor — Documents-only for now) ──────
+              if (!isSubContractor)
               ListTile(
                 leading: const Icon(Icons.dashboard, color: Colors.indigo),
                 title: Text(
@@ -483,6 +489,13 @@ class _BaseLayoutState extends State<BaseLayout> {
                 ),
               ),
 
+              // Sub-contractor per requirement: Documents (their own
+              // uploads only — see DocumentsScreen) is the only section
+              // they get right now; every other section below (including
+              // Communication, which is otherwise available to literally
+              // every other role) is deliberately withheld until their
+              // real permission set is defined.
+              if (!isSubContractor) ...[
               // ── Drawings ──────────────────────────────────────────────────
               _buildProtectedMenuItem(
                 context: context,
@@ -655,8 +668,9 @@ class _BaseLayoutState extends State<BaseLayout> {
                   ),
                 ),
 
-              // ── Communication (all roles) ─────────────────────────────────
-              // Communication is intentionally available to ALL roles —
+              // ── Communication (all OTHER roles) ─────────────────────────────
+              // Communication is available to every role except
+              // Sub-contractor (see the enclosing if block above) —
               // Clients need to message their Admins and vice versa.
               // The CommunicationService enforces project-scoped filtering,
               // so no additional role guard is needed here.
@@ -673,6 +687,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   logger: widget.logger,
                 ),
               ),
+              ], // end if (!isSubContractor)
             ],
             ),
           ),

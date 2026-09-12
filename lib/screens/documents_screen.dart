@@ -119,6 +119,23 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     super.dispose();
   }
 
+  /// Matches this signed-in Sub-contractor account to one of the project's
+  /// Sub-Contractor team-member entries by name — same convention as the
+  /// Project Manager auto-link (task_progress_monitor_screen.dart): the
+  /// Users doc's own id/display name (_actorName) is exactly the string
+  /// that would have been typed into the team-member's name field. Returns
+  /// null (no confident match) rather than guessing, same reasoning as the
+  /// PM auto-link — a SubContractor account that hasn't been added as a
+  /// team member yet, or whose name doesn't exactly match, sees the empty
+  /// state instead of either nothing or (worse) someone else's documents.
+  String? _resolveOwnSubcontractorName() {
+    final match = _currentProject.teamMembers.where(
+      (m) => m.role.trim().toLowerCase() == 'subcontractor' &&
+          m.name.trim().toLowerCase() == _actorName.trim().toLowerCase(),
+    );
+    return match.isEmpty ? null : match.first.name;
+  }
+
   void _navigateToEditProject() {
     Navigator.push(
       context,
@@ -162,7 +179,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
 
     // Determine if user is a client
     final bool isClient = _userRole == 'Client';
-    
+    // Sub-contractor accounts see only their own Sub-Contractor-tab
+    // documents — matched to a team-member entry by name (same
+    // name-matching convention used elsewhere, e.g. the Project Manager
+    // auto-link in task_progress_monitor_screen.dart), the same way a
+    // Client account is implicitly scoped to the "Client" tab already.
+    // isClient's related conditions below (tab bar / single-section swap)
+    // are deliberately reused for this rather than introduced as a
+    // parallel set of checks, since the two cases are structurally
+    // identical — just pointed at a different tab + memberName filter.
+    final bool isSubContractorAccount = _userRole == 'SubContractor';
+    final String? ownSubcontractorName = isSubContractorAccount ? _resolveOwnSubcontractorName() : null;
+    final bool showSingleSection = isClient || isSubContractorAccount;
+
     return BaseLayout(
       title: '${_currentProject.name} - Documents',
       project: _currentProject,
@@ -240,8 +269,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 children: [
                   Column(
                     children: [
-                      // Show TabBar only for Admin/MainAdmin users
-                      if (!isClient)
+                      // Show TabBar only for Admin-tier / Technician users —
+                      // Client and Sub-contractor accounts are both
+                      // implicitly scoped to one section, no tab picker.
+                      if (!showSingleSection)
                         TabBar(
                           controller: _mainTabController,
                           tabs: [
@@ -254,10 +285,31 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                           labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                         ),
                       SizedBox(
-                        height: constraints.maxHeight - (isClient ? 0 : 48) - 48,
+                        height: constraints.maxHeight - (showSingleSection ? 0 : 48) - 48,
                         child: isClient
                             ? _buildRoleSection('Client', _clientSubTabController, memberName: null, sections: _clientSubSections)
-                            : TabBarView(
+                            : isSubContractorAccount
+                                ? (ownSubcontractorName == null
+                                    // No Sub-Contractor team-member entry
+                                    // matches this account's name yet — no
+                                    // "go edit the project" shortcut here
+                                    // (unlike the Admin-tier empty state),
+                                    // since a Sub-contractor account can't
+                                    // and shouldn't reach Edit Project.
+                                    ? Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(32.0),
+                                          child: Text(
+                                            'No documents yet — ask your project admin to add you as a '
+                                            'Sub-Contractor team member first.',
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.poppins(color: Colors.grey[600]),
+                                          ),
+                                        ),
+                                      )
+                                    : _buildRoleSection('Sub-Contractor', _subContractorSubTabController,
+                                        memberName: ownSubcontractorName, sections: _subSections))
+                                : TabBarView(
                                 controller: _mainTabController,
                                 children: [
                                   _buildRoleSection('Client', _clientSubTabController, memberName: null, sections: _clientSubSections),

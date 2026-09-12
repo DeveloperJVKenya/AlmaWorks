@@ -8,6 +8,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
+/// Same Web Push certificate key already used successfully by
+/// CommunicationNotificationService's own token-save path (see
+/// lib/screens/communication/communication_notification_service.dart) —
+/// one Firebase project has exactly one VAPID key pair, so this is the
+/// correct value for every web push use in this app, not something
+/// specific to Communication.
+const String _webVapidKey = 'BFNsKKhcnjrm3fFaQIxcmv0NUUKE0E5omRsH7Je2EsVk1jiQq7Y1jJLSr5__ETytl0IaGbvvPZiOjoFhdpNrlBI';
+
 /// A device's own FCM token is unique to itself, so a user signed in on both
 /// web and mobile needs both remembered — see Users.fcmTokens in
 /// _persistFcmToken. `fcmToken` (singular) is kept alongside it purely as a
@@ -96,8 +104,11 @@ class NotificationService {
 
   Future<void> _configureFCM() async {
     try {
-      // Save initial token.
-      final token = await _fcm.getToken();
+      // Save initial token. Web requires an explicit vapidKey argument —
+      // without it getToken() either returns null or throws, silently
+      // producing no usable token (same key already used successfully by
+      // CommunicationNotificationService's own token save path).
+      final token = kIsWeb ? await _fcm.getToken(vapidKey: _webVapidKey) : await _fcm.getToken();
       _logger.i('📱 FCM Token obtained');
       if (token != null) await _persistFcmToken(token);
 

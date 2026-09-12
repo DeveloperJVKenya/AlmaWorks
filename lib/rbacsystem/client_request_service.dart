@@ -270,6 +270,20 @@ class ClientRequestService {
           .get();
       if (!requestDoc.exists) return 'Request not found';
 
+      // MainAdmin immunity — see the matching check in updateGrantedRole.
+      // In practice a MainAdmin account never goes through this
+      // request/grant flow in the first place, but this guard means that
+      // stays true even against a stray/legacy ClientRequests doc rather
+      // than relying on that never happening.
+      final userQuery = await _firestore
+          .collection('Users')
+          .where('uid', isEqualTo: clientUid)
+          .limit(1)
+          .get();
+      if (userQuery.docs.isNotEmpty && userQuery.docs.first.data()['role'] == 'MainAdmin') {
+        return 'MainAdmin accounts are protected and cannot have project access revoked.';
+      }
+
       final request = ClientRequest.fromFirestore(requestDoc);
       final updated = request.grantedProjects
           .where((id) => !projectIdsToRevoke.contains(id))
@@ -318,6 +332,10 @@ class ClientRequestService {
     required String newRole,
     required String adminUsername,
     required String adminUid,
+    // Null = leave the PM-eligibility flag untouched (only the MainAdmin-
+    // only checkbox in _showEditRoleDialog ever passes a real value —
+    // an Admin caller, who never sees that checkbox, always passes null).
+    bool? isProjectManager,
   }) async {
     try {
       _logger.i('🔁 Updating granted role for request $requestId to $newRole');
@@ -328,13 +346,6 @@ class ClientRequestService {
           .get();
       if (!requestDoc.exists) return 'Request not found';
 
-      await _firestore.collection('ClientRequests').doc(requestId).update({
-        'grantedRole': newRole,
-        'approvedBy': adminUsername,
-        'approvedByUid': adminUid,
-        'approvalDate': Timestamp.now(),
-      });
-
       final userQuery = await _firestore
           .collection('Users')
           .where('uid', isEqualTo: clientUid)
@@ -342,10 +353,29 @@ class ClientRequestService {
           .get();
       if (userQuery.docs.isEmpty) return 'User account not found';
 
-      await _firestore
-          .collection('Users')
-          .doc(userQuery.docs.first.id)
-          .update({'role': newRole});
+      // MainAdmin immunity: once an account is MainAdmin, nothing written
+      // through this screen may change its role or revoke it — checked
+      // here (not just in the calling screen's dialog guard) so this is
+      // still safe if ever called from anywhere else in the future.
+      // Real enforcement also lives in firestore.rules' Users update
+      // clause; this check exists so the caller gets a clean error message
+      // instead of a bare permission-denied exception.
+      final currentRole = userQuery.docs.first.data()['role'] as String?;
+      if (currentRole == 'MainAdmin') {
+        return 'MainAdmin accounts are protected and cannot have their role changed.';
+      }
+
+      await _firestore.collection('ClientRequests').doc(requestId).update({
+        'grantedRole': newRole,
+        'approvedBy': adminUsername,
+        'approvedByUid': adminUid,
+        'approvalDate': Timestamp.now(),
+      });
+
+      await _firestore.collection('Users').doc(userQuery.docs.first.id).update({
+        'role': newRole,
+        'isProjectManager': ?isProjectManager,
+      });
 
       _logger.i('✅ Granted role updated to $newRole');
       return null;

@@ -81,7 +81,15 @@ void main() async {
     // Single notification manager app-wide — every channel (schedule,
     // client requests, Communication) is registered here.
     await AwesomeNotifications().initialize(
-      null, // Use default app icon
+      // Was `null` ("use default app icon") — Android has rendered
+      // status-bar/notification icons from ONLY their alpha channel since
+      // API 21, so falling back to the full-color launcher icon (or
+      // whatever "default" resolved to) produced a solid white blob
+      // instead of real branding. Points at a dedicated white-silhouette-
+      // on-transparent drawable generated from the AlmaWorks mark — see
+      // android/app/src/main/res/drawable*/ic_notification.png and the
+      // matching AndroidManifest.xml meta-data.
+      'resource://drawable/ic_notification',
       [
         NotificationChannel(
           channelKey: 'schedule_overdue',
@@ -142,7 +150,12 @@ void main() async {
           channelShowBadge: true,
           playSound: true,
           enableVibration: true,
-          icon: 'resource://drawable/ic_launcher',
+          // Was 'resource://drawable/ic_launcher' — that resource only
+          // ever existed under mipmap-*, never drawable*, so it silently
+          // failed to resolve. Explicit here (even though it now matches
+          // the initialize() default above) so this channel doesn't
+          // regress if that default ever changes independently.
+          icon: 'resource://drawable/ic_notification',
         ),
       ],
       debug: false,

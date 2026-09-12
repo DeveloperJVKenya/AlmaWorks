@@ -74,10 +74,21 @@
 
         <!-- Default notification icon used by FCM when no icon is specified
              in the server payload. Ensures correct branding on the lock
-             screen and status bar. -->
+             screen and status bar.
+
+             Was @mipmap/ic_launcher — the full-color adaptive launcher
+             icon — which is the wrong asset here: Android has rendered
+             status-bar/notification icons using ONLY their alpha channel
+             since API 21, so a full-color icon collapses to a solid white
+             blob instead of a recognizable mark (this is what showed up
+             as "the default icon" instead of real branding). Now points
+             at a dedicated white-silhouette-on-transparent drawable
+             (res/drawable*/ic_notification.png, generated from the AlmaWorks
+             mark) — the same asset every NotificationChannel below and
+             AwesomeNotifications().initialize()'s default icon reference. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
+            android:resource="@drawable/ic_notification" />
 
         <!-- ─────────────────────────────────────────────────────────────────
              Main Activity (existing, untouched except notification tap filter)

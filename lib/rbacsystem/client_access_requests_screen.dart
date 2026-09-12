@@ -40,6 +40,48 @@ class _ClientAccessRequestsScreenState
     if (mounted) setState(() => _currentUserRole = role);
   }
 
+  /// Which roles the current approver may grant — Admin's scope is
+  /// deliberately narrower than MainAdmin's (Technician/Sub-contractor
+  /// only). Shared by every grant/re-approve/edit-role dialog below so the
+  /// three don't drift out of sync with each other.
+  List<({String value, String label, String subtitle})> _grantableRoleOptions() {
+    const client = (
+      value: 'Client',
+      label: 'Client',
+      subtitle: 'Read-only access to granted projects',
+    );
+    const technician = (
+      value: 'Technician',
+      label: 'Technician',
+      subtitle: 'Full working access to granted projects (like Admin, minus Financials)',
+    );
+    const subContractor = (
+      value: 'SubContractor',
+      label: 'Sub-contractor',
+      subtitle: 'Documents only, for their own uploads, on granted projects (more permissions defined later)',
+    );
+    const admin = (
+      value: 'Admin',
+      label: 'Admin',
+      subtitle: 'Full system access, not limited to granted projects',
+    );
+    const systemAdmin = (
+      value: 'SystemAdmin',
+      label: 'System Admin',
+      subtitle: 'Full Admin access, plus the only role (with MainAdmin) that can '
+          'approve checkout requests, record returns, and issue materials',
+    );
+
+    if (_currentUserRole == 'MainAdmin') {
+      return [client, technician, subContractor, admin, systemAdmin];
+    }
+    // Admin is the only other role that can reach this screen at all
+    // (see dashboard_screen.dart's menu gate) — scoped to exactly
+    // Technician/Sub-contractor, never Client (self-evident default,
+    // nothing to "grant"), Admin, or SystemAdmin.
+    return [technician, subContractor];
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -660,12 +702,14 @@ class _ClientAccessRequestsScreenState
 
   Future<void> _showApprovalDialog(ClientRequest request) async {
     final selectedProjects = <String>[];
-    // 'Client' (read-only, project-scoped) or 'Technician' (full Admin-
-    // equivalent access — minus Financials and Inventory approval — on
-    // just their granted projects). Every requester goes through this
-    // exact same request regardless of which one they'll end up with; this
-    // is the only place that decision actually gets made.
-    String grantedRole = 'Client';
+    final roleOptions = _grantableRoleOptions();
+    // Every requester goes through this exact same request regardless of
+    // which role they'll end up with; this is the only place that
+    // decision actually gets made. Default to whatever's first in this
+    // approver's own scope (Client for MainAdmin, Technician for Admin —
+    // see _grantableRoleOptions) rather than hardcoding 'Client', since
+    // Admin's scope doesn't include Client at all.
+    String grantedRole = roleOptions.first.value;
     final projects = await _fetchAvailableProjects();
 
     if (!mounted) return;
@@ -691,28 +735,19 @@ class _ClientAccessRequestsScreenState
                 const SizedBox(height: 4),
                 RadioGroup<String>(
                   groupValue: grantedRole,
-                  onChanged: (v) => setDialogState(() => grantedRole = v ?? 'Client'),
+                  onChanged: (v) => setDialogState(() => grantedRole = v ?? grantedRole),
                   child: Column(
-                    children: [
-                      RadioListTile<String>(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text('Client', style: GoogleFonts.poppins(fontSize: 14)),
-                        subtitle: Text('Read-only access to granted projects',
-                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
-                        value: 'Client',
-                        activeColor: const Color(0xFF0A2E5A),
-                      ),
-                      RadioListTile<String>(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text('Technician', style: GoogleFonts.poppins(fontSize: 14)),
-                        subtitle: Text('Full working access to granted projects (like Admin, minus Financials)',
-                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
-                        value: 'Technician',
-                        activeColor: const Color(0xFF0A2E5A),
-                      ),
-                    ],
+                    children: roleOptions
+                        .map((r) => RadioListTile<String>(
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              title: Text(r.label, style: GoogleFonts.poppins(fontSize: 14)),
+                              subtitle: Text(r.subtitle,
+                                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                              value: r.value,
+                              activeColor: const Color(0xFF0A2E5A),
+                            ))
+                        .toList(),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1043,12 +1078,57 @@ class _ClientAccessRequestsScreenState
   /// Client/Technician, plus Admin when the caller is a MainAdmin — without
   /// having to revoke and re-approve the request.
   Future<void> _showEditRoleDialog(ClientRequest request) async {
-    final canGrantAdmin = _currentUserRole == 'MainAdmin';
-    final isAdminTierRole = request.grantedRole == 'Admin' || request.grantedRole == 'SystemAdmin';
-    String selectedRole = canGrantAdmin || !isAdminTierRole
-        ? request.grantedRole
-        : 'Technician';
+    // MainAdmin immunity: nobody — not even another MainAdmin — edits a
+    // MainAdmin's role from here. Matches the same guard in
+    // ClientRequestService.updateGrantedRole and firestore.rules' Users
+    // update clause; this is just the earliest, friendliest place to stop
+    // it, before a doomed write round-trip.
+    if (request.grantedRole == 'MainAdmin') {
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('MainAdmin is protected', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          content: Text(
+            '${request.clientUsername} is a MainAdmin — their role, project access, and permissions can\'t be '
+            'changed or revoked from this screen, by design.',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: GoogleFonts.poppins())),
+          ],
+        ),
+      );
+      return;
+    }
 
+    final roleOptions = _grantableRoleOptions();
+    final canGrantAdmin = _currentUserRole == 'MainAdmin';
+    String selectedRole = roleOptions.any((r) => r.value == request.grantedRole)
+        ? request.grantedRole
+        : roleOptions.first.value;
+
+    // PM eligibility is a separate, additive flag on the Users doc (not a
+    // role swap — see TeamMember/ProjectModel.projectManagerUid) — fetch
+    // its current value fresh since ClientRequest doesn't carry it.
+    bool isProjectManager = false;
+    if (canGrantAdmin) {
+      try {
+        final userQuery = await FirebaseFirestore.instance
+            .collection('Users')
+            .where('uid', isEqualTo: request.clientUid)
+            .limit(1)
+            .get();
+        if (userQuery.docs.isNotEmpty) {
+          isProjectManager = userQuery.docs.first.data()['isProjectManager'] as bool? ?? false;
+        }
+      } catch (e) {
+        widget.logger.e('❌ ClientAccessRequestsScreen: failed to load PM flag', error: e);
+      }
+    }
+    final initialIsProjectManager = isProjectManager;
+
+    if (!mounted) return;
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -1084,60 +1164,36 @@ class _ClientAccessRequestsScreenState
                   onChanged: (v) =>
                       setDialogState(() => selectedRole = v ?? selectedRole),
                   child: Column(
-                    children: [
-                      RadioListTile<String>(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text('Client',
-                            style: GoogleFonts.poppins(fontSize: 14)),
-                        subtitle: Text('Read-only access to granted projects',
-                            style: GoogleFonts.poppins(
-                                fontSize: 12, color: Colors.grey[600])),
-                        value: 'Client',
-                        activeColor: const Color(0xFF0A2E5A),
-                      ),
-                      RadioListTile<String>(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text('Technician',
-                            style: GoogleFonts.poppins(fontSize: 14)),
-                        subtitle: Text(
-                            'Full working access to granted projects (like Admin, minus Financials)',
-                            style: GoogleFonts.poppins(
-                                fontSize: 12, color: Colors.grey[600])),
-                        value: 'Technician',
-                        activeColor: const Color(0xFF0A2E5A),
-                      ),
-                      if (canGrantAdmin)
-                        RadioListTile<String>(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          title: Text('Admin',
-                              style: GoogleFonts.poppins(fontSize: 14)),
-                          subtitle: Text(
-                              'Full system access, not limited to granted projects',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12, color: Colors.grey[600])),
-                          value: 'Admin',
-                          activeColor: const Color(0xFF0A2E5A),
-                        ),
-                      if (canGrantAdmin)
-                        RadioListTile<String>(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          title: Text('System Admin',
-                              style: GoogleFonts.poppins(fontSize: 14)),
-                          subtitle: Text(
-                              'Full Admin access, plus the only role (with MainAdmin) that can '
-                              'approve checkout requests, record returns, and issue materials',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12, color: Colors.grey[600])),
-                          value: 'SystemAdmin',
-                          activeColor: const Color(0xFF0A2E5A),
-                        ),
-                    ],
+                    children: roleOptions
+                        .map((r) => RadioListTile<String>(
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              title: Text(r.label, style: GoogleFonts.poppins(fontSize: 14)),
+                              subtitle: Text(r.subtitle,
+                                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                              value: r.value,
+                              activeColor: const Color(0xFF0A2E5A),
+                            ))
+                        .toList(),
                   ),
                 ),
+                if (canGrantAdmin) ...[
+                  const Divider(height: 20),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text('Project Manager eligible',
+                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                        'Makes them pickable as a project\'s Linked PM Account (Edit Project), independent '
+                        'of the role above — doesn\'t change their base permissions.',
+                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                    value: isProjectManager,
+                    activeColor: const Color(0xFF0A2E5A),
+                    onChanged: (v) => setDialogState(() => isProjectManager = v ?? false),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1148,9 +1204,13 @@ class _ClientAccessRequestsScreenState
                   style: GoogleFonts.poppins(color: Colors.grey)),
             ),
             ElevatedButton(
-              onPressed: selectedRole == request.grantedRole
+              onPressed: (selectedRole == request.grantedRole && isProjectManager == initialIsProjectManager)
                   ? null
-                  : () => _updateRole(request, selectedRole),
+                  : () => _updateRole(
+                        request,
+                        selectedRole,
+                        isProjectManager: canGrantAdmin ? isProjectManager : null,
+                      ),
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0A2E5A)),
               child: Text('Save',
@@ -1169,7 +1229,8 @@ class _ClientAccessRequestsScreenState
   /// Dialog: approve a previously denied request.
   Future<void> _showReApproveDialog(ClientRequest request) async {
     final selectedProjects = <String>[];
-    String grantedRole = 'Client';
+    final roleOptions = _grantableRoleOptions();
+    String grantedRole = roleOptions.first.value;
     final projects = await _fetchAvailableProjects();
 
     if (!mounted) return;
@@ -1229,24 +1290,17 @@ class _ClientAccessRequestsScreenState
                 ),
                 RadioGroup<String>(
                   groupValue: grantedRole,
-                  onChanged: (v) => setDialogState(() => grantedRole = v ?? 'Client'),
+                  onChanged: (v) => setDialogState(() => grantedRole = v ?? grantedRole),
                   child: Column(
-                    children: [
-                      RadioListTile<String>(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text('Client', style: GoogleFonts.poppins(fontSize: 13)),
-                        value: 'Client',
-                        activeColor: Colors.green,
-                      ),
-                      RadioListTile<String>(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text('Technician', style: GoogleFonts.poppins(fontSize: 13)),
-                        value: 'Technician',
-                        activeColor: Colors.green,
-                      ),
-                    ],
+                    children: roleOptions
+                        .map((r) => RadioListTile<String>(
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              title: Text(r.label, style: GoogleFonts.poppins(fontSize: 13)),
+                              value: r.value,
+                              activeColor: Colors.green,
+                            ))
+                        .toList(),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1476,7 +1530,7 @@ class _ClientAccessRequestsScreenState
     }
   }
 
-  Future<void> _updateRole(ClientRequest request, String newRole) async {
+  Future<void> _updateRole(ClientRequest request, String newRole, {bool? isProjectManager}) async {
     Navigator.pop(context);
 
     final userData = await _authService.getUserData();
@@ -1488,6 +1542,7 @@ class _ClientAccessRequestsScreenState
       newRole: newRole,
       adminUsername: userData['username'],
       adminUid: userData['uid'],
+      isProjectManager: isProjectManager,
     );
 
     if (!mounted) return;

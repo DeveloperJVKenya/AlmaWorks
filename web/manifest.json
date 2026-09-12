@@ -1,11 +1,11 @@
 {
-    "name": "almaworks",
-    "short_name": "almaworks",
+    "name": "AlmaWorks",
+    "short_name": "AlmaWorks",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#0A2E5A",
+    "description": "AlmaWorks construction project management system.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
