@@ -40,7 +40,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _userRole = '';
   bool _isLoadingRole = true;
   List<String> _grantedProjectIds = [];
-  
+  // Live instead of a one-shot get() — see BaseLayout's identical fix for
+  // why a role change needs to reach every gated widget without requiring a
+  // screen teardown/rebuild.
+  StreamSubscription<QuerySnapshot>? _userDocSub;
+  String? _notificationListenersSetUpForRole;
+
 
   @override
   void initState() {
@@ -53,24 +58,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _fetchUserRoleAndAccess() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        _logger.e('❌ DashboardScreen: No authenticated user found');
-        setState(() => _isLoadingRole = false);
-        return;
-      }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _logger.e('❌ DashboardScreen: No authenticated user found');
+      setState(() => _isLoadingRole = false);
+      return;
+    }
 
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('Users')
-          .where('uid', isEqualTo: user.uid)
-          .limit(1)
-          .get();
-
+    _userDocSub?.cancel();
+    _userDocSub = FirebaseFirestore.instance
+        .collection('Users')
+        .where('uid', isEqualTo: user.uid)
+        .limit(1)
+        .snapshots()
+        .listen((querySnapshot) async {
       if (querySnapshot.docs.isNotEmpty) {
         final userData = querySnapshot.docs.first.data();
         final role = userData['role'] as String? ?? 'Client';
-        
+
         // Client, Technician, and SubContractor are all restricted to
         // their granted project list — Technician sees Admin-equivalent
         // sections once inside one, SubContractor sees Documents-only for
@@ -81,56 +86,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _logger.i('✅ DashboardScreen: $role granted project IDs: $grantedIds');
         }
 
-        // Persists this device's FCM token to the signed-in user's Users
-        // doc (fcmToken/fcmTokens — see NotificationService._persistFcmToken)
-        // so the onAdminNotificationQueued/onUserNotificationQueued Cloud
-        // Functions have something to actually send a push to. This was
-        // never being called anywhere in the app — _persistFcmToken
-        // early-returns if FirebaseAuth.instance.currentUser is null, so
-        // calling it at cold app start (before login) wouldn't have worked
-        // either; here, right where `user` is already confirmed signed in,
-        // is the correct place. Root cause of Inventory checkout/return
-        // pushes never reaching devices: the queue docs and Cloud
-        // Functions were always correct, but every device's token field
-        // was empty, so there was never anything to send to.
-        await NotificationService().initialize();
+        // The notification-listener setup below opens its own long-lived
+        // Firestore subscriptions inside NotificationService — only redo it
+        // when the role actually changes, not on every incidental emission
+        // of this Users-doc stream (e.g. an unrelated field edit), to avoid
+        // stacking duplicate listeners.
+        if (_notificationListenersSetUpForRole != role) {
+          _notificationListenersSetUpForRole = role;
 
-        // ── Admin / MainAdmin / SystemAdmin: attach the AdminNotificationQueue listener ──
-        if (role == 'Admin' || role == 'MainAdmin' || role == 'SystemAdmin') {
-          await NotificationService().setupAdminNotificationListener(user.uid, role: role);
-          _logger.i(
-            '🔔 DashboardScreen: Admin notification listener started for $role (uid: ${user.uid})',
-          );
+          // Persists this device's FCM token to the signed-in user's Users
+          // doc (fcmToken/fcmTokens — see NotificationService._persistFcmToken)
+          // so the onAdminNotificationQueued/onUserNotificationQueued Cloud
+          // Functions have something to actually send a push to. This was
+          // never being called anywhere in the app — _persistFcmToken
+          // early-returns if FirebaseAuth.instance.currentUser is null, so
+          // calling it at cold app start (before login) wouldn't have worked
+          // either; here, right where `user` is already confirmed signed in,
+          // is the correct place. Root cause of Inventory checkout/return
+          // pushes never reaching devices: the queue docs and Cloud
+          // Functions were always correct, but every device's token field
+          // was empty, so there was never anything to send to.
+          await NotificationService().initialize();
+
+          // ── Admin / MainAdmin / SystemAdmin: attach the AdminNotificationQueue listener ──
+          if (role == 'Admin' || role == 'MainAdmin' || role == 'SystemAdmin') {
+            await NotificationService().setupAdminNotificationListener(user.uid, role: role);
+            _logger.i(
+              '🔔 DashboardScreen: Admin notification listener started for $role (uid: ${user.uid})',
+            );
+          }
+
+          // ── Every role: attach the per-user targeted listener — e.g. a
+          // Technician or Admin holding a booked asset needs to be notified
+          // directly when someone else books it for an upcoming date,
+          // regardless of their own role's broadcast-queue access. ──
+          await NotificationService().setupUserNotificationListener(user.uid);
         }
 
-        // ── Every role: attach the per-user targeted listener — e.g. a
-        // Technician or Admin holding a booked asset needs to be notified
-        // directly when someone else books it for an upcoming date,
-        // regardless of their own role's broadcast-queue access. ──
-        await NotificationService().setupUserNotificationListener(user.uid);
-
-
+        if (!mounted) return;
         setState(() {
           _userRole = role;
           _grantedProjectIds = grantedIds;
           _isLoadingRole = false;
         });
-        
-        _logger.i('✅ DashboardScreen: User role fetched: $role, Granted Projects: ${grantedIds.length}');
+
+        _logger.i('✅ DashboardScreen: User role updated: $role, Granted Projects: ${grantedIds.length}');
       } else {
         _logger.w('⚠️ DashboardScreen: User document not found');
+        if (!mounted) return;
         setState(() {
           _userRole = 'Client';
           _isLoadingRole = false;
         });
       }
-    } catch (e) {
-      _logger.e('❌ DashboardScreen: Error fetching user role: $e');
+    }, onError: (e) {
+      _logger.e('❌ DashboardScreen: Error streaming user role: $e');
+      if (!mounted) return;
       setState(() {
         _userRole = 'Client';
         _isLoadingRole = false;
       });
-    }
+    });
   }
 
   void navigateToProjects({int initialTab = 0}) {
@@ -848,6 +864,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // ignores no-op cancels.
     NotificationService().cancelAdminNotificationListener();
     NotificationService().cancelUserNotificationListener();
+    _userDocSub?.cancel();
     super.dispose();
   }
 }

@@ -1,6 +1,5 @@
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/schedule_monitor_model.dart';
-import 'package:almaworks/screens/schedule/notification_center_screen.dart';
 import 'package:almaworks/services/enhanced_notification_service.dart';
 import 'package:almaworks/services/notification_service.dart';
 import 'package:flutter/foundation.dart';
@@ -261,14 +260,11 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late NotificationService _notificationService;
-  int _unreadNotificationCount = 0;
   bool _isCheckingNotifications = false;
   late EnhancedNotificationService _enhancedNotificationService;
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-
-  StreamSubscription<int>? _unreadCountSubscription;
 
   Timer? _refreshTimer;
   Timer? _realtimeStatusTimer; // FIX: saved reference so dispose() can cancel it
@@ -319,20 +315,6 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
       widget.logger.e('❌ NotificationService initialization failed', error: error);
     });
     
-    // Listen to unread count
-    _unreadCountSubscription = _notificationService.getUnreadCount(widget.projectId).listen(
-      (unreadCount) {
-        if (mounted) {
-          widget.logger.d('📊 Unread count updated: $unreadCount');
-          setState(() {
-            _unreadNotificationCount = unreadCount;
-          });
-        }
-      },
-      onError: (error) {
-        widget.logger.e('❌ Error listening to unread count', error: error);
-      },
-    );
     
     // Animation setup
     _animationController = AnimationController(
@@ -669,7 +651,6 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
     
     _refreshTimer?.cancel();
     _realtimeStatusTimer?.cancel(); // FIX: cancel the realtime status updater
-    _unreadCountSubscription?.cancel(); // FIXED: Cancel subscription
     _animationController.dispose();
     _searchController.dispose();
     _isCheckingNotifications = false;
@@ -1024,73 +1005,22 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
             },
             child: Column(
               children: [
-                // Search bar with notification icon
+                // Search bar — notifications live in BaseLayout's single,
+                // unified appbar bell now (see notifications_screen.dart),
+                // not a second icon duplicated per section.
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            labelText: 'Search Tasks',
-                            suffixIcon: const Icon(Icons.search),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
-                          ),
-                        ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Search Tasks',
+                      suffixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 12),
-                      Stack(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.notifications_outlined, size: 28),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                  builder: (context) => NotificationCenterScreen(
-                                    projectId: widget.project.id,
-                                    notificationService: _notificationService,
-                                    logger: widget.logger, // ← NOW matches the constructor
-                                  ),
-                                ),
-                              );
-                            },
-                            tooltip: 'View Notifications',
-                          ),
-                          if (_unreadNotificationCount > 0)
-                            Positioned(
-                              right: 8,
-                              top: 8,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade600,
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 18,
-                                  minHeight: 18,
-                                ),
-                                child: Text(
-                                  _unreadNotificationCount > 99 
-                                      ? '99+' 
-                                      : _unreadNotificationCount.toString(),
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                    ),
                   ),
                 ),
                 // Tabs

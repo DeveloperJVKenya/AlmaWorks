@@ -1,6 +1,7 @@
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
@@ -19,6 +20,7 @@ class AddMaintenanceWindowScreen extends StatefulWidget {
   final AssetModel asset;
   final String createdByUid;
   final String createdByName;
+  final String userRole;
 
   const AddMaintenanceWindowScreen({
     super.key,
@@ -27,6 +29,7 @@ class AddMaintenanceWindowScreen extends StatefulWidget {
     required this.asset,
     required this.createdByUid,
     required this.createdByName,
+    required this.userRole,
   });
 
   @override
@@ -110,6 +113,21 @@ class _AddMaintenanceWindowScreenState extends State<AddMaintenanceWindowScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (!InventoryPermissions.canManageCatalog(widget.userRole)) {
+      return BaseLayout(
+        title: 'Schedule Maintenance',
+        project: widget.project,
+        logger: widget.logger,
+        selectedMenuItem: 'Inventory',
+        onMenuItemSelected: (_) {},
+        child: Center(
+          child: Text(
+            'You do not have permission to schedule maintenance.',
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+          ),
+        ),
+      );
+    }
     return BaseLayout(
       title: 'Schedule Maintenance',
       project: widget.project,

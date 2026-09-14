@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/project_date_extension_request_model.dart';
+import 'package:almaworks/screens/notifications_screen.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:excel/excel.dart' hide Border, TextSpan;
@@ -1871,6 +1872,19 @@ class _TaskProgressMonitorScreenState
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          // Unified, app-wide notification center (see notifications_screen.dart)
+          // — this screen writes UserNotificationQueue/AdminNotificationQueue
+          // entries for date-extension requests/decisions but, unlike every
+          // other section, had no way to view them since it isn't wrapped
+          // in BaseLayout (it builds its own Scaffold/AppBar).
+          IconButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => NotificationsScreen(logger: widget.logger)),
+            ),
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: 'Notifications',
+          ),
           if (_projectExtensionRequests.isNotEmpty)
             Stack(
               alignment: Alignment.center,

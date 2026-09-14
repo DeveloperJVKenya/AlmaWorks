@@ -77,17 +77,27 @@ class _BaseLayoutState extends State<BaseLayout> {
   final ClientRequestService _requestService = ClientRequestService();
   final AuthService _authService = AuthService();
 
-  // Bell icon badge — merges UserNotificationQueue (by uid) and
-  // AdminNotificationQueue (by role), same two collections
-  // NotificationsScreen itself reads (see notifications_screen.dart).
-  // Lives here (not per-screen) so the badge is correct everywhere, since
-  // BaseLayout wraps every screen in the app.
+  // Bell icon badge — merges UserNotificationQueue (by uid),
+  // AdminNotificationQueue (by role), and ScheduleNotifications (by uid),
+  // the same three sources NotificationsScreen itself reads (see
+  // notifications_screen.dart). Lives here (not per-screen) so the badge is
+  // correct everywhere, since BaseLayout wraps every screen in the app.
   int _unreadUserCount = 0;
   int _unreadAdminCount = 0;
+  int _unreadScheduleCount = 0;
   StreamSubscription<QuerySnapshot>? _unreadUserSub;
   StreamSubscription<QuerySnapshot>? _unreadAdminSub;
+  StreamSubscription<QuerySnapshot>? _unreadScheduleSub;
 
-  int get _unreadNotificationCount => _unreadUserCount + _unreadAdminCount;
+  // Live instead of a one-shot get() — a role changed directly in Firestore
+  // (or a slow mirror sync) now reflects here, and in every role-gated
+  // widget downstream, without requiring the screen to be torn down and
+  // rebuilt. Previously this was a single get() in _fetchUserRoleAndAccess,
+  // which is exactly why a role change could leave stale permissions
+  // ("hanging" gates) visible for the rest of the session.
+  StreamSubscription<QuerySnapshot>? _userDocSub;
+
+  int get _unreadNotificationCount => _unreadUserCount + _unreadAdminCount + _unreadScheduleCount;
 
   @override
   void initState() {
@@ -100,6 +110,7 @@ class _BaseLayoutState extends State<BaseLayout> {
   void _subscribeNotificationBadge(String uid, String role) {
     _unreadUserSub?.cancel();
     _unreadAdminSub?.cancel();
+    _unreadScheduleSub?.cancel();
     _unreadUserSub = FirebaseFirestore.instance
         .collection('UserNotificationQueue')
         .where('targetUid', isEqualTo: uid)
@@ -117,33 +128,42 @@ class _BaseLayoutState extends State<BaseLayout> {
       if (!mounted) return;
       setState(() => _unreadAdminCount = snap.docs.where((d) => (d.data()['isRead'] as bool?) != true).length);
     }, onError: (e) => widget.logger.e('❌ BaseLayout: admin notification badge stream error', error: e));
+
+    _unreadScheduleSub = FirebaseFirestore.instance
+        .collection('ScheduleNotifications')
+        .where('userId', isEqualTo: uid)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      setState(() => _unreadScheduleCount = snap.docs.where((d) => (d.data()['isRead'] as bool?) != true).length);
+    }, onError: (e) => widget.logger.e('❌ BaseLayout: schedule notification badge stream error', error: e));
   }
 
   Future<void> _fetchUserRoleAndAccess() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        widget.logger.e('❌ BaseLayout: No authenticated user found');
-        if (mounted) {
-          setState(() {
-            _isLoadingUserData = false;
-          });
-        }
-        return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      widget.logger.e('❌ BaseLayout: No authenticated user found');
+      if (mounted) {
+        setState(() {
+          _isLoadingUserData = false;
+        });
       }
+      return;
+    }
 
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('Users')
-          .where('uid', isEqualTo: user.uid)
-          .limit(1)
-          .get();
-
+    _userDocSub?.cancel();
+    _userDocSub = FirebaseFirestore.instance
+        .collection('Users')
+        .where('uid', isEqualTo: user.uid)
+        .limit(1)
+        .snapshots()
+        .listen((querySnapshot) async {
       if (querySnapshot.docs.isNotEmpty) {
         final userData = querySnapshot.docs.first.data();
         final username = querySnapshot.docs.first.id;
         final role = userData['role'] as String? ?? 'Client';
 
-        // Keep UserRoles/{uid} in sync on every screen load, not just at
+        // Keep UserRoles/{uid} in sync on every emission, not just at
         // login — persisted sessions skip login_screen.dart entirely on app
         // restart (see main.dart's isLoggedIn fast-path), so this is the
         // only place guaranteed to run for an already-signed-in user. This
@@ -186,7 +206,7 @@ class _BaseLayoutState extends State<BaseLayout> {
         _subscribeNotificationBadge(user.uid, role);
 
         widget.logger.i(
-            '✅ BaseLayout: User role fetched: $role, Granted Projects: ${grantedIds.length}');
+            '✅ BaseLayout: User role updated: $role, Granted Projects: ${grantedIds.length}');
       } else {
         widget.logger.w('⚠️ BaseLayout: User document not found');
         if (mounted) {
@@ -196,21 +216,23 @@ class _BaseLayoutState extends State<BaseLayout> {
           });
         }
       }
-    } catch (e) {
-      widget.logger.e('❌ BaseLayout: Error fetching user role: $e');
+    }, onError: (e) {
+      widget.logger.e('❌ BaseLayout: Error streaming user role: $e');
       if (mounted) {
         setState(() {
           _userRole = 'Client';
           _isLoadingUserData = false;
         });
       }
-    }
+    });
   }
 
   @override
   void dispose() {
     _unreadUserSub?.cancel();
     _unreadAdminSub?.cancel();
+    _unreadScheduleSub?.cancel();
+    _userDocSub?.cancel();
     super.dispose();
   }
 
@@ -281,7 +303,12 @@ class _BaseLayoutState extends State<BaseLayout> {
               ),
           ],
         ),
-        if (widget.actions != null) ...widget.actions!,
+        // Technician gets nothing in the appbar besides the notification
+        // bell above, app-wide (not just Inventory) — every section routes
+        // through this one shared appbar builder, so this single branch is
+        // enough to guarantee it regardless of what any given screen passes
+        // as `actions`.
+        if (_userRole != 'Technician' && widget.actions != null) ...widget.actions!,
       ],
     );
   }

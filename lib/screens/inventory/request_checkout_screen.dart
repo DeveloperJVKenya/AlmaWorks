@@ -6,6 +6,7 @@ import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/asset_availability_calendar.dart';
 import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/relative_date_label.dart';
 import 'package:almaworks/services/inventory_service.dart';
@@ -32,6 +33,7 @@ class RequestCheckoutScreen extends ConsumerStatefulWidget {
   final AssetModel asset;
   final String requestedByUid;
   final String requestedByName;
+  final String requestedByRole;
 
   const RequestCheckoutScreen({
     super.key,
@@ -40,6 +42,7 @@ class RequestCheckoutScreen extends ConsumerStatefulWidget {
     required this.asset,
     required this.requestedByUid,
     required this.requestedByName,
+    required this.requestedByRole,
   });
 
   @override
@@ -218,6 +221,21 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!InventoryPermissions.canRequestOrReturn(widget.requestedByRole)) {
+      return BaseLayout(
+        title: 'Request Checkout',
+        project: widget.project,
+        logger: widget.logger,
+        selectedMenuItem: 'Inventory',
+        onMenuItemSelected: (_) {},
+        child: Center(
+          child: Text(
+            'You do not have permission to request a checkout.',
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+          ),
+        ),
+      );
+    }
     return BaseLayout(
       title: 'Request Checkout',
       project: widget.project,

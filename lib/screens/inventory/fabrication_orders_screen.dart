@@ -3,6 +3,7 @@ import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/create_fabrication_order_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
+import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/upload_fabrication_scan_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -34,7 +35,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
     required this.currentUid,
   });
 
-  bool get _canApproveAndIssue => userRole == 'MainAdmin' || userRole == 'SystemAdmin';
+  bool get _canApproveAndIssue => InventoryPermissions.canApproveAndIssue(userRole);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,11 +102,11 @@ class FabricationOrdersScreen extends ConsumerWidget {
             ? 'Verified'
             : order.isScanUploaded
                 ? 'Scan Uploaded'
-                : 'Awaiting Scan';
+                : 'With Driver — Heading to Fabrication';
 
     // Only the Technician performs the scan-upload — never MainAdmin/
     // SystemAdmin (who issue orders) and never plain Admin either.
-    final canUpload = userRole == 'Technician' && order.isIssued;
+    final canUpload = InventoryPermissions.canUploadFabricationScan(userRole) && order.isIssued;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -160,6 +161,8 @@ class FabricationOrdersScreen extends ConsumerWidget {
                   style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700]),
                 ),
               ],
+              const SizedBox(height: 10),
+              _buildTraceTimeline(order),
               if (canUpload) ...[
                 const SizedBox(height: 8),
                 Text('Tap to upload the completed scanned form',
@@ -169,6 +172,56 @@ class FabricationOrdersScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Shows exactly where this order sits in the paper-based
+  /// Admin -> Driver -> Fabricator -> Driver -> Technician chain, since the
+  /// underlying status model only has two real states before verification
+  /// (issued/scanUploaded) — this makes that whole "issued" span legible as
+  /// "materials are currently with the driver, heading to fabrication" for
+  /// the Technician, rather than an opaque "Awaiting Scan".
+  Widget _buildTraceTimeline(MaterialFabricationOrderModel order) {
+    final steps = <(String, DateTime?, bool)>[
+      ('Issued — handed to driver', order.issuedAt, true),
+      ('Scan uploaded by Technician', order.technicianAckAt, order.isScanUploaded || order.isVerified || order.isDiscrepancy),
+      (
+        order.isDiscrepancy ? 'Discrepancy flagged' : 'Verified',
+        order.verifiedAt,
+        order.isVerified || order.isDiscrepancy,
+      ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < steps.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                Icon(
+                  steps[i].$3 ? Icons.check_circle : Icons.radio_button_unchecked,
+                  size: 14,
+                  color: steps[i].$3 ? InventoryColors.available : Colors.grey[400],
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  steps[i].$1,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: steps[i].$3 ? FontWeight.w600 : FontWeight.w400,
+                    color: steps[i].$3 ? Colors.grey[800] : Colors.grey[400],
+                  ),
+                ),
+                if (steps[i].$3 && steps[i].$2 != null) ...[
+                  const Spacer(),
+                  Text(DateFormat('d MMM, HH:mm').format(steps[i].$2!),
+                      style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[500])),
+                ],
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

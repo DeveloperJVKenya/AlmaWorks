@@ -6,6 +6,7 @@ import 'package:almaworks/screens/inventory/add_asset_screen.dart';
 import 'package:almaworks/screens/inventory/add_material_screen.dart';
 import 'package:almaworks/screens/inventory/asset_detail_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
+import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/material_detail_screen.dart';
 import 'package:almaworks/screens/inventory/pending_fabrication_orders_screen.dart';
@@ -84,9 +85,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
     // reads + requests checkouts only, via isAuthorized below. Reviewing
     // pending requests/fabrication orders is narrower — MainAdmin/SystemAdmin
     // only (see asset_detail_screen.dart's canApproveAndIssue split).
-    final isAuthorized = role == 'MainAdmin' || role == 'Admin' || role == 'SystemAdmin' || role == 'Technician';
-    final canAddCatalogItems = role == 'MainAdmin' || role == 'Admin' || role == 'SystemAdmin';
-    final canApproveAndIssue = role == 'MainAdmin' || role == 'SystemAdmin';
+    final isAuthorized = InventoryPermissions.isAuthorized(role);
+    final canAddCatalogItems = InventoryPermissions.canAddCatalogItems(role);
+    final canApproveAndIssue = InventoryPermissions.canApproveAndIssue(role);
     final uid = ref.watch(currentUidProvider);
 
     if (!isAuthorized) {

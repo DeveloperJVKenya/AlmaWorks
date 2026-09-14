@@ -11,8 +11,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:almaworks/screens/schedule/notification_center_screen.dart';
-import 'package:almaworks/services/notification_service.dart';
 
 class ProjectSummaryScreen extends StatefulWidget {
   final ProjectModel project;
@@ -31,8 +29,6 @@ class ProjectSummaryScreen extends StatefulWidget {
 class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  final NotificationService _notificationService =
-      NotificationService(logger: Logger());
 
   // Local, refreshable copy of the project — widget.project is a snapshot
   // taken at navigation time and never changes, so every read in this
@@ -198,48 +194,10 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       logger: widget.logger,
       selectedMenuItem: 'Overview',
       onMenuItemSelected: _handleMenuNavigation,
+      // Notifications are BaseLayout's single, unified appbar bell now (see
+      // notifications_screen.dart) — this screen no longer adds a second,
+      // project-scoped one.
       actions: [
-        StreamBuilder<int>(
-          stream: _notificationService.getUnreadCount(_currentProject.id),
-          builder: (context, snapshot) {
-            final count = snapshot.data ?? 0;
-            return Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.notifications),
-                  onPressed: () {
-                    widget.logger.i('🔔 Notifications pressed');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => NotificationCenterScreen(
-                          projectId: _currentProject.id,
-                          notificationService: _notificationService,
-                          logger: widget.logger,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                if (count > 0)
-                  Positioned(
-                    right: 6, top: 6,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                          color: Colors.red, shape: BoxShape.circle),
-                      constraints:
-                          const BoxConstraints(minWidth: 16, minHeight: 16),
-                      child: Text('$count',
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 10),
-                          textAlign: TextAlign.center),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () {

@@ -8,14 +8,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 
-/// One notification merged from either UserNotificationQueue (targeted at
-/// this uid) or AdminNotificationQueue (targeted at this role) — same
-/// shape either way (see InventoryService._notifyUser/_notifyAdmins and
-/// TaskProgressMonitorScreen._notifyUser/_notifyAdmins, which both write
-/// to these two collections).
+/// One notification merged from UserNotificationQueue (targeted at this
+/// uid), AdminNotificationQueue (targeted at this role), or ScheduleNotifications
+/// (task overdue/starting-soon alerts, targeted at this uid) — normalized to
+/// one shape so the whole app has exactly one notification list instead of
+/// three (see InventoryService._notifyUser/_notifyAdmins and
+/// TaskProgressMonitorScreen._notifyUser/_notifyAdmins for the first two;
+/// services/notification_service.dart for the third).
 class _QueuedNotification {
   final String id;
-  final String collection; // 'UserNotificationQueue' | 'AdminNotificationQueue'
+  final String collection; // 'UserNotificationQueue' | 'AdminNotificationQueue' | 'ScheduleNotifications'
   final String title;
   final String body;
   final Map<String, dynamic> payload;
@@ -40,6 +42,28 @@ class _QueuedNotification {
       title: data['title'] ?? '',
       body: data['body'] ?? '',
       payload: Map<String, dynamic>.from(data['payload'] as Map? ?? {}),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isRead: data['isRead'] as bool? ?? false,
+    );
+  }
+
+  /// ScheduleNotifications docs (see models/notification_model.dart) use a
+  /// different field shape (taskName/message/type instead of title/body/
+  /// payload) — normalized here into the same shape as the two queues above
+  /// rather than teaching the rest of this screen a second shape to render.
+  factory _QueuedNotification.fromScheduleDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final type = data['type'] as String? ?? 'unknown';
+    return _QueuedNotification(
+      id: doc.id,
+      collection: 'ScheduleNotifications',
+      title: data['taskName'] ?? 'Task update',
+      body: data['message'] ?? '',
+      payload: {
+        'type': 'schedule_$type',
+        'projectId': data['projectId'],
+        'taskId': data['taskId'],
+      },
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isRead: data['isRead'] as bool? ?? false,
     );
@@ -70,12 +94,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   List<_QueuedNotification> _userNotifications = [];
   List<_QueuedNotification> _adminNotifications = [];
+  List<_QueuedNotification> _scheduleNotifications = [];
   StreamSubscription<QuerySnapshot>? _userSub;
   StreamSubscription<QuerySnapshot>? _adminSub;
+  StreamSubscription<QuerySnapshot>? _scheduleSub;
   bool _isLoading = true;
 
   List<_QueuedNotification> get _all {
-    final combined = [..._userNotifications, ..._adminNotifications];
+    final combined = [..._userNotifications, ..._adminNotifications, ..._scheduleNotifications];
     combined.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return combined;
   }
@@ -143,12 +169,34 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _logger.e('❌ NotificationsScreen: admin queue stream error', error: e);
       if (mounted) setState(() => _isLoading = false);
     });
+
+    // Third source: task overdue/starting-soon schedule alerts, merged in
+    // so this is the one notification center for the whole app instead of
+    // a separate project-scoped screen (see notification_center_screen.dart,
+    // now removed). Filtered by userId — every write path sets this from
+    // the signed-in user (see services/notification_service.dart).
+    _scheduleSub = FirebaseFirestore.instance
+        .collection('ScheduleNotifications')
+        .where('userId', isEqualTo: _currentUid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      setState(() {
+        _scheduleNotifications = snap.docs.map(_QueuedNotification.fromScheduleDoc).toList();
+        _isLoading = false;
+      });
+    }, onError: (e) {
+      _logger.e('❌ NotificationsScreen: schedule queue stream error', error: e);
+      if (mounted) setState(() => _isLoading = false);
+    });
   }
 
   @override
   void dispose() {
     _userSub?.cancel();
     _adminSub?.cancel();
+    _scheduleSub?.cancel();
     _logger.i('🧹 NotificationsScreen: Disposing resources');
     super.dispose();
   }
@@ -186,7 +234,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final projectId = n.payload['projectId'] as String?;
     if (type == null || projectId == null) return;
 
-    if (type.startsWith('project_date_extension') || type.startsWith('task_date_extension')) {
+    if (type.startsWith('project_date_extension') ||
+        type.startsWith('task_date_extension') ||
+        type.startsWith('schedule_')) {
       await _openProject(projectId);
     }
   }
@@ -295,6 +345,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (type.startsWith('project_date_extension_rejected')) return (Icons.cancel_outlined, Colors.red);
     if (type.startsWith('inventory')) return (Icons.inventory_2_outlined, Colors.brown);
     if (type.startsWith('communication')) return (Icons.mail_outline, Colors.blueAccent);
+    if (type == 'schedule_overdue') return (Icons.schedule, Colors.red);
+    if (type == 'schedule_starting_soon') return (Icons.schedule, Colors.orange);
     return (Icons.info_outline, Colors.grey);
   }
 

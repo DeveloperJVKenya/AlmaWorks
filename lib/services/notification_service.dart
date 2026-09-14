@@ -586,11 +586,15 @@ class NotificationService {
           .snapshots()
           .map((snapshot) {
             logger.d('getNotifications: Received snapshot with ${snapshot.docs.length} docs');
+            // Notifications persist as history and are never hidden by
+            // expiry — only isRead reflects whether the user has seen one
+            // (see NotificationsScreen, the single unified notification
+            // center). expiresAt is kept on the model/doc for reference but
+            // no longer drives visibility or deletion (see
+            // cleanupOldNotifications, which nothing calls anymore).
             final list = snapshot.docs
                 .map((doc) => ScheduleNotification.fromFirestore(doc.id, doc.data() as Map<String, dynamic>))
-                .where((n) => n.expiresAt.isAfter(DateTime.now()))
                 .toList();
-            logger.d('getNotifications: After filtering expired, ${list.length} notifications remain');
             return list;
           }).handleError((error) {
             logger.e('getNotifications: Stream error', error: error);

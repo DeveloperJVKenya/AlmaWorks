@@ -3,6 +3,7 @@ import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/add_material_screen.dart';
 import 'package:almaworks/screens/inventory/fabrication_orders_screen.dart';
+import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/record_material_movement_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -43,7 +44,7 @@ class MaterialDetailScreen extends ConsumerWidget {
       logger: logger,
       selectedMenuItem: 'Inventory',
       onMenuItemSelected: (_) {},
-      actions: userRole == 'MainAdmin'
+      actions: InventoryPermissions.canManageCatalog(userRole)
           ? [
               materialAsync.maybeWhen(
                 data: (material) => material == null
@@ -178,8 +179,8 @@ class MaterialDetailScreen extends ConsumerWidget {
     // Issuing/receiving stock is a canApproveAndIssue action — MainAdmin
     // and System Admin only; plain Admin can still add new materials but no
     // longer records movements.
-    final canApproveAndIssue = userRole == 'MainAdmin' || userRole == 'SystemAdmin';
-    final canView = canApproveAndIssue || userRole == 'Admin' || userRole == 'Technician';
+    final canApproveAndIssue = InventoryPermissions.canApproveAndIssue(userRole);
+    final canView = InventoryPermissions.isAuthorized(userRole);
     if (!canView) return const SizedBox.shrink();
 
     return Wrap(

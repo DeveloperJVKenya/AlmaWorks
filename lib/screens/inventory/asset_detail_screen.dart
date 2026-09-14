@@ -11,6 +11,7 @@ import 'package:almaworks/screens/inventory/add_maintenance_window_screen.dart';
 import 'package:almaworks/screens/inventory/asset_availability_calendar.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
 import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/record_custody_event_screen.dart';
 import 'package:almaworks/screens/inventory/request_checkout_screen.dart';
@@ -47,19 +48,15 @@ class AssetDetailScreen extends ConsumerWidget {
     required this.currentUid,
   });
 
-  /// MainAdmin/Admin/SystemAdmin share full catalog visibility and can add
-  /// new items; Technician stays on the request-only flow.
-  bool get isFullAccess => userRole == 'MainAdmin' || userRole == 'Admin' || userRole == 'SystemAdmin';
-
   /// Approve/reject checkout requests, record collections/returns, issue
   /// materials — MainAdmin + System Admin only. Nobody self-approves, so a
   /// MainAdmin/SystemAdmin who currently holds an item never sees these for
   /// their own custody (see the self-holder branch in [_buildActionButton]).
-  bool get canApproveAndIssue => userRole == 'MainAdmin' || userRole == 'SystemAdmin';
+  bool get canApproveAndIssue => InventoryPermissions.canApproveAndIssue(userRole);
 
   /// Edit an existing asset/tool and schedule/cancel maintenance —
   /// MainAdmin only.
-  bool get canManageCatalog => userRole == 'MainAdmin';
+  bool get canManageCatalog => InventoryPermissions.canManageCatalog(userRole);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,6 +85,7 @@ class AssetDetailScreen extends ConsumerWidget {
                               asset: asset,
                               createdByUid: currentUid,
                               createdByName: username,
+                              userRole: userRole,
                             ),
                           ),
                         ),
@@ -289,7 +287,7 @@ class AssetDetailScreen extends ConsumerWidget {
     AssetModel asset,
     List<AssetBookingModel> bookings,
   ) {
-    final canAct = userRole == 'MainAdmin' || userRole == 'Admin' || userRole == 'SystemAdmin' || userRole == 'Technician';
+    final canAct = InventoryPermissions.canRequestOrReturn(userRole);
     if (!canAct) return const SizedBox.shrink();
 
     // A pending request locks the asset — nobody else can request/check it
@@ -382,6 +380,7 @@ class AssetDetailScreen extends ConsumerWidget {
               asset: asset,
               requestedByUid: currentUid,
               requestedByName: username,
+              requestedByRole: userRole,
             ),
           ),
         ),
@@ -439,6 +438,7 @@ class AssetDetailScreen extends ConsumerWidget {
                 asset: asset,
                 requestedByUid: currentUid,
                 requestedByName: username,
+                requestedByRole: userRole,
               ),
             ),
           ),

@@ -37,28 +37,39 @@ final currentUidProvider = Provider<String>((ref) {
 });
 
 /// Single source of the caller's Users doc — role AND username come from
-/// the exact same query, run once. userRoleProvider/usernameProvider and
+/// the exact same query, kept live. userRoleProvider/usernameProvider and
 /// roleMirrorSyncProvider below all derive from this instead of each
 /// separately querying `Users` (which is what AuthService.getUserRole() /
 /// getUsername() do individually) — that used to mean 2-3 sequential
 /// Firestore round trips gating the Inventory screen before it could
-/// render its tabs at all. Cached for the app's lifetime (not autoDispose).
-final _currentUserDocProvider = FutureProvider<({String role, String username})>((ref) async {
+/// render its tabs at all.
+///
+/// A live `.snapshots()` listener rather than a one-shot `.get()` — a role
+/// changed directly in Firestore (or a slow mirror sync) now reaches every
+/// Inventory widget gated on userRoleProvider without requiring the
+/// Inventory screen to be torn down and rebuilt (see BaseLayout's identical
+/// fix for the same staleness problem app-wide).
+final _currentUserDocProvider = StreamProvider<({String role, String username})>((ref) {
   final uid = ref.watch(currentUidProvider);
-  if (uid.isEmpty) return (role: 'Client', username: '');
-  final snapshot =
-      await FirebaseFirestore.instance.collection('Users').where('uid', isEqualTo: uid).limit(1).get();
-  if (snapshot.docs.isEmpty) return (role: 'Client', username: '');
-  final data = snapshot.docs.first.data();
-  return (role: data['role'] as String? ?? 'Client', username: snapshot.docs.first.id);
+  if (uid.isEmpty) return Stream.value((role: 'Client', username: ''));
+  return FirebaseFirestore.instance
+      .collection('Users')
+      .where('uid', isEqualTo: uid)
+      .limit(1)
+      .snapshots()
+      .map((snapshot) {
+    if (snapshot.docs.isEmpty) return (role: 'Client', username: '');
+    final data = snapshot.docs.first.data();
+    return (role: data['role'] as String? ?? 'Client', username: snapshot.docs.first.id);
+  });
 });
 
-final userRoleProvider = FutureProvider<String>((ref) async {
-  return (await ref.watch(_currentUserDocProvider.future)).role;
+final userRoleProvider = Provider<AsyncValue<String>>((ref) {
+  return ref.watch(_currentUserDocProvider).whenData((doc) => doc.role);
 });
 
-final usernameProvider = FutureProvider<String>((ref) async {
-  return (await ref.watch(_currentUserDocProvider.future)).username;
+final usernameProvider = Provider<AsyncValue<String>>((ref) {
+  return ref.watch(_currentUserDocProvider).whenData((doc) => doc.username);
 });
 
 /// Ensures UserRoles/{uid} exists before Inventory's own Firestore listeners
