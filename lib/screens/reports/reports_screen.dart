@@ -38,11 +38,17 @@ class ReportsScreen extends StatefulWidget {
   /// – Edit and Delete actions are removed from every report card
   final bool isClient;
 
+  /// Technician: same view access as Admin (all tabs), but no create/upload,
+  /// edit, delete, or download — view-only, same spirit as [isClient] minus
+  /// the tab restriction.
+  final bool isTechnician;
+
   const ReportsScreen({
     super.key,
     required this.project,
     required this.logger,
     this.isClient = false,
+    this.isTechnician = false,
   });
 
   @override
@@ -97,8 +103,8 @@ class _ReportsScreenState extends State<ReportsScreen>
       logger: widget.logger,
       selectedMenuItem: 'Reports',
       onMenuItemSelected: (_) {},
-      // Clients cannot create or upload reports — hide the FAB entirely.
-      floatingActionButton: widget.isClient
+      // Clients and Technician cannot create or upload reports — hide the FAB entirely.
+      floatingActionButton: (widget.isClient || widget.isTechnician)
           ? null
           : FloatingActionButton(
               onPressed: _isLoading ? null : _handleUploadAction,
@@ -364,8 +370,8 @@ class _ReportsScreenState extends State<ReportsScreen>
                 color: Colors.grey[600], fontSize: 16),
           ),
           const SizedBox(height: 8),
-          // Clients cannot create reports — show a neutral message instead.
-          if (!widget.isClient)
+          // Clients/Technician cannot create reports — show a neutral message instead.
+          if (!widget.isClient && !widget.isTechnician)
             Text(
               'Tap the upload button to add one',
               style: GoogleFonts.poppins(
@@ -471,10 +477,12 @@ class _ReportsScreenState extends State<ReportsScreen>
               if (isSafetyFormReport)
                 _popupItem(
                     'view_form', Icons.assignment, Colors.blue[600]!, 'View / Edit Form'),
-              _popupItem(
-                  'download', Icons.download, Colors.green[600]!, 'Download PDF'),
-              // Clients cannot delete reports.
-              if (!widget.isClient)
+              // Technician is view-only — no download.
+              if (!widget.isTechnician)
+                _popupItem(
+                    'download', Icons.download, Colors.green[600]!, 'Download PDF'),
+              // Clients and Technician cannot delete reports.
+              if (!widget.isClient && !widget.isTechnician)
                 _popupItem('delete', Icons.delete, Colors.red[600]!, 'Delete'),
             ];
           },
@@ -608,8 +616,8 @@ class _ReportsScreenState extends State<ReportsScreen>
             itemBuilder: (context) => [
               _popupItem('open', Icons.visibility_rounded,
                   Colors.blue[700]!, 'Open'),
-              // Clients are view-only — Edit and Delete are hidden.
-              if (!widget.isClient) ...[
+              // Clients and Technician are view-only — Edit and Delete are hidden.
+              if (!widget.isClient && !widget.isTechnician) ...[
                 _popupItem('edit', Icons.edit_rounded,
                     const Color(0xFF0A2E5A), 'Edit'),
                 _popupItem('delete', Icons.delete_rounded,
@@ -859,8 +867,8 @@ class _ReportsScreenState extends State<ReportsScreen>
             itemBuilder: (context) => [
               _popupItem('open', Icons.visibility_rounded,
                   Colors.blue[700]!, 'Open'),
-              // Edit and Delete are hidden from clients.
-              if (!widget.isClient) ...[
+              // Edit and Delete are hidden from clients and Technician.
+              if (!widget.isClient && !widget.isTechnician) ...[
                 _popupItem('edit', Icons.edit_rounded,
                     const Color(0xFF0A2E5A), 'Edit'),
                 _popupItem('delete', Icons.delete_rounded,

@@ -61,13 +61,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
   final List<String> _mainTabs = ['Client', 'Sub-Contractor', 'Supplier'];
   final List<String> _subSections = ['Contract', 'Communication'];
 
-  // Only Admin/Technician/SystemAdmin/MainAdmin may upload or delete
-  // documents; Client is view-only everywhere, including their own tab.
+  // Only Admin/SystemAdmin/MainAdmin may upload or delete documents;
+  // Client AND Technician are view-only everywhere, including download.
   bool get _canManageDocuments =>
       _userRole == 'Admin' ||
-      _userRole == 'Technician' ||
       _userRole == 'SystemAdmin' ||
       _userRole == 'MainAdmin';
+
+  bool get _isTechnician => _userRole == 'Technician';
 
   // Distinct team-member roles other than subcontractor/supplier, in
   // first-seen order, case-insensitively de-duplicated.
@@ -675,16 +676,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                           ],
                         ),
                       ),
-                      PopupMenuItem(
-                        value: 'download',
-                        child: Row(
-                          children: [
-                            Icon(Icons.download, color: Colors.green[600]),
-                            const SizedBox(width: 8),
-                            Text('Download', style: GoogleFonts.poppins()),
-                          ],
+                      if (!_isTechnician)
+                        PopupMenuItem(
+                          value: 'download',
+                          child: Row(
+                            children: [
+                              Icon(Icons.download, color: Colors.green[600]),
+                              const SizedBox(width: 8),
+                              Text('Download', style: GoogleFonts.poppins()),
+                            ],
+                          ),
                         ),
-                      ),
                       if (_canManageDocuments)
                         PopupMenuItem(
                           value: 'delete',

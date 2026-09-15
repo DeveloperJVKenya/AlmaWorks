@@ -125,7 +125,8 @@ class _ScheduleScreenState extends State<ScheduleScreen>
 
     // Determine if user is a client
     final bool isClient = _userRole == 'Client';
-    
+    final bool isTechnician = _userRole == 'Technician';
+
     return BaseLayout(
       title: '${widget.project.name} - Schedule',
       project: widget.project,
@@ -191,6 +192,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
                                 project: widget.project,
                                 logger: widget.logger,
                                 isClient: true,
+                                isTechnician: isTechnician,
                               )
                             : TabBarView(
                                 controller: _tabController,
@@ -199,6 +201,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
                                     project: widget.project,
                                     logger: widget.logger,
                                     isClient: false,
+                                    isTechnician: isTechnician,
                                   ),
                                   DynamicScheduleScreen(
                                     project: widget.project,

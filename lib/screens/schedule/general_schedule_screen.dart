@@ -20,12 +20,14 @@ class GeneralScheduleScreen extends StatefulWidget {
   final ProjectModel project;
   final Logger logger;
   final bool isClient;
+  final bool isTechnician;
 
   const GeneralScheduleScreen({
     super.key,
     required this.project,
     required this.logger,
     this.isClient = false,
+    this.isTechnician = false,
   });
 
   @override
@@ -35,6 +37,10 @@ class GeneralScheduleScreen extends StatefulWidget {
 class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
   final ScheduleService _scheduleService = ScheduleService();
   bool _isUploading = false;
+
+  // Client and Technician are view-only here — no upload, download, or
+  // delete; every other role keeps full manage access.
+  bool get _canManage => !widget.isClient && !widget.isTechnician;
 
   @override
   void initState() {
@@ -98,7 +104,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  if (!widget.isClient)
+                  if (_canManage)
                     Text(
                       'Tap the upload button to add into schedule',
                       style: GoogleFonts.poppins(
@@ -121,7 +127,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           );
         },
       ),
-      floatingActionButton: widget.isClient
+      floatingActionButton: !_canManage
           ? null
           : FloatingActionButton(
               onPressed: _isUploading ? null : _uploadScheduleDocument,
@@ -186,17 +192,18 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                 ],
               ),
             ),
-            PopupMenuItem(
-              value: 'download',
-              child: Row(
-                children: [
-                  Icon(Icons.download, size: 16, color: Colors.green[600]),
-                  const SizedBox(width: 8),
-                  const Text('Download'),
-                ],
+            if (!widget.isTechnician)
+              PopupMenuItem(
+                value: 'download',
+                child: Row(
+                  children: [
+                    Icon(Icons.download, size: 16, color: Colors.green[600]),
+                    const SizedBox(width: 8),
+                    const Text('Download'),
+                  ],
+                ),
               ),
-            ),
-            if (!widget.isClient)
+            if (_canManage)
               PopupMenuItem(
                 value: 'delete',
                 child: Row(

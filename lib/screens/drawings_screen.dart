@@ -41,6 +41,11 @@ class _DrawingsScreenState extends State<DrawingsScreen>
   bool _isUploading = false;
   String? _userRole = 'Client'; // default to most restrictive until loaded
 
+  // Client and Technician are view-only here — no upload, download, or
+  // delete; every other role keeps full manage access.
+  bool get _canManageDrawings => _userRole != 'Client' && _userRole != 'Technician';
+  bool get _isTechnician => _userRole == 'Technician';
+
   @override
   void initState() {
     super.initState();
@@ -86,7 +91,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       logger: widget.logger,
       selectedMenuItem: 'Drawings',
       onMenuItemSelected: (_) {}, // Empty callback as navigation is handled by BaseLayout
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: !_canManageDrawings ? null : FloatingActionButton(
             onPressed: _isUploading ? null : () {
               if (_tabController.index == 0) {
                 _uploadContractDrawing();
@@ -295,17 +300,18 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 ],
               ),
             ),
-            PopupMenuItem(
-              value: 'download',
-              child: Row(
-                children: [
-                  Icon(Icons.download, size: 16, color: Colors.green[600]),
-                  SizedBox(width: 8),
-                  Text('Download'),
-                ],
+            if (!_isTechnician)
+              PopupMenuItem(
+                value: 'download',
+                child: Row(
+                  children: [
+                    Icon(Icons.download, size: 16, color: Colors.green[600]),
+                    SizedBox(width: 8),
+                    Text('Download'),
+                  ],
+                ),
               ),
-            ),
-            if (_userRole != 'Client')
+            if (_canManageDrawings)
               PopupMenuItem(
                 value: 'delete',
                 child: Row(
@@ -784,17 +790,18 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   ],
                 ),
               ),
-              PopupMenuItem(
-                value: 'download',
-                child: Row(
-                  children: [
-                    Icon(Icons.download, size: 16, color: Colors.green[600]),
-                    SizedBox(width: 8),
-                    Text('Download'),
-                  ],
+              if (!_isTechnician)
+                PopupMenuItem(
+                  value: 'download',
+                  child: Row(
+                    children: [
+                      Icon(Icons.download, size: 16, color: Colors.green[600]),
+                      SizedBox(width: 8),
+                      Text('Download'),
+                    ],
+                  ),
                 ),
-              ),
-              if (_userRole != 'Client')
+              if (_canManageDrawings)
                 PopupMenuItem(
                   value: 'delete',
                   child: Row(
@@ -857,18 +864,19 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 ],
               ),
             ),
-            PopupMenuItem(
-              value: 'download',
-              child: Row(
-                children: [
-                  Icon(Icons.download, size: 16, color: Colors.green[600]),
-                  SizedBox(width: 8),
-                  Text('Download'),
-                ],
+            if (!_isTechnician)
+              PopupMenuItem(
+                value: 'download',
+                child: Row(
+                  children: [
+                    Icon(Icons.download, size: 16, color: Colors.green[600]),
+                    SizedBox(width: 8),
+                    Text('Download'),
+                  ],
+                ),
               ),
-            ),
             // REMOVED "Update" option
-            if (_userRole != 'Client')
+            if (_canManageDrawings)
               PopupMenuItem(
                 value: 'delete',
                 child: Row(
