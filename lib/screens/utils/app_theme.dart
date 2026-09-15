@@ -7,6 +7,14 @@ class AppTheme {
   static const Color surfaceColor = Colors.white;
   static const Color errorColor = Color(0xFFB00020);
 
+  // Shared modern-rounded shape/padding floor for every button in the app
+  // that doesn't override its own style — content-sized (buttons are never
+  // stretched by this shape alone), consistent 14px rounding across
+  // Elevated/Outlined/Filled so a mixed row of button types still reads as
+  // one visual language.
+  static final _buttonShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(14));
+  static const _buttonPadding = EdgeInsets.symmetric(horizontal: 20, vertical: 14);
+
   static ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primarySwatch: Colors.blue,
@@ -28,9 +36,24 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: _buttonShape,
+        padding: _buttonPadding,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primaryColor,
+        side: const BorderSide(color: primaryColor),
+        shape: _buttonShape,
+        padding: _buttonPadding,
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        shape: _buttonShape,
+        padding: _buttonPadding,
       ),
     ),
   );
@@ -70,9 +93,24 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: _buttonShape,
+        padding: _buttonPadding,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: const BorderSide(color: Colors.white70),
+        shape: _buttonShape,
+        padding: _buttonPadding,
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        shape: _buttonShape,
+        padding: _buttonPadding,
       ),
     ),
     dialogTheme: DialogThemeData(

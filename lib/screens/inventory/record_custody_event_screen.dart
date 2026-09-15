@@ -255,10 +255,13 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: _isSaving ? null : _pickPhotos,
-                        icon: const Icon(Icons.add_a_photo_outlined),
-                        label: Text('Add Photos', style: GoogleFonts.poppins()),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          onPressed: _isSaving ? null : _pickPhotos,
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: Text('Add Photos', style: GoogleFonts.poppins()),
+                        ),
                       ),
                       if (_selectedPhotos.isNotEmpty) ...[
                         const SizedBox(height: 10),
