@@ -53,5 +53,13 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<!-- Required by image_picker/cunning_document_scanner for camera capture
+	     (asset/tool photos, delivery acknowledgment scans, fabrication form
+	     scanning) — iOS refuses camera access at all without these, crashing
+	     the app rather than just denying the request. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Almaworks uses the camera to scan documents and capture photos for inventory and delivery records.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Almaworks uses your photo library to attach existing photos to inventory and delivery records.</string>
 </dict>
 </plist>

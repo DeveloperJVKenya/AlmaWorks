@@ -8,6 +8,7 @@ import 'package:almaworks/models/inventory/checkout_request_model.dart';
 import 'package:almaworks/models/inventory/material_fabrication_order_model.dart';
 import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/inventory/material_movement_model.dart';
+import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:logger/logger.dart';
@@ -1527,6 +1528,7 @@ class InventoryService {
     required String title,
     required String body,
     Map<String, dynamic>? payload,
+    List<String> targetRoles = const ['MainAdmin', 'SystemAdmin'],
   }) async {
     try {
       await _firestore.collection(_adminQueueCollection).add({
@@ -1534,7 +1536,7 @@ class InventoryService {
         'body': body,
         'payload': ?payload,
         'createdAt': FieldValue.serverTimestamp(),
-        'targetRoles': const ['MainAdmin', 'SystemAdmin'],
+        'targetRoles': targetRoles,
       });
     } catch (e) {
       _logger.e('❌ InventoryService: Failed to write admin notification', error: e);
@@ -1913,6 +1915,7 @@ class InventoryService {
         .collection(_fabricationOrdersCollection)
         .where('status', whereIn: [
           MaterialFabricationOrderModel.statusIssued,
+          MaterialFabricationOrderModel.statusPendingAdminReview,
           MaterialFabricationOrderModel.statusScanUploaded,
           MaterialFabricationOrderModel.statusDiscrepancy,
         ])
@@ -1941,7 +1944,15 @@ class InventoryService {
   /// decrements `quantityInStorage` transactionally the same way
   /// [recordMaterialIssue] does, and creates the order doc that the printed
   /// form (see fabrication_form_pdf.dart) and later the scan-upload review
-  /// both key off of.
+  /// both key off of. Also writes a `movementIssued` entry to the material's
+  /// movement history in the same transaction — this used to be invisible
+  /// there (fabrication had its own separate quantity decrement that never
+  /// touched the ledger), cross-referenced back to the order via
+  /// [MaterialMovementModel.fabricationOrderId]. This is the same moment
+  /// the printable form is generated (create + download is one combined UI
+  /// action — see create_fabrication_order_screen.dart), so it satisfies
+  /// "as soon as the form is handed to the driver" without risking a
+  /// duplicate ledger entry if the PDF is re-downloaded later.
   Future<MaterialFabricationOrderModel> createFabricationOrder({
     required String materialId,
     required String materialName,
@@ -1952,10 +1963,15 @@ class InventoryService {
     String? expectedFabricatorName,
     required String issuedByUid,
     required String issuedByName,
+    required String issuedByRole,
   }) async {
+    if (!InventoryPermissions.canApproveAndIssue(issuedByRole)) {
+      throw Exception('You do not have permission to issue material for fabrication.');
+    }
     try {
       _logger.i('🏗️ InventoryService: Creating fabrication order for material $materialId ($quantity $unit)');
       final orderRef = _firestore.collection(_fabricationOrdersCollection).doc();
+      final movementRef = _firestore.collection(_movementsCollection).doc();
       final now = DateTime.now();
       final order = MaterialFabricationOrderModel(
         id: orderRef.id,
@@ -1971,6 +1987,23 @@ class InventoryService {
         issuedAt: now,
         status: MaterialFabricationOrderModel.statusIssued,
       );
+      final movement = MaterialMovementModel(
+        id: movementRef.id,
+        materialId: materialId,
+        movementType: MaterialMovementModel.movementIssued,
+        quantity: quantity,
+        projectId: projectId,
+        projectName: projectName,
+        fabricationOrderId: orderRef.id,
+        notes: 'Issued for fabrication — Form ID ${orderRef.id}'
+            '${expectedFabricatorName != null ? ' — Fabricator: $expectedFabricatorName' : ''}',
+        photoUrls: const [],
+        recordedByUid: issuedByUid,
+        recordedByName: issuedByName,
+        recordedByRole: issuedByRole,
+        eventAt: now,
+        createdAt: now,
+      );
 
       await _firestore.runTransaction((transaction) async {
         final materialRef = _firestore.collection(_materialsCollection).doc(materialId);
@@ -1982,6 +2015,7 @@ class InventoryService {
         }
 
         transaction.set(orderRef, order.toFirestore());
+        transaction.set(movementRef, movement.toFirestore());
         transaction.update(materialRef, {
           'quantityInStorage': currentQty - quantity,
           'updatedAt': Timestamp.fromDate(now),
@@ -1996,13 +2030,27 @@ class InventoryService {
     }
   }
 
-  /// Technician scans the completed paper form back in. Every field here
-  /// (except the technician's own live acknowledgment) is a human-reviewed
-  /// value the technician confirmed or corrected after reading the physical
-  /// form — OCR only ever pre-filled the review screen, it never writes
-  /// here directly. Flags `discrepancy` instead of `verified` if the final
-  /// received quantity doesn't reconcile with what was issued/fabricated,
-  /// within a small tolerance, so an admin can follow up.
+  /// The site recipient (Technician or Admin/MainAdmin — see
+  /// [InventoryPermissions.canUploadFabricationScan]) scans the completed
+  /// paper form back in. Every field here (except the recipient's own live
+  /// acknowledgment) is a human-reviewed value they confirmed or corrected
+  /// after reading the physical form — OCR only ever pre-filled the review
+  /// screen, it never writes here directly.
+  ///
+  /// This no longer self-verifies: it only ever moves the order to
+  /// [MaterialFabricationOrderModel.statusPendingAdminReview] (recipient is
+  /// Technician) or [MaterialFabricationOrderModel.statusScanUploaded]
+  /// (recipient is Admin/MainAdmin, skipping the review step since they're
+  /// already trusted). The final verified/discrepancy call is a separate,
+  /// explicit action — see [adminReviewFabricationScan] and
+  /// [verifyFabricationOrder]. `hasQuantityDiscrepancy` is still computed
+  /// here as a hint for whoever reviews/verifies, never as the final
+  /// decision.
+  ///
+  /// Also writes a `movementReceived` entry to the material's movement
+  /// history in the same beat — the second of the two tracking checkpoints
+  /// (issue/handover-to-driver, then this) the live tracking view is meant
+  /// to show; nothing in between is tracked, by design.
   Future<MaterialFabricationOrderModel> submitFabricationFormScan({
     required MaterialFabricationOrderModel order,
     required Uint8List scanBytes,
@@ -2019,7 +2067,11 @@ class InventoryService {
     required double technicianAckQuantityReceived,
     required String technicianAckByUid,
     required String technicianAckByName,
+    required String recipientRole,
   }) async {
+    if (!InventoryPermissions.canUploadFabricationScan(recipientRole)) {
+      throw Exception('You do not have permission to submit a fabrication scan.');
+    }
     try {
       _logger.i('📄 InventoryService: Submitting scanned form for fabrication order ${order.id}');
       final scanUrl = await _uploadFabricationScan(order.id, scanBytes, scanFileName);
@@ -2032,44 +2084,161 @@ class InventoryService {
               (technicianAckQuantityReceived - driverAckQuantityFromFabricator).abs() > tolerance ||
               (driverAckQuantityAtPickup - expectedOutput).abs() > tolerance;
 
+      final isTrustedRecipient = recipientRole == 'Admin' || recipientRole == 'MainAdmin';
+      final nextStatus = isTrustedRecipient
+          ? MaterialFabricationOrderModel.statusScanUploaded
+          : MaterialFabricationOrderModel.statusPendingAdminReview;
+
       final now = DateTime.now();
       final orderRef = _firestore.collection(_fabricationOrdersCollection).doc(order.id);
-      await orderRef.update({
-        'status': hasDiscrepancy
-            ? MaterialFabricationOrderModel.statusDiscrepancy
-            : MaterialFabricationOrderModel.statusVerified,
-        'scannedFormUrl': scanUrl,
-        'ocrRawText': ?ocrRawText,
-        'ocrExtractedFields': ?ocrExtractedFields,
-        'driverAckQuantityAtPickup': driverAckQuantityAtPickup,
-        'fabricatorName': fabricatorName,
-        'fabricatorAckQuantityReceived': fabricatorAckQuantityReceived,
-        'fabricatorAckCondition': fabricatorAckCondition,
-        'fabricatorDamageNotes': ?fabricatorDamageNotes,
-        'fabricatorAckQuantityOutput': fabricatorAckQuantityOutput,
-        'driverAckQuantityFromFabricator': driverAckQuantityFromFabricator,
-        'technicianAckQuantityReceived': technicianAckQuantityReceived,
-        'technicianAckByUid': technicianAckByUid,
-        'technicianAckByName': technicianAckByName,
-        'technicianAckAt': Timestamp.fromDate(now),
-        'verifiedByUid': technicianAckByUid,
-        'verifiedByName': technicianAckByName,
-        'verifiedAt': Timestamp.fromDate(now),
-      });
-
-      await _notifyAdmins(
-        title: hasDiscrepancy ? '⚠️ Fabrication Form: Discrepancy' : '📄 Fabrication Form Received',
-        body: '$technicianAckByName uploaded the completed form for "${order.materialName}"'
-            '${hasDiscrepancy ? ' — quantities don\'t reconcile, please review.' : '.'}',
-        payload: {'type': 'inventory_fabrication_scan', 'orderId': order.id},
+      final movementRef = _firestore.collection(_movementsCollection).doc();
+      final movement = MaterialMovementModel(
+        id: movementRef.id,
+        materialId: order.materialId,
+        movementType: MaterialMovementModel.movementReceived,
+        quantity: technicianAckQuantityReceived,
+        projectId: order.projectId,
+        projectName: order.projectName,
+        fabricationOrderId: order.id,
+        conditionOnReceipt: fabricatorAckCondition,
+        notes: 'Received back from fabrication — Form ID ${order.id}'
+            '${hasDiscrepancy ? ' — quantities flagged for review' : ''}',
+        photoUrls: const [],
+        recordedByUid: technicianAckByUid,
+        recordedByName: technicianAckByName,
+        recordedByRole: recipientRole,
+        eventAt: now,
+        createdAt: now,
       );
 
-      _logger.i('✅ InventoryService: Fabrication order ${order.id} ${hasDiscrepancy ? 'flagged (discrepancy)' : 'verified'}');
+      // Deliberately does NOT touch the material's quantityInStorage balance
+      // here — this is an audit/tracking entry (the second of the two live
+      // tracking checkpoints), not a restock. Whether fabricated output
+      // actually goes back into the same material's storage balance is a
+      // separate MainAdmin/SystemAdmin decision via the existing
+      // recordMaterialReceipt flow, same as any other receipt.
+      await _firestore.runTransaction((transaction) async {
+        transaction.update(orderRef, {
+          'status': nextStatus,
+          'scannedFormUrl': scanUrl,
+          'ocrRawText': ?ocrRawText,
+          'ocrExtractedFields': ?ocrExtractedFields,
+          'driverAckQuantityAtPickup': driverAckQuantityAtPickup,
+          'fabricatorName': fabricatorName,
+          'fabricatorAckQuantityReceived': fabricatorAckQuantityReceived,
+          'fabricatorAckCondition': fabricatorAckCondition,
+          'fabricatorDamageNotes': ?fabricatorDamageNotes,
+          'fabricatorAckQuantityOutput': fabricatorAckQuantityOutput,
+          'technicianAckQuantityReceived': technicianAckQuantityReceived,
+          'driverAckQuantityFromFabricator': driverAckQuantityFromFabricator,
+          'technicianAckByUid': technicianAckByUid,
+          'technicianAckByName': technicianAckByName,
+          'technicianAckAt': Timestamp.fromDate(now),
+          'hasQuantityDiscrepancy': hasDiscrepancy,
+        });
+        transaction.set(movementRef, movement.toFirestore());
+      });
+
+      if (isTrustedRecipient) {
+        await _notifyAdmins(
+          title: hasDiscrepancy ? '⚠️ Fabrication Form: Discrepancy Flagged' : '📄 Fabrication Form Ready for Verification',
+          body: '$technicianAckByName uploaded the completed form for "${order.materialName}"'
+              '${hasDiscrepancy ? ' — quantities don\'t reconcile, please review.' : ' — ready for verification.'}',
+          payload: {'type': 'inventory_fabrication_scan', 'orderId': order.id},
+          targetRoles: const ['SystemAdmin', 'MainAdmin'],
+        );
+      } else {
+        await _notifyAdmins(
+          title: '📄 Fabrication Form Awaiting Review',
+          body: '$technicianAckByName uploaded the completed form for "${order.materialName}" — needs Admin review.',
+          payload: {'type': 'inventory_fabrication_scan', 'orderId': order.id},
+          targetRoles: const ['Admin', 'MainAdmin'],
+        );
+      }
+
+      _logger.i('✅ InventoryService: Fabrication order ${order.id} scan submitted (status: $nextStatus)');
 
       final saved = await orderRef.get();
       return MaterialFabricationOrderModel.fromFirestore(saved);
     } catch (e) {
       _logger.e('❌ InventoryService: Failed to submit scan for fabrication order ${order.id}', error: e);
+      rethrow;
+    }
+  }
+
+  /// Admin/MainAdmin reviews a Technician-submitted scan, moving it from
+  /// awaiting-review to ready-for-SystemAdmin-verification. Cannot review
+  /// their own submission's order twice, nor an order not actually pending
+  /// review — both enforced by the status check, not just the role check.
+  Future<void> adminReviewFabricationScan({
+    required String orderId,
+    required String reviewerUid,
+    required String reviewerName,
+    required String reviewerRole,
+  }) async {
+    if (!InventoryPermissions.canReviewFabricationScan(reviewerRole)) {
+      throw Exception('You do not have permission to review this fabrication order.');
+    }
+    try {
+      final orderRef = _firestore.collection(_fabricationOrdersCollection).doc(orderId);
+      final snap = await orderRef.get();
+      if (!snap.exists) throw Exception('Fabrication order $orderId no longer exists');
+      final order = MaterialFabricationOrderModel.fromFirestore(snap);
+      if (!order.isPendingAdminReview) {
+        throw Exception('This order is not awaiting Admin review.');
+      }
+      final now = DateTime.now();
+      await orderRef.update({
+        'status': MaterialFabricationOrderModel.statusScanUploaded,
+        'adminReviewedByUid': reviewerUid,
+        'adminReviewedByName': reviewerName,
+        'adminReviewedAt': Timestamp.fromDate(now),
+      });
+      await _notifyAdmins(
+        title: order.hasQuantityDiscrepancy ? '⚠️ Fabrication Form: Discrepancy Flagged' : '📄 Fabrication Form Ready for Verification',
+        body: '$reviewerName reviewed the form for "${order.materialName}" — ready for verification.',
+        payload: {'type': 'inventory_fabrication_scan', 'orderId': orderId},
+        targetRoles: const ['SystemAdmin', 'MainAdmin'],
+      );
+      _logger.i('✅ InventoryService: Fabrication order $orderId reviewed by $reviewerName');
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to review fabrication order $orderId', error: e);
+      rethrow;
+    }
+  }
+
+  /// SystemAdmin/MainAdmin's final call — verified or flagged as a
+  /// discrepancy. `hasQuantityDiscrepancy` (computed at scan-submission) is
+  /// only ever a hint surfaced in the UI; this explicit decision is what
+  /// actually sets the final status.
+  Future<void> verifyFabricationOrder({
+    required String orderId,
+    required String verifiedByUid,
+    required String verifiedByName,
+    required String verifierRole,
+    required bool isDiscrepancy,
+  }) async {
+    if (!InventoryPermissions.canVerifyFabricationOrder(verifierRole)) {
+      throw Exception('You do not have permission to verify this fabrication order.');
+    }
+    try {
+      final orderRef = _firestore.collection(_fabricationOrdersCollection).doc(orderId);
+      final snap = await orderRef.get();
+      if (!snap.exists) throw Exception('Fabrication order $orderId no longer exists');
+      final order = MaterialFabricationOrderModel.fromFirestore(snap);
+      if (!order.isScanUploaded) {
+        throw Exception('This order is not ready for verification.');
+      }
+      final now = DateTime.now();
+      await orderRef.update({
+        'status': isDiscrepancy ? MaterialFabricationOrderModel.statusDiscrepancy : MaterialFabricationOrderModel.statusVerified,
+        'verifiedByUid': verifiedByUid,
+        'verifiedByName': verifiedByName,
+        'verifiedAt': Timestamp.fromDate(now),
+      });
+      _logger.i('✅ InventoryService: Fabrication order $orderId ${isDiscrepancy ? 'flagged (discrepancy)' : 'verified'} by $verifiedByName');
+    } catch (e) {
+      _logger.e('❌ InventoryService: Failed to verify fabrication order $orderId', error: e);
       rethrow;
     }
   }
@@ -2089,6 +2258,8 @@ class InventoryService {
       case 'heic':
       case 'heif':
         return 'image/heic';
+      case 'pdf':
+        return 'application/pdf';
       default:
         return 'image/jpeg';
     }

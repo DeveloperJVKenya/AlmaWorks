@@ -60,9 +60,16 @@ service cloud.firestore {
       allow update: if request.auth != null && (
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isProjectManager'])
         || (
+          // MainAdmin's own doc is immune to every caller below, including
+          // another MainAdmin or a SystemAdmin — this clause alone is what
+          // keeps that true regardless of which role gets added above.
           resource.data.role != 'MainAdmin'
           && (
-            inventoryUserRole() == 'MainAdmin'
+            // SystemAdmin has the same unrestricted grant power as
+            // MainAdmin here (per requirement) — the one exception is the
+            // MainAdmin-immunity clause just above, which already applies
+            // equally to both.
+            inventoryUserRole() in ['MainAdmin', 'SystemAdmin']
             || (
               inventoryUserRole() == 'Admin'
               && request.resource.data.role in ['Technician', 'SubContractor']
@@ -598,11 +605,13 @@ service cloud.firestore {
     // Decided per issue, not a fixed material property. The Driver and
     // Fabricator legs have no app account (by design — see
     // InventoryService's fabrication-order doc comment) and travel on a
-    // printed form instead; only the Technician's final scan-upload is a
-    // digital write, and it's a single atomic transition (issued ->
-    // verified/discrepancy) carrying every human-reviewed field from that
-    // upload — never partial, never from anyone but the technician who
-    // actually performed it.
+    // printed form instead. Three separate, field-restricted update
+    // clauses below for the three-step Admin-then-SystemAdmin review chain:
+    // (a) the site recipient's scan submission (issued -> pendingAdminReview
+    //     if Technician, or issued -> scanUploaded if Admin/MainAdmin —
+    //     never self-verifies), (b) an Admin/MainAdmin's review
+    //     (pendingAdminReview -> scanUploaded), (c) a SystemAdmin/MainAdmin's
+    //     final verify/discrepancy call (scanUploaded -> verified/discrepancy).
     match /InventoryMaterialFabricationOrders/{orderId} {
       allow read: if request.auth != null
                    && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
@@ -614,19 +623,37 @@ service cloud.firestore {
                      && request.resource.data.issuedByUid == request.auth.uid
                      && request.resource.data.status == 'issued';
 
-      allow update: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician']
-                     && resource.data.status == 'issued'
-                     && request.resource.data.status in ['verified', 'discrepancy']
-                     && request.resource.data.technicianAckByUid == request.auth.uid
-                     && request.resource.data.diff(resource.data).affectedKeys()
-                          .hasOnly(['status', 'scannedFormUrl', 'ocrRawText', 'ocrExtractedFields',
-                                    'driverAckQuantityAtPickup', 'fabricatorName',
-                                    'fabricatorAckQuantityReceived', 'fabricatorAckCondition',
-                                    'fabricatorDamageNotes', 'fabricatorAckQuantityOutput',
-                                    'driverAckQuantityFromFabricator', 'technicianAckQuantityReceived',
-                                    'technicianAckByUid', 'technicianAckByName', 'technicianAckAt',
-                                    'verifiedByUid', 'verifiedByName', 'verifiedAt']);
+      allow update: if request.auth != null && (
+        // (a) Site recipient's scan submission.
+        (inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician']
+          && resource.data.status == 'issued'
+          && request.resource.data.status in ['pendingAdminReview', 'scanUploaded']
+          && request.resource.data.technicianAckByUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status', 'scannedFormUrl', 'ocrRawText', 'ocrExtractedFields',
+                         'driverAckQuantityAtPickup', 'fabricatorName',
+                         'fabricatorAckQuantityReceived', 'fabricatorAckCondition',
+                         'fabricatorDamageNotes', 'fabricatorAckQuantityOutput',
+                         'driverAckQuantityFromFabricator', 'technicianAckQuantityReceived',
+                         'technicianAckByUid', 'technicianAckByName', 'technicianAckAt',
+                         'hasQuantityDiscrepancy']))
+        ||
+        // (b) Admin/MainAdmin review.
+        (inventoryUserRole() in ['Admin', 'MainAdmin']
+          && resource.data.status == 'pendingAdminReview'
+          && request.resource.data.status == 'scanUploaded'
+          && request.resource.data.adminReviewedByUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status', 'adminReviewedByUid', 'adminReviewedByName', 'adminReviewedAt']))
+        ||
+        // (c) SystemAdmin/MainAdmin final verify/discrepancy.
+        (inventoryUserRole() in ['SystemAdmin', 'MainAdmin']
+          && resource.data.status == 'scanUploaded'
+          && request.resource.data.status in ['verified', 'discrepancy']
+          && request.resource.data.verifiedByUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status', 'verifiedByUid', 'verifiedByName', 'verifiedAt']))
+      );
 
       allow delete: if false;
     }

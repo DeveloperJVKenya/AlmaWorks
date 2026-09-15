@@ -6,7 +6,9 @@ import 'package:almaworks/screens/inventory/inventory_colors.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/upload_fabrication_scan_screen.dart';
+import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
+import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,9 +16,12 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
 /// The fabrication-order trail for a single material: MainAdmin/SystemAdmin
-/// can issue new orders; a Technician can upload the completed scanned form
-/// for an order still awaiting one. Tools never appear here — fabrication
-/// only ever applies to Materials, and only when chosen at issue time.
+/// can issue new orders; the site recipient (Technician or Admin/MainAdmin)
+/// uploads the completed scanned form for an order still awaiting one, an
+/// Admin/MainAdmin reviews it if a Technician submitted, and finally a
+/// SystemAdmin/MainAdmin verifies or flags a discrepancy. Tools never
+/// appear here — fabrication only ever applies to Materials, and only when
+/// chosen at issue time.
 class FabricationOrdersScreen extends ConsumerWidget {
   final ProjectModel project;
   final Logger logger;
@@ -58,6 +63,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
                     material: material,
                     createdByUid: currentUid,
                     createdByName: username,
+                    createdByRole: userRole,
                   ),
                 ),
               ),
@@ -81,14 +87,14 @@ class FabricationOrdersScreen extends ConsumerWidget {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: orders.length,
-            itemBuilder: (context, i) => _buildOrderCard(context, orders[i]),
+            itemBuilder: (context, i) => _buildOrderCard(context, ref, orders[i]),
           );
         },
       ),
     );
   }
 
-  Widget _buildOrderCard(BuildContext context, MaterialFabricationOrderModel order) {
+  Widget _buildOrderCard(BuildContext context, WidgetRef ref, MaterialFabricationOrderModel order) {
     final color = order.isDiscrepancy
         ? InventoryColors.damaged
         : order.isVerified
@@ -101,14 +107,23 @@ class FabricationOrdersScreen extends ConsumerWidget {
         : order.isVerified
             ? 'Verified'
             : order.isScanUploaded
-                ? 'Scan Uploaded'
-                : 'With Driver — Heading to Fabrication';
+                ? 'Ready for Verification'
+                : order.isPendingAdminReview
+                    ? 'Awaiting Admin Review'
+                    : 'With Driver — Heading to Fabrication';
 
-    // Only the Technician performs the scan-upload — never MainAdmin/
-    // SystemAdmin (who issue orders) and never plain Admin either.
     final canUpload = InventoryPermissions.canUploadFabricationScan(userRole) && order.isIssued;
+    final canReview = InventoryPermissions.canReviewFabricationScan(userRole) && order.isPendingAdminReview;
+    final canVerify = InventoryPermissions.canVerifyFabricationOrder(userRole) && order.isScanUploaded;
 
-    return Card(
+    // SystemAdmin/MainAdmin can see an order still awaiting Admin review,
+    // but shouldn't be able to act on it (open/verify) until that review is
+    // done — visible, not actionable.
+    final isFaintForViewer = InventoryPermissions.canVerifyFabricationOrder(userRole) &&
+        !InventoryPermissions.canReviewFabricationScan(userRole) &&
+        order.isPendingAdminReview;
+
+    Widget card = Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         onTap: canUpload
@@ -121,6 +136,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
                       order: order,
                       technicianUid: currentUid,
                       technicianName: username,
+                      recipientRole: userRole,
                     ),
                   ),
                 )
@@ -161,6 +177,15 @@ class FabricationOrdersScreen extends ConsumerWidget {
                   style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700]),
                 ),
               ],
+              if (order.adminReviewedByName != null) ...[
+                const SizedBox(height: 4),
+                Text('Reviewed by ${order.adminReviewedByName}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+              ],
+              if (order.hasQuantityDiscrepancy && !order.isVerified && !order.isDiscrepancy) ...[
+                const SizedBox(height: 4),
+                Text('⚠ Quantities don\'t fully reconcile — review before verifying',
+                    style: GoogleFonts.poppins(fontSize: 11, color: InventoryColors.damaged, fontWeight: FontWeight.w600)),
+              ],
               const SizedBox(height: 10),
               _buildTraceTimeline(order),
               if (canUpload) ...[
@@ -168,23 +193,127 @@ class FabricationOrdersScreen extends ConsumerWidget {
                 Text('Tap to upload the completed scanned form',
                     style: GoogleFonts.poppins(fontSize: 11, color: InventoryColors.checkedOut, fontWeight: FontWeight.w600)),
               ],
+              if (canReview) ...[
+                const SizedBox(height: 10),
+                _actionButtons(context, ref, order, review: true),
+              ],
+              if (canVerify) ...[
+                const SizedBox(height: 10),
+                _actionButtons(context, ref, order, review: false),
+              ],
             ],
           ),
         ),
       ),
     );
+
+    if (isFaintForViewer) {
+      return Opacity(opacity: 0.45, child: IgnorePointer(child: card));
+    }
+    return card;
   }
 
-  /// Shows exactly where this order sits in the paper-based
-  /// Admin -> Driver -> Fabricator -> Driver -> Technician chain, since the
-  /// underlying status model only has two real states before verification
-  /// (issued/scanUploaded) — this makes that whole "issued" span legible as
-  /// "materials are currently with the driver, heading to fabrication" for
-  /// the Technician, rather than an opaque "Awaiting Scan".
+  Widget _actionButtons(BuildContext context, WidgetRef ref, MaterialFabricationOrderModel order, {required bool review}) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      children: review
+          ? [
+              ElevatedButton.icon(
+                onPressed: () => _reviewOrder(context, order),
+                icon: const Icon(Icons.fact_check_outlined, size: 18),
+                label: Text('Mark Reviewed', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                style: ElevatedButton.styleFrom(backgroundColor: InventoryColors.checkedOut, foregroundColor: Colors.white),
+              ),
+            ]
+          : [
+              ElevatedButton.icon(
+                onPressed: () => _verifyOrder(context, order, isDiscrepancy: false),
+                icon: const Icon(Icons.check_circle_outline, size: 18),
+                label: Text('Verify', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                style: ElevatedButton.styleFrom(backgroundColor: InventoryColors.available, foregroundColor: Colors.white),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _verifyOrder(context, order, isDiscrepancy: true),
+                icon: const Icon(Icons.warning_amber_outlined, size: 18, color: InventoryColors.damaged),
+                label: Text('Flag Discrepancy',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12.5, color: InventoryColors.damaged)),
+                style: OutlinedButton.styleFrom(side: const BorderSide(color: InventoryColors.damaged)),
+              ),
+            ],
+    );
+  }
+
+  Future<void> _reviewOrder(BuildContext context, MaterialFabricationOrderModel order) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Mark Reviewed',
+      message: 'Confirm you\'ve checked the scanned form for "${order.materialName}"? '
+          'It will then be ready for SystemAdmin verification.',
+      confirmLabel: 'Mark Reviewed',
+    );
+    if (!confirmed) return;
+    try {
+      await InventoryService().adminReviewFabricationScan(
+        orderId: order.id,
+        reviewerUid: currentUid,
+        reviewerName: username,
+        reviewerRole: userRole,
+      );
+    } catch (e) {
+      logger.e('❌ FabricationOrdersScreen: Failed to review order', error: e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to mark reviewed: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _verifyOrder(BuildContext context, MaterialFabricationOrderModel order, {required bool isDiscrepancy}) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: isDiscrepancy ? 'Flag Discrepancy' : 'Verify Order',
+      message: isDiscrepancy
+          ? 'Flag "${order.materialName}" as a quantity discrepancy for follow-up?'
+          : 'Confirm "${order.materialName}" is verified and reconciled?',
+      confirmLabel: isDiscrepancy ? 'Flag Discrepancy' : 'Verify',
+    );
+    if (!confirmed) return;
+    try {
+      await InventoryService().verifyFabricationOrder(
+        orderId: order.id,
+        verifiedByUid: currentUid,
+        verifiedByName: username,
+        verifierRole: userRole,
+        isDiscrepancy: isDiscrepancy,
+      );
+    } catch (e) {
+      logger.e('❌ FabricationOrdersScreen: Failed to verify order', error: e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to verify: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// The live tracking view — deliberately only two real checkpoints, each
+  /// backed by an actual movement-history entry (see
+  /// InventoryService.createFabricationOrder/submitFabricationFormScan):
+  /// handed to the driver, and received back from the site recipient.
+  /// Nothing in between (with fabricator, in transit, etc.) is tracked —
+  /// by design, not an omission. The final verification outcome is shown
+  /// as a third node since it's the order's end state, not an extra
+  /// movement checkpoint.
   Widget _buildTraceTimeline(MaterialFabricationOrderModel order) {
     final steps = <(String, DateTime?, bool)>[
-      ('Issued — handed to driver', order.issuedAt, true),
-      ('Scan uploaded by Technician', order.technicianAckAt, order.isScanUploaded || order.isVerified || order.isDiscrepancy),
+      ('Handed to driver (movement recorded)', order.issuedAt, true),
+      (
+        'Received back — scan uploaded${order.technicianAckByName != null ? ' by ${order.technicianAckByName}' : ''} (movement recorded)',
+        order.technicianAckAt,
+        !order.isIssued,
+      ),
       (
         order.isDiscrepancy ? 'Discrepancy flagged' : 'Verified',
         order.verifiedAt,
@@ -205,19 +334,19 @@ class FabricationOrdersScreen extends ConsumerWidget {
                   color: steps[i].$3 ? InventoryColors.available : Colors.grey[400],
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  steps[i].$1,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: steps[i].$3 ? FontWeight.w600 : FontWeight.w400,
-                    color: steps[i].$3 ? Colors.grey[800] : Colors.grey[400],
+                Expanded(
+                  child: Text(
+                    steps[i].$1,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: steps[i].$3 ? FontWeight.w600 : FontWeight.w400,
+                      color: steps[i].$3 ? Colors.grey[800] : Colors.grey[400],
+                    ),
                   ),
                 ),
-                if (steps[i].$3 && steps[i].$2 != null) ...[
-                  const Spacer(),
+                if (steps[i].$3 && steps[i].$2 != null)
                   Text(DateFormat('d MMM, HH:mm').format(steps[i].$2!),
                       style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[500])),
-                ],
               ],
             ),
           ),

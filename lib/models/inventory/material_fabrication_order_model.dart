@@ -13,6 +13,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// OCR only partially succeeds.
 class MaterialFabricationOrderModel {
   static const statusIssued = 'issued';
+  // Set when the site recipient submitting the scan is a Technician — sits
+  // here until an Admin/MainAdmin reviews it, per the two-step
+  // Admin-then-SystemAdmin approval chain. Skipped entirely (straight to
+  // statusScanUploaded) when the recipient submitting is Admin/MainAdmin
+  // themself — they're already trusted to have checked it.
+  static const statusPendingAdminReview = 'pendingAdminReview';
+  // "Ready for SystemAdmin/MainAdmin verification" — reached either
+  // directly (Admin/MainAdmin submitted) or via an explicit admin review
+  // (Technician submitted, then reviewed).
   static const statusScanUploaded = 'scanUploaded';
   static const statusVerified = 'verified';
   static const statusDiscrepancy = 'discrepancy';
@@ -52,9 +61,21 @@ class MaterialFabricationOrderModel {
   final double? driverAckQuantityFromFabricator;
   final double? technicianAckQuantityReceived;
 
+  // Field names kept as "technician" for backward compatibility with
+  // existing docs — the site recipient submitting the scan may in fact be
+  // an Admin/MainAdmin too (see [InventoryPermissions.canUploadFabricationScan]).
   final String? technicianAckByUid;
   final String? technicianAckByName;
   final DateTime? technicianAckAt;
+
+  // Auto-computed at scan-submission time from the quantity chain above —
+  // a hint for whoever reviews/verifies, never trusted as the final call
+  // (same "computed hint, human decides" pattern as OCR pre-fill).
+  final bool hasQuantityDiscrepancy;
+
+  final String? adminReviewedByUid;
+  final String? adminReviewedByName;
+  final DateTime? adminReviewedAt;
 
   final String? verifiedByUid;
   final String? verifiedByName;
@@ -87,12 +108,17 @@ class MaterialFabricationOrderModel {
     this.technicianAckByUid,
     this.technicianAckByName,
     this.technicianAckAt,
+    this.hasQuantityDiscrepancy = false,
+    this.adminReviewedByUid,
+    this.adminReviewedByName,
+    this.adminReviewedAt,
     this.verifiedByUid,
     this.verifiedByName,
     this.verifiedAt,
   });
 
   bool get isIssued => status == statusIssued;
+  bool get isPendingAdminReview => status == statusPendingAdminReview;
   bool get isScanUploaded => status == statusScanUploaded;
   bool get isVerified => status == statusVerified;
   bool get isDiscrepancy => status == statusDiscrepancy;
@@ -127,6 +153,10 @@ class MaterialFabricationOrderModel {
       technicianAckByUid: data['technicianAckByUid'] as String?,
       technicianAckByName: data['technicianAckByName'] as String?,
       technicianAckAt: (data['technicianAckAt'] as Timestamp?)?.toDate(),
+      hasQuantityDiscrepancy: data['hasQuantityDiscrepancy'] as bool? ?? false,
+      adminReviewedByUid: data['adminReviewedByUid'] as String?,
+      adminReviewedByName: data['adminReviewedByName'] as String?,
+      adminReviewedAt: (data['adminReviewedAt'] as Timestamp?)?.toDate(),
       verifiedByUid: data['verifiedByUid'] as String?,
       verifiedByName: data['verifiedByName'] as String?,
       verifiedAt: (data['verifiedAt'] as Timestamp?)?.toDate(),
@@ -161,6 +191,10 @@ class MaterialFabricationOrderModel {
       if (technicianAckByUid != null) 'technicianAckByUid': technicianAckByUid,
       if (technicianAckByName != null) 'technicianAckByName': technicianAckByName,
       if (technicianAckAt != null) 'technicianAckAt': Timestamp.fromDate(technicianAckAt!),
+      'hasQuantityDiscrepancy': hasQuantityDiscrepancy,
+      if (adminReviewedByUid != null) 'adminReviewedByUid': adminReviewedByUid,
+      if (adminReviewedByName != null) 'adminReviewedByName': adminReviewedByName,
+      if (adminReviewedAt != null) 'adminReviewedAt': Timestamp.fromDate(adminReviewedAt!),
       if (verifiedByUid != null) 'verifiedByUid': verifiedByUid,
       if (verifiedByName != null) 'verifiedByName': verifiedByName,
       if (verifiedAt != null) 'verifiedAt': Timestamp.fromDate(verifiedAt!),

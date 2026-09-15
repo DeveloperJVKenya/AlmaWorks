@@ -28,16 +28,25 @@ class InventoryPermissions {
   static bool canApproveAndIssue(String role) => role == _mainAdmin || role == _systemAdmin;
 
   /// Editing an existing asset/tool/material, or scheduling a maintenance
-  /// blackout window — MainAdmin only.
-  static bool canManageCatalog(String role) => role == _mainAdmin;
+  /// blackout window — MainAdmin and SystemAdmin.
+  static bool canManageCatalog(String role) => role == _mainAdmin || role == _systemAdmin;
 
   /// Requesting a checkout/booking or returning/collecting one already held
   /// — every authorized Inventory role including Technician.
   static bool canRequestOrReturn(String role) => isAuthorized(role);
 
-  /// Scanning + re-uploading the completed fabrication delivery form —
-  /// Technician only (the person physically receiving the materials).
-  static bool canUploadFabricationScan(String role) => role == _technician;
+  /// Scanning + re-uploading the completed fabrication delivery form — the
+  /// site recipient, which may be a Technician or an Admin/MainAdmin.
+  static bool canUploadFabricationScan(String role) =>
+      role == _technician || role == _admin || role == _mainAdmin;
+
+  /// Reviewing a Technician-submitted fabrication scan before it reaches
+  /// SystemAdmin verification — Admin/MainAdmin only.
+  static bool canReviewFabricationScan(String role) => role == _admin || role == _mainAdmin;
+
+  /// Final verify/flag-discrepancy decision on a fabrication order —
+  /// SystemAdmin/MainAdmin only.
+  static bool canVerifyFabricationOrder(String role) => role == _systemAdmin || role == _mainAdmin;
 
   static bool isTechnician(String role) => role == _technician;
   static bool isClient(String role) => role == 'Client';

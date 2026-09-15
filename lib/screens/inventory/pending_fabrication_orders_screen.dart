@@ -1,8 +1,8 @@
 import 'package:almaworks/models/inventory/material_fabrication_order_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
+import 'package:almaworks/screens/inventory/fabrication_orders_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
-import 'package:almaworks/screens/inventory/material_detail_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:flutter/material.dart';
@@ -16,8 +16,9 @@ import 'package:logger/logger.dart';
 /// discrepancy that needs follow-up — the discoverable entry point that
 /// used to be missing (previously an admin could only find these by
 /// opening materials one at a time via Material Detail → Fabrication
-/// Orders). Tapping an order jumps to its material's detail screen, which
-/// already has the full "Fabrication Orders" trail for that material.
+/// Orders). Tapping an order jumps straight to that material's Fabrication
+/// Orders live-tracking view — not the generic Material Detail screen —
+/// since that's the trail the admin actually came here to follow up on.
 class PendingFabricationOrdersScreen extends ConsumerWidget {
   final ProjectModel project;
   final Logger logger;
@@ -109,7 +110,7 @@ class PendingFabricationOrdersScreen extends ConsumerWidget {
                       return ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                         itemCount: orders.length,
-                        itemBuilder: (context, index) => _buildOrderCard(context, orders[index]),
+                        itemBuilder: (context, index) => _buildOrderCard(context, ref, orders[index]),
                       );
                     }
                     return GridView.builder(
@@ -121,7 +122,7 @@ class PendingFabricationOrdersScreen extends ConsumerWidget {
                         mainAxisSpacing: 14,
                       ),
                       itemCount: orders.length,
-                      itemBuilder: (context, index) => _buildOrderCard(context, orders[index]),
+                      itemBuilder: (context, index) => _buildOrderCard(context, ref, orders[index]),
                     );
                   },
                 );
@@ -133,17 +134,27 @@ class PendingFabricationOrdersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildOrderCard(BuildContext context, MaterialFabricationOrderModel order) {
+  Widget _buildOrderCard(BuildContext context, WidgetRef ref, MaterialFabricationOrderModel order) {
     final isDiscrepancy = order.isDiscrepancy;
-    final color = isDiscrepancy ? InventoryColors.damaged : InventoryColors.pendingRequest;
+    final color = isDiscrepancy
+        ? InventoryColors.damaged
+        : order.isScanUploaded
+            ? InventoryColors.booked
+            : InventoryColors.pendingRequest;
     final icon = isDiscrepancy ? Icons.warning_amber_outlined : Icons.hourglass_top;
-    final statusLabel = isDiscrepancy ? 'Discrepancy' : 'Awaiting Scan';
+    final statusLabel = isDiscrepancy
+        ? 'Discrepancy'
+        : order.isScanUploaded
+            ? 'Ready for Verification'
+            : order.isPendingAdminReview
+                ? 'Awaiting Admin Review'
+                : 'With Driver — Heading to Fabrication';
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => _openMaterial(context, order),
+        onTap: () => _openFabricationOrders(context, ref, order),
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(14),
@@ -196,14 +207,28 @@ class PendingFabricationOrdersScreen extends ConsumerWidget {
     );
   }
 
-  void _openMaterial(BuildContext context, MaterialFabricationOrderModel order) {
+  Future<void> _openFabricationOrders(
+    BuildContext context,
+    WidgetRef ref,
+    MaterialFabricationOrderModel order,
+  ) async {
+    final material = await ref.read(materialByIdProvider(order.materialId).future);
+    if (material == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('That material no longer exists.', style: GoogleFonts.poppins())),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MaterialDetailScreen(
+        builder: (context) => FabricationOrdersScreen(
           project: project,
           logger: logger,
-          materialId: order.materialId,
+          material: material,
           userRole: userRole,
           username: username,
           currentUid: currentUid,

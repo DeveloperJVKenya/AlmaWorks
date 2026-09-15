@@ -22,6 +22,11 @@ class MaterialMovementModel {
   final String? projectId;
   final String? projectName;
 
+  // Cross-reference back to the fabrication order this issue was for, when
+  // applicable — set only by [InventoryService.createFabricationOrder]'s
+  // own movement entry, null for every other issue/receipt.
+  final String? fabricationOrderId;
+
   // Received-only: provenance/verification for international shipments.
   final String? conditionOnReceipt; // conditionGood | conditionDamaged | conditionPartial
   final String? portVerifiedByName; // who verified at port of arrival (international only)
@@ -42,6 +47,7 @@ class MaterialMovementModel {
     required this.quantity,
     this.projectId,
     this.projectName,
+    this.fabricationOrderId,
     this.conditionOnReceipt,
     this.portVerifiedByName,
     this.receivedByName,
@@ -66,6 +72,7 @@ class MaterialMovementModel {
       quantity: (data['quantity'] as num?)?.toDouble() ?? 0,
       projectId: data['projectId'] as String?,
       projectName: data['projectName'] as String?,
+      fabricationOrderId: data['fabricationOrderId'] as String?,
       conditionOnReceipt: data['conditionOnReceipt'] as String?,
       portVerifiedByName: data['portVerifiedByName'] as String?,
       receivedByName: data['receivedByName'] as String?,
@@ -86,6 +93,7 @@ class MaterialMovementModel {
       'quantity': quantity,
       if (projectId != null) 'projectId': projectId,
       if (projectName != null) 'projectName': projectName,
+      if (fabricationOrderId != null) 'fabricationOrderId': fabricationOrderId,
       if (conditionOnReceipt != null) 'conditionOnReceipt': conditionOnReceipt,
       if (portVerifiedByName != null) 'portVerifiedByName': portVerifiedByName,
       if (receivedByName != null) 'receivedByName': receivedByName,

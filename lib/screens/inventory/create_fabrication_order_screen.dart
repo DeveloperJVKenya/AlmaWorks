@@ -26,6 +26,7 @@ class CreateFabricationOrderScreen extends StatefulWidget {
   final MaterialModel material;
   final String createdByUid;
   final String createdByName;
+  final String createdByRole;
 
   const CreateFabricationOrderScreen({
     super.key,
@@ -34,6 +35,7 @@ class CreateFabricationOrderScreen extends StatefulWidget {
     required this.material,
     required this.createdByUid,
     required this.createdByName,
+    required this.createdByRole,
   });
 
   @override
@@ -127,6 +129,7 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
             _fabricatorController.text.trim().isEmpty ? null : _fabricatorController.text.trim(),
         issuedByUid: widget.createdByUid,
         issuedByName: widget.createdByName,
+        issuedByRole: widget.createdByRole,
       );
       if (!mounted) return;
       setState(() => _createdOrder = order);
