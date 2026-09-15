@@ -317,14 +317,32 @@ class _TaskProgressMonitorScreenState
   static const double _kMinZoom = 0.7;
   static const double _kMaxZoom = 1.6;
   double _zoomFactor = 1.0;
+  // Once the user picks a zoom level explicitly, stop auto-adjusting it on
+  // resize — otherwise a live window-resize (not just the initial load)
+  // would keep overriding their choice. Until then, _buildTable's
+  // LayoutBuilder keeps this in sync with the actual available width on
+  // every layout pass, so shrinking the window live (not just at first
+  // load) reliably zooms out instead of overflowing.
+  bool _userSetZoom = false;
 
-  void _setZoom(double value) {
+  void _setZoom(double value, {bool fromUser = true}) {
     final clamped = value.clamp(_kMinZoom, _kMaxZoom);
+    if (fromUser) _userSetZoom = true;
     if (clamped == _zoomFactor) return;
     setState(() {
       _zoomFactor = clamped;
       _cachedPhaseColumns = null;
     });
+  }
+
+  /// Suggested zoom for a given available width — narrower than a
+  /// comfortable desktop width zooms out proportionally (floored at
+  /// [_kMinZoom]) so the fixed left panel plus at least a few day columns
+  /// keep fitting instead of overflowing.
+  double _autoZoomFor(double width) {
+    const comfortableWidth = 700.0;
+    if (width >= comfortableWidth) return 1.0;
+    return (width / comfortableWidth).clamp(_kMinZoom, 1.0);
   }
 
   // ── State ───────────────────────────────────────────────────────
@@ -441,14 +459,6 @@ class _TaskProgressMonitorScreenState
     _fetchCurrentUser();
     _refreshLiveProjectManager();
     _subscribeProjectExtensionRequests();
-    // Narrow/mobile screens start a little zoomed out so more of the table
-    // is immediately legible without horizontal scrolling — the user can
-    // still zoom in/out freely from there (see _buildToolbar).
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final width = MediaQuery.of(context).size.width;
-      if (width < 400) _setZoom(0.8);
-    });
   }
 
   /// Re-fetches the project's linked PM directly from Firestore — see the
@@ -2077,7 +2087,16 @@ class _TaskProgressMonitorScreenState
               offset: const Offset(0, 2))
         ],
       ),
-      child: Row(children: [
+      // Horizontally scrollable, not a plain Row — this toolbar packs in
+      // ~8 separate controls (row toggle, add/remove row, zoom, legend,
+      // import), and on a narrow window their combined natural width can
+      // exceed what's available; a bare Row can't shrink them and throws a
+      // pixel overflow, exactly like the table body would without its own
+      // horizontal scroll. Scrolling instead of squeezing keeps every
+      // control fully tappable at any width.
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
         _toolBtn(
           icon: Icons.format_list_numbered_rounded,
           label: '# Rows',
@@ -2126,8 +2145,7 @@ class _TaskProgressMonitorScreenState
             child: Icon(Icons.zoom_in_rounded, size: 18, color: Colors.grey),
           ),
         ),
-        const SizedBox(width: 8),
-        const Spacer(),
+        const SizedBox(width: 20),
         _legendChip(DayStatus.done),
         const SizedBox(width: 4),
         _legendChip(DayStatus.holiday),
@@ -2159,7 +2177,8 @@ class _TaskProgressMonitorScreenState
             ),
           ),
         ),
-      ]),
+        ]),
+      ),
     );
   }
 
@@ -2228,6 +2247,19 @@ class _TaskProgressMonitorScreenState
 
     return LayoutBuilder(
       builder: (context, outerConstraints) {
+        // Keeps zoom in sync with the actual available width on every
+        // layout pass (not just once at screen load) — this is what makes
+        // shrinking the window live, not just opening it small, zoom out
+        // instead of overflowing. Stops once the user picks a zoom level
+        // themselves (see _userSetZoom).
+        if (!_userSetZoom) {
+          final suggested = _autoZoomFor(outerConstraints.maxWidth);
+          if ((suggested - _zoomFactor).abs() > 0.02) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _setZoom(suggested, fromUser: false);
+            });
+          }
+        }
         // Narrow/mobile screens: reserve less area up front for the period
         // panel and allow the name column to shrink further, so at least a
         // few daily columns are visible without the fixed panel alone
