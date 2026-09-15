@@ -4,6 +4,7 @@ import 'package:almaworks/screens/projects/add_project_screen.dart';
 import 'package:almaworks/screens/projects/edit_project_screen.dart';
 import 'package:almaworks/screens/projects/project_summary_screen.dart';
 import 'package:almaworks/services/project_service.dart';
+import 'package:almaworks/widgets/base_layout.dart' show projectSummaryRouteName;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:logger/logger.dart';
@@ -134,6 +135,15 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
       ),
       child: TabBar(
         controller: _tabController,
+        // Non-scrollable (the default) forces each tab into an equal,
+        // fixed-width slot — on a narrower desktop window that's not wide
+        // enough for "All Projects"/"Active"/"Completed" plus their count
+        // badges, the Row inside each Tab can't shrink to fit, which is
+        // exactly what threw the RenderFlex pixel-overflow. Scrollable
+        // tabs size to their own natural content width instead and simply
+        // scroll if the bar as a whole doesn't fit.
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
         labelColor: Theme.of(context).primaryColor,
         unselectedLabelColor: Colors.grey[600],
         indicatorColor: Theme.of(context).primaryColor,
@@ -556,7 +566,14 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
+              // Wrap (not Row) — on a narrow window there isn't always
+              // room for budget + PM name + live progress on one line;
+              // wrapping to a second line instead of a fixed Row avoids
+              // forcing these below their natural width and overflowing.
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 4,
+                runSpacing: 4,
                 children: [
                   if (project.budget != null) ...[
                     Icon(Icons.attach_money, size: 14, color: Colors.grey[600]),
@@ -564,16 +581,18 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                       '\$${_formatBudget(project.budget!)}',
                       style: TextStyle(color: Colors.grey[600], fontSize: 11),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                   ],
                   Icon(Icons.person, size: 14, color: Colors.grey[600]),
-                  Expanded(
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 160),
                     child: Text(
                       project.projectManager,
                       style: TextStyle(color: Colors.grey[600], fontSize: 11),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   // ── Live progress from TaskProgressMonitor ──────────
                   StreamBuilder<double>(
                     stream: FirebaseFirestore.instance
@@ -650,6 +669,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
     Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: projectSummaryRouteName),
         builder: (context) => ChangeNotifierProvider(
           create: (context) => SelectedProjectProvider()..selectProject(project),
           child: ProjectSummaryScreen(

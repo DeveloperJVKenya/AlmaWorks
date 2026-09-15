@@ -755,11 +755,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (Navigator.canPop(context)) Navigator.pop(context);
           },
         ),
-        // SystemAdmin is deliberately excluded — role/access-request
-        // management is Admin/MainAdmin territory (Inventory approvals
-        // are SystemAdmin's own separate lane), and per requirement they
-        // shouldn't even see this section exists.
-        if (_userRole == 'MainAdmin' || _userRole == 'Admin')
+        // SystemAdmin now has the same access here as MainAdmin (equal
+        // grant/approve/deny/edit-role actions — see
+        // ClientAccessRequestsScreen's _grantableRoleOptions/canGrantAdmin),
+        // the one exception being that nobody, including SystemAdmin, can
+        // ever touch a MainAdmin's own role (enforced independently in
+        // that screen regardless of caller).
+        if (_userRole == 'MainAdmin' || _userRole == 'Admin' || _userRole == 'SystemAdmin')
           ListTile(
             leading: const Icon(Icons.supervised_user_circle),
             title: const Text('Client Access Requests'),
@@ -799,8 +801,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     : null,
           );
         case 2:
-          // SystemAdmin excluded — see the matching menu-tile guard above.
-          if (_userRole == 'MainAdmin' || _userRole == 'Admin') {
+          // SystemAdmin included — see the matching menu-tile guard above.
+          if (_userRole == 'MainAdmin' || _userRole == 'Admin' || _userRole == 'SystemAdmin') {
             _logger.d('✅ DashboardScreen: Returning ClientAccessRequestsScreen');
             return ClientAccessRequestsScreen(logger: _logger);
           } else {

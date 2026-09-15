@@ -23,9 +23,11 @@ class _ClientAccessRequestsScreenState
   final ClientRequestService _requestService = ClientRequestService();
   final AuthService _authService = AuthService();
   late TabController _tabController;
-  // Gates the 'Admin' option in the role-edit dialog — only a MainAdmin may
-  // hand out Admin from this screen; a plain Admin can still switch someone
-  // between Client and Technician.
+  // Gates the 'Admin'/'System Admin' options in the role-edit dialog —
+  // MainAdmin and SystemAdmin have equal grant power here (the one
+  // exception, a MainAdmin's own role being untouchable, is enforced
+  // separately below regardless of caller); a plain Admin can still switch
+  // someone between Client and Technician only.
   String _currentUserRole = '';
 
   @override
@@ -72,7 +74,7 @@ class _ClientAccessRequestsScreenState
           'approve checkout requests, record returns, and issue materials',
     );
 
-    if (_currentUserRole == 'MainAdmin') {
+    if (_currentUserRole == 'MainAdmin' || _currentUserRole == 'SystemAdmin') {
       return [client, technician, subContractor, admin, systemAdmin];
     }
     // Admin is the only other role that can reach this screen at all
@@ -1103,7 +1105,7 @@ class _ClientAccessRequestsScreenState
     }
 
     final roleOptions = _grantableRoleOptions();
-    final canGrantAdmin = _currentUserRole == 'MainAdmin';
+    final canGrantAdmin = _currentUserRole == 'MainAdmin' || _currentUserRole == 'SystemAdmin';
     String selectedRole = roleOptions.any((r) => r.value == request.grantedRole)
         ? request.grantedRole
         : roleOptions.first.value;

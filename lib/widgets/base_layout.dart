@@ -8,7 +8,6 @@ import 'package:almaworks/screens/financial_screen.dart';
 import 'package:almaworks/screens/photo_gallery_screen.dart';
 import 'package:almaworks/screens/photos_screen.dart';
 import 'package:almaworks/screens/projects/projects_main_screen.dart';
-import 'package:almaworks/screens/projects/project_summary_screen.dart';
 import 'package:almaworks/screens/documents_screen.dart';
 import 'package:almaworks/screens/drawings_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_screen.dart';
@@ -44,6 +43,13 @@ const _sidebarSelectedTextColorDark = Color(0xFF82B1FF);
 const _sidebarTextColorLight = Color(0xFF37474F);
 const _sidebarTextColorDark = Color(0xFFECEFF1);
 
+/// Route name tagged on ProjectSummaryScreen's push (see
+/// projects_main_screen.dart) so BaseLayout's sidebar can pop back to it
+/// specifically from any section, instead of the old pushReplacement that
+/// silently discarded it from the stack — see _goToProjectSummary/
+/// _goToSection below.
+const projectSummaryRouteName = '/projectSummary';
+
 class BaseLayout extends StatefulWidget {
   final Widget child;
   final String title;
@@ -71,6 +77,7 @@ class BaseLayout extends StatefulWidget {
 }
 
 class _BaseLayoutState extends State<BaseLayout> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String? _userRole;
   List<String>? _clientProjectIds;
   bool _isLoadingUserData = true;
@@ -104,6 +111,15 @@ class _BaseLayoutState extends State<BaseLayout> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _fetchUserRoleAndAccess();
+      // Project Summary is the anchor every section's back button now
+      // returns to (see _goToSection/_goToProjectSummary below) — opening
+      // the drawer here on mobile means arriving back at it (by back
+      // button or by tapping Overview) always surfaces the section menu
+      // immediately, mirroring the persistent side panel larger screens
+      // already show for free.
+      if (mounted && widget.selectedMenuItem == 'Overview' && MediaQuery.of(context).size.width < 600) {
+        _scaffoldKey.currentState?.openDrawer();
+      }
     });
   }
 
@@ -227,6 +243,21 @@ class _BaseLayoutState extends State<BaseLayout> {
     });
   }
 
+  void _goToProjectSummary(BuildContext context) {
+    Navigator.of(context).popUntil((route) => route.settings.name == projectSummaryRouteName || route.isFirst);
+  }
+
+  /// Section switch (Documents, Drawings, Schedule, ...): pop back to
+  /// Project Summary first (discarding whatever section was open, same as
+  /// the old pushReplacement did) then push the new section on top of it —
+  /// unlike pushReplacement, this never discards Project Summary itself, so
+  /// the system back button from any section always returns there instead
+  /// of skipping past the whole project.
+  void _goToSection(BuildContext context, Widget Function() builder) {
+    _goToProjectSummary(context);
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => builder()));
+  }
+
   @override
   void dispose() {
     _unreadUserSub?.cancel();
@@ -244,6 +275,7 @@ class _BaseLayoutState extends State<BaseLayout> {
 
     if (_isLoadingUserData) {
       return Scaffold(
+        key: _scaffoldKey,
         appBar: _buildAppBar(context),
         body: const Center(
           child: CircularProgressIndicator(),
@@ -252,6 +284,7 @@ class _BaseLayoutState extends State<BaseLayout> {
     }
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: _buildAppBar(context),
       drawer: isMobile ? _buildDrawer(context) : null,
       body: Row(
@@ -430,8 +463,14 @@ class _BaseLayoutState extends State<BaseLayout> {
                       '🧭 BaseLayout: Switch Project selected, role: $_userRole');
                   if (isMobile) Navigator.pop(context);
 
-                  Navigator.pushReplacement(
-                    context,
+                  // Leaving the project entirely — discard the whole
+                  // "inside a project" stack (Project Summary and any
+                  // section on top of it) down to the app's root screen,
+                  // then push a fresh Projects list on top of THAT (not
+                  // pushReplacement — replacing the root route itself would
+                  // leave nothing for back-navigation to land on).
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => ProjectsMainScreen(
                         logger: widget.logger,
@@ -479,15 +518,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                       return;
                     }
 
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ProjectSummaryScreen(
-                          project: widget.project!,
-                          logger: widget.logger,
-                        ),
-                      ),
-                    );
+                    _goToProjectSummary(context);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -602,6 +633,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   project: widget.project!,
                   logger: widget.logger,
                   isClient: isClient,
+                  isTechnician: _userRole == 'Technician',
                 ),
               ),
 
@@ -784,12 +816,7 @@ class _BaseLayoutState extends State<BaseLayout> {
             return;
           }
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => onNavigate(),
-            ),
-          );
+          _goToSection(context, onNavigate);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
