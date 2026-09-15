@@ -282,17 +282,50 @@ class _TaskProgressMonitorScreenState
   static const double _weekBorderWidth = 1.8;
 
   // ── Fixed column widths ─────────────────────────────────────────
-  static const double _kNoW   = 38.0;
-  static const double _kNameW = 234.0;
-  static const double _kDateW = 86.0;
-  static const double _kDayW  = 42.0;
+  // Base (unzoomed) pixel values — kept as the original constant names
+  // below via instance getters multiplying by [_zoomFactor], so every one
+  // of this file's 30+ existing `_kDayW`/`_kNameW`/etc. call sites picks up
+  // zoom scaling automatically with no per-call-site changes needed.
+  static const double _kNoWBase   = 38.0;
+  static const double _kNameWBase = 234.0;
+  static const double _kDateWBase = 86.0;
+  static const double _kDayWBase  = 42.0;
+
+  double get _kNoW   => _kNoWBase * _zoomFactor;
+  double get _kNameW => _kNameWBase * _zoomFactor;
+  double get _kDateW => _kDateWBase * _zoomFactor;
+  double get _kDayW  => _kDayWBase * _zoomFactor;
 
   // ── Base row heights (minimum) ──────────────────────────────────
-  static const double _kHeaderH    = 84.0;
-  static const double _kProjectH   = 46.0;
-  static const double _kCategoryH  = 44.0;
-  static const double _kPhaseH     = 52.0;
-  static const double _kTaskH      = 46.0;
+  static const double _kHeaderHBase    = 84.0;
+  static const double _kProjectHBase   = 46.0;
+  static const double _kCategoryHBase  = 44.0;
+  static const double _kPhaseHBase     = 52.0;
+  static const double _kTaskHBase      = 46.0;
+
+  double get _kHeaderH   => _kHeaderHBase * _zoomFactor;
+  double get _kProjectH  => _kProjectHBase * _zoomFactor;
+  double get _kCategoryH => _kCategoryHBase * _zoomFactor;
+  double get _kPhaseH    => _kPhaseHBase * _zoomFactor;
+  double get _kTaskH     => _kTaskHBase * _zoomFactor;
+
+  // ── Zoom ───────────────────────────────────────────────────────
+  // User-controlled content density (like a spreadsheet's zoom) — scales
+  // every column width/row height above uniformly. Clamped so text/cells
+  // never shrink past legibility or grow enough to defeat the point of a
+  // dense table. Local UI state only, not persisted.
+  static const double _kMinZoom = 0.7;
+  static const double _kMaxZoom = 1.6;
+  double _zoomFactor = 1.0;
+
+  void _setZoom(double value) {
+    final clamped = value.clamp(_kMinZoom, _kMaxZoom);
+    if (clamped == _zoomFactor) return;
+    setState(() {
+      _zoomFactor = clamped;
+      _cachedPhaseColumns = null;
+    });
+  }
 
   // ── State ───────────────────────────────────────────────────────
   final List<TaskProgressRowData> _rows = [];
@@ -325,7 +358,7 @@ class _TaskProgressMonitorScreenState
   Timer?            _autosaveDebounce;
 
   // ── Name column width (set by LayoutBuilder, used for height calc)
-  double _nameColW = _kNameW;
+  double _nameColW = _kNameWBase;
 
   // ── Scroll controllers ──────────────────────────────────────────
   final _hScrollHeader = ScrollController();
@@ -408,6 +441,14 @@ class _TaskProgressMonitorScreenState
     _fetchCurrentUser();
     _refreshLiveProjectManager();
     _subscribeProjectExtensionRequests();
+    // Narrow/mobile screens start a little zoomed out so more of the table
+    // is immediately legible without horizontal scrolling — the user can
+    // still zoom in/out freely from there (see _buildToolbar).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final width = MediaQuery.of(context).size.width;
+      if (width < 400) _setZoom(0.8);
+    });
   }
 
   /// Re-fetches the project's linked PM directly from Firestore — see the
@@ -2060,6 +2101,32 @@ class _TaskProgressMonitorScreenState
           ),
           const SizedBox(width: 6),
         ],
+        InkWell(
+          onTap: () => _setZoom(_zoomFactor - 0.1),
+          borderRadius: BorderRadius.circular(6),
+          child: const Padding(
+            padding: EdgeInsets.all(6),
+            child: Icon(Icons.zoom_out_rounded, size: 18, color: Colors.grey),
+          ),
+        ),
+        InkWell(
+          onTap: () => _setZoom(1.0),
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text('${(_zoomFactor * 100).round()}%',
+                style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey[700])),
+          ),
+        ),
+        InkWell(
+          onTap: () => _setZoom(_zoomFactor + 0.1),
+          borderRadius: BorderRadius.circular(6),
+          child: const Padding(
+            padding: EdgeInsets.all(6),
+            child: Icon(Icons.zoom_in_rounded, size: 18, color: Colors.grey),
+          ),
+        ),
+        const SizedBox(width: 8),
         const Spacer(),
         _legendChip(DayStatus.done),
         const SizedBox(width: 4),
@@ -2161,12 +2228,19 @@ class _TaskProgressMonitorScreenState
 
     return LayoutBuilder(
       builder: (context, outerConstraints) {
-        const double minPeriodArea = 200.0;
+        // Narrow/mobile screens: reserve less area up front for the period
+        // panel and allow the name column to shrink further, so at least a
+        // few daily columns are visible without the fixed panel alone
+        // eating the whole screen width — the rest is reachable via the
+        // existing horizontal scroll.
+        final isNarrow = outerConstraints.maxWidth < 400;
+        final minPeriodArea = isNarrow ? 110.0 : 200.0;
+        final nameColFloor = isNarrow ? 70.0 : 100.0;
         final newNameColW = (outerConstraints.maxWidth
                 - (_showRowNumbers ? _kNoW : 0)
                 - _kDateW * 2
                 - minPeriodArea)
-            .clamp(100.0, _kNameW);
+            .clamp(nameColFloor, _kNameW);
         // Update cached name column width when layout changes
         if ((newNameColW - _nameColW).abs() > 0.5) {
           // Schedule post-frame to avoid setState during build
