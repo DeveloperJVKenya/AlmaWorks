@@ -1,9 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
 import 'package:almaworks/services/safety_training_service.dart';
+import 'package:almaworks/utils/lottie_web_safety.dart';
 import 'package:almaworks/widgets/safety_training/hazard_scene_visual.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -110,14 +110,14 @@ class _AddScenarioScreenState extends State<AddScenarioScreen> {
     final bytes = file?.bytes;
     if (bytes == null) return;
 
-    if (kIsWeb && _lottieHasTrimPath(bytes)) {
+    if (kIsWeb && lottieHasUnsafeWebShapes(bytes)) {
       if (!mounted) return;
       final proceedAnyway = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: Text('This animation may not render on web', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
           content: Text(
-            'This file uses a "Trim Path" shape, which crashes Flutter Web\'s renderer with a stack overflow '
+            'This file uses a "Trim Path" or "Merge Paths" shape, which crashes Flutter Web\'s renderer '
             '(a known Lottie/CanvasKit compatibility issue) — it will still work fine on Android/iOS. '
             'Pick a different animation, or continue only if this scenario won\'t be viewed in a web browser.',
             style: GoogleFonts.poppins(fontSize: 13, height: 1.4),
@@ -136,37 +136,6 @@ class _AddScenarioScreenState extends State<AddScenarioScreen> {
       _pickedLottieName = file!.name;
       _mediaKind = _SceneMediaKind.lottieAnim;
     });
-  }
-
-  /// Detects Lottie "Trim Path" shapes (`ty:"tm"`) — known to trigger a
-  /// StackOverflowError in Flutter Web's CanvasKit path-extraction code
-  /// (lazy_path.dart). Mobile/desktop Skia rendering isn't affected, so
-  /// this only warns rather than blocking outright.
-  bool _lottieHasTrimPath(Uint8List bytes) {
-    try {
-      final data = jsonDecode(utf8.decode(bytes));
-      bool found = false;
-      void walk(dynamic node) {
-        if (found) return;
-        if (node is List) {
-          for (final item in node) {
-            walk(item);
-          }
-        } else if (node is Map) {
-          if (node['ty'] == 'tm') {
-            found = true;
-            return;
-          }
-          for (final value in node.values) {
-            walk(value);
-          }
-        }
-      }
-      walk(data);
-      return found;
-    } catch (_) {
-      return false;
-    }
   }
 
   Future<void> _pickRive() async {

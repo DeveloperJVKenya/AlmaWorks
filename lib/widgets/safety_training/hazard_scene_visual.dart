@@ -1,9 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' as lottie;
 import 'package:rive/rive.dart' as rive;
 
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
+import 'package:almaworks/utils/lottie_web_safety.dart';
 
 /// The animated "scene" a worker sees before answering a scenario's
 /// question. Renders the richest thing available, in order:
@@ -118,18 +123,67 @@ class _HazardSceneVisualState extends State<HazardSceneVisual> with TickerProvid
   }
 
   Widget _buildLottieScene(String lottieUrl) {
-    return Container(
-      color: const Color(0xFFECEFF1),
-      alignment: Alignment.center,
-      padding: const EdgeInsets.all(12),
-      child: lottie.Lottie.network(
-        lottieUrl,
-        fit: BoxFit.contain,
-        repeat: true,
-        frameRate: lottie.FrameRate.max,
-        errorBuilder: (context, error, stackTrace) => _buildIconScene(),
-      ),
+    // On web, a Trim Path/Merge Paths shape crashes CanvasKit's path
+    // builder with a native `Aborted()` during paint — not a catchable
+    // Dart error, so Lottie.network's errorBuilder never gets a chance to
+    // run and the whole renderer goes down. Fetch and scan the JSON first
+    // so an unsafe animation falls back to the icon scene instead of
+    // taking the page down. Mobile/desktop Skia isn't affected, so there
+    // this renders straight from the network as before.
+    if (!kIsWeb) {
+      return Container(
+        color: const Color(0xFFECEFF1),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(12),
+        child: lottie.Lottie.network(
+          lottieUrl,
+          fit: BoxFit.contain,
+          repeat: true,
+          frameRate: lottie.FrameRate.max,
+          errorBuilder: (context, error, stackTrace) => _buildIconScene(),
+        ),
+      );
+    }
+
+    return FutureBuilder<Uint8List?>(
+      future: _fetchLottieIfWebSafe(lottieUrl),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const ColoredBox(
+            color: Color(0xFFECEFF1),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final bytes = snapshot.data;
+        if (bytes == null) return _buildIconScene();
+        return Container(
+          color: const Color(0xFFECEFF1),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(12),
+          child: lottie.Lottie.memory(
+            bytes,
+            fit: BoxFit.contain,
+            repeat: true,
+            frameRate: lottie.FrameRate.max,
+            errorBuilder: (context, error, stackTrace) => _buildIconScene(),
+          ),
+        );
+      },
     );
+  }
+
+  /// Returns the animation's bytes, or `null` if it failed to download or
+  /// contains a shape known to crash Flutter Web's renderer.
+  Future<Uint8List?> _fetchLottieIfWebSafe(String lottieUrl) async {
+    try {
+      final response = await http.get(Uri.parse(lottieUrl));
+      if (response.statusCode != 200) return null;
+      final bytes = response.bodyBytes;
+      if (lottieHasUnsafeWebShapes(bytes)) return null;
+      return bytes;
+    } catch (_) {
+      return null;
+    }
   }
 
   Widget _buildImageScene(String imageUrl) {
