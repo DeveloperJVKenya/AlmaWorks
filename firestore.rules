@@ -724,5 +724,26 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if false;
     }
+
+    // A MainAdmin/SystemAdmin's determination of a worker's overall safety-
+    // training standing (cleared / needs retraining / escalated), based on
+    // their accumulated SafetyTrainingSessions — append-only ledger, same
+    // shape as SafetyTrainingSessions above. Deliberately scoped to just
+    // MainAdmin/SystemAdmin (excluding plain Admin, unlike most other
+    // admin-tier gates in this file) since this is the designated reviewer
+    // tier for the safety-training program. A worker may read their own
+    // review history so they can see their current standing.
+    match /SafetyTrainingReviews/{reviewId} {
+      allow read: if request.auth != null
+                   && (resource.data.workerUid == request.auth.uid
+                       || inventoryUserRole() in ['MainAdmin', 'SystemAdmin']);
+
+      allow create: if request.auth != null
+                     && inventoryUserRole() in ['MainAdmin', 'SystemAdmin']
+                     && request.resource.data.reviewedByUid == request.auth.uid;
+
+      allow update: if false;
+      allow delete: if false;
+    }
   }
 }

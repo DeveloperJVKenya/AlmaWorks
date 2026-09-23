@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
+import 'package:almaworks/models/safety_training/safety_training_review_model.dart';
 import 'package:almaworks/models/safety_training/safety_training_session_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -37,6 +38,8 @@ class SafetyTrainingService {
       _firestore.collection('SafetyTrainingScenarios');
   CollectionReference<Map<String, dynamic>> get _sessions =>
       _firestore.collection('SafetyTrainingSessions');
+  CollectionReference<Map<String, dynamic>> get _reviews =>
+      _firestore.collection('SafetyTrainingReviews');
 
   Stream<List<SafetyScenarioModel>> streamActiveScenarios() {
     return _scenarios
@@ -159,5 +162,37 @@ class SafetyTrainingService {
       correctAttempts: correct,
       totalPoints: points,
     );
+  }
+
+  /// Records a MainAdmin/SystemAdmin's determination of a worker's overall
+  /// safety-training standing (cleared / needs retraining / escalated).
+  Future<void> recordReview(SafetyTrainingReviewModel review) async {
+    await _reviews.add(review.toFirestore());
+    _logger.i(
+        '✅ SafetyTrainingService: Recorded review for ${review.workerName} '
+        '(status: ${review.status})');
+  }
+
+  /// Every review ever recorded, newest first — callers building a
+  /// per-worker "current standing" view should take the first entry for
+  /// each workerUid, since re-reviewing a worker adds a new doc rather than
+  /// overwriting the previous one.
+  Stream<List<SafetyTrainingReviewModel>> streamAllReviews() {
+    return _reviews
+        .orderBy('reviewedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map(SafetyTrainingReviewModel.fromFirestore).toList());
+  }
+
+  /// The most recent review recorded for one worker, or `null` if they've
+  /// never been reviewed — used to show a worker their own current standing.
+  Future<SafetyTrainingReviewModel?> fetchLatestReviewForWorker(String workerUid) async {
+    final snap = await _reviews
+        .where('workerUid', isEqualTo: workerUid)
+        .orderBy('reviewedAt', descending: true)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return SafetyTrainingReviewModel.fromFirestore(snap.docs.first);
   }
 }

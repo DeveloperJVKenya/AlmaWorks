@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' as lottie;
+import 'package:path/path.dart' as p;
 import 'package:rive/rive.dart' as rive;
 
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
@@ -165,6 +166,16 @@ class _HazardSceneVisualState extends State<HazardSceneVisual> with TickerProvid
             fit: BoxFit.contain,
             repeat: true,
             frameRate: lottie.FrameRate.max,
+            // Lottie.memory has no source URL to resolve an animation's
+            // *linked* (non-embedded, `"e":0`) raster image layers against,
+            // so without this it falls back to treating them as local
+            // Flutter assets (`AssetImage('images/foo.png')`) — which never
+            // exist in this app and 404 as "assets/images/foo.png". Mirror
+            // what Lottie.network itself does (see NetworkLottie._loadImage
+            // in the lottie package) and resolve dirName/fileName relative
+            // to the animation's own Storage URL instead.
+            imageProviderFactory: (asset) =>
+                NetworkImage(Uri.parse(lottieUrl).resolve(p.url.join(asset.dirName, asset.fileName)).toString()),
             errorBuilder: (context, error, stackTrace) => _buildIconScene(),
           ),
         );

@@ -1,6 +1,8 @@
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
+import 'package:almaworks/models/safety_training/safety_training_review_model.dart';
 import 'package:almaworks/screens/safety_training/add_scenario_screen.dart';
+import 'package:almaworks/screens/safety_training/safety_training_review_screen.dart';
 import 'package:almaworks/screens/safety_training/scenario_play_screen.dart';
 import 'package:almaworks/screens/safety_training/training_history_screen.dart';
 import 'package:almaworks/services/safety_training_service.dart';
@@ -37,8 +39,15 @@ class _SafetyTrainingScreenState extends State<SafetyTrainingScreen> {
   String? _uid;
   bool _isLoadingUser = true;
   SafetyScoreSummary _summary = SafetyScoreSummary.empty;
+  SafetyTrainingReviewModel? _latestReview;
 
   bool get _isAdmin => ['MainAdmin', 'Admin', 'SystemAdmin'].contains(_userRole);
+
+  // Reviewing a worker's overall standing and deciding next steps is
+  // deliberately scoped to just MainAdmin/SystemAdmin, not the wider
+  // admin-tier `_isAdmin` set — this is a managerial determination, not
+  // routine content authoring.
+  bool get _isReviewer => ['MainAdmin', 'SystemAdmin'].contains(_userRole);
 
   @override
   void initState() {
@@ -59,6 +68,16 @@ class _SafetyTrainingScreenState extends State<SafetyTrainingScreen> {
           .limit(1)
           .get();
       final summary = await _service.fetchWorkerScoreSummary(user.uid);
+      // Fetched separately from the block above: a worker with no reviews
+      // yet — or any transient/permission hiccup on this specific query —
+      // shouldn't stop the role/summary load that the rest of the screen
+      // (including the reviewer button) depends on.
+      SafetyTrainingReviewModel? latestReview;
+      try {
+        latestReview = await _service.fetchLatestReviewForWorker(user.uid);
+      } catch (e) {
+        widget.logger.e('❌ SafetyTrainingScreen: Error loading latest review: $e');
+      }
       if (!mounted) return;
       setState(() {
         _uid = user.uid;
@@ -67,6 +86,7 @@ class _SafetyTrainingScreenState extends State<SafetyTrainingScreen> {
           _userName = snap.docs.first.id;
         }
         _summary = summary;
+        _latestReview = latestReview;
         _isLoadingUser = false;
       });
     } catch (e) {
@@ -79,7 +99,19 @@ class _SafetyTrainingScreenState extends State<SafetyTrainingScreen> {
     final uid = _uid;
     if (uid == null) return;
     final summary = await _service.fetchWorkerScoreSummary(uid);
-    if (mounted) setState(() => _summary = summary);
+    SafetyTrainingReviewModel? latestReview;
+    try {
+      latestReview = await _service.fetchLatestReviewForWorker(uid);
+    } catch (e) {
+      widget.logger.e('❌ SafetyTrainingScreen: Error refreshing latest review: $e');
+      latestReview = _latestReview;
+    }
+    if (mounted) {
+      setState(() {
+        _summary = summary;
+        _latestReview = latestReview;
+      });
+    }
   }
 
   @override
@@ -91,6 +123,22 @@ class _SafetyTrainingScreenState extends State<SafetyTrainingScreen> {
       selectedMenuItem: 'Safety Training',
       onMenuItemSelected: (_) {},
       actions: [
+        if (_isReviewer)
+          IconButton(
+            icon: const Icon(Icons.fact_check_outlined),
+            tooltip: 'Review worker safety standing',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SafetyTrainingReviewScreen(
+                  logger: widget.logger,
+                  reviewerUid: _uid ?? '',
+                  reviewerName: _userName,
+                  reviewerRole: _userRole,
+                ),
+              ),
+            ),
+          ),
         IconButton(
           icon: const Icon(Icons.leaderboard),
           tooltip: _isAdmin ? 'All-worker history' : 'My history',
@@ -132,6 +180,10 @@ class _SafetyTrainingScreenState extends State<SafetyTrainingScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _buildScoreCard(),
+                  if (_latestReview != null) ...[
+                    const SizedBox(height: 12),
+                    _buildStandingBanner(_latestReview!),
+                  ],
                   const SizedBox(height: 20),
                   Text(
                     'Safety Scenarios',
@@ -210,6 +262,55 @@ class _SafetyTrainingScreenState extends State<SafetyTrainingScreen> {
             ),
           ),
           const Icon(Icons.shield_moon, color: Colors.white, size: 48),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStandingBanner(SafetyTrainingReviewModel review) {
+    final Color color;
+    final IconData icon;
+    switch (review.status) {
+      case SafetyTrainingReviewModel.statusCleared:
+        color = Colors.green;
+        icon = Icons.verified_outlined;
+        break;
+      case SafetyTrainingReviewModel.statusNeedsRetraining:
+        color = Colors.orange;
+        icon = Icons.replay_circle_filled_outlined;
+        break;
+      case SafetyTrainingReviewModel.statusEscalated:
+        color = Colors.redAccent;
+        icon = Icons.report_gmailerrorred_outlined;
+        break;
+      default:
+        color = Colors.grey;
+        icon = Icons.info_outline;
+    }
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(SafetyTrainingReviewModel.statusLabel(review.status),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: color)),
+                if (review.notes.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(review.notes, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );

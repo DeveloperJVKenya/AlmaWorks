@@ -1072,6 +1072,20 @@
       ]
     },
     {
+      "collectionGroup": "ScheduleNotifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "ClientRequests",
       "queryScope": "COLLECTION",
       "fields": [
@@ -1346,6 +1360,14 @@
       "fields": [
         { "fieldPath": "workerUid", "order": "ASCENDING" },
         { "fieldPath": "completedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "SafetyTrainingReviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "workerUid", "order": "ASCENDING" },
+        { "fieldPath": "reviewedAt", "order": "DESCENDING" }
       ]
     },
     {
