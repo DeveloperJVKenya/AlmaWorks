@@ -690,20 +690,66 @@ service cloud.firestore {
     // append-only per-worker ledger, same shape as the Inventory custody
     // ledger above — reuses inventoryUserRole() since it's the same
     // UserRoles/{uid} mirror, not an Inventory-specific concept.
+    function isSafetyContentAdmin() {
+      return request.auth != null
+             && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin'];
+    }
+
+    function safetyAnswerKeyPath(scenarioId) {
+      return /databases/$(database)/documents/SafetyTrainingAnswerKeys/$(scenarioId);
+    }
+
+    // Shape every written scenario must have. The answer (correctOptionIndex)
+    // and its explanation must NOT live on the scenario doc — Technicians
+    // can read scenarios, so they live in SafetyTrainingAnswerKeys instead.
+    function isValidSafetyScenario(d) {
+      return d.title is string && d.title.size() > 0
+             && d.question is string && d.question.size() > 0
+             && d.options is list && d.options.size() >= 2 && d.options.size() <= 4
+             && d.points is int && d.points > 0 && d.points <= 1000
+             && d.isActive is bool
+             && !d.keys().hasAny(['correctOptionIndex', 'explanation']);
+    }
+
     match /SafetyTrainingScenarios/{scenarioId} {
       allow read: if request.auth != null
                    && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
 
-      // create: the authoring admin must self-attest as createdByUid.
+      // create: the authoring admin must self-attest as createdByUid, and
+      // the scenario's answer key must be written in the same batch.
       // update: any admin role may edit content or toggle isActive —
-      // scenario authorship doesn't restrict who can maintain it, unlike
-      // the append-only session ledger below.
-      allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin']
-                     && request.resource.data.createdByUid == request.auth.uid;
+      // scenario authorship doesn't restrict who can maintain it, but the
+      // authorship fields themselves are immutable, and changing the
+      // options requires the (post-batch) answer key to still be in range.
+      allow create: if isSafetyContentAdmin()
+                     && request.resource.data.createdByUid == request.auth.uid
+                     && isValidSafetyScenario(request.resource.data)
+                     && existsAfter(safetyAnswerKeyPath(scenarioId));
 
-      allow update: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin'];
+      allow update: if isSafetyContentAdmin()
+                     && isValidSafetyScenario(request.resource.data)
+                     && !request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['createdByUid', 'createdByName', 'createdByRole', 'createdAt'])
+                     && (!('options' in request.resource.data.diff(resource.data).affectedKeys())
+                         || getAfter(safetyAnswerKeyPath(scenarioId)).data.correctOptionIndex
+                              < request.resource.data.options.size());
+
+      allow delete: if false;
+    }
+
+    // The graded part of a scenario — read only by admins (authoring/edit)
+    // and by the submitSafetyScenarioAttempt Cloud Function (Admin SDK).
+    // The index is checked against the scenario's options as they'll be
+    // once the surrounding batch commits.
+    match /SafetyTrainingAnswerKeys/{scenarioId} {
+      allow read: if isSafetyContentAdmin();
+
+      allow create, update: if isSafetyContentAdmin()
+                             && request.resource.data.correctOptionIndex is int
+                             && request.resource.data.correctOptionIndex >= 0
+                             && request.resource.data.correctOptionIndex
+                                  < getAfter(/databases/$(database)/documents/SafetyTrainingScenarios/$(scenarioId)).data.options.size()
+                             && request.resource.data.explanation is string;
 
       allow delete: if false;
     }
@@ -711,16 +757,20 @@ service cloud.firestore {
     // Append-only: a worker's completed attempt, once recorded, is never
     // edited or deleted — including by the worker themself — so a
     // trainer's view of past reasoning answers can't be altered after the
-    // fact.
+    // fact. Created only by the submitSafetyScenarioAttempt Cloud Function,
+    // which grades the answer server-side — a client-written session could
+    // claim any isCorrect/pointsEarned it liked.
     match /SafetyTrainingSessions/{sessionId} {
+      // `resource == null`: the app watches the session doc for an attempt
+      // it's submitting (it generates the id up front) before the grading
+      // function has written it — reading a not-yet-existing doc reveals
+      // nothing.
       allow read: if request.auth != null
-                   && (resource.data.workerUid == request.auth.uid
+                   && (resource == null
+                       || resource.data.workerUid == request.auth.uid
                        || inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin']);
 
-      allow create: if request.auth != null
-                     && inventoryUserRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician']
-                     && request.resource.data.workerUid == request.auth.uid;
-
+      allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
@@ -738,9 +788,78 @@ service cloud.firestore {
                    && (resource.data.workerUid == request.auth.uid
                        || inventoryUserRole() in ['MainAdmin', 'SystemAdmin']);
 
+      // A reviewer can't record a determination about themselves — their
+      // own standing is for another MainAdmin/SystemAdmin to decide.
       allow create: if request.auth != null
                      && inventoryUserRole() in ['MainAdmin', 'SystemAdmin']
-                     && request.resource.data.reviewedByUid == request.auth.uid;
+                     && request.resource.data.reviewedByUid == request.auth.uid
+                     && request.resource.data.workerUid is string
+                     && request.resource.data.workerUid.size() > 0
+                     && request.resource.data.workerUid != request.auth.uid
+                     && request.resource.data.status in ['cleared', 'needsRetraining', 'escalated']
+                     && request.resource.data.notes is string
+                     && request.resource.data.notes.size() <= 2000
+                     && request.resource.data.reviewedAt is timestamp
+                     && isValidSafetyReviewOutcome(request.resource.data);
+
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // What each status must carry so it has a consequence the app and the
+    // daily follow-up Cloud Function can act on:
+    //   cleared         → when the clearance lapses (expiresAt)
+    //   needsRetraining → which scenarios to redo, and by when
+    //   escalated       → which MainAdmin/SystemAdmin it's escalated to
+    function isValidSafetyReviewOutcome(d) {
+      return (d.status != 'cleared'
+              || (d.expiresAt is timestamp && d.expiresAt > d.reviewedAt))
+             && (d.status != 'needsRetraining'
+                 || (d.assignedScenarioIds is list
+                     && d.assignedScenarioIds.size() >= 1
+                     && d.assignedScenarioIds.size() <= 50
+                     && d.dueAt is timestamp
+                     && d.dueAt > d.reviewedAt))
+             && (d.status != 'escalated'
+                 || (d.escalatedToUid is string
+                     && d.escalatedToUid != d.workerUid
+                     && d.escalatedToUid != request.auth.uid
+                     && get(/databases/$(database)/documents/UserRoles/$(d.escalatedToUid)).data.role
+                          in ['MainAdmin', 'SystemAdmin']));
+    }
+
+    // Per-worker training aggregates (first-attempt scoring, last attempt
+    // per scenario), maintained only by the submitSafetyScenarioAttempt /
+    // rebuildSafetyTrainingStats Cloud Functions.
+    match /SafetyTrainingWorkerStats/{workerUid} {
+      allow read: if request.auth != null
+                   && (workerUid == request.auth.uid || isSafetyContentAdmin());
+      allow write: if false;
+    }
+
+    // Bookkeeping for the stats rebuild (SafetyTrainingMeta/stats).
+    match /SafetyTrainingMeta/{docId} {
+      allow read: if isSafetyContentAdmin();
+      allow write: if false;
+    }
+
+    // A trainer's comment on one recorded attempt — append-only, like the
+    // sessions it annotates. Any admin-tier trainer may comment, except on
+    // their own attempts; workerUid must match the session's, since it's
+    // what scopes the worker's read access.
+    match /SafetyTrainingFeedback/{feedbackId} {
+      allow read: if request.auth != null
+                   && (resource.data.workerUid == request.auth.uid || isSafetyContentAdmin());
+
+      allow create: if isSafetyContentAdmin()
+                     && request.resource.data.byUid == request.auth.uid
+                     && request.resource.data.comment is string
+                     && request.resource.data.comment.size() > 0
+                     && request.resource.data.comment.size() <= 1000
+                     && request.resource.data.sessionId is string
+                     && request.resource.data.workerUid != request.auth.uid
+                     && get(/databases/$(database)/documents/SafetyTrainingSessions/$(request.resource.data.sessionId)).data.workerUid
+                          == request.resource.data.workerUid;
 
       allow update: if false;
       allow delete: if false;

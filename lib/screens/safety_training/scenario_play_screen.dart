@@ -1,49 +1,54 @@
+import 'dart:async';
+
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
-import 'package:almaworks/models/safety_training/safety_training_session_model.dart';
+import 'package:almaworks/screens/safety_training/safety_training_providers.dart';
 import 'package:almaworks/services/safety_training_service.dart';
+import 'package:almaworks/widgets/modern/modern_ui.dart';
 import 'package:almaworks/widgets/safety_training/hazard_scene_visual.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
-
-/// Plays a single scenario: the animated hazard scene, a graded
-/// multiple-choice hazard question, then a free-text reasoning prompt
-/// ("explain why / how to prevent it") before recording the session.
-class ScenarioPlayScreen extends StatefulWidget {
-  final SafetyScenarioModel scenario;
-  final ProjectModel project;
-  final Logger logger;
-  final String workerUid;
-  final String workerName;
-  final String workerRole;
-
-  const ScenarioPlayScreen({
-    super.key,
-    required this.scenario,
-    required this.project,
-    required this.logger,
-    required this.workerUid,
-    required this.workerName,
-    required this.workerRole,
-  });
-
-  @override
-  State<ScenarioPlayScreen> createState() => _ScenarioPlayScreenState();
-}
 
 enum _Stage { question, reasoning, result }
 
-class _ScenarioPlayScreenState extends State<ScenarioPlayScreen> {
-  final SafetyTrainingService _service = SafetyTrainingService();
+/// Plays one scenario: observe the hazard scene, choose an answer, explain
+/// the reasoning in your own words, then see the server-graded result.
+/// Side-by-side on wide screens, stacked on phones.
+class ScenarioPlayScreen extends ConsumerStatefulWidget {
+  const ScenarioPlayScreen({super.key, required this.scenario, required this.project, required this.logger});
+
+  final SafetyScenarioModel scenario;
+  final ProjectModel project;
+  final Logger logger;
+
+  @override
+  ConsumerState<ScenarioPlayScreen> createState() => _ScenarioPlayScreenState();
+}
+
+class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
   final _reasoningController = TextEditingController();
   final _stopwatch = Stopwatch()..start();
+
+  // Must match SAFETY_REASONING_MIN/MAX_LENGTH in functions/safetyTraining.js
+  // — a one-word answer gives a trainer nothing to review.
+  static const _minReasoningLength = 20;
+  static const _maxReasoningLength = 2000;
 
   _Stage _stage = _Stage.question;
   int? _selectedOption;
   bool _isSaving = false;
+  String? _submitError;
 
-  bool get _isCorrect => _selectedOption == widget.scenario.correctOptionIndex;
+  /// Generated on the first submit of an attempt and reused by any retry,
+  /// so a retry after a lost response can't record the attempt twice.
+  String? _attemptId;
+
+  /// The server's grading — the client never holds the answer key.
+  SafetyAttemptResult? _result;
+
+  SafetyScenarioModel get _scenario => widget.scenario;
 
   @override
   void dispose() {
@@ -51,302 +56,405 @@ class _ScenarioPlayScreenState extends State<ScenarioPlayScreen> {
     super.dispose();
   }
 
-  void _submitAnswer() {
-    if (_selectedOption == null) return;
-    setState(() => _stage = _Stage.reasoning);
-  }
-
-  Future<void> _submitReasoning() async {
-    setState(() => _isSaving = true);
-    final session = SafetyTrainingSessionModel(
-      id: '',
-      scenarioId: widget.scenario.id,
-      scenarioTitle: widget.scenario.title,
-      category: widget.scenario.category,
-      projectId: widget.project.id,
-      projectName: widget.project.name,
-      workerUid: widget.workerUid,
-      workerName: widget.workerName,
-      workerRole: widget.workerRole,
-      selectedOptionIndex: _selectedOption!,
-      isCorrect: _isCorrect,
-      reasoningAnswer: _reasoningController.text.trim(),
-      pointsEarned: _isCorrect ? widget.scenario.points : 0,
-      timeTakenSeconds: _stopwatch.elapsed.inSeconds,
-      completedAt: DateTime.now(),
-    );
+  Future<void> _submit() async {
+    final service = ref.read(safetyServiceProvider);
+    _attemptId ??= service.newAttemptId();
+    setState(() {
+      _isSaving = true;
+      _submitError = null;
+    });
     try {
-      await _service.recordSession(session);
+      final result = await service.submitAttempt(
+        attemptId: _attemptId!,
+        scenarioId: _scenario.id,
+        selectedOptionIndex: _selectedOption!,
+        reasoningAnswer: _reasoningController.text.trim(),
+        timeTakenSeconds: _stopwatch.elapsed.inSeconds,
+        projectId: widget.project.id,
+        projectName: widget.project.name,
+      );
+      _stopwatch.stop();
       if (!mounted) return;
       setState(() {
+        _result = result;
         _stage = _Stage.result;
         _isSaving = false;
       });
+    } on FirebaseFunctionsException catch (e) {
+      widget.logger.e('❌ ScenarioPlayScreen: Grading failed: ${e.code} ${e.message}');
+      const userFacing = {'invalid-argument', 'failed-precondition', 'not-found', 'permission-denied'};
+      _fail(
+        userFacing.contains(e.code) && e.message != null
+            ? e.message!
+            : 'Your answer couldn\'t be submitted. Check your connection and tap Retry.',
+      );
+    } on TimeoutException {
+      widget.logger.w('⚠️ ScenarioPlayScreen: Attempt $_attemptId not confirmed in time');
+      _fail(
+        'We couldn\'t confirm your answer was saved. Check your connection and tap Retry — '
+        'it won\'t be counted twice.',
+      );
     } catch (e) {
-      widget.logger.e('❌ ScenarioPlayScreen: Failed to record session: $e');
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save your result. Please try again.', style: GoogleFonts.poppins())),
-        );
-      }
+      widget.logger.e('❌ ScenarioPlayScreen: Failed to submit attempt: $e');
+      _fail('Your answer couldn\'t be submitted. Tap Retry to try again.');
     }
+  }
+
+  void _fail(String message) {
+    if (!mounted) return;
+    setState(() {
+      _isSaving = false;
+      _submitError = message;
+    });
+  }
+
+  void _practiceAgain() {
+    setState(() {
+      _stage = _Stage.question;
+      _selectedOption = null;
+      _result = null;
+      _attemptId = null;
+      _submitError = null;
+      _reasoningController.clear();
+      _stopwatch
+        ..reset()
+        ..start();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final scenario = widget.scenario;
+    final s = _scenario;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(scenario.title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF0A2E5A),
-        foregroundColor: Colors.white,
-      ),
-      backgroundColor: const Color(0xFFF4F6F9),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            HazardSceneVisual(
-              visualKey: scenario.visualKey,
-              imageUrl: scenario.imageUrl,
-              lottieUrl: scenario.lottieUrl,
-              riveUrl: scenario.riveUrl,
-            ),
-            const SizedBox(height: 16),
-            _SectionCard(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0A2E5A).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.visibility_outlined, color: Color(0xFF0A2E5A), size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(scenario.sceneDescription, style: GoogleFonts.poppins(fontSize: 14, height: 1.5)),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: switch (_stage) {
-                _Stage.question => _buildQuestionStage(),
-                _Stage.reasoning => _buildReasoningStage(),
-                _Stage.result => _buildResultStage(),
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuestionStage() {
-    final scenario = widget.scenario;
-    return _SectionCard(
-      key: const ValueKey('question'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(scenario.question, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, height: 1.3)),
-          const SizedBox(height: 16),
-          ...List.generate(scenario.options.length, (i) {
-            final selected = _selectedOption == i;
-            final letter = String.fromCharCode(65 + i);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () => setState(() => _selectedOption = i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    color: selected ? const Color(0xFF0A2E5A).withValues(alpha: 0.06) : Colors.white,
-                    border: Border.all(
-                      color: selected ? const Color(0xFF0A2E5A) : const Color(0xFFE0E4EA),
-                      width: selected ? 2 : 1,
-                    ),
-                  ),
+      backgroundColor: AppPalette.canvas,
+      appBar: modernAppBar(context, title: s.title, subtitle: '${s.category} · ${s.difficulty} · ${s.points} pts'),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= Breakpoints.medium;
+          final pad = constraints.maxWidth < Breakpoints.compact ? 14.0 : 24.0;
+          final scene = _SceneColumn(scenario: s, sceneHeight: wide ? 320 : 220);
+          final panel = s.options.length < 2
+              ? AppCard(
                   child: Row(
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        width: 30,
-                        height: 30,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: selected ? const Color(0xFF0A2E5A) : const Color(0xFFF1F3F6),
-                        ),
-                        child: selected
-                            ? const Icon(Icons.check, color: Colors.white, size: 18)
-                            : Text(letter,
-                                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13, color: const Color(0xFF5A6472))),
-                      ),
-                      const SizedBox(width: 14),
+                      const IconBadge(icon: Icons.error_outline_rounded, color: AppPalette.coral),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          scenario.options[i],
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            height: 1.35,
-                            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                            color: selected ? const Color(0xFF0A2E5A) : const Color(0xFF2B2F36),
-                          ),
+                          'This scenario is incomplete and can\'t be answered yet. Please let an admin know.',
+                          style: appText(14, color: AppPalette.coral),
                         ),
                       ),
                     ],
                   ),
-                ),
+                )
+              : AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOutCubic,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween(begin: const Offset(0.03, 0), end: Offset.zero).animate(animation),
+                      child: child,
+                    ),
+                  ),
+                  child: switch (_stage) {
+                    _Stage.question => _buildQuestion(),
+                    _Stage.reasoning => _buildReasoning(),
+                    _Stage.result => _buildResult(),
+                  },
+                );
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(pad, pad, pad, 40),
+            child: ResponsiveCenter(
+              maxWidth: 1180,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _StepIndicator(current: _stage.index + 1),
+                  const SizedBox(height: 18),
+                  if (wide)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 5, child: scene),
+                        const SizedBox(width: 22),
+                        Expanded(flex: 6, child: panel),
+                      ],
+                    )
+                  else ...[
+                    scene,
+                    const SizedBox(height: 16),
+                    panel,
+                  ],
+                ],
               ),
-            );
-          }),
-          const SizedBox(height: 4),
-          SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              onPressed: _selectedOption == null ? null : _submitAnswer,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0A2E5A),
-                disabledBackgroundColor: const Color(0xFF0A2E5A).withValues(alpha: 0.3),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              child: Text('Continue', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildReasoningStage() {
-    return _SectionCard(
-      key: const ValueKey('reasoning'),
+  // ── Stage 1: choose an answer ─────────────────────────────────────────────
+
+  Widget _buildQuestion() {
+    return AppCard(
+      key: const ValueKey('question'),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(widget.scenario.reasoningPrompt,
-              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, height: 1.3)),
-          const SizedBox(height: 6),
           Text(
-            'In your own words — this helps your trainer see how well you understand the risk.',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600], height: 1.4),
+            'QUESTION',
+            style: appText(11, weight: FontWeight.w700, color: AppPalette.brightBlue),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _reasoningController,
-            maxLines: 5,
-            style: GoogleFonts.poppins(fontSize: 14),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: const Color(0xFFF7F8FA),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF0A2E5A), width: 1.5),
+          const SizedBox(height: 6),
+          Text(_scenario.question, style: appText(17, weight: FontWeight.w700, height: 1.35)),
+          const SizedBox(height: 18),
+          for (var i = 0; i < _scenario.options.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _OptionTile(
+                index: i,
+                text: _scenario.options[i],
+                selected: _selectedOption == i,
+                onTap: () => setState(() => _selectedOption = i),
               ),
-              contentPadding: const EdgeInsets.all(14),
-              hintText: 'Explain the cause and how to prevent it...',
-              hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[500]),
             ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              onPressed: (_isSaving || _reasoningController.text.trim().isEmpty) ? null : _submitReasoning,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0A2E5A),
-                disabledBackgroundColor: const Color(0xFF0A2E5A).withValues(alpha: 0.3),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              child: _isSaving
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text('Submit', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
-            ),
+          const SizedBox(height: 8),
+          PrimaryButton(
+            label: 'Continue',
+            icon: Icons.arrow_forward_rounded,
+            expand: true,
+            onPressed: _selectedOption == null ? null : () => setState(() => _stage = _Stage.reasoning),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildResultStage() {
-    final scenario = widget.scenario;
-    final accent = _isCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
-    return _SectionCard(
+  // ── Stage 2: explain ──────────────────────────────────────────────────────
+
+  Widget _buildReasoning() {
+    final trimmed = _reasoningController.text.trim().length;
+    final short = trimmed < _minReasoningLength;
+    final i = _selectedOption!;
+    return AppCard(
+      key: const ValueKey('reasoning'),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppPalette.skyBlue, borderRadius: BorderRadius.circular(14)),
+            child: Row(
+              children: [
+                _LetterBadge(index: i, selected: true),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Your answer', style: appText(11, color: AppPalette.inkMuted)),
+                      Text(_scenario.options[i], style: appText(13.5, weight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: _isSaving ? null : () => setState(() => _stage = _Stage.question),
+                  child: Text(
+                    'Change',
+                    style: appText(12.5, weight: FontWeight.w600, color: AppPalette.brightBlue),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'EXPLAIN YOUR THINKING',
+            style: appText(11, weight: FontWeight.w700, color: AppPalette.brightBlue),
+          ),
+          const SizedBox(height: 6),
+          Text(_scenario.reasoningPrompt, style: appText(16, weight: FontWeight.w700, height: 1.35)),
+          const SizedBox(height: 4),
+          Text(
+            'In your own words — this helps your trainer see how well you understand the risk.',
+            style: appText(12.5, color: AppPalette.inkMuted),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _reasoningController,
+            enabled: !_isSaving,
+            minLines: 4,
+            maxLines: 8,
+            maxLength: _maxReasoningLength,
+            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => Text(
+              short ? '${_minReasoningLength - trimmed} more characters needed' : '$currentLength / $maxLength',
+              style: appText(11.5, color: short ? AppPalette.orange : AppPalette.inkFaint),
+            ),
+            style: appText(14, height: 1.45),
+            decoration: InputDecoration(
+              hintText: 'Explain the cause and how to prevent it…',
+              hintStyle: appText(13.5, color: AppPalette.inkFaint),
+              filled: true,
+              fillColor: AppPalette.canvas,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppPalette.brightBlue, width: 1.5),
+              ),
+              contentPadding: const EdgeInsets.all(16),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          if (_submitError != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppPalette.coral.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppPalette.coral.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: AppPalette.coral, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(_submitError!, style: appText(12.5, color: AppPalette.coral, height: 1.35)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          PrimaryButton(
+            label: _isSaving ? 'Submitting your answer…' : (_submitError != null ? 'Retry' : 'Submit answer'),
+            icon: _submitError != null ? Icons.refresh_rounded : Icons.send_rounded,
+            loading: _isSaving,
+            expand: true,
+            onPressed: short ? null : _submit,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Stage 3: result ───────────────────────────────────────────────────────
+
+  Widget _buildResult() {
+    final result = _result!;
+    final correct = result.isCorrect;
+    final accent = correct ? AppPalette.green : AppPalette.coral;
+    final ci = result.correctOptionIndex;
+    final hasCorrect = ci >= 0 && ci < _scenario.options.length;
+    return AppCard(
       key: const ValueKey('result'),
+      padding: const EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 500),
+            duration: const Duration(milliseconds: 600),
             curve: Curves.elasticOut,
-            builder: (context, value, child) => Transform.scale(scale: value, child: child),
+            builder: (context, v, child) => Transform.scale(scale: v, child: child),
             child: Center(
               child: Container(
-                width: 88,
-                height: 88,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: accent.withValues(alpha: 0.12)),
-                child: Icon(
-                  _isCorrect ? Icons.check_circle : Icons.cancel,
-                  color: accent,
-                  size: 56,
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(colors: [accent.withValues(alpha: 0.18), accent.withValues(alpha: 0.06)]),
                 ),
+                child: Icon(correct ? Icons.check_circle_rounded : Icons.cancel_rounded, color: accent, size: 60),
               ),
             ),
           ),
           const SizedBox(height: 14),
-          Center(
-            child: Text(
-              _isCorrect ? 'Correct! +${scenario.points} pts' : 'Not quite right',
-              style: GoogleFonts.poppins(fontSize: 19, fontWeight: FontWeight.bold, color: accent),
-            ),
+          Text(
+            correct ? 'Correct — well spotted!' : 'Not quite right',
+            textAlign: TextAlign.center,
+            style: appText(21, weight: FontWeight.w800, color: accent),
           ),
+          const SizedBox(height: 8),
+          Center(
+            child: result.isFirstAttempt
+                ? StatusPill(
+                    label: correct ? '+${result.pointsEarned} points' : 'No points this time',
+                    color: correct ? AppPalette.green : AppPalette.inkMuted,
+                    icon: Icons.star_rounded,
+                  )
+                : const StatusPill(
+                    label: 'Practice attempt — only your first attempt scores',
+                    color: AppPalette.brightBlue,
+                    icon: Icons.replay_rounded,
+                  ),
+          ),
+          if (!correct && hasCorrect) ...[
+            const SizedBox(height: 18),
+            _AnswerLine(label: 'Correct answer', index: ci, text: _scenario.options[ci], color: AppPalette.green),
+          ],
+          if (_selectedOption != null) ...[
+            const SizedBox(height: 8),
+            _AnswerLine(
+              label: 'Your answer',
+              index: _selectedOption!,
+              text: _scenario.options[_selectedOption!],
+              color: correct ? AppPalette.green : AppPalette.coral,
+            ),
+          ],
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: const Color(0xFFF7F8FA), borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(color: AppPalette.skyBlue, borderRadius: BorderRadius.circular(16)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.lightbulb_outline, size: 18, color: Color(0xFF0A2E5A)),
+                    const Icon(Icons.lightbulb_rounded, size: 19, color: AppPalette.amber),
                     const SizedBox(width: 8),
-                    Text('Why it matters', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
+                    Text('Why it matters', style: appText(13.5, weight: FontWeight.w700)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(scenario.explanation, style: GoogleFonts.poppins(fontSize: 13.5, height: 1.5)),
+                Text(
+                  result.explanation.isEmpty ? 'No explanation was provided for this scenario.' : result.explanation,
+                  style: appText(13.5, height: 1.55),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0A2E5A),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _practiceAgain,
+                icon: const Icon(Icons.replay_rounded, size: 18),
+                label: Text(
+                  'Practice again',
+                  style: appText(13.5, weight: FontWeight.w600, color: AppPalette.deepBlue),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  side: const BorderSide(color: AppPalette.border),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
               ),
-              child: Text('Done', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
-            ),
+              PrimaryButton(
+                label: 'Back to scenarios',
+                icon: Icons.grid_view_rounded,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
           ),
         ],
       ),
@@ -354,26 +462,258 @@ class _ScenarioPlayScreenState extends State<ScenarioPlayScreen> {
   }
 }
 
-/// Shared card chrome for every stage below the hazard scene — gives the
-/// screen a consistent, breathable rhythm instead of raw text/buttons
-/// sitting directly on the scaffold background.
-class _SectionCard extends StatelessWidget {
-  final Widget child;
-  const _SectionCard({super.key, required this.child});
+class _SceneColumn extends StatelessWidget {
+  const _SceneColumn({required this.scenario, required this.sceneHeight});
+
+  final SafetyScenarioModel scenario;
+  final double sceneHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppCard(
+          padding: const EdgeInsets.all(8),
+          child: HazardSceneVisual(
+            visualKey: scenario.visualKey,
+            imageUrl: scenario.imageUrl,
+            lottieUrl: scenario.lottieUrl,
+            riveUrl: scenario.riveUrl,
+            height: sceneHeight,
+          ),
+        ),
+        const SizedBox(height: 14),
+        AppCard(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const IconBadge(icon: Icons.visibility_rounded, color: AppPalette.brightBlue, size: 38),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'WHAT YOU SEE',
+                      style: appText(11, weight: FontWeight.w700, color: AppPalette.brightBlue),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(scenario.sceneDescription, style: appText(14, height: 1.55)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Observe → Answer → Explain → Result.
+class _StepIndicator extends StatelessWidget {
+  const _StepIndicator({required this.current});
+
+  /// 1 = answering, 2 = explaining, 3 = result (observing is always done).
+  final int current;
+
+  static const _steps = ['Observe', 'Answer', 'Explain', 'Result'];
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = Breakpoints.isCompact(context);
+    return Row(
+      children: [
+        for (var i = 0; i < _steps.length; i++) ...[
+          if (i > 0)
+            Expanded(
+              child: Container(
+                height: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: i <= current ? AppPalette.brightBlue : AppPalette.border,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          _step(i, compact),
+        ],
+      ],
+    );
+  }
+
+  Widget _step(int i, bool compact) {
+    final done = i < current;
+    final active = i == current;
+    final color = done || active ? AppPalette.brightBlue : AppPalette.inkFaint;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: done ? AppPalette.brightBlue : (active ? AppPalette.skyBlue : AppPalette.surface),
+            border: Border.all(color: color, width: 1.5),
+          ),
+          child: done
+              ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+              : Text(
+                  '${i + 1}',
+                  style: appText(12, weight: FontWeight.w700, color: color),
+                ),
+        ),
+        if (!compact) ...[
+          const SizedBox(width: 6),
+          Text(
+            _steps[i],
+            style: appText(12.5, weight: active ? FontWeight.w700 : FontWeight.w500, color: color),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _LetterBadge extends StatelessWidget {
+  const _LetterBadge({required this.index, required this.selected});
+
+  final int index;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      width: 32,
+      height: 32,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: selected ? AppPalette.deepBlue : AppPalette.canvas,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        String.fromCharCode(65 + index),
+        style: appText(13.5, weight: FontWeight.w700, color: selected ? Colors.white : AppPalette.inkMuted),
+      ),
+    );
+  }
+}
+
+class _OptionTile extends StatefulWidget {
+  const _OptionTile({required this.index, required this.text, required this.selected, required this.onTap});
+
+  final int index;
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  State<_OptionTile> createState() => _OptionTileState();
+}
+
+class _OptionTileState extends State<_OptionTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = widget.selected;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        decoration: BoxDecoration(
+          color: selected ? AppPalette.skyBlue : (_hovered ? AppPalette.canvas : AppPalette.surface),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected
+                ? AppPalette.brightBlue
+                : (_hovered ? AppPalette.brightBlue.withValues(alpha: 0.4) : AppPalette.border),
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: widget.onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  _LetterBadge(index: widget.index, selected: selected),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      widget.text,
+                      style: appText(14, weight: selected ? FontWeight.w600 : FontWeight.w400, height: 1.35),
+                    ),
+                  ),
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 160),
+                    opacity: selected ? 1 : 0,
+                    child: const Icon(Icons.check_circle_rounded, color: AppPalette.brightBlue),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnswerLine extends StatelessWidget {
+  const _AnswerLine({required this.label, required this.index, required this.text, required this.color});
+
+  final String label;
+  final int index;
+  final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+            child: Text(
+              String.fromCharCode(65 + index),
+              style: appText(12.5, weight: FontWeight.w700, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: appText(11, color: AppPalette.inkMuted)),
+                Text(
+                  text,
+                  style: appText(13.5, weight: FontWeight.w600, color: AppPalette.ink),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
-      child: child,
     );
   }
 }

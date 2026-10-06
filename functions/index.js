@@ -437,40 +437,6 @@ exports.sendBookingReminders = onSchedule(
   }
 );
 
-/**
- * Weekly nudge for every Technician to run through this week's safety-
- * training scenarios — an ongoing "gauge your own fitness to work safely"
- * check-in (see lib/screens/safety_training), not a one-time catch-up
- * reminder, so it fires unconditionally for the whole Technician roster
- * regardless of how recently any individual last trained.
- */
-exports.sendWeeklySafetyTrainingReminder = onSchedule(
-  { schedule: "0 7 * * 1", timeZone: "Africa/Nairobi" },
-  async () => {
-    const techniciansSnap = await db
-      .collection("Users")
-      .where("role", "==", "Technician")
-      .get();
-
-    if (techniciansSnap.empty) {
-      logger.info("sendWeeklySafetyTrainingReminder: no Technicians found");
-      return;
-    }
-
-    let sent = 0;
-    for (const doc of techniciansSnap.docs) {
-      const uid = doc.data().uid;
-      if (!uid) continue;
-      await db.collection("UserNotificationQueue").add({
-        targetUid: uid,
-        title: "🦺 Weekly Safety Training",
-        body: "Take a few minutes this week to run through your safety scenarios and check how fit you are to work safely on site.",
-        payload: { type: "safety_training_weekly_reminder" },
-        createdAt: FieldValue.serverTimestamp(),
-      });
-      sent += 1;
-    }
-
-    logger.info(`sendWeeklySafetyTrainingReminder: sent ${sent} reminder(s)`);
-  }
-);
+// Safety Training: grading, worker stats, review/feedback notifications and
+// scheduled nudges — see safetyTraining.js.
+Object.assign(exports, require("./safetyTraining"));

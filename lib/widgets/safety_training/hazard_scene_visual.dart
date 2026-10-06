@@ -5,10 +5,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' as lottie;
-import 'package:path/path.dart' as p;
 import 'package:rive/rive.dart' as rive;
 
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
+import 'package:almaworks/utils/lottie_assets.dart';
 import 'package:almaworks/utils/lottie_web_safety.dart';
 
 /// The animated "scene" a worker sees before answering a scenario's
@@ -46,11 +46,32 @@ class _HazardSceneVisualState extends State<HazardSceneVisual> with TickerProvid
   late final AnimationController _loopController;
   late final AnimationController _pulseController;
 
+  /// The web-safety-checked Lottie download, created once per [lottieUrl]
+  /// — not in build(), since a parent rebuild (every keystroke in the
+  /// scenario's reasoning field) would otherwise re-download and re-scan
+  /// the JSON and flash the loading spinner over the scene each time.
+  Future<Uint8List?>? _webLottieFuture;
+
   @override
   void initState() {
     super.initState();
     _loopController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
     _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 6))..repeat();
+    _webLottieFuture = _startWebLottieFetch();
+  }
+
+  @override
+  void didUpdateWidget(covariant HazardSceneVisual oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.lottieUrl != widget.lottieUrl) {
+      _webLottieFuture = _startWebLottieFetch();
+    }
+  }
+
+  Future<Uint8List?>? _startWebLottieFetch() {
+    final lottieUrl = widget.lottieUrl;
+    if (!kIsWeb || lottieUrl == null || lottieUrl.isEmpty) return null;
+    return _fetchLottieIfWebSafe(lottieUrl);
   }
 
   @override
@@ -141,13 +162,14 @@ class _HazardSceneVisualState extends State<HazardSceneVisual> with TickerProvid
           fit: BoxFit.contain,
           repeat: true,
           frameRate: lottie.FrameRate.max,
+          imageProviderFactory: unresolvedLottieImage,
           errorBuilder: (context, error, stackTrace) => _buildIconScene(),
         ),
       );
     }
 
     return FutureBuilder<Uint8List?>(
-      future: _fetchLottieIfWebSafe(lottieUrl),
+      future: _webLottieFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const ColoredBox(
@@ -166,16 +188,7 @@ class _HazardSceneVisualState extends State<HazardSceneVisual> with TickerProvid
             fit: BoxFit.contain,
             repeat: true,
             frameRate: lottie.FrameRate.max,
-            // Lottie.memory has no source URL to resolve an animation's
-            // *linked* (non-embedded, `"e":0`) raster image layers against,
-            // so without this it falls back to treating them as local
-            // Flutter assets (`AssetImage('images/foo.png')`) — which never
-            // exist in this app and 404 as "assets/images/foo.png". Mirror
-            // what Lottie.network itself does (see NetworkLottie._loadImage
-            // in the lottie package) and resolve dirName/fileName relative
-            // to the animation's own Storage URL instead.
-            imageProviderFactory: (asset) =>
-                NetworkImage(Uri.parse(lottieUrl).resolve(p.url.join(asset.dirName, asset.fileName)).toString()),
+            imageProviderFactory: unresolvedLottieImage,
             errorBuilder: (context, error, stackTrace) => _buildIconScene(),
           ),
         );

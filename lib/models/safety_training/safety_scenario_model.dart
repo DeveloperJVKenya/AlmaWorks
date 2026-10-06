@@ -7,6 +7,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// reasoning answer isn't auto-graded (see [SafetyTrainingSessionModel]) —
 /// it's captured for a trainer/admin to review, since "explain why this is
 /// unsafe" doesn't reduce to a single correct string.
+///
+/// Holds only what a worker may see *before* answering — the correct option
+/// and its explanation live in [SafetyScenarioAnswerKey]
+/// (SafetyTrainingAnswerKeys/{scenarioId}), which only admins and the
+/// grading Cloud Function can read.
 class SafetyScenarioModel {
   static const difficultyBasic = 'Basic';
   static const difficultyIntermediate = 'Intermediate';
@@ -40,8 +45,6 @@ class SafetyScenarioModel {
 
   final String question;
   final List<String> options;
-  final int correctOptionIndex;
-  final String explanation;
   final String reasoningPrompt;
 
   final String difficulty;
@@ -65,8 +68,6 @@ class SafetyScenarioModel {
     this.riveUrl,
     required this.question,
     required this.options,
-    required this.correctOptionIndex,
-    required this.explanation,
     required this.reasoningPrompt,
     this.difficulty = difficultyBasic,
     this.points = 10,
@@ -91,8 +92,6 @@ class SafetyScenarioModel {
       riveUrl: data['riveUrl'] as String?,
       question: data['question'] ?? '',
       options: List<String>.from(data['options'] as List? ?? const []),
-      correctOptionIndex: data['correctOptionIndex'] as int? ?? 0,
-      explanation: data['explanation'] ?? '',
       reasoningPrompt: data['reasoningPrompt'] ?? '',
       difficulty: data['difficulty'] ?? difficultyBasic,
       points: data['points'] as int? ?? 10,
@@ -103,6 +102,34 @@ class SafetyScenarioModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
+  }
+
+  /// Whether this scenario doc still carries the answer fields from before
+  /// they were split into SafetyTrainingAnswerKeys — see
+  /// SafetyTrainingService.secureLegacyScenarios.
+  static bool hasLegacyAnswerFields(Map<String, dynamic> data) =>
+      data.containsKey('correctOptionIndex') || data.containsKey('explanation');
+
+  /// The editable content fields, for updating an existing scenario —
+  /// excludes authorship (immutable per firestore.rules) and isActive
+  /// (toggled separately), and writes every media field explicitly so
+  /// clearing or switching media removes the stale URL.
+  Map<String, dynamic> toContentUpdate() {
+    return {
+      'title': title,
+      'category': category,
+      'sceneDescription': sceneDescription,
+      'visualKey': visualKey,
+      'imageUrl': imageUrl,
+      'lottieUrl': lottieUrl,
+      'riveUrl': riveUrl,
+      'question': question,
+      'options': options,
+      'reasoningPrompt': reasoningPrompt,
+      'difficulty': difficulty,
+      'points': points,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    };
   }
 
   Map<String, dynamic> toFirestore() {
@@ -116,8 +143,6 @@ class SafetyScenarioModel {
       if (riveUrl != null) 'riveUrl': riveUrl,
       'question': question,
       'options': options,
-      'correctOptionIndex': correctOptionIndex,
-      'explanation': explanation,
       'reasoningPrompt': reasoningPrompt,
       'difficulty': difficulty,
       'points': points,
@@ -127,6 +152,34 @@ class SafetyScenarioModel {
       'createdByRole': createdByRole,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt ?? DateTime.now()),
+    };
+  }
+}
+
+/// The graded half of a [SafetyScenarioModel], stored separately at
+/// SafetyTrainingAnswerKeys/{scenarioId} so Technicians — who can read
+/// scenarios — never see the answer before submitting. Written by admins
+/// in the same batch as the scenario; read by admins when editing and by
+/// the submitSafetyScenarioAttempt Cloud Function when grading.
+class SafetyScenarioAnswerKey {
+  final int correctOptionIndex;
+  final String explanation;
+
+  const SafetyScenarioAnswerKey({required this.correctOptionIndex, required this.explanation});
+
+  factory SafetyScenarioAnswerKey.fromMap(Map<String, dynamic> data) {
+    return SafetyScenarioAnswerKey(
+      correctOptionIndex: data['correctOptionIndex'] as int? ?? 0,
+      explanation: data['explanation'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toFirestore({required String updatedByUid}) {
+    return {
+      'correctOptionIndex': correctOptionIndex,
+      'explanation': explanation,
+      'updatedByUid': updatedByUid,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
     };
   }
 }

@@ -20,9 +20,21 @@ class SafetyTrainingSessionModel {
 
   final int selectedOptionIndex;
   final bool isCorrect;
+
+  /// Whether this was the worker's first attempt at the scenario (the only
+  /// one that scores). Null on sessions recorded before the flag existed —
+  /// use SafetyScoreSummary.fromSessions, which derives it from order.
+  final bool? isFirstAttempt;
   final String reasoningAnswer;
   final int pointsEarned;
   final int timeTakenSeconds;
+
+  // Snapshot of the question as it was answered (set by the grading Cloud
+  // Function), so the record stays readable after the scenario is edited.
+  // Null on sessions recorded before server-side grading.
+  final String? question;
+  final List<String>? options;
+  final int? correctOptionIndex;
 
   final DateTime completedAt;
 
@@ -38,9 +50,13 @@ class SafetyTrainingSessionModel {
     required this.workerRole,
     required this.selectedOptionIndex,
     required this.isCorrect,
+    this.isFirstAttempt,
     required this.reasoningAnswer,
     required this.pointsEarned,
     required this.timeTakenSeconds,
+    this.question,
+    this.options,
+    this.correctOptionIndex,
     required this.completedAt,
   });
 
@@ -58,9 +74,13 @@ class SafetyTrainingSessionModel {
       workerRole: data['workerRole'] ?? '',
       selectedOptionIndex: data['selectedOptionIndex'] as int? ?? -1,
       isCorrect: data['isCorrect'] as bool? ?? false,
+      isFirstAttempt: data['isFirstAttempt'] as bool?,
       reasoningAnswer: data['reasoningAnswer'] ?? '',
       pointsEarned: data['pointsEarned'] as int? ?? 0,
       timeTakenSeconds: data['timeTakenSeconds'] as int? ?? 0,
+      question: data['question'] as String?,
+      options: data['options'] is List ? List<String>.from(data['options'] as List) : null,
+      correctOptionIndex: data['correctOptionIndex'] as int?,
       completedAt: (data['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -77,9 +97,13 @@ class SafetyTrainingSessionModel {
       'workerRole': workerRole,
       'selectedOptionIndex': selectedOptionIndex,
       'isCorrect': isCorrect,
+      'isFirstAttempt': ?isFirstAttempt,
       'reasoningAnswer': reasoningAnswer,
       'pointsEarned': pointsEarned,
       'timeTakenSeconds': timeTakenSeconds,
+      if (question != null) 'question': question,
+      if (options != null) 'options': options,
+      if (correctOptionIndex != null) 'correctOptionIndex': correctOptionIndex,
       'completedAt': Timestamp.fromDate(completedAt),
     };
   }

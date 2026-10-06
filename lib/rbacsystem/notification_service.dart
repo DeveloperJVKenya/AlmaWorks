@@ -239,11 +239,13 @@ class NotificationService {
 
             final title = data['title'] as String? ?? '🔔 New Notification';
             final body = data['body'] as String? ?? '';
-            final payload =
-                (data['payload'] as Map<String, dynamic>?)?.map(
-                  (k, v) => MapEntry(k, v.toString()),
-                ) ??
-                {};
+            final payload = <String, String>{
+              ...?(data['payload'] as Map<String, dynamic>?)?.map(
+                (k, v) => MapEntry(k, v.toString()),
+              ),
+              'notificationDocId': docId,
+              'notificationCollection': 'AdminNotificationQueue',
+            };
 
             _showLocalNotificationWithActions(
               title: title,
@@ -302,11 +304,13 @@ class NotificationService {
             final data = change.doc.data() as Map<String, dynamic>;
             final title = data['title'] as String? ?? '🔔 New Notification';
             final body = data['body'] as String? ?? '';
-            final payload =
-                (data['payload'] as Map<String, dynamic>?)?.map(
-                  (k, v) => MapEntry(k, v.toString()),
-                ) ??
-                {};
+            final payload = <String, String>{
+              ...?(data['payload'] as Map<String, dynamic>?)?.map(
+                (k, v) => MapEntry(k, v.toString()),
+              ),
+              'notificationDocId': docId,
+              'notificationCollection': 'UserNotificationQueue',
+            };
 
             _showLocalNotificationWithActions(
               title: title,

@@ -1,359 +1,551 @@
-import 'dart:async';
-
-import 'package:almaworks/models/project_model.dart';
-import 'package:almaworks/screens/schedule/task_progress_monitor_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:almaworks/notifications/app_notification.dart';
+import 'package:almaworks/notifications/notification_providers.dart';
+import 'package:almaworks/notifications/notification_router.dart';
+import 'package:almaworks/widgets/modern/modern_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
-/// One notification merged from UserNotificationQueue (targeted at this
-/// uid), AdminNotificationQueue (targeted at this role), or ScheduleNotifications
-/// (task overdue/starting-soon alerts, targeted at this uid) — normalized to
-/// one shape so the whole app has exactly one notification list instead of
-/// three (see InventoryService._notifyUser/_notifyAdmins and
-/// TaskProgressMonitorScreen._notifyUser/_notifyAdmins for the first two;
-/// services/notification_service.dart for the third).
-class _QueuedNotification {
-  final String id;
-  final String collection; // 'UserNotificationQueue' | 'AdminNotificationQueue' | 'ScheduleNotifications'
-  final String title;
-  final String body;
-  final Map<String, dynamic> payload;
-  final DateTime createdAt;
-  final bool isRead;
-
-  const _QueuedNotification({
-    required this.id,
-    required this.collection,
-    required this.title,
-    required this.body,
-    required this.payload,
-    required this.createdAt,
-    required this.isRead,
-  });
-
-  factory _QueuedNotification.fromDoc(DocumentSnapshot doc, String collection) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    return _QueuedNotification(
-      id: doc.id,
-      collection: collection,
-      title: data['title'] ?? '',
-      body: data['body'] ?? '',
-      payload: Map<String, dynamic>.from(data['payload'] as Map? ?? {}),
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      isRead: data['isRead'] as bool? ?? false,
-    );
-  }
-
-  /// ScheduleNotifications docs (see models/notification_model.dart) use a
-  /// different field shape (taskName/message/type instead of title/body/
-  /// payload) — normalized here into the same shape as the two queues above
-  /// rather than teaching the rest of this screen a second shape to render.
-  factory _QueuedNotification.fromScheduleDoc(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    final type = data['type'] as String? ?? 'unknown';
-    return _QueuedNotification(
-      id: doc.id,
-      collection: 'ScheduleNotifications',
-      title: data['taskName'] ?? 'Task update',
-      body: data['message'] ?? '',
-      payload: {
-        'type': 'schedule_$type',
-        'projectId': data['projectId'],
-        'taskId': data['taskId'],
-      },
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      isRead: data['isRead'] as bool? ?? false,
-    );
-  }
-}
-
-/// Real, Firestore-backed notification center — merges every notification
-/// queued for the signed-in user (UserNotificationQueue, by uid) or their
-/// role (AdminNotificationQueue, by targetRoles) into one chronological
-/// list. Tapping one marks it read and, where the payload names a known
-/// destination (currently: project date-extension requests/decisions),
-/// navigates straight there — the same deep-link a tap on the OS tray
-/// notification does (see main.dart's onActionReceivedMethod, which this
-/// mirrors for in-app taps).
-class NotificationsScreen extends StatefulWidget {
-  final Logger? logger;
-
+/// The app-wide notification center: everything queued for the signed-in
+/// user (UserNotificationQueue, by uid), their role (AdminNotificationQueue,
+/// by targetRoles) and their task alerts (ScheduleNotifications), merged
+/// into one live list — filterable, grouped by day, with per-item read /
+/// unread / remove actions. Tapping an item marks it read and opens what
+/// it's about (see [NotificationRouter], the same routing an OS-tray tap
+/// uses); items with nowhere to go open their full details instead.
+class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key, this.logger});
 
-  @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
+  final Logger? logger;
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  late final Logger _logger;
-  String? _currentUid;
-  String _currentRole = 'Client';
-
-  List<_QueuedNotification> _userNotifications = [];
-  List<_QueuedNotification> _adminNotifications = [];
-  List<_QueuedNotification> _scheduleNotifications = [];
-  StreamSubscription<QuerySnapshot>? _userSub;
-  StreamSubscription<QuerySnapshot>? _adminSub;
-  StreamSubscription<QuerySnapshot>? _scheduleSub;
-  bool _isLoading = true;
-
-  List<_QueuedNotification> get _all {
-    final combined = [..._userNotifications, ..._adminNotifications, ..._scheduleNotifications];
-    combined.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return combined;
-  }
-
-  int get _unreadCount => _all.where((n) => !n.isRead).length;
+  static const _filters = <NotificationFilter>[
+    AllNotifications(),
+    UnreadNotifications(),
+    CategoryNotifications(NotificationCategory.safety),
+    CategoryNotifications(NotificationCategory.projects),
+    CategoryNotifications(NotificationCategory.inventory),
+    CategoryNotifications(NotificationCategory.messages),
+    CategoryNotifications(NotificationCategory.access),
+    CategoryNotifications(NotificationCategory.other),
+  ];
 
   @override
-  void initState() {
-    super.initState();
-    _logger = widget.logger ?? Logger();
-    _logger.i('🔔 NotificationsScreen: Initialized');
-    _init();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(notificationsProvider);
+    final unread = ref.watch(unreadNotificationCountProvider);
+    final filter = ref.watch(notificationFilterProvider);
+    final all = async.valueOrNull ?? const <AppNotification>[];
+    final failedSources = ref.watch(notificationSourceErrorsProvider);
 
-  Future<void> _init() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
-    _currentUid = user.uid;
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('Users')
-          .where('uid', isEqualTo: user.uid)
-          .limit(1)
-          .get();
-      if (snap.docs.isNotEmpty) {
-        _currentRole = snap.docs.first.data()['role'] as String? ?? 'Client';
-      }
-    } catch (e) {
-      _logger.e('❌ NotificationsScreen: failed to resolve role', error: e);
-    }
-
-    _userSub = FirebaseFirestore.instance
-        .collection('UserNotificationQueue')
-        .where('targetUid', isEqualTo: _currentUid)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .listen((snap) {
-      if (!mounted) return;
-      setState(() {
-        _userNotifications =
-            snap.docs.map((d) => _QueuedNotification.fromDoc(d, 'UserNotificationQueue')).toList();
-        _isLoading = false;
-      });
-    }, onError: (e) {
-      _logger.e('❌ NotificationsScreen: user queue stream error', error: e);
-      if (mounted) setState(() => _isLoading = false);
-    });
-
-    _adminSub = FirebaseFirestore.instance
-        .collection('AdminNotificationQueue')
-        .where('targetRoles', arrayContains: _currentRole)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .listen((snap) {
-      if (!mounted) return;
-      setState(() {
-        _adminNotifications =
-            snap.docs.map((d) => _QueuedNotification.fromDoc(d, 'AdminNotificationQueue')).toList();
-        _isLoading = false;
-      });
-    }, onError: (e) {
-      _logger.e('❌ NotificationsScreen: admin queue stream error', error: e);
-      if (mounted) setState(() => _isLoading = false);
-    });
-
-    // Third source: task overdue/starting-soon schedule alerts, merged in
-    // so this is the one notification center for the whole app instead of
-    // a separate project-scoped screen (see notification_center_screen.dart,
-    // now removed). Filtered by userId — every write path sets this from
-    // the signed-in user (see services/notification_service.dart).
-    _scheduleSub = FirebaseFirestore.instance
-        .collection('ScheduleNotifications')
-        .where('userId', isEqualTo: _currentUid)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .listen((snap) {
-      if (!mounted) return;
-      setState(() {
-        _scheduleNotifications = snap.docs.map(_QueuedNotification.fromScheduleDoc).toList();
-        _isLoading = false;
-      });
-    }, onError: (e) {
-      _logger.e('❌ NotificationsScreen: schedule queue stream error', error: e);
-      if (mounted) setState(() => _isLoading = false);
-    });
-  }
-
-  @override
-  void dispose() {
-    _userSub?.cancel();
-    _adminSub?.cancel();
-    _scheduleSub?.cancel();
-    _logger.i('🧹 NotificationsScreen: Disposing resources');
-    super.dispose();
-  }
-
-  Future<void> _markRead(_QueuedNotification n) async {
-    if (n.isRead) return;
-    try {
-      await FirebaseFirestore.instance.collection(n.collection).doc(n.id).update({'isRead': true});
-    } catch (e) {
-      _logger.e('❌ NotificationsScreen: failed to mark read', error: e);
-    }
-  }
-
-  Future<void> _markAllAsRead() async {
-    final unread = _all.where((n) => !n.isRead).toList();
-    if (unread.isEmpty) return;
-    try {
-      final batch = FirebaseFirestore.instance.batch();
-      for (final n in unread) {
-        batch.update(FirebaseFirestore.instance.collection(n.collection).doc(n.id), {'isRead': true});
-      }
-      await batch.commit();
-      _logger.i('✅ NotificationsScreen: All notifications marked as read');
-    } catch (e) {
-      _logger.e('❌ NotificationsScreen: failed to mark all read', error: e);
-    }
-  }
-
-  /// Mirrors main.dart's onActionReceivedMethod dispatch for the OS-tray
-  /// tap — same payload `type`/`projectId` fields, so a notification opens
-  /// the same place whether tapped here or from the system tray.
-  Future<void> _handleTap(_QueuedNotification n) async {
-    await _markRead(n);
-    final type = n.payload['type'] as String?;
-    final projectId = n.payload['projectId'] as String?;
-    if (type == null || projectId == null) return;
-
-    if (type.startsWith('project_date_extension') ||
-        type.startsWith('task_date_extension') ||
-        type.startsWith('schedule_')) {
-      await _openProject(projectId);
-    }
-  }
-
-  Future<void> _openProject(String projectId) async {
-    if (!mounted) return;
-    try {
-      final doc = await FirebaseFirestore.instance.collection('Projects').doc(projectId).get();
-      if (!doc.exists) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('That project no longer exists.', style: GoogleFonts.poppins()),
-          ));
-        }
-        return;
-      }
-      final project = ProjectModel.fromFirestore(doc);
-      if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => TaskProgressMonitorScreen(project: project, logger: _logger)),
-      );
-    } catch (e) {
-      _logger.e('❌ NotificationsScreen: failed to open project', error: e);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Notifications', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF0A2E5A),
-        foregroundColor: Colors.white,
+      backgroundColor: AppPalette.canvas,
+      appBar: modernAppBar(
+        context,
+        title: 'Notifications',
+        subtitle: unread == 0 ? 'You\'re all caught up' : '$unread unread',
         actions: [
-          if (_unreadCount > 0)
-            TextButton(
-              onPressed: _markAllAsRead,
-              child: Text('Mark All Read', style: GoogleFonts.poppins(color: Colors.white)),
+          if (unread > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: TextButton.icon(
+                onPressed: () => _markAllRead(context, ref, all),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                icon: const Icon(Icons.done_all_rounded, size: 18),
+                label: Text(
+                  'Mark all read',
+                  style: appText(12.5, weight: FontWeight.w600, color: Colors.white),
+                ),
+              ),
             ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _all.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.notifications_none_rounded, size: 56, color: Colors.grey[300]),
-                      const SizedBox(height: 12),
-                      Text('No notifications yet', style: GoogleFonts.poppins(color: Colors.grey[500])),
-                    ],
+      body: async.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => EmptyState(
+          icon: Icons.cloud_off_rounded,
+          title: 'Couldn\'t load notifications',
+          message: 'Check your connection and try again.',
+          action: OutlinedButton(onPressed: () => ref.invalidate(notificationUserProvider), child: const Text('Retry')),
+        ),
+        data: (_) {
+          final visible = all.where(filter.matches).toList();
+          return ResponsiveCenter(
+            maxWidth: 860,
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SummaryStrip(all: all),
+                        const SizedBox(height: 14),
+                        FilterChipBar<NotificationFilter>(
+                          options: [
+                            for (final f in _filters)
+                              if (f is! CategoryNotifications || all.any(f.matches)) f,
+                          ],
+                          selected: filter,
+                          onSelected: (f) => ref.read(notificationFilterProvider.notifier).state = f,
+                          label: (f) => f.label,
+                          count: (f) => f is AllNotifications ? 0 : all.where((n) => f.matches(n) && !n.isRead).length,
+                          icon: (f) => switch (f) {
+                            CategoryNotifications(:final category) => category.icon,
+                            UnreadNotifications() => Icons.mark_email_unread_rounded,
+                            _ => Icons.inbox_rounded,
+                          },
+                        ),
+                        if (failedSources > 0) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            'Some notifications couldn\'t be loaded — the list may be incomplete.',
+                            style: appText(12, color: AppPalette.orange),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _all.length,
-                  itemBuilder: (context, index) => _buildNotificationItem(_all[index]),
                 ),
-    );
-  }
-
-  Widget _buildNotificationItem(_QueuedNotification n) {
-    final icon = _iconFor(n.payload['type'] as String?);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: n.isRead ? Colors.white : const Color(0xFF0A2E5A).withValues(alpha: 0.05),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: icon.$2.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Icon(icon.$1, color: icon.$2, size: 20),
-        ),
-        title: Text(n.title,
-            style: GoogleFonts.poppins(fontWeight: n.isRead ? FontWeight.normal : FontWeight.w700, fontSize: 13.5)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 2),
-            Text(n.body, style: GoogleFonts.poppins(fontSize: 12.5)),
-            const SizedBox(height: 4),
-            Text(_formatTimestamp(n.createdAt), style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 11)),
-          ],
-        ),
-        trailing: n.isRead
-            ? null
-            : Container(
-                width: 8, height: 8,
-                decoration: const BoxDecoration(color: Color(0xFF0A2E5A), shape: BoxShape.circle),
-              ),
-        onTap: () => _handleTap(n),
+                if (visible.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyState(
+                      icon: filter is UnreadNotifications
+                          ? Icons.mark_email_read_rounded
+                          : Icons.notifications_none_rounded,
+                      title: filter is UnreadNotifications ? 'No unread notifications' : 'Nothing here yet',
+                      message: filter is AllNotifications
+                          ? 'Updates about your projects, inventory, safety training and messages will appear here.'
+                          : 'Try another filter to see more.',
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+                    sliver: SliverList.builder(
+                      itemCount: visible.length,
+                      itemBuilder: (context, i) {
+                        final n = visible[i];
+                        final now = DateTime.now();
+                        final day = notificationDayLabel(n.createdAt, now);
+                        final showHeader = i == 0 || notificationDayLabel(visible[i - 1].createdAt, now) != day;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (showHeader)
+                              Padding(
+                                padding: EdgeInsets.only(top: i == 0 ? 6 : 18, bottom: 8, left: 4),
+                                child: Text(
+                                  day.toUpperCase(),
+                                  style: appText(11.5, weight: FontWeight.w700, color: AppPalette.inkFaint),
+                                ),
+                              ),
+                            StaggeredEntrance(
+                              index: i,
+                              child: _NotificationTile(
+                                key: ValueKey('${n.collection}/${n.id}'),
+                                notification: n,
+                                logger: logger ?? Logger(),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  (IconData, Color) _iconFor(String? type) {
-    if (type == null) return (Icons.info_outline, Colors.grey);
-    if (type.startsWith('project_date_extension_requested')) return (Icons.hourglass_top_rounded, Colors.orange);
-    if (type.startsWith('project_date_extension_approved')) return (Icons.check_circle_outline, Colors.green);
-    if (type.startsWith('project_date_extension_rejected')) return (Icons.cancel_outlined, Colors.red);
-    if (type.startsWith('inventory')) return (Icons.inventory_2_outlined, Colors.brown);
-    if (type.startsWith('communication')) return (Icons.mail_outline, Colors.blueAccent);
-    if (type == 'schedule_overdue') return (Icons.schedule, Colors.red);
-    if (type == 'schedule_starting_soon') return (Icons.schedule, Colors.orange);
-    return (Icons.info_outline, Colors.grey);
+  Future<void> _markAllRead(BuildContext context, WidgetRef ref, List<AppNotification> all) async {
+    final user = ref.read(notificationUserProvider).valueOrNull;
+    if (user == null) return;
+    try {
+      await ref.read(notificationRepositoryProvider).markAllRead(all, user.uid);
+      if (context.mounted) showAppSnack(context, 'All notifications marked as read');
+    } catch (e) {
+      logger?.e('❌ NotificationsScreen: mark all read failed', error: e);
+      if (context.mounted) showAppSnack(context, 'Couldn\'t mark notifications as read', error: true);
+    }
+  }
+}
+
+/// Unread count per category, as compact colored tiles.
+class _SummaryStrip extends StatelessWidget {
+  const _SummaryStrip({required this.all});
+
+  final List<AppNotification> all;
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = all.where((n) => !n.isRead).toList();
+    final today = all.where((n) => notificationDayLabel(n.createdAt, DateTime.now()) == 'Today').length;
+    final safety = unread.where((n) => n.category == NotificationCategory.safety).length;
+    return ResponsiveTiles(
+      minTileWidth: 150,
+      children: [
+        StatTile(label: 'Unread', value: '${unread.length}', icon: Icons.mark_email_unread_rounded),
+        StatTile(label: 'Today', value: '$today', icon: Icons.today_rounded, color: AppPalette.violet),
+        StatTile(
+          label: 'Safety (unread)',
+          value: '$safety',
+          icon: Icons.health_and_safety_rounded,
+          color: AppPalette.teal,
+        ),
+        StatTile(label: 'Total', value: '${all.length}', icon: Icons.inbox_rounded, color: AppPalette.orange),
+      ],
+    );
+  }
+}
+
+class _NotificationTile extends ConsumerWidget {
+  const _NotificationTile({super.key, required this.notification, required this.logger});
+
+  final AppNotification notification;
+  final Logger logger;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final n = notification;
+    final access = _AccessOutcome.of(n, ref);
+    final (icon, color) = access?.visual ?? n.visual;
+    final title = access?.title ?? n.title;
+    final body = access?.body ?? n.body;
+    final now = DateTime.now();
+    final canOpen = NotificationRouter.hasDestination(n.payload);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Dismissible(
+        key: ValueKey('dismiss-${n.collection}/${n.id}'),
+        background: _swipeBackground(
+          alignment: Alignment.centerLeft,
+          color: AppPalette.brightBlue,
+          icon: n.isRead ? Icons.mark_email_unread_rounded : Icons.mark_email_read_rounded,
+          label: n.isRead ? 'Mark unread' : 'Mark read',
+        ),
+        secondaryBackground: _swipeBackground(
+          alignment: Alignment.centerRight,
+          color: AppPalette.coral,
+          icon: Icons.delete_outline_rounded,
+          label: 'Remove',
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            await _setRead(context, ref, !n.isRead);
+            return false; // toggled in place — keep the tile
+          }
+          return true;
+        },
+        onDismissed: (_) => _remove(context, ref),
+        child: AppCard(
+          highlighted: !n.isRead,
+          accent: n.isRead ? null : color,
+          padding: const EdgeInsets.fromLTRB(16, 14, 6, 14),
+          onTap: () => _open(context, ref),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconBadge(icon: icon, color: color),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: appText(14, weight: n.isRead ? FontWeight.w500 : FontWeight.w700),
+                          ),
+                        ),
+                        if (!n.isRead)
+                          Container(
+                            width: 9,
+                            height: 9,
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                          ),
+                      ],
+                    ),
+                    if (body.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        body,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: appText(13, color: AppPalette.inkMuted, height: 1.4),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        StatusPill(label: n.category.label, color: n.category.color, icon: n.category.icon),
+                        if (access != null)
+                          StatusPill(label: access.pill, color: access.visual.$2, icon: access.visual.$1),
+                        Text(
+                          '${relativeTime(n.createdAt, now)} · ${DateFormat('MMM d, HH:mm').format(n.createdAt)}',
+                          style: appText(11.5, color: AppPalette.inkFaint),
+                        ),
+                        if (canOpen)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Open',
+                                style: appText(11.5, weight: FontWeight.w600, color: AppPalette.brightBlue),
+                              ),
+                              const Icon(Icons.chevron_right_rounded, size: 16, color: AppPalette.brightBlue),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                tooltip: 'More',
+                icon: const Icon(Icons.more_vert_rounded, color: AppPalette.inkFaint),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                onSelected: (action) {
+                  switch (action) {
+                    case 'open':
+                      _open(context, ref);
+                    case 'details':
+                      _showDetails(context, ref);
+                    case 'toggle':
+                      _setRead(context, ref, !n.isRead);
+                    case 'remove':
+                      _remove(context, ref);
+                  }
+                },
+                itemBuilder: (_) => [
+                  if (canOpen) _menuItem('open', Icons.open_in_new_rounded, 'Open'),
+                  _menuItem('details', Icons.article_outlined, 'View details'),
+                  _menuItem(
+                    'toggle',
+                    n.isRead ? Icons.mark_email_unread_outlined : Icons.mark_email_read_outlined,
+                    n.isRead ? 'Mark as unread' : 'Mark as read',
+                  ),
+                  _menuItem('remove', Icons.delete_outline_rounded, 'Remove', color: AppPalette.coral),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  String _formatTimestamp(DateTime timestamp) {
-    final difference = DateTime.now().difference(timestamp);
-    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
-    if (difference.inHours < 24) return '${difference.inHours}h ago';
-    return '${difference.inDays}d ago';
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color color = AppPalette.ink}) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 19, color: color),
+          const SizedBox(width: 12),
+          Text(label, style: appText(13.5, color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _swipeBackground({
+    required Alignment alignment,
+    required Color color,
+    required IconData icon,
+    required String label,
+  }) {
+    final left = alignment == Alignment.centerLeft;
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 22),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(18)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!left)
+            Text(
+              label,
+              style: appText(13, weight: FontWeight.w600, color: Colors.white),
+            ),
+          if (!left) const SizedBox(width: 8),
+          Icon(icon, color: Colors.white),
+          if (left) const SizedBox(width: 8),
+          if (left)
+            Text(
+              label,
+              style: appText(13, weight: FontWeight.w600, color: Colors.white),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _setRead(BuildContext context, WidgetRef ref, bool read) async {
+    final user = ref.read(notificationUserProvider).valueOrNull;
+    if (user == null) return;
+    try {
+      await ref.read(notificationRepositoryProvider).setRead(notification, user.uid, read: read);
+    } catch (e) {
+      logger.e('❌ NotificationsScreen: set read failed', error: e);
+      if (context.mounted) showAppSnack(context, 'Couldn\'t update the notification', error: true);
+    }
+  }
+
+  Future<void> _remove(BuildContext context, WidgetRef ref) async {
+    final user = ref.read(notificationUserProvider).valueOrNull;
+    if (user == null) return;
+    try {
+      await ref.read(notificationRepositoryProvider).remove(notification, user.uid);
+      if (context.mounted) showAppSnack(context, 'Notification removed');
+    } catch (e) {
+      logger.e('❌ NotificationsScreen: remove failed', error: e);
+      if (context.mounted) showAppSnack(context, 'Couldn\'t remove the notification', error: true);
+    }
+  }
+
+  /// Marks read, then opens the destination — or the details sheet when
+  /// the notification isn't about anything openable.
+  Future<void> _open(BuildContext context, WidgetRef ref) async {
+    if (!notification.isRead) _setRead(context, ref, true);
+    if (NotificationRouter.hasDestination(notification.payload)) {
+      await NotificationRouter.of(context, logger).open(notification.payload);
+    } else {
+      _showDetails(context, ref);
+    }
+  }
+
+  void _showDetails(BuildContext context, WidgetRef ref) {
+    final n = notification;
+    final access = _AccessOutcome.of(n, ref);
+    final (icon, color) = access?.visual ?? n.visual;
+    if (!n.isRead) _setRead(context, ref, true);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppPalette.surface,
+      constraints: const BoxConstraints(maxWidth: 640),
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  IconBadge(icon: icon, color: color, size: 48),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(access?.title ?? n.title, style: appText(17, weight: FontWeight.w700)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                (access?.body ?? n.body).isEmpty ? 'No further details.' : (access?.body ?? n.body),
+                style: appText(14.5, height: 1.55),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  StatusPill(label: n.category.label, color: n.category.color, icon: n.category.icon),
+                  if (access != null) StatusPill(label: access.pill, color: access.visual.$2, icon: access.visual.$1),
+                  StatusPill(
+                    label: DateFormat('EEE, MMM d yyyy · HH:mm').format(n.createdAt),
+                    color: AppPalette.inkMuted,
+                    icon: Icons.schedule_rounded,
+                  ),
+                ],
+              ),
+              if (NotificationRouter.hasDestination(n.payload)) ...[
+                const SizedBox(height: 22),
+                PrimaryButton(
+                  label: 'Open',
+                  icon: Icons.open_in_new_rounded,
+                  expand: true,
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    NotificationRouter.of(context, logger).open(n.payload);
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// What became of the access request an admin alert is about — read live
+/// from ClientRequests, so every admin's copy of the alert shows the same,
+/// current outcome ("Approved by Jane as Technician · Oct 2") no matter
+/// which admin acted or when.
+class _AccessOutcome {
+  const _AccessOutcome({required this.title, required this.body, required this.pill, required this.visual});
+
+  final String? title;
+  final String? body;
+  final String pill;
+  final (IconData, Color) visual;
+
+  static _AccessOutcome? of(AppNotification n, WidgetRef ref) {
+    final id = n.accessRequestId;
+    if (id == null) return null;
+    final async = ref.watch(accessRequestProvider(id));
+    final request = async.valueOrNull;
+    if (async.isLoading && request == null) return null;
+    if (request == null) {
+      return const _AccessOutcome(
+        title: null,
+        body: null,
+        pill: 'Request no longer exists',
+        visual: (Icons.help_outline_rounded, AppPalette.inkMuted),
+      );
+    }
+    final who = request.clientUsername.isEmpty ? 'This user' : request.clientUsername;
+    final by = (request.approvedBy ?? '').isEmpty ? 'an admin' : request.approvedBy!;
+    final when = request.approvalDate == null ? '' : ' · ${DateFormat('MMM d, HH:mm').format(request.approvalDate!)}';
+    switch (request.status) {
+      case 'approved':
+        final count = request.grantedProjects.length;
+        return _AccessOutcome(
+          title: '✅ Access approved — $who',
+          body: '$who was approved as ${request.grantedRole} with access to $count project${count == 1 ? '' : 's'}.',
+          pill: 'Approved by $by$when',
+          visual: (Icons.verified_user_rounded, AppPalette.green),
+        );
+      case 'denied':
+        final reason = request.denialReason;
+        return _AccessOutcome(
+          title: '❌ Access denied — $who',
+          body: reason == null || reason.isEmpty ? '$who\'s access request was denied.' : 'Reason: $reason',
+          pill: 'Denied by $by$when',
+          visual: (Icons.block_rounded, AppPalette.coral),
+        );
+      default:
+        return const _AccessOutcome(
+          title: null,
+          body: null,
+          pill: 'Awaiting a decision',
+          visual: (Icons.hourglass_top_rounded, AppPalette.amber),
+        );
+    }
   }
 }

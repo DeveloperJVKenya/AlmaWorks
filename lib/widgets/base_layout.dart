@@ -11,7 +11,7 @@ import 'package:almaworks/screens/projects/projects_main_screen.dart';
 import 'package:almaworks/screens/documents_screen.dart';
 import 'package:almaworks/screens/drawings_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_screen.dart';
-import 'package:almaworks/screens/notifications_screen.dart';
+import 'package:almaworks/notifications/notification_bell.dart';
 import 'package:almaworks/screens/quality_and_safety_screen.dart';
 import 'package:almaworks/screens/reports/reports_screen.dart';
 import 'package:almaworks/screens/safety_training/safety_training_screen.dart';
@@ -84,18 +84,6 @@ class _BaseLayoutState extends State<BaseLayout> {
   final ClientRequestService _requestService = ClientRequestService();
   final AuthService _authService = AuthService();
 
-  // Bell icon badge — merges UserNotificationQueue (by uid),
-  // AdminNotificationQueue (by role), and ScheduleNotifications (by uid),
-  // the same three sources NotificationsScreen itself reads (see
-  // notifications_screen.dart). Lives here (not per-screen) so the badge is
-  // correct everywhere, since BaseLayout wraps every screen in the app.
-  int _unreadUserCount = 0;
-  int _unreadAdminCount = 0;
-  int _unreadScheduleCount = 0;
-  StreamSubscription<QuerySnapshot>? _unreadUserSub;
-  StreamSubscription<QuerySnapshot>? _unreadAdminSub;
-  StreamSubscription<QuerySnapshot>? _unreadScheduleSub;
-
   // Live instead of a one-shot get() — a role changed directly in Firestore
   // (or a slow mirror sync) now reflects here, and in every role-gated
   // widget downstream, without requiring the screen to be torn down and
@@ -103,8 +91,6 @@ class _BaseLayoutState extends State<BaseLayout> {
   // which is exactly why a role change could leave stale permissions
   // ("hanging" gates) visible for the rest of the session.
   StreamSubscription<QuerySnapshot>? _userDocSub;
-
-  int get _unreadNotificationCount => _unreadUserCount + _unreadAdminCount + _unreadScheduleCount;
 
   @override
   void initState() {
@@ -121,38 +107,6 @@ class _BaseLayoutState extends State<BaseLayout> {
         _scaffoldKey.currentState?.openDrawer();
       }
     });
-  }
-
-  void _subscribeNotificationBadge(String uid, String role) {
-    _unreadUserSub?.cancel();
-    _unreadAdminSub?.cancel();
-    _unreadScheduleSub?.cancel();
-    _unreadUserSub = FirebaseFirestore.instance
-        .collection('UserNotificationQueue')
-        .where('targetUid', isEqualTo: uid)
-        .snapshots()
-        .listen((snap) {
-      if (!mounted) return;
-      setState(() => _unreadUserCount = snap.docs.where((d) => (d.data()['isRead'] as bool?) != true).length);
-    }, onError: (e) => widget.logger.e('❌ BaseLayout: user notification badge stream error', error: e));
-
-    _unreadAdminSub = FirebaseFirestore.instance
-        .collection('AdminNotificationQueue')
-        .where('targetRoles', arrayContains: role)
-        .snapshots()
-        .listen((snap) {
-      if (!mounted) return;
-      setState(() => _unreadAdminCount = snap.docs.where((d) => (d.data()['isRead'] as bool?) != true).length);
-    }, onError: (e) => widget.logger.e('❌ BaseLayout: admin notification badge stream error', error: e));
-
-    _unreadScheduleSub = FirebaseFirestore.instance
-        .collection('ScheduleNotifications')
-        .where('userId', isEqualTo: uid)
-        .snapshots()
-        .listen((snap) {
-      if (!mounted) return;
-      setState(() => _unreadScheduleCount = snap.docs.where((d) => (d.data()['isRead'] as bool?) != true).length);
-    }, onError: (e) => widget.logger.e('❌ BaseLayout: schedule notification badge stream error', error: e));
   }
 
   Future<void> _fetchUserRoleAndAccess() async {
@@ -219,7 +173,6 @@ class _BaseLayoutState extends State<BaseLayout> {
             _isLoadingUserData = false;
           });
         }
-        _subscribeNotificationBadge(user.uid, role);
 
         widget.logger.i(
             '✅ BaseLayout: User role updated: $role, Granted Projects: ${grantedIds.length}');
@@ -260,9 +213,6 @@ class _BaseLayoutState extends State<BaseLayout> {
 
   @override
   void dispose() {
-    _unreadUserSub?.cancel();
-    _unreadAdminSub?.cancel();
-    _unreadScheduleSub?.cancel();
     _userDocSub?.cancel();
     super.dispose();
   }
@@ -310,32 +260,10 @@ class _BaseLayoutState extends State<BaseLayout> {
       backgroundColor: const Color(0xFF0A2E5A),
       foregroundColor: Colors.white,
       actions: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => NotificationsScreen(logger: widget.logger)),
-              ),
-              icon: const Icon(Icons.notifications_outlined),
-              tooltip: 'Notifications',
-            ),
-            if (_unreadNotificationCount > 0)
-              Positioned(
-                right: 6,
-                top: 6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(8)),
-                  child: Text(
-                    _unreadNotificationCount > 99 ? '99+' : '$_unreadNotificationCount',
-                    style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
-                  ),
-                ),
-              ),
-          ],
-        ),
+        // Unread count comes from the same provider the notification
+        // center lists (notifications/notification_providers.dart), so the
+        // badge and the list can never disagree.
+        NotificationBell(logger: widget.logger),
         // Technician gets nothing in the appbar besides the notification
         // bell above, app-wide (not just Inventory) — every section routes
         // through this one shared appbar builder, so this single branch is

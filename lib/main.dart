@@ -1,19 +1,12 @@
 import 'package:almaworks/authentication/login_screen.dart';
 import 'package:almaworks/authentication/welcome_screen.dart';
 import 'package:almaworks/rbacsystem/firebase_notification_handler.dart';
-import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/providers/locale_provider.dart';
 import 'package:almaworks/providers/theme_provider.dart';
+import 'package:almaworks/notifications/notification_providers.dart';
+import 'package:almaworks/notifications/notification_router.dart';
 import 'package:almaworks/rbacsystem/auth_service.dart';
-import 'package:almaworks/screens/communication/communication_message_detail_screen.dart';
-import 'package:almaworks/screens/communication/communication_models.dart';
 import 'package:almaworks/screens/communication/communication_notification_service.dart';
-import 'package:almaworks/screens/communication/communication_screen.dart';
-import 'package:almaworks/screens/communication/communication_service.dart';
-import 'package:almaworks/models/inventory/checkout_request_model.dart';
-import 'package:almaworks/screens/inventory/asset_detail_screen.dart';
-import 'package:almaworks/screens/inventory/review_checkout_request_screen.dart';
-import 'package:almaworks/screens/schedule/task_progress_monitor_screen.dart';
 import 'package:almaworks/screens/utils/app_theme.dart';
 import 'package:almaworks/services/notification_service.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -222,6 +215,10 @@ class _AlmaWorksAppState extends State<AlmaWorksApp> {
 
         if (receivedAction.payload != null) {
           final notificationType = receivedAction.payload!['type'];
+          // Captured before any await below.
+          final navState = navigatorKey.currentState;
+          final navContext = navigatorKey.currentContext;
+          final messenger = navContext == null ? null : ScaffoldMessenger.maybeOf(navContext);
 
           // ── Schedule / task notifications ───────────────────────────────
           if (notificationType == 'schedule' || notificationType == null) {
@@ -251,368 +248,33 @@ class _AlmaWorksAppState extends State<AlmaWorksApp> {
             }
           }
 
-          // ── Client request notifications ────────────────────────────────
-          else if (notificationType == 'client_request') {
-            widget.logger.d('Client request notification tapped');
-          }
-
-          // ── Inventory notifications (checkout requests, returns, etc.) ──
-          // Covers every InventoryService._notifyAdmins / _notifyUser type
-          // (inventory_return_intent, inventory_checkout_request,
-          // inventory_checkout_approved/rejected, inventory_overdue_return,
-          // inventory_delivery_dispatched, inventory_booking_*,
-          // inventory_return_for_maintenance, etc.) — previously none of
-          // these had a tap route at all, so tapping just opened the app
-          // with no navigation. A pending checkout request opens straight
-          // into its review screen; everything else (which always carries
-          // an assetId) opens that asset's detail screen, where the
-          // relevant action (Record Return, Acknowledge Receipt, etc.)
-          // lives.
-          else if (notificationType.startsWith('inventory_')) {
-            final assetId = receivedAction.payload!['assetId'];
-            final requestId = receivedAction.payload!['requestId'];
-            widget.logger.d(
-                'Inventory notification tapped: type=$notificationType, assetId=$assetId, requestId=$requestId');
-
-            if (notificationType == 'inventory_checkout_request' && requestId != null) {
-              await _navigateToInventoryRequest(requestId: requestId, assetId: assetId);
-            } else if (assetId != null) {
-              await _navigateToInventoryAsset(assetId: assetId);
+          // Mark the queue doc this tray notification came from as read
+          // (notification_service.dart puts its source and id in the
+          // payload), so the in-app notification center agrees.
+          final docId = receivedAction.payload!['notificationDocId'];
+          final collection = receivedAction.payload!['notificationCollection'];
+          final uid = FirebaseAuth.instance.currentUser?.uid;
+          if (docId != null && collection != null && uid != null) {
+            try {
+              await NotificationRepository(FirebaseFirestore.instance).markReadById(collection, docId, uid);
+            } catch (e) {
+              widget.logger.w('⚠️ Could not mark tray notification $collection/$docId read: $e');
             }
           }
 
-          // ── Task Progress date-extension notifications ──────────────────
-          // Covers TaskProgressMonitorScreen._notifyUser/_notifyAdmins'
-          // project_date_extension_requested/approved/rejected types — all
-          // three carry just a projectId (the approval surface lives on
-          // the Task Progress Monitor screen itself, not a separate
-          // review screen), so tapping any of them opens straight there.
-          else if (notificationType.startsWith('project_date_extension')) {
-            final projectId = receivedAction.payload!['projectId'];
-            widget.logger.d(
-                'Project date-extension notification tapped: type=$notificationType, projectId=$projectId');
-            if (projectId != null) {
-              await _navigateToTaskProgressMonitor(projectId: projectId);
-            }
-          }
-
-          // ── Communication (message) notifications ───────────────────────
-          else if (notificationType == 'communication') {
-            final messageId = receivedAction.payload!['messageId'];
-            final projectId = receivedAction.payload!['projectId'];
-            widget.logger.d(
-                'Communication notification tapped: messageId=$messageId, projectId=$projectId');
-
-            if (messageId != null && projectId != null) {
-              await _navigateToMessage(
-                messageId: messageId,
-                projectId: projectId,
-              );
-            }
+          // Everything with a destination (inventory, project date
+          // extensions, messages, safety training, …) is routed by the same
+          // NotificationRouter the in-app notification center uses, so a
+          // notification opens the same place from either.
+          final payload = Map<String, dynamic>.from(receivedAction.payload!);
+          if (navState == null || messenger == null) {
+            widget.logger.w('⚠️ Notification tapped before the app was ready — not navigating');
+          } else if (NotificationRouter.hasDestination(payload)) {
+            await NotificationRouter(navigator: navState, messenger: messenger, logger: widget.logger).open(payload);
           }
         }
       },
     );
-  }
-
-  // ─── Deep-link navigation ─────────────────────────────────────────────────
-  /// Fetches the project, message, current user, and project users from
-  /// Firestore, then pushes [CommunicationScreen] + [CommunicationMessageDetailScreen]
-  /// onto the current navigation stack using the global [navigatorKey].
-  ///
-  /// Called when the user taps a communication notification from the system
-  /// tray while the app is open or resuming from background.
-  Future<void> _navigateToMessage({
-    required String messageId,
-    required String projectId,
-  }) async {
-    final navState = navigatorKey.currentState;
-    if (navState == null) {
-      widget.logger.w(
-          '⚠️ _navigateToMessage: navigatorKey has no current state — app not yet ready');
-      return;
-    }
-
-    // Show a brief feedback snackbar while we fetch data
-    final messenger = ScaffoldMessenger.of(navigatorKey.currentContext!);
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Opening message…'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-
-    try {
-      final db = FirebaseFirestore.instance;
-      final commService = CommunicationService();
-
-      // 1 ── Fetch the message document ─────────────────────────────────────
-      final msgDoc =
-          await db.collection('Communication').doc(messageId).get();
-      if (!msgDoc.exists) {
-        widget.logger.w('⚠️ _navigateToMessage: message $messageId not found');
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Message not found or has been deleted.')),
-        );
-        return;
-      }
-      final message = CommunicationMessage.fromDoc(msgDoc);
-
-      // 2 ── Fetch the project document ─────────────────────────────────────
-      final projectDoc =
-          await db.collection('Projects').doc(projectId).get();
-      if (!projectDoc.exists) {
-        widget.logger
-            .w('⚠️ _navigateToMessage: project $projectId not found');
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Project not found.')),
-        );
-        return;
-      }
-      final project = ProjectModel.fromFirestore(projectDoc);
-
-      // 3 ── Fetch the current user's participant record ─────────────────────
-      final currentUser = await commService.getCurrentUserParticipant();
-      if (currentUser == null) {
-        widget.logger.w('⚠️ _navigateToMessage: could not resolve current user');
-        messenger.hideCurrentSnackBar();
-        return;
-      }
-
-      // 4 ── Fetch users who share this project (for Reply / Reply All) ──────
-      final projectUsers = await commService.getProjectUsers(projectId);
-
-      messenger.hideCurrentSnackBar();
-
-      // 5 ── Navigate ────────────────────────────────────────────────────────
-      // Push CommunicationScreen first so the user can tap Back and land on
-      // their inbox rather than wherever they were before the notification.
-      navState.push(
-        MaterialPageRoute(
-          builder: (_) => CommunicationScreen(
-            project: project,
-            logger: widget.logger,
-          ),
-        ),
-      );
-
-      // Then immediately push the specific message on top.
-      navState.push(
-        MaterialPageRoute(
-          builder: (_) => CommunicationMessageDetailScreen(
-            message: message,
-            service: commService,
-            currentUser: currentUser,
-            projectUsers: projectUsers,
-            projectId: projectId,
-          ),
-        ),
-      );
-
-      widget.logger.i(
-          '✅ _navigateToMessage: navigated to message $messageId in project $projectId');
-    } catch (e, stack) {
-      widget.logger.e('❌ _navigateToMessage failed',
-          error: e, stackTrace: stack);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        const SnackBar(
-            content: Text('Could not open message. Please try again.')),
-      );
-    }
-  }
-
-  /// Inventory is company-wide, not project-scoped — `project` only exists
-  /// so BaseLayout can render its header/project-switcher chrome (see
-  /// base_layout.dart's Inventory menu entry). Prefers the asset's own
-  /// `currentProjectId` when it has one, falling back to any project so
-  /// navigation never dead-ends just because the asset happens to be sitting
-  /// unassigned in storage.
-  Future<ProjectModel?> _resolveProjectForInventory(String? projectId) async {
-    final db = FirebaseFirestore.instance;
-    if (projectId != null) {
-      final doc = await db.collection('Projects').doc(projectId).get();
-      if (doc.exists) return ProjectModel.fromFirestore(doc);
-    }
-    final anySnap = await db.collection('Projects').limit(1).get();
-    if (anySnap.docs.isEmpty) return null;
-    return ProjectModel.fromFirestore(anySnap.docs.first);
-  }
-
-  /// Resolves the signed-in user's role/username the same way
-  /// dashboard_screen.dart does, for screens reached via a notification tap
-  /// rather than normal in-app navigation (where these are already
-  /// available from a provider).
-  Future<({String role, String username})?> _resolveCurrentUser() async {
-    final authUser = FirebaseAuth.instance.currentUser;
-    if (authUser == null) return null;
-    final snap = await FirebaseFirestore.instance
-        .collection('Users')
-        .where('uid', isEqualTo: authUser.uid)
-        .limit(1)
-        .get();
-    if (snap.docs.isEmpty) return null;
-    return (role: snap.docs.first.data()['role'] as String? ?? 'Client', username: snap.docs.first.id);
-  }
-
-  /// Opens Task Progress Monitor for the given project — the destination
-  /// for every `project_date_extension_*` notification tap. That screen
-  /// itself surfaces the request's detail/approve UI via its AppBar badge
-  /// (see task_progress_monitor_screen.dart's _showProjectExtensionDetailDialog),
-  /// so there's no separate review screen to route into.
-  Future<void> _navigateToTaskProgressMonitor({required String projectId}) async {
-    final navState = navigatorKey.currentState;
-    if (navState == null) {
-      widget.logger.w('⚠️ _navigateToTaskProgressMonitor: navigatorKey has no current state — app not yet ready');
-      return;
-    }
-    final messenger = ScaffoldMessenger.of(navigatorKey.currentContext!);
-    messenger.showSnackBar(const SnackBar(content: Text('Opening project…'), duration: Duration(seconds: 2)));
-
-    try {
-      final doc = await FirebaseFirestore.instance.collection('Projects').doc(projectId).get();
-      if (!doc.exists) {
-        widget.logger.w('⚠️ _navigateToTaskProgressMonitor: project $projectId not found');
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(const SnackBar(content: Text('That project no longer exists.')));
-        return;
-      }
-      final project = ProjectModel.fromFirestore(doc);
-      messenger.hideCurrentSnackBar();
-      navState.push(
-        MaterialPageRoute(builder: (_) => TaskProgressMonitorScreen(project: project, logger: widget.logger)),
-      );
-      widget.logger.i('✅ _navigateToTaskProgressMonitor: navigated to project $projectId');
-    } catch (e, stack) {
-      widget.logger.e('❌ _navigateToTaskProgressMonitor failed', error: e, stackTrace: stack);
-      messenger.hideCurrentSnackBar();
-    }
-  }
-
-  /// Opens the asset's detail screen — where Record Return, Acknowledge
-  /// Receipt, and every other Inventory action actually lives — from an
-  /// `inventory_*` notification tap.
-  Future<void> _navigateToInventoryAsset({required String assetId, String? projectId}) async {
-    final navState = navigatorKey.currentState;
-    if (navState == null) {
-      widget.logger.w('⚠️ _navigateToInventoryAsset: navigatorKey has no current state — app not yet ready');
-      return;
-    }
-    final messenger = ScaffoldMessenger.of(navigatorKey.currentContext!);
-    messenger.showSnackBar(const SnackBar(content: Text('Opening asset…'), duration: Duration(seconds: 2)));
-
-    try {
-      final authUser = FirebaseAuth.instance.currentUser;
-      final currentUser = await _resolveCurrentUser();
-      if (authUser == null || currentUser == null) {
-        widget.logger.w('⚠️ _navigateToInventoryAsset: could not resolve current user');
-        messenger.hideCurrentSnackBar();
-        return;
-      }
-
-      final assetDoc = await FirebaseFirestore.instance.collection('InventoryAssets').doc(assetId).get();
-      if (!assetDoc.exists) {
-        widget.logger.w('⚠️ _navigateToInventoryAsset: asset $assetId not found');
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(const SnackBar(content: Text('Asset not found or has been removed.')));
-        return;
-      }
-
-      final project = await _resolveProjectForInventory(projectId ?? assetDoc.data()?['currentProjectId'] as String?);
-      if (project == null) {
-        widget.logger.w('⚠️ _navigateToInventoryAsset: no project available for chrome context');
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(const SnackBar(content: Text('Could not open Inventory right now.')));
-        return;
-      }
-
-      messenger.hideCurrentSnackBar();
-      navState.push(
-        MaterialPageRoute(
-          builder: (_) => AssetDetailScreen(
-            project: project,
-            logger: widget.logger,
-            assetId: assetId,
-            userRole: currentUser.role,
-            username: currentUser.username,
-            currentUid: authUser.uid,
-          ),
-        ),
-      );
-      widget.logger.i('✅ _navigateToInventoryAsset: navigated to asset $assetId');
-    } catch (e, stack) {
-      widget.logger.e('❌ _navigateToInventoryAsset failed', error: e, stackTrace: stack);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(const SnackBar(content: Text('Could not open asset. Please try again.')));
-    }
-  }
-
-  /// Opens a pending checkout request straight into its review screen —
-  /// this is the direct "review and take an action" surface for
-  /// MainAdmin/SystemAdmin tapping an `inventory_checkout_request` push.
-  /// Falls back to the asset's detail screen if the request has already
-  /// been handled by the time it's tapped.
-  Future<void> _navigateToInventoryRequest({required String requestId, String? assetId}) async {
-    final navState = navigatorKey.currentState;
-    if (navState == null) {
-      widget.logger.w('⚠️ _navigateToInventoryRequest: navigatorKey has no current state — app not yet ready');
-      return;
-    }
-    final messenger = ScaffoldMessenger.of(navigatorKey.currentContext!);
-    messenger.showSnackBar(const SnackBar(content: Text('Opening request…'), duration: Duration(seconds: 2)));
-
-    try {
-      final requestDoc =
-          await FirebaseFirestore.instance.collection('InventoryCheckoutRequests').doc(requestId).get();
-      if (!requestDoc.exists || requestDoc.data()?['status'] != CheckoutRequestModel.statusPending) {
-        widget.logger.i('ℹ️ _navigateToInventoryRequest: request $requestId no longer pending');
-        messenger.hideCurrentSnackBar();
-        if (assetId != null) {
-          await _navigateToInventoryAsset(assetId: assetId);
-        } else {
-          messenger.showSnackBar(const SnackBar(content: Text('This request has already been handled.')));
-        }
-        return;
-      }
-      final request = CheckoutRequestModel.fromFirestore(requestDoc);
-
-      final authUser = FirebaseAuth.instance.currentUser;
-      final currentUser = await _resolveCurrentUser();
-      if (authUser == null || currentUser == null) {
-        widget.logger.w('⚠️ _navigateToInventoryRequest: could not resolve current user');
-        messenger.hideCurrentSnackBar();
-        return;
-      }
-
-      final project = await _resolveProjectForInventory(request.projectId);
-      if (project == null) {
-        widget.logger.w('⚠️ _navigateToInventoryRequest: no project available for chrome context');
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(const SnackBar(content: Text('Could not open Inventory right now.')));
-        return;
-      }
-
-      messenger.hideCurrentSnackBar();
-      navState.push(
-        MaterialPageRoute(
-          builder: (_) => ReviewCheckoutRequestScreen(
-            project: project,
-            logger: widget.logger,
-            request: request,
-            respondedByUid: authUser.uid,
-            respondedByName: currentUser.username,
-            respondedByRole: currentUser.role,
-          ),
-        ),
-      );
-      widget.logger.i('✅ _navigateToInventoryRequest: navigated to request $requestId');
-    } catch (e, stack) {
-      widget.logger.e('❌ _navigateToInventoryRequest failed', error: e, stackTrace: stack);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(const SnackBar(content: Text('Could not open request. Please try again.')));
-    }
   }
 
   @override

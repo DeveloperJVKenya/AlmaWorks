@@ -21,9 +21,28 @@ service firebase.storage {
     // .json / Rive .riv animation files) — matches the
     // SafetyTrainingScenarios Firestore rule: read by any authenticated
     // Admin/Technician role, write (author/edit) restricted to admin roles.
-    match /SafetyTraining/Scenarios/{scenarioId}/{allPaths=**} {
+    // Only the three fixed file names SafetyTrainingService writes are
+    // allowed, each with a content type and size cap (the app checks the
+    // same caps before uploading). Delete is allowed so replaced media can
+    // be cleaned up.
+    match /SafetyTraining/Scenarios/{scenarioId}/{fileName} {
       allow read: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin', 'SystemAdmin', 'Technician'];
-      allow write: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin', 'SystemAdmin'];
+      allow create, update: if request.auth != null
+                             && inventoryRole() in ['MainAdmin', 'Admin', 'SystemAdmin']
+                             && isValidSafetyMedia(fileName);
+      allow delete: if request.auth != null && inventoryRole() in ['MainAdmin', 'Admin', 'SystemAdmin'];
+    }
+
+    function isValidSafetyMedia(fileName) {
+      return (fileName == 'image.jpg'
+              && request.resource.contentType.matches('image/(jpeg|png|webp|gif)')
+              && request.resource.size <= 10 * 1024 * 1024)
+             || (fileName == 'animation.json'
+                 && request.resource.contentType == 'application/json'
+                 && request.resource.size <= 5 * 1024 * 1024)
+             || (fileName == 'animation.riv'
+                 && request.resource.contentType == 'application/octet-stream'
+                 && request.resource.size <= 10 * 1024 * 1024);
     }
 
     // Asset catalog photos — MainAdmin/Admin/SystemAdmin, matching
