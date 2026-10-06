@@ -79,3 +79,5 @@ app.*.map.json
 **/ios/Pods/
 **/ios/.symlinks/
 **/ios/DerivedData/
+# Firebase emulator tests
+firebase_tests/node_modules/

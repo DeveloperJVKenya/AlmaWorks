@@ -8,13 +8,16 @@ service firebase.storage {
       return firestore.get(/databases/(default)/documents/UserRoles/$(request.auth.uid)).data.role;
     }
 
-    // Preserve current (pre-existing) behavior for every path outside
-    // Inventory/ and SafetyTraining/ — this project has never had a
-    // storage.rules file before, so this file is additive; everything
-    // Documents/Drawings/PhotoGallery/Photos/Reports/etc. already do keeps
-    // working unchanged.
+    // Every path outside Inventory/ and SafetyTraining/ — project files
+    // ({projectId}/Documents, Drawings, Financials, PhotoGallery, Reports,
+    // …), communication/ attachments and projects/ schedules. These used to
+    // be open to anyone, signed in or not; they now require a signed-in
+    // account. Download URLs already handed out carry their own token and
+    // keep working, since token URLs bypass these rules.
     match /{topLevel}/{allPaths=**} {
-      allow read, write: if topLevel != 'Inventory' && topLevel != 'SafetyTraining';
+      allow read, write: if request.auth != null
+                         && topLevel != 'Inventory'
+                         && topLevel != 'SafetyTraining';
     }
 
     // Safety Training scenario media (scene photo, and optional Lottie
