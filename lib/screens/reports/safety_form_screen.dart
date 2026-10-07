@@ -11,7 +11,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -721,7 +720,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Safety report saved successfully.',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.green,
         ));
       }
@@ -737,7 +736,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
   void _showError(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.poppins()),
+      content: Text(msg, style: TextStyle()),
       backgroundColor: Colors.red[700],
     ));
   }
@@ -835,7 +834,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       if (!ctx.mounted) return;
       ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
         content: Text('PDF saved: $fileName',
-            style: GoogleFonts.poppins()),
+            style: TextStyle()),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 4),
       ));
@@ -1547,7 +1546,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_rounded),
               label: Text('Edit',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontWeight: FontWeight.w600)),
             )
           : null,
@@ -1557,7 +1556,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         title: Text(
           '${widget.project.name} — Safety Report'
           '${_isReadOnly ? ' (View)' : ''}',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               fontWeight: FontWeight.w600, fontSize: 15),
         ),
         leading: IconButton(
@@ -1659,7 +1658,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             textAlign: TextAlign.center,
             softWrap: true,
             overflow: TextOverflow.visible,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -1672,7 +1671,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Contract No: ',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white70, fontSize: 13)),
               SizedBox(
                 width: 180,
@@ -1680,11 +1679,11 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                   controller: _contractCtrl,
                   readOnly: _isReadOnly,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'e.g. CN-2024-001',
-                    hintStyle: GoogleFonts.poppins(
+                    hintStyle: TextStyle(
                         color: Colors.white38, fontSize: 12),
                     isDense: true,
                     border: const UnderlineInputBorder(
@@ -1720,7 +1719,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
           children: [
             Text(
               'SAFETY REPORT',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 color: _navy,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -1739,7 +1738,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               ),
               child: Text(
                 isWeekly ? 'WEEKLY' : 'MONTHLY',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -1787,7 +1786,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                 Icon(icon, color: _navy, size: 13),
                 const SizedBox(width: 4),
                 Text(label,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 9.5,
                       fontWeight: FontWeight.w600,
                       color: _navy.withValues(alpha: 0.7),
@@ -1797,7 +1796,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               const SizedBox(height: 4),
               Text(
                 value,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -1856,7 +1855,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               ),
             ),
             child: Text('BUILDING',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: _navy,
@@ -1868,11 +1867,11 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               controller: _buildingCtrl,
               readOnly: _isReadOnly,
               textAlignVertical: TextAlignVertical.center,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 13, color: Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Building number, ID, or name…',
-                hintStyle: GoogleFonts.poppins(
+                hintStyle: TextStyle(
                     color: Colors.grey[400], fontSize: 12),
                 border: InputBorder.none,
                 isDense: true,
@@ -1924,7 +1923,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                     color: selected ? Colors.white : _navy, size: 22),
                 const SizedBox(height: 5),
                 Text(label,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       color: selected ? Colors.white : _navy,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
@@ -2000,7 +1999,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                     color: _navy.withValues(alpha: 0.06),
                     child: Text(
                       '${i + 1}',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: _navy),
@@ -2028,7 +2027,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                                 vertical: 12),
                             child: Text(
                               item.label,
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: item.checked
                                     ? const Color(0xFF1B5E20)
@@ -2041,7 +2040,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                           )
                         : TextField(
                             controller: _checklistLabelCtrls[i],
-                            style: GoogleFonts.poppins(fontSize: 13),
+                            style: TextStyle(fontSize: 13),
                             decoration: const InputDecoration(
                               border: InputBorder.none,
                               isDense: true,
@@ -2085,7 +2084,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                       Icons.add_circle_outline_rounded,
                       size: 16),
                   label: Text('Add Checklist Item',
-                      style: GoogleFonts.poppins(fontSize: 13)),
+                      style: TextStyle(fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _navy,
                     side:
@@ -2387,7 +2386,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                       allImages.isEmpty
                           ? 'Attach Image(s)'
                           : 'Add More Images',
-                      style: GoogleFonts.poppins(fontSize: 13),
+                      style: TextStyle(fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _navy,
@@ -2430,7 +2429,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                             Colors.white)))
                 : Icon(icon, size: 16),
             label: Text(label,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 13)),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
@@ -2483,7 +2482,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       ),
       child: Text(
         title,
-        style: GoogleFonts.poppins(
+        style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w700,
           fontSize: 12,
@@ -2691,7 +2690,7 @@ class _SafetyAttendanceTableWidgetState
                       color: Colors.white, size: 18),
                   const SizedBox(width: 10),
                   Text('Edit Column Headers',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 14)),
@@ -2721,7 +2720,7 @@ class _SafetyAttendanceTableWidgetState
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: Text('${i + 1}',
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: _navy)),
@@ -2730,7 +2729,7 @@ class _SafetyAttendanceTableWidgetState
                           Expanded(
                             child: TextField(
                               controller: ctrls[i],
-                              style: GoogleFonts.poppins(fontSize: 12),
+                              style: TextStyle(fontSize: 12),
                               autofocus: i == 0,
                               textInputAction: i < ctrls.length - 1
                                   ? TextInputAction.next
@@ -2738,7 +2737,7 @@ class _SafetyAttendanceTableWidgetState
                               decoration: InputDecoration(
                                 isDense: true,
                                 hintText: 'Column ${i + 1}',
-                                hintStyle: GoogleFonts.poppins(
+                                hintStyle: TextStyle(
                                     color: Colors.grey[400],
                                     fontSize: 11),
                                 border: OutlineInputBorder(
@@ -2775,7 +2774,7 @@ class _SafetyAttendanceTableWidgetState
                             borderRadius: BorderRadius.circular(8)),
                       ),
                       child: Text('Cancel',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: _navy, fontSize: 13)),
                     ),
                   ),
@@ -2786,7 +2785,7 @@ class _SafetyAttendanceTableWidgetState
                       icon: const Icon(Icons.check_rounded,
                           size: 16),
                       label: Text('Apply',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 13)),
                       style: ElevatedButton.styleFrom(
@@ -3004,7 +3003,7 @@ class _SafetyAttendanceTableWidgetState
             ),
             child: Center(
               child: Text('No data — use toolbar to add rows/columns',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.grey[400], fontSize: 12)),
             ),
           )
@@ -3064,7 +3063,7 @@ class _SafetyAttendanceTableWidgetState
                             padding: const EdgeInsets.symmetric(
                                 vertical: 8),
                             child: Text('${ri + 1}',
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                     color: _navy.withValues(
@@ -3112,7 +3111,7 @@ class _SafetyAttendanceTableWidgetState
               onPressed: _addRow,
               icon: const Icon(Icons.add_rounded, size: 16),
               label: Text('Add Row',
-                  style: GoogleFonts.poppins(fontSize: 12)),
+                  style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _navy,
                 side: BorderSide(
@@ -3133,7 +3132,7 @@ class _SafetyAttendanceTableWidgetState
         padding: const EdgeInsets.symmetric(
             horizontal: 8, vertical: 9),
         child: Text(text,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
                 fontSize: 11)),
@@ -3151,7 +3150,7 @@ class _SafetyAttendanceTableWidgetState
             horizontal: 8, vertical: 8),
         child: Text(
           _controllers[ri][ci].text,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               fontSize: 12, color: Colors.black87),
           softWrap: true,
         ),
@@ -3163,7 +3162,7 @@ class _SafetyAttendanceTableWidgetState
         controller: _controllers[ri][ci],
         maxLines: null,
         minLines: 1,
-        style: GoogleFonts.poppins(
+        style: TextStyle(
             fontSize: 12, color: Colors.black87),
         decoration: const InputDecoration(
           border: InputBorder.none,
@@ -3249,7 +3248,7 @@ class _SafetyAttendanceTableWidgetState
                         const SizedBox(width: 4),
                         Text(
                           'Signed',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             fontSize: 11,
                             color: const Color(0xFF2E7D32),
                             fontWeight: FontWeight.w600,
@@ -3269,7 +3268,7 @@ class _SafetyAttendanceTableWidgetState
                         Expanded(
                           child: Text(
                             widget.readOnly ? '—' : 'Tap to sign',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[400],
                               fontStyle: FontStyle.italic,
@@ -3433,7 +3432,7 @@ class _SSignaturePickerDialogState
     widget.logger.w('⚠️ SigDialog: showing error to user – "$msg"');
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.poppins()),
+      content: Text(msg, style: TextStyle()),
       backgroundColor: Colors.red[700],
       behavior: SnackBarBehavior.floating,
     ));
@@ -3481,7 +3480,7 @@ class _SSignaturePickerDialogState
           Icon(icon, size: 13, color: active ? Colors.white : _navy),
           const SizedBox(width: 5),
           Text(label,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: active ? Colors.white : _navy)),
@@ -3513,7 +3512,7 @@ class _SSignaturePickerDialogState
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
               child: Text('Select Signature Photo',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: _navy)),
@@ -3523,14 +3522,14 @@ class _SSignaturePickerDialogState
               leading:
                   const Icon(Icons.photo_library_rounded, color: _navy),
               title: Text('Choose from Gallery',
-                  style: GoogleFonts.poppins(fontSize: 13)),
+                  style: TextStyle(fontSize: 13)),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
             ListTile(
               leading:
                   const Icon(Icons.camera_alt_rounded, color: _navy),
               title: Text('Take a Photo',
-                  style: GoogleFonts.poppins(fontSize: 13)),
+                  style: TextStyle(fontSize: 13)),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             const SizedBox(height: 8),
@@ -3709,7 +3708,7 @@ class _SSignaturePickerDialogState
                         color: Colors.white, size: 18),
                     const SizedBox(width: 10),
                     Text('Select a Page',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: 14)),
@@ -3725,7 +3724,7 @@ class _SSignaturePickerDialogState
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                   child: Text(
                     'Tap the page that contains the signature',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         fontSize: 12, color: Colors.grey[600]),
                   ),
                 ),
@@ -3761,7 +3760,7 @@ class _SSignaturePickerDialogState
                         ),
                         const SizedBox(height: 4),
                         Text('Page ${i + 1}',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: _navy)),
@@ -3837,7 +3836,7 @@ class _SSignaturePickerDialogState
                                   color: Colors.grey[400], size: 18),
                               const SizedBox(width: 6),
                               Text('Could not load signature',
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       color: Colors.grey[400],
                                       fontSize: 11)),
                             ]),
@@ -3852,7 +3851,7 @@ class _SSignaturePickerDialogState
                       color: Colors.grey[300], size: 28),
                   const SizedBox(height: 6),
                   Text('No signature yet',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.grey[400], fontSize: 12)),
                 ],
               ),
@@ -3896,7 +3895,7 @@ class _SSignaturePickerDialogState
                     color: Colors.white, size: 18),
                 const SizedBox(width: 10),
                 Text('Add Signature',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 14)),
@@ -3984,7 +3983,7 @@ class _SSignaturePickerDialogState
                                   ? 'Replace & Crop'
                                   : 'Pick Photo & Crop',
                               style:
-                                  GoogleFonts.poppins(fontSize: 11),
+                                  TextStyle(fontSize: 11),
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: _navy,
@@ -4021,7 +4020,7 @@ class _SSignaturePickerDialogState
                           Expanded(
                             child: Text(
                               'Pick a PDF → select the page → drag to crop the signature area',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontSize: 10,
                                   color:
                                       _navy.withValues(alpha: 0.75)),
@@ -4052,7 +4051,7 @@ class _SSignaturePickerDialogState
                               (_pickedBytes ?? _drawnBytes) != null
                                   ? 'Replace from PDF'
                                   : 'Pick PDF & Crop',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 11),
                             ),
@@ -4098,7 +4097,7 @@ class _SSignaturePickerDialogState
                           borderRadius: BorderRadius.circular(8)),
                     ),
                     child: Text('Cancel',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: _navy, fontSize: 13)),
                   ),
                 ),
@@ -4114,7 +4113,7 @@ class _SSignaturePickerDialogState
                         : null,
                     icon: const Icon(Icons.check_rounded, size: 16),
                     label: Text('Confirm',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 13)),
                     style: ElevatedButton.styleFrom(
@@ -4148,7 +4147,7 @@ class _SSignaturePickerDialogState
         icon: Icon(Icons.delete_outline_rounded,
             size: 14, color: Colors.red[400]),
         label: Text('Clear',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 fontSize: 11,
                 color: Colors.red[400],
                 fontWeight: FontWeight.w600)),
@@ -4347,13 +4346,13 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                                   color: Colors.grey[300], size: 28),
                               const SizedBox(height: 5),
                               Text('Sign here',
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       color: Colors.grey[350],
                                       fontSize: 12)),
                               const SizedBox(height: 2),
                               Text(
                                   'Finger · Stylus · Mouse — all supported',
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       color: Colors.grey[350],
                                       fontSize: 9.5)),
                             ],
@@ -4376,7 +4375,7 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                     size: 13, color: Colors.green[700]),
                 const SizedBox(width: 4),
                 Text('Signature captured',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.green[700],
                         fontSize: 10,
                         fontWeight: FontWeight.w600)),
@@ -4390,7 +4389,7 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(_inputLabel,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             fontSize: 9,
                             color: _navy,
                             fontWeight: FontWeight.w500)),
@@ -4398,7 +4397,7 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                 ],
               ] else
                 Text('Draw your signature above',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.grey[400], fontSize: 10)),
             ]),
             if (_hasSignature)
@@ -4407,7 +4406,7 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                 icon: Icon(Icons.refresh_rounded,
                     size: 13, color: Colors.red[400]),
                 label: Text('Clear',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.red[400],
                         fontSize: 11,
                         fontWeight: FontWeight.w600)),
@@ -4844,7 +4843,7 @@ class _InAppCropperDialogState
         setState(() => _cropping = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Crop failed: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -5007,7 +5006,7 @@ class _InAppCropperDialogState
                     color: Colors.white, size: 18),
                 const SizedBox(width: 10),
                 Text('Crop Signature',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 14)),
@@ -5033,7 +5032,7 @@ class _InAppCropperDialogState
                           child: Padding(
                             padding: const EdgeInsets.all(24),
                             child: Text(_error!,
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                     color: Colors.red[700])),
                           ))
                       : LayoutBuilder(
@@ -5118,7 +5117,7 @@ class _InAppCropperDialogState
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(null),
                   child: Text('Cancel',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 13,
                           fontWeight: FontWeight.w500)),
@@ -5148,7 +5147,7 @@ class _InAppCropperDialogState
                       : const Icon(Icons.check_rounded, size: 16),
                   label: Text(
                       _cropping ? 'Cropping…' : 'Use Crop',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600)),
                 ),
@@ -5190,7 +5189,7 @@ class _ToolbarIconBtn extends StatelessWidget {
           Icon(icon, size: 22, color: color),
           const SizedBox(height: 2),
           Text(label,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 9,
                   color: color,
                   fontWeight: FontWeight.w500)),

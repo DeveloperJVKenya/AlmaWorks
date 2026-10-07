@@ -6,7 +6,6 @@ import 'package:almaworks/screens/projects/edit_project_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -242,7 +241,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 if (role != 'Client' && memberName == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Please select a $role first', style: GoogleFonts.poppins()),
+                      content: Text('Please select a $role first', style: TextStyle()),
                     ),
                   );
                   return;
@@ -283,7 +282,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                           ],
                           labelColor: const Color(0xFF0A2E5A),
                           unselectedLabelColor: Colors.grey,
-                          labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                          labelStyle: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       SizedBox(
                         height: constraints.maxHeight - (showSingleSection ? 0 : 48) - 48,
@@ -304,7 +303,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                                             'No documents yet — ask your project admin to add you as a '
                                             'Sub-Contractor team member first.',
                                             textAlign: TextAlign.center,
-                                            style: GoogleFonts.poppins(color: Colors.grey[600]),
+                                            style: TextStyle(color: Colors.grey[600]),
                                           ),
                                         ),
                                       )
@@ -380,7 +379,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               labelColor: const Color(0xFF0A2E5A),
               unselectedLabelColor: Colors.grey,
               labelStyle:
-                  GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  TextStyle(fontWeight: FontWeight.w600),
             ),
             Expanded(
               child: TabBarView(
@@ -521,10 +520,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          title: Text(member.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          title: Text(member.name, style: TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(
             '${member.role.capitalize()}${member.category != null ? ' - ${member.category}' : ''}',
-            style: GoogleFonts.poppins(color: Colors.grey[600]),
+            style: TextStyle(color: Colors.grey[600]),
           ),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () => onSelected(member.name),
@@ -548,7 +547,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               Expanded(
                 child: Text(
                   'Documents for $memberName',
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -571,13 +570,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           const SizedBox(height: 16),
           Text(
             'No $title added to this project yet',
-            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             'Add team members via the Edit Project section.',
-            style: GoogleFonts.poppins(color: Colors.grey[600]),
+            style: TextStyle(color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -613,7 +612,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           return Center(
             child: Text(
               'Error loading documents',
-              style: GoogleFonts.poppins(color: Colors.red[600]),
+              style: TextStyle(color: Colors.red[600]),
             ),
           );
         }
@@ -629,7 +628,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 child: Center(
                   child: Text(
                     'No documents in this section',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
               )
@@ -643,10 +642,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 final type = docData['type'] as String;
                 return ListTile(
                   leading: Icon(_getDocumentIcon(type), color: _getFileIconColor(type)),
-                  title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                  title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(
                     '$fileName - Uploaded: ${_formatDate(docData['uploadedAt'] as Timestamp)}',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) {
@@ -672,7 +671,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                           children: [
                             Icon(Icons.visibility, color: Colors.blue[600]),
                             const SizedBox(width: 8),
-                            Text('View', style: GoogleFonts.poppins()),
+                            Text('View', style: TextStyle()),
                           ],
                         ),
                       ),
@@ -683,7 +682,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                             children: [
                               Icon(Icons.download, color: Colors.green[600]),
                               const SizedBox(width: 8),
-                              Text('Download', style: GoogleFonts.poppins()),
+                              Text('Download', style: TextStyle()),
                             ],
                           ),
                         ),
@@ -694,7 +693,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                             children: [
                               Icon(Icons.delete, color: Colors.red[600]),
                               const SizedBox(width: 8),
-                              Text('Delete', style: GoogleFonts.poppins()),
+                              Text('Delete', style: TextStyle()),
                             ],
                           ),
                         ),
@@ -747,7 +746,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           children: [
             const Icon(Icons.history, color: Color(0xFF0A2E5A)),
             const SizedBox(width: 10),
-            Text('Document Activity', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            Text('Document Activity', style: TextStyle(fontWeight: FontWeight.w600)),
           ],
         ),
         content: SizedBox(
@@ -763,7 +762,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
-                  child: Text('Error loading activity', style: GoogleFonts.poppins(color: Colors.red[600])),
+                  child: Text('Error loading activity', style: TextStyle(color: Colors.red[600])),
                 );
               }
               if (!snapshot.hasData) {
@@ -774,7 +773,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                   .toList();
               if (entries.isEmpty) {
                 return Center(
-                  child: Text('No activity recorded yet', style: GoogleFonts.poppins(color: Colors.grey[600])),
+                  child: Text('No activity recorded yet', style: TextStyle(color: Colors.grey[600])),
                 );
               }
               return ListView.separated(
@@ -793,11 +792,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                     ),
                     title: Text(
                       '${e.actorName} (${e.actorRole}) ${e.isUpload ? 'uploaded' : 'deleted'} "${e.documentTitle}"',
-                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(
                       '$scope\n${_formatDateTime(e.createdAt)}',
-                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     ),
                     isThreeLine: true,
                   );
@@ -809,7 +808,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close', style: GoogleFonts.poppins()),
+            child: Text('Close', style: TextStyle()),
           ),
         ],
       ),
@@ -919,7 +918,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               SnackBar(
                 content: Text(
                   'Could not read file data. Please try again.',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
               ),
             );
@@ -935,7 +934,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               SnackBar(
                 content: Text(
                   'Could not access file path. Please try again.',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
               ),
             );
@@ -1016,7 +1015,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Document "$title" added successfully!', style: GoogleFonts.poppins()),
+              content: Text('Document "$title" added successfully!', style: TextStyle()),
             ),
           );
           widget.logger.i('✅ DocumentsScreen: Document uploaded successfully: $fileName with title $title');
@@ -1027,7 +1026,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Upload cancelled', style: GoogleFonts.poppins()),
+                content: Text('Upload cancelled', style: TextStyle()),
               ),
             );
           }
@@ -1037,7 +1036,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error adding document: ${e.message}', style: GoogleFonts.poppins()),
+                content: Text('Error adding document: ${e.message}', style: TextStyle()),
               ),
             );
           }
@@ -1048,7 +1047,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error adding document: ${e.toString()}', style: GoogleFonts.poppins()),
+              content: Text('Error adding document: ${e.toString()}', style: TextStyle()),
             ),
           );
         }
@@ -1114,22 +1113,22 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('Enter Document Title', style: GoogleFonts.poppins()),
+          title: Text('Enter Document Title', style: TextStyle()),
           content: TextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
               labelText: 'Title (e.g., RFI, Close Out doc)',
               border: const OutlineInputBorder(),
-              labelStyle: GoogleFonts.poppins(),
+              labelStyle: TextStyle(),
             ),
-            style: GoogleFonts.poppins(),
+            style: TextStyle(),
             onChanged: (val) => title = val.trim(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: GoogleFonts.poppins()),
+              child: Text('Cancel', style: TextStyle()),
             ),
             TextButton(
               onPressed: () {
@@ -1138,11 +1137,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 } else {
                   if (!mounted) return;
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('Please enter a title', style: GoogleFonts.poppins())),
+                    SnackBar(content: Text('Please enter a title', style: TextStyle())),
                   );
                 }
               },
-              child: Text('OK', style: GoogleFonts.poppins()),
+              child: Text('OK', style: TextStyle()),
             ),
           ],
         );
@@ -1202,14 +1201,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text(name, style: GoogleFonts.poppins()),
+                title: Text(name, style: TextStyle()),
                 content: SingleChildScrollView(
-                  child: SelectableText(content, style: GoogleFonts.poppins()),
+                  child: SelectableText(content, style: TextStyle()),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Close', style: GoogleFonts.poppins()),
+                    child: Text('Close', style: TextStyle()),
                   ),
                 ],
               ),
@@ -1226,7 +1225,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               widget.logger.e('Could not launch $viewerUrl');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Could not open document viewer', style: GoogleFonts.poppins()),
+                  content: Text('Could not open document viewer', style: TextStyle()),
                 ),
               );
             }
@@ -1237,7 +1236,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: ${result.message}', style: GoogleFonts.poppins()),
+                content: Text('Could not open file: ${result.message}', style: TextStyle()),
                 action: SnackBarAction(
                   label: 'Download instead',
                   onPressed: () => _downloadDocument(url, name),
@@ -1250,7 +1249,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('No internet and no cache available', style: GoogleFonts.poppins()),
+              content: Text('No internet and no cache available', style: TextStyle()),
             ),
           );
         }
@@ -1260,7 +1259,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error viewing document: $e', style: GoogleFonts.poppins()),
+            content: Text('Error viewing document: $e', style: TextStyle()),
           ),
         );
       }
@@ -1290,7 +1289,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               kIsWeb 
                 ? result  // Web: "Download started. Check your browser downloads."
                 : 'Downloaded successfully!\nLocation: $result',  // Mobile: Full path
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
@@ -1318,7 +1317,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               e.toString().contains('permission')
                 ? 'Storage permission denied. Please enable it in Settings.'
                 : 'Error downloading: $e',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
@@ -1367,7 +1366,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         widget.logger.i('✅ DocumentsScreen: Document deleted successfully');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Document deleted successfully', style: GoogleFonts.poppins()),
+            content: Text('Document deleted successfully', style: TextStyle()),
           ),
         );
       }
@@ -1376,7 +1375,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting: $e', style: GoogleFonts.poppins()),
+            content: Text('Error deleting: $e', style: TextStyle()),
           ),
         );
       }
@@ -1460,7 +1459,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
           const SizedBox(width: 10),
           Text(
             'Uploading Document',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
           ),
         ],
       ),
@@ -1487,7 +1486,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
                 ),
                 Text(
                   '$pct%',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0A2E5A),
@@ -1517,12 +1516,12 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
               children: [
                 Text(
                   _statusLabel,
-                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 if (_bytesLabel.isNotEmpty)
                   Text(
                     _bytesLabel,
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
               ],
             ),
@@ -1534,7 +1533,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
               alignment: Alignment.centerLeft,
               child: Text(
                 widget.fileName,
-                style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -1547,7 +1546,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
       actions: [
         TextButton(
           onPressed: widget.onCancel,
-          child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.red[600])),
+          child: Text('Cancel', style: TextStyle(color: Colors.red[600])),
         ),
       ],
     );

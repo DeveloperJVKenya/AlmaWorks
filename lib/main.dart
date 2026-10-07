@@ -1,13 +1,15 @@
 import 'package:almaworks/authentication/login_screen.dart';
 import 'package:almaworks/authentication/welcome_screen.dart';
 import 'package:almaworks/rbacsystem/firebase_notification_handler.dart';
-import 'package:almaworks/providers/locale_provider.dart';
-import 'package:almaworks/providers/theme_provider.dart';
+import 'package:almaworks/core/app_scope.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/settings/settings_providers.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/theme/app_theme.dart';
 import 'package:almaworks/notifications/notification_providers.dart';
 import 'package:almaworks/notifications/notification_router.dart';
 import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:almaworks/screens/communication/communication_notification_service.dart';
-import 'package:almaworks/screens/utils/app_theme.dart';
 import 'package:almaworks/services/notification_service.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
@@ -20,12 +22,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
-
-// ─── Global providers ─────────────────────────────────────────────────────────
-final LocaleProvider localeProvider = LocaleProvider();
-final ThemeProvider themeProvider = ThemeProvider();
-// ─────────────────────────────────────────────────────────────────────────────
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,11 +48,15 @@ void main() async {
     );
     logger.i('✅ Firebase initialized successfully');
 
-    // ── Restore persisted language/theme preferences before first frame ────
-    await localeProvider.load();
-    await themeProvider.load();
-    logger.i('✅ Locale/theme preferences restored '
-        '(language=${localeProvider.language}, darkMode=${themeProvider.isDarkMode})');
+    // ── Settings (theme, font, text size, language…) ──────────────────────
+    // Loaded before the first frame so the app opens in the right
+    // appearance and language; the providers read them synchronously.
+    final prefs = await SharedPreferences.getInstance();
+    final settings = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
+    // Text built before the UI exists (notification channel names, the
+    // startup error screen) uses the saved language too.
+    setCurrentL10n(l10nFor(settings.read(languageProvider)));
+    logger.i('✅ Settings restored (language=${settings.read(languageProvider).code})');
 
     // ── FCM background handler — MUST be registered before runApp ─────────
     // This top-level function handles FCM pushes when the app is terminated
@@ -86,8 +88,8 @@ void main() async {
       [
         NotificationChannel(
           channelKey: 'schedule_overdue',
-          channelName: 'Overdue Tasks',
-          channelDescription: 'Notifications for overdue tasks',
+          channelName: l10nNow.channelOverdueTasks,
+          channelDescription: l10nNow.channelOverdueTasksDesc,
           defaultColor: Colors.red,
           ledColor: Colors.red,
           importance: NotificationImportance.High,
@@ -97,8 +99,8 @@ void main() async {
         ),
         NotificationChannel(
           channelKey: 'schedule_starting_soon',
-          channelName: 'Starting Soon Tasks',
-          channelDescription: 'Notifications for tasks starting soon',
+          channelName: l10nNow.channelStartingSoon,
+          channelDescription: l10nNow.channelStartingSoonDesc,
           defaultColor: Colors.orange,
           ledColor: Colors.orange,
           importance: NotificationImportance.High,
@@ -108,8 +110,8 @@ void main() async {
         ),
         NotificationChannel(
           channelKey: 'schedule_summary',
-          channelName: 'Task Summary',
-          channelDescription: 'Grouped task notifications',
+          channelName: l10nNow.channelTaskSummary,
+          channelDescription: l10nNow.channelTaskSummaryDesc,
           defaultColor: Colors.blue,
           ledColor: Colors.blue,
           importance: NotificationImportance.Max,
@@ -119,8 +121,8 @@ void main() async {
         ),
         NotificationChannel(
           channelKey: 'client_requests',
-          channelName: 'Client Access Requests',
-          channelDescription: 'Notifications for client access requests',
+          channelName: l10nNow.channelRequests,
+          channelDescription: l10nNow.channelRequestsDesc,
           defaultColor: const Color(0xFF0A2E5A),
           ledColor: const Color(0xFF0A2E5A),
           importance: NotificationImportance.Max,
@@ -135,8 +137,8 @@ void main() async {
         // Notifications is the single notification manager app-wide.
         NotificationChannel(
           channelKey: 'communication_channel',
-          channelName: 'Messages',
-          channelDescription: 'AlmaWorks in-app communication notifications',
+          channelName: l10nNow.channelMessages,
+          channelDescription: l10nNow.channelMessagesDesc,
           defaultColor: const Color(0xFF0A2E5A),
           ledColor: const Color(0xFF0A2E5A),
           importance: NotificationImportance.High,
@@ -181,25 +183,25 @@ void main() async {
     // affect any existing `provider`-package (ChangeNotifierProvider/
     // LocaleProvider) code elsewhere in the app. Currently only the
     // Inventory module (lib/screens/inventory/) consumes Riverpod providers.
-    runApp(ProviderScope(child: AlmaWorksApp(logger: logger)));
+    runApp(UncontrolledProviderScope(container: settings, child: AlmaWorksApp(logger: logger)));
     logger.i('✅ AlmaWorks app started successfully');
   } catch (e, stackTrace) {
     logger.e('❌ Failed to initialize AlmaWorks app',
         error: e, stackTrace: stackTrace);
-    runApp(ErrorApp(error: e.toString()));
+    runApp(const ErrorApp());
   }
 }
 
-class AlmaWorksApp extends StatefulWidget {
+class AlmaWorksApp extends ConsumerStatefulWidget {
   final Logger logger;
 
   const AlmaWorksApp({super.key, required this.logger});
 
   @override
-  State<AlmaWorksApp> createState() => _AlmaWorksAppState();
+  ConsumerState<AlmaWorksApp> createState() => _AlmaWorksAppState();
 }
 
-class _AlmaWorksAppState extends State<AlmaWorksApp> {
+class _AlmaWorksAppState extends ConsumerState<AlmaWorksApp> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -288,25 +290,28 @@ class _AlmaWorksAppState extends State<AlmaWorksApp> {
       ),
     );
 
-    return ListenableBuilder(
-      listenable: Listenable.merge([localeProvider, themeProvider]),
-      builder: (context, _) => MaterialApp(
-        navigatorKey: navigatorKey,
-        title: 'AlmaWorks',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeProvider.themeMode,
-        debugShowCheckedModeBanner: false,
-        locale: localeProvider.locale,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          FlutterQuillLocalizations.delegate,
-        ],
-        supportedLocales: LocaleProvider.supportedLocales,
-        home: AuthenticationWrapper(logger: widget.logger),
-      ),
+    final font = ref.watch(appFontProvider).fontFamily;
+    final highContrast = ref.watch(highContrastProvider);
+    final reduceMotion = ref.watch(reduceMotionProvider);
+
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      title: 'AlmaWorks',
+      theme: AppTheme.light(fontFamily: font, highContrast: highContrast, reduceMotion: reduceMotion),
+      darkTheme: AppTheme.dark(fontFamily: font, highContrast: highContrast, reduceMotion: reduceMotion),
+      themeMode: ref.watch(themeModeProvider),
+      debugShowCheckedModeBanner: false,
+      locale: ref.watch(languageProvider).locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
+      ],
+      supportedLocales: AppLanguage.supportedLocales,
+      builder: (context, child) => AppearanceScope(child: LanguageSync(child: child ?? const SizedBox.shrink())),
+      home: AuthenticationWrapper(logger: widget.logger),
     );
   }
 }
@@ -379,7 +384,7 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0A2E5A),
+        backgroundColor: AppColors.navy,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -398,7 +403,7 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Site Management System',
+                context.l10n.appTagline,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 16,
@@ -421,10 +426,10 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
 }
 
 // ─── Error fallback app ───────────────────────────────────────────────────────
+/// Shown when startup fails. The technical error is logged, not shown —
+/// the person sees what to do instead.
 class ErrorApp extends StatelessWidget {
-  final String error;
-
-  const ErrorApp({super.key, required this.error});
+  const ErrorApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -436,16 +441,19 @@ class ErrorApp extends StatelessWidget {
             children: [
               const Icon(Icons.error, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              const Text(
-                'Failed to initialize AlmaWorks',
-                style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                l10nNow.startupFailedTitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                error,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  l10nNow.startupFailedMessage,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
               ),
             ],
           ),

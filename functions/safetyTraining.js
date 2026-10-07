@@ -18,6 +18,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
+const { t, formatDate, bilingual } = require("./i18n");
 
 const db = getFirestore();
 
@@ -43,24 +44,23 @@ const RETRAINING_NUDGE_WINDOW_DAYS = 3;
 const sessions = () => db.collection("SafetyTrainingSessions");
 const statsRef = (uid) => db.doc(`SafetyTrainingWorkerStats/${uid}`);
 
-function formatDate(date) {
-  return date.toLocaleDateString("en-GB", {
-    timeZone: "Africa/Nairobi",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-async function notifyUser(targetUid, title, body, payload) {
+/**
+ * Queues a notification for one person. [text] is `bilingual(...)` output
+ * — English title/body plus every other language under `i18n`.
+ */
+async function notifyUser(targetUid, text, payload) {
   if (!targetUid) return;
   await db.collection("UserNotificationQueue").add({
     targetUid,
-    title,
-    body,
+    ...text,
     payload,
     createdAt: FieldValue.serverTimestamp(),
   });
+}
+
+/** Bilingual text from two message keys sharing the same params. */
+function msg(titleKey, bodyKey, params = {}) {
+  return bilingual((lang) => ({ title: t(lang, titleKey, params), body: t(lang, bodyKey, params) }));
 }
 
 // ── Worker stats ────────────────────────────────────────────────────────
@@ -326,7 +326,7 @@ exports.submitSafetyScenarioAttempt = onCall(async (request) => {
       workerUid: uid,
       workerName,
       scenarioId,
-      scenarioTitle: scenario.title || "a scenario",
+      scenarioTitle: scenario.title || "",
       isCorrect,
       isFirstAttempt: result.isFirstAttempt,
     });
@@ -353,13 +353,17 @@ exports.submitSafetyScenarioAttempt = onCall(async (request) => {
  * rather than failing the worker's submission.
  */
 async function notifyAttemptToReviewers(attempt) {
-  const who = attempt.workerName || "A worker";
-  const outcome = attempt.isCorrect ? "answered correctly" : "answered incorrectly";
-  const kind = attempt.isFirstAttempt ? "" : " (practice attempt)";
   try {
     await db.collection("AdminNotificationQueue").add({
-      title: "🦺 New Safety Training Attempt",
-      body: `${who} ${outcome} on "${attempt.scenarioTitle}"${kind}. Tap to review their reasoning.`,
+      ...bilingual((lang) => ({
+        title: t(lang, "attemptTitle"),
+        body: t(lang, "attemptBody", {
+          who: attempt.workerName || t(lang, "aWorker"),
+          correct: attempt.isCorrect,
+          practice: !attempt.isFirstAttempt,
+          scenario: attempt.scenarioTitle || t(lang, "aScenario"),
+        }),
+      })),
       targetRoles: SAFETY_ATTEMPT_ALERT_ROLES,
       payload: {
         type: "safety_training_attempt",
@@ -430,28 +434,38 @@ exports.onSafetyTrainingReviewCreated = onDocumentCreated(
     let body;
     switch (review.status) {
       case "cleared":
-        body = `You've been cleared to work on site until ${formatDate(clearanceExpiry(review))}.`;
+        body = (lang) => t(lang, "reviewCleared", { date: formatDate(clearanceExpiry(review), lang) });
         break;
       case "needsRetraining": {
         const count = Array.isArray(review.assignedScenarioIds) ? review.assignedScenarioIds.length : 0;
-        const due = review.dueAt ? ` by ${formatDate(review.dueAt.toDate())}` : "";
-        body = `You've been assigned ${count} scenario${count === 1 ? "" : "s"} to retrain on${due}.`;
+        body = (lang) => t(lang, "reviewRetraining", {
+          count,
+          date: review.dueAt ? formatDate(review.dueAt.toDate(), lang) : "",
+        });
         break;
       }
       case "escalated":
-        body = "Your safety training standing has been escalated for follow-up with a supervisor.";
+        body = (lang) => t(lang, "reviewEscalated");
         break;
       default:
         return;
     }
-    await notifyUser(review.workerUid, "🦺 Safety Training Review", body, payload);
+    await notifyUser(
+      review.workerUid,
+      bilingual((lang) => ({ title: t(lang, "reviewTitle"), body: body(lang) })),
+      payload
+    );
 
     if (review.status === "escalated" && review.escalatedToUid) {
       await notifyUser(
         review.escalatedToUid,
-        "⚠️ Safety Escalation",
-        `${review.reviewedByName || "A reviewer"} escalated ${review.workerName || "a worker"}'s safety ` +
-          "training standing to you for follow-up.",
+        bilingual((lang) => ({
+          title: t(lang, "escalationTitle"),
+          body: t(lang, "escalationBody", {
+            reviewer: review.reviewedByName || t(lang, "aReviewer"),
+            worker: review.workerName || t(lang, "aWorker"),
+          }),
+        })),
         { type: "safety_training_escalation", audience: "reviewer", reviewId: event.params.reviewId }
       );
     }
@@ -465,10 +479,13 @@ exports.onSafetyTrainingFeedbackCreated = onDocumentCreated(
     const feedback = event.data && event.data.data();
     if (!feedback || !feedback.workerUid) return;
     const comment = String(feedback.comment || "");
+    const excerpt = comment.length > 140 ? `${comment.slice(0, 137)}…` : comment;
     await notifyUser(
       feedback.workerUid,
-      `💬 Feedback on "${feedback.scenarioTitle || "a safety scenario"}"`,
-      `${feedback.byName || "Your trainer"}: ${comment.length > 140 ? `${comment.slice(0, 137)}…` : comment}`,
+      bilingual((lang) => ({
+        title: t(lang, "feedbackTitle", { scenario: feedback.scenarioTitle || t(lang, "aSafetyScenario") }),
+        body: `${feedback.byName || t(lang, "yourTrainer")}: ${excerpt}`,
+      })),
       { type: "safety_training_feedback", sessionId: feedback.sessionId || "" }
     );
   }
@@ -527,18 +544,22 @@ exports.sendWeeklySafetyTrainingReminder = onSchedule(
       const uid = doc.data().uid;
       if (!uid) continue;
       const review = latestReviews.get(uid);
-      let body =
-        "Take a few minutes this week to run through your safety scenarios and check how fit you are to work safely on site.";
+      let body = (lang) => t(lang, "weeklyBody");
       if (review && review.status === "needsRetraining") {
         const stats = (await statsRef(uid).get()).data();
         const remaining = remainingRetraining(review, stats, activeIds);
         if (remaining.length > 0) {
-          const due = review.dueAt ? ` by ${formatDate(review.dueAt.toDate())}` : "";
-          body = `You still have ${remaining.length} assigned retraining scenario${remaining.length === 1 ? "" : "s"} ` +
-            `to complete${due}.`;
+          body = (lang) => t(lang, "weeklyRetrainingBody", {
+            count: remaining.length,
+            date: review.dueAt ? formatDate(review.dueAt.toDate(), lang) : "",
+          });
         }
       }
-      await notifyUser(uid, "🦺 Weekly Safety Training", body, { type: "safety_training_weekly_reminder" });
+      await notifyUser(
+        uid,
+        bilingual((lang) => ({ title: t(lang, "weeklyTitle"), body: body(lang) })),
+        { type: "safety_training_weekly_reminder" }
+      );
       sent += 1;
     }
     logger.info(`sendWeeklySafetyTrainingReminder: sent ${sent} reminder(s)`);
@@ -566,34 +587,42 @@ exports.sendSafetyTrainingFollowUps = onSchedule(
         const remaining = remainingRetraining(review, stats, activeIds);
         if (remaining.length === 0) continue;
         const dueMs = review.dueAt.toMillis();
-        const dueText = formatDate(review.dueAt.toDate());
-        const count = `${remaining.length} retraining scenario${remaining.length === 1 ? "" : "s"}`;
+        const dueDate = review.dueAt.toDate();
+        const count = remaining.length;
+        const text = (titleKey, bodyKey) => bilingual((lang) => ({
+          title: t(lang, titleKey),
+          body: t(lang, bodyKey, {
+            count,
+            date: formatDate(dueDate, lang),
+            worker: review.workerName || t(lang, "aWorker"),
+          }),
+        }));
 
         if (dueMs < now) {
-          await notifyUser(uid, "⏰ Retraining Overdue", `Your ${count} ${remaining.length === 1 ? "was" : "were"} due on ${dueText}. ` +
-            `Please complete ${remaining.length === 1 ? "it" : "them"} today.`,
-            { type: "safety_training_retraining_overdue" });
+          await notifyUser(uid, text("overdueTitle", "overdueWorkerBody"), { type: "safety_training_retraining_overdue" });
           sent += 1;
           if (dueMs >= now - DAY_MS) {
-            await notifyUser(review.reviewedByUid, "⏰ Retraining Overdue",
-              `${review.workerName || "A worker"} hasn't finished their ${count} (due ${dueText}).`,
+            await notifyUser(review.reviewedByUid, text("overdueTitle", "overdueReviewerBody"),
               { type: "safety_training_retraining_overdue", audience: "reviewer", workerUid: uid });
             sent += 1;
           }
         } else if (dueMs - now <= RETRAINING_NUDGE_WINDOW_DAYS * DAY_MS) {
-          await notifyUser(uid, "🦺 Retraining Due Soon", `You have ${count} to complete by ${dueText}.`,
-            { type: "safety_training_retraining_due" });
+          await notifyUser(uid, text("dueSoonTitle", "dueSoonBody"), { type: "safety_training_retraining_due" });
           sent += 1;
         }
       } else if (review.status === "cleared" && review.reviewedAt) {
         const expiresMs = clearanceExpiry(review).getTime();
         if (expiresMs <= now && expiresMs > now - DAY_MS) {
-          await notifyUser(uid, "🦺 Safety Clearance Expired",
-            "Your safety clearance has expired. Keep practising your scenarios — a reviewer will reassess your standing.",
+          await notifyUser(uid, msg("clearanceExpiredTitle", "clearanceExpiredWorkerBody"),
             { type: "safety_training_clearance_expired" });
-          await notifyUser(review.reviewedByUid, "🦺 Safety Clearance Expired",
-            `${review.workerName || "A worker"}'s safety clearance expired today and needs a new review.`,
-            { type: "safety_training_clearance_expired", audience: "reviewer", workerUid: uid });
+          await notifyUser(
+            review.reviewedByUid,
+            bilingual((lang) => ({
+              title: t(lang, "clearanceExpiredTitle"),
+              body: t(lang, "clearanceExpiredReviewerBody", { worker: review.workerName || t(lang, "aWorker") }),
+            })),
+            { type: "safety_training_clearance_expired", audience: "reviewer", workerUid: uid }
+          );
           sent += 2;
         }
       }

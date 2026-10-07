@@ -4,7 +4,6 @@ import 'package:almaworks/widgets/base_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -89,7 +88,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: GoogleFonts.poppins(color: Colors.white)),
+        content: Text(message, style: TextStyle(color: Colors.white)),
         backgroundColor: backgroundColor,
         duration: duration,
         behavior: SnackBarBehavior.floating,
@@ -179,7 +178,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
         children: [
           Text(
             '${_selection.count} selected',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF0A2E5A),
@@ -193,7 +192,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
             icon: const Icon(Icons.close, color: Color(0xFF0A2E5A)),
             label: Text(
               'Cancel',
-              style: GoogleFonts.poppins(color: const Color(0xFF0A2E5A)),
+              style: TextStyle(color: const Color(0xFF0A2E5A)),
             ),
           ),
         ],
@@ -254,7 +253,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
         child: ElevatedButton.icon(
           onPressed: onPressed,
           icon: Icon(icon, size: 20),
-          label: Text(label, style: GoogleFonts.poppins(fontSize: 12)),
+          label: Text(label, style: TextStyle(fontSize: 12)),
           style: ElevatedButton.styleFrom(
             backgroundColor:
                 isEnabled ? Colors.white : Colors.white.withValues(alpha: 0.3),
@@ -312,21 +311,21 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                   const SizedBox(height: 12),
                   Text(
                     'Error loading photos',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.red[600], fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${snapshot.error}',
                     style:
-                        GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+                        TextStyle(color: Colors.grey, fontSize: 12),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () => setState(() {}),
                     icon: const Icon(Icons.refresh),
-                    label: Text('Retry', style: GoogleFonts.poppins()),
+                    label: Text('Retry', style: TextStyle()),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0A2E5A),
                       foregroundColor: Colors.white,
@@ -364,7 +363,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'No photos yet. Add some!',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.grey[600], fontSize: 16),
                   ),
                 ],
@@ -395,7 +394,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Text(
                 _formatDate(DateTime.parse(dateKey)),
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 18),
               ),
             ),
@@ -499,7 +498,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               _selection.multiSelectMode
                   ? 'Deactivate Selection'
                   : 'Activate Selection',
-              style: GoogleFonts.poppins(fontSize: 14),
+              style: TextStyle(fontSize: 14),
             ),
             contentPadding: EdgeInsets.zero,
           ),
@@ -512,7 +511,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
             child: ListTile(
               leading:
                   const Icon(Icons.visibility, color: Color(0xFF0A2E5A)),
-              title: Text('View', style: GoogleFonts.poppins(fontSize: 14)),
+              title: Text('View', style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -521,7 +520,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                 .addPostFrameCallback((_) => _editPhotoDetails(photo)),
             child: ListTile(
               leading: const Icon(Icons.edit, color: Color(0xFF0A2E5A)),
-              title: Text('Edit', style: GoogleFonts.poppins(fontSize: 14)),
+              title: Text('Edit', style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -530,7 +529,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                 .addPostFrameCallback((_) => _sharePhoto(photo)),
             child: ListTile(
               leading: const Icon(Icons.share, color: Color(0xFF0A2E5A)),
-              title: Text('Share', style: GoogleFonts.poppins(fontSize: 14)),
+              title: Text('Share', style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -541,7 +540,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               leading: const Icon(Icons.delete, color: Colors.red),
               title: Text('Delete',
                   style:
-                      GoogleFonts.poppins(fontSize: 14, color: Colors.red)),
+                      TextStyle(fontSize: 14, color: Colors.red)),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -582,7 +581,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               children: [
                 const Icon(Icons.drive_file_move, color: Color(0xFF0A2E5A)),
                 const SizedBox(width: 8),
-                Text('Moving Photos', style: GoogleFonts.poppins()),
+                Text('Moving Photos', style: TextStyle()),
               ],
             ),
             content: Column(
@@ -601,7 +600,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                 Text(
                   '${(value * idsToMove.length).round()} of '
                   '${idsToMove.length} photos processed…',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
               ],
             ),
@@ -694,7 +693,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
     messenger.showSnackBar(
       SnackBar(
         content:
-            Text(msg.toString(), style: GoogleFonts.poppins(color: Colors.white)),
+            Text(msg.toString(), style: TextStyle(color: Colors.white)),
         backgroundColor: bgColor,
         duration: const Duration(seconds: 6),
         behavior: SnackBarBehavior.floating,
@@ -709,19 +708,19 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                   showDialog<void>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text('Move Results', style: GoogleFonts.poppins()),
+                      title: Text('Move Results', style: TextStyle()),
                       content: Text(
                         'Moved successfully: $successCount\n'
                         'Already existed: $alreadyExistsCount\n'
                         'Failed: $failCount\n\n'
                         'Photos that "already existed" are already present in '
                         'the Photos collection and were not duplicated.',
-                        style: GoogleFonts.poppins(),
+                        style: TextStyle(),
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: Text('OK', style: GoogleFonts.poppins()),
+                          child: Text('OK', style: TextStyle()),
                         ),
                       ],
                     ),
@@ -814,25 +813,25 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
           children: [
             const Icon(Icons.delete_forever, color: Colors.red),
             const SizedBox(width: 8),
-            Text('Delete Photos', style: GoogleFonts.poppins()),
+            Text('Delete Photos', style: TextStyle()),
           ],
         ),
         content: Text(
           'Are you sure you want to delete ${idsToDelete.length} '
           'selected photo${idsToDelete.length > 1 ? 's' : ''}?\n\n'
           'This action cannot be undone.',
-          style: GoogleFonts.poppins(),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('Delete',
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -878,7 +877,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
           appBar: AppBar(
             backgroundColor: Colors.black,
             foregroundColor: Colors.white,
-            title: Text(photo.name, style: GoogleFonts.poppins()),
+            title: Text(photo.name, style: TextStyle()),
             actions: [
               IconButton(
                 icon: const Icon(Icons.edit),
@@ -907,7 +906,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                       color: Colors.white54, size: 64),
                   const SizedBox(height: 12),
                   Text('Cannot display image',
-                      style: GoogleFonts.poppins(color: Colors.white54)),
+                      style: TextStyle(color: Colors.white54)),
                 ],
               ),
             ),
@@ -931,7 +930,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text('Edit Photo Details', style: GoogleFonts.poppins()),
+        title: Text('Edit Photo Details', style: TextStyle()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -957,14 +956,14 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0A2E5A)),
             child: Text('Save',
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1022,7 +1021,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Preparing photo for sharing…',
-              style: GoogleFonts.poppins(color: Colors.white)),
+              style: TextStyle(color: Colors.white)),
           backgroundColor: const Color(0xFF0A2E5A),
           duration: const Duration(seconds: 30),
           behavior: SnackBarBehavior.floating,
@@ -1064,21 +1063,21 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
           children: [
             const Icon(Icons.delete, color: Colors.red),
             const SizedBox(width: 8),
-            Text('Delete Photo', style: GoogleFonts.poppins()),
+            Text('Delete Photo', style: TextStyle()),
           ],
         ),
         content: Text('Delete this photo? This cannot be undone.',
-            style: GoogleFonts.poppins()),
+            style: TextStyle()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('Delete',
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1114,16 +1113,16 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
       builder: (context) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text('Upload Photos', style: GoogleFonts.poppins()),
-        content: Text('Select upload type', style: GoogleFonts.poppins()),
+        title: Text('Upload Photos', style: TextStyle()),
+        content: Text('Select upload type', style: TextStyle()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, 'single'),
-            child: Text('Single Photo', style: GoogleFonts.poppins()),
+            child: Text('Single Photo', style: TextStyle()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, 'multiple'),
-            child: Text('Multiple Photos', style: GoogleFonts.poppins()),
+            child: Text('Multiple Photos', style: TextStyle()),
           ),
         ],
       ),
@@ -1145,12 +1144,12 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: Text('Camera', style: GoogleFonts.poppins()),
+                title: Text('Camera', style: TextStyle()),
                 onTap: () => Navigator.pop(context, 'camera'),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: Text('Gallery', style: GoogleFonts.poppins()),
+                title: Text('Gallery', style: TextStyle()),
                 onTap: () => Navigator.pop(context, 'gallery'),
               ),
             ],
@@ -1181,23 +1180,23 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
       builder: (context) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text('Confirm Upload', style: GoogleFonts.poppins()),
+        title: Text('Confirm Upload', style: TextStyle()),
         content: Text(
           'Upload ${selectedFiles.length} '
           'photo${selectedFiles.length > 1 ? 's' : ''}?',
-          style: GoogleFonts.poppins(),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0A2E5A)),
             child: Text('Confirm',
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1215,7 +1214,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text('Photo Details', style: GoogleFonts.poppins()),
+        title: Text('Photo Details', style: TextStyle()),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1274,14 +1273,14 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0A2E5A)),
             child: Text('OK',
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1308,7 +1307,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               children: [
                 const Icon(Icons.cloud_upload, color: Color(0xFF0A2E5A)),
                 const SizedBox(width: 8),
-                Text('Uploading', style: GoogleFonts.poppins()),
+                Text('Uploading', style: TextStyle()),
               ],
             ),
             content: Column(
@@ -1327,7 +1326,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                   '${(value * 100).toStringAsFixed(0)}%  '
                   '(${(value * selectedFiles.length).floor()}'
                   ' of ${selectedFiles.length} photos)',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
               ],
             ),

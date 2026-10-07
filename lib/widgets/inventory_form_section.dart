@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 const inventoryNavy = Color(0xFF0A2E5A);
 
@@ -12,7 +12,7 @@ const inventoryNavy = Color(0xFF0A2E5A);
 /// surface, especially under bright ambient light. Applying this behind the
 /// form content is what actually makes the cards and fields read as
 /// distinct surfaces rather than all just "white."
-const inventoryPageBackground = Color(0xFFEEF1F5);
+Color get inventoryPageBackground => AppColors.isDark ? AppColors.canvas : const Color(0xFFEEF1F5);
 
 /// A titled, card-style section used to group related fields on the
 /// Inventory module's Add/Record forms — replaces the previous flat list of
@@ -30,10 +30,10 @@ Widget inventoryFormSection({
     margin: const EdgeInsets.only(bottom: 16),
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.grey.withValues(alpha: 0.20)),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 14, offset: const Offset(0, 4))],
+      border: Border.all(color: AppColors.border),
+      boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 14, offset: const Offset(0, 4))],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,10 +44,10 @@ Widget inventoryFormSection({
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: inventoryNavy.withValues(alpha: 0.08),
+                  color: AppColors.brandTint,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, size: 16, color: inventoryNavy),
+                child: Icon(icon, size: 16, color: AppColors.brandInk),
               ),
               const SizedBox(width: 10),
             ],
@@ -55,11 +55,11 @@ Widget inventoryFormSection({
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: inventoryNavy)),
+                  Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.brandInk)),
                   if (subtitle != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
-                      child: Text(subtitle, style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey[500])),
+                      child: Text(subtitle, style: TextStyle(fontSize: 11.5, color: AppColors.inkMuted)),
                     ),
                 ],
               ),
@@ -96,16 +96,16 @@ InputDecoration inventoryInputDecoration({
     labelText: label,
     isDense: isDense,
     hintText: hint,
-    hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[500]),
-    labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[700]),
-    floatingLabelStyle: GoogleFonts.poppins(fontSize: 13, color: inventoryNavy, fontWeight: FontWeight.w600),
-    prefixIcon: icon != null ? Icon(icon, size: 19, color: Colors.grey[600]) : null,
+    hintStyle: TextStyle(fontSize: 12.5, color: AppColors.inkFaint),
+    labelStyle: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+    floatingLabelStyle: TextStyle(fontSize: 13, color: AppColors.brandInk, fontWeight: FontWeight.w600),
+    prefixIcon: icon != null ? Icon(icon, size: 19, color: AppColors.inkMuted) : null,
     filled: true,
-    fillColor: const Color(0xFFF3F5F8),
+    fillColor: AppColors.isDark ? AppColors.surfaceAlt : const Color(0xFFF3F5F8),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    border: border(Colors.grey.withValues(alpha: 0.4)),
-    enabledBorder: border(Colors.grey.withValues(alpha: 0.4)),
-    focusedBorder: border(inventoryNavy, 1.6),
+    border: border(AppColors.border),
+    enabledBorder: border(AppColors.border),
+    focusedBorder: border(AppColors.brandInk, 1.6),
     errorBorder: border(Colors.red.shade300),
     focusedErrorBorder: border(Colors.red.shade400, 1.6),
   );
@@ -137,7 +137,7 @@ Widget inventoryPrimaryButton({
     child: ElevatedButton.icon(
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color ?? inventoryNavy,
+        backgroundColor: color ?? AppColors.brand,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -149,7 +149,7 @@ Widget inventoryPrimaryButton({
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
             )
           : Icon(icon ?? Icons.check, size: 18),
-      label: Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+      label: Text(label, style: TextStyle(fontWeight: FontWeight.w600)),
     ),
   );
 }

@@ -7,7 +7,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
@@ -450,7 +449,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
 
   void _showError(String msg) => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(msg, style: GoogleFonts.poppins()),
+          content: Text(msg, style: TextStyle()),
           backgroundColor: Colors.red[700],
         ),
       );
@@ -563,7 +562,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content:
-              Text('Daily report saved successfully.', style: GoogleFonts.poppins()),
+              Text('Daily report saved successfully.', style: TextStyle()),
           backgroundColor: Colors.green,
         ));
       }
@@ -818,7 +817,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             'PDF saved to Downloads: $fileName',
-            style: GoogleFonts.poppins(),
+            style: TextStyle(),
           ),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 4),
@@ -1282,19 +1281,19 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('New Daily Report',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
             'Your current form has been saved. Start a fresh daily report?',
-            style: GoogleFonts.poppins()),
+            style: TextStyle()),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: GoogleFonts.poppins())),
+              child: Text('Cancel', style: TextStyle())),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: _navy, foregroundColor: Colors.white),
-            child: Text('New Form', style: GoogleFonts.poppins()),
+            child: Text('New Form', style: TextStyle()),
           ),
         ],
       ),
@@ -1333,7 +1332,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         title: Text(
           '${widget.project.name} — Daily Report'
           '${_isReadOnly ? '  (View)' : ''}',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               fontWeight: FontWeight.w600, fontSize: 16),
         ),
         leading: IconButton(
@@ -1356,7 +1355,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               backgroundColor: _navy,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_rounded),
-              label: Text('Edit', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              label: Text('Edit', style: TextStyle(fontWeight: FontWeight.w600)),
             )
           : null,
       body: LayoutBuilder(
@@ -1486,7 +1485,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             textAlign: TextAlign.center,
             softWrap: true,
             overflow: TextOverflow.visible,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -1501,7 +1500,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             children: [
               Text(
                 'Contract No: ',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
                 ),
@@ -1512,11 +1511,11 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   controller: _contractController,
                   readOnly: _isReadOnly,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: _isReadOnly ? '—' : 'e.g. CN-2024-001',
-                    hintStyle: GoogleFonts.poppins(
+                    hintStyle: TextStyle(
                         color: Colors.white38, fontSize: 12),
                     isDense: true,
                     border: const UnderlineInputBorder(
@@ -1553,7 +1552,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Text(
           'DAILY REPORT',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             color: _navy,
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -1618,7 +1617,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 Icon(icon, color: _navy, size: iconSz),
                 const SizedBox(width: 4),
                 Text(label,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: labelFs,
                       fontWeight: FontWeight.w600,
                       color: _navy.withValues(alpha: 0.7),
@@ -1628,7 +1627,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               const SizedBox(height: 3),
               Text(
                 value,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: valueFs,
                   fontWeight: FontWeight.w500,
                   color: value == 'Tap to set'
@@ -1668,7 +1667,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             const Icon(Icons.wb_sunny_rounded, color: _navy, size: iconSz),
             const SizedBox(width: 4),
             Text('WEATHER',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: labelFs,
                   fontWeight: FontWeight.w600,
                   color: _navy.withValues(alpha: 0.7),
@@ -1680,20 +1679,20 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             child: DropdownButton<String>(
               value: _weather.isEmpty ? null : _weather,
               hint: Text('Select…',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.grey[400], fontSize: valueFs)),
               isExpanded: true,
               isDense: true,
               icon: const Icon(Icons.expand_more_rounded,
                   color: _navy, size: 16),
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: valueFs, color: Colors.black87),
               items: _weatherOptions
                   .map((w) => DropdownMenuItem(
                       value: w,
                       child: Text(w,
                           style:
-                              GoogleFonts.poppins(fontSize: valueFs))))
+                              TextStyle(fontSize: valueFs))))
                   .toList(),
               onChanged: _isReadOnly ? null : (v) {
                 widget.logger.i('📋 DailyForm: weather selected → "$v"');
@@ -1760,7 +1759,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             ),
             child: Text(
               'BUILDING',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: _navy,
@@ -1780,10 +1779,10 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       RegExp(r'[a-zA-Z0-9\s\-_/]'))
                 ],
                 style:
-                    GoogleFonts.poppins(fontSize: 13, color: Colors.black87),
+                    TextStyle(fontSize: 13, color: Colors.black87),
                 decoration: InputDecoration(
                   hintText: _isReadOnly ? '—' : 'Building number, ID, or name…',
-                  hintStyle: GoogleFonts.poppins(
+                  hintStyle: TextStyle(
                       color: Colors.grey[400], fontSize: 12),
                   border: InputBorder.none,
                   isDense: true,
@@ -1865,7 +1864,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           padding: EdgeInsets.all(editorPad),
           child: Text(
             '⚠ Toolbar error [$fieldKey] — see logs\n$e',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 color: Colors.red[800], fontSize: 11),
           ),
         );
@@ -1892,7 +1891,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 enableInteractiveSelection: true,
                 customStyles: quill.DefaultStyles(
                   placeHolder: quill.DefaultTextBlockStyle(
-                    GoogleFonts.poppins(
+                    TextStyle(
                         color: Colors.grey[400], fontSize: editorFs),
                     const quill.HorizontalSpacing(0, 0),
                     const quill.VerticalSpacing(0, 0),
@@ -1900,7 +1899,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                     null,
                   ),
                   paragraph: quill.DefaultTextBlockStyle(
-                    GoogleFonts.poppins(
+                    TextStyle(
                         color: Colors.black87, fontSize: editorFs),
                     const quill.HorizontalSpacing(0, 0),
                     const quill.VerticalSpacing(2, 2),
@@ -1921,7 +1920,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           padding: EdgeInsets.all(editorPad),
           child: Text(
             '⚠ Editor error [$fieldKey] — see logs\n$e',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 color: Colors.red[800], fontSize: 11),
           ),
         );
@@ -1954,7 +1953,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 ),
               ),
               child: Text(title,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: titleFs,
@@ -1983,7 +1982,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         ),
         child: Text(
           '⚠ Section "$title" failed to render — see logs\n$e',
-          style: GoogleFonts.poppins(color: Colors.red[800], fontSize: 11),
+          style: TextStyle(color: Colors.red[800], fontSize: 11),
         ),
       );
     }
@@ -2043,7 +2042,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 ),
                 child: Text(
                   '${idx + 1}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: labelFs,
                       fontWeight: FontWeight.w700,
                       color: _navy),
@@ -2054,7 +2053,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               Expanded(
                 child: Text(
                   name,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: valueFs,
                       fontWeight: FontWeight.w500,
                       color: Colors.black87),
@@ -2111,7 +2110,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             child: Row(
               children: [
                 Text('SUB-CONTRACTOR',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: titleFs,
@@ -2127,7 +2126,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                     ),
                     child: Text(
                       '${_selectedSubContractors.length} selected',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.white,
                           fontSize: titleFs * 0.82,
                           fontWeight: FontWeight.w500),
@@ -2146,7 +2145,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 if (_subcontractorNames.isEmpty)
                   Text(
                     'No sub-contractors added to this project.',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.grey[500], fontSize: valueFs),
                   )
                 else ...[
@@ -2155,7 +2154,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   if (canAddMore) ...[
                     Text(
                       'ADD SUB-CONTRACTOR',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: labelFs,
                           fontWeight: FontWeight.w600,
                           color: _navy.withValues(alpha: 0.7),
@@ -2167,7 +2166,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       key: ValueKey(_selectedSubContractors.length),
                       initialValue: null,
                       hint: Text('Select sub-contractor…',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: Colors.grey[400], fontSize: valueFs)),
                       isExpanded: true,
                       decoration: InputDecoration(
@@ -2190,13 +2189,13 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                               const BorderSide(color: _navy, width: 1.5),
                         ),
                       ),
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: valueFs, color: Colors.black87),
                       items: available
                           .map((n) => DropdownMenuItem(
                               value: n,
                               child: Text(n,
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       fontSize: valueFs))))
                           .toList(),
                       onChanged: (v) {
@@ -2224,7 +2223,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                         padding: EdgeInsets.only(bottom: padV * 0.6),
                         child: Text(
                           'All sub-contractors have been selected.',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: Colors.green[700],
                               fontSize: labelFs,
                               fontWeight: FontWeight.w500),
@@ -2235,7 +2234,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                         _isReadOnly
                             ? 'SUB-CONTRACTORS'
                             : 'SELECTED SUB-CONTRACTORS',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             fontSize: labelFs,
                             fontWeight: FontWeight.w600,
                             color: _navy.withValues(alpha: 0.7),
@@ -2252,7 +2251,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       padding: EdgeInsets.only(top: padV * 0.5),
                       child: Text(
                         'No sub-contractor selected yet.',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: Colors.grey[400], fontSize: valueFs),
                       ),
                     ),
@@ -2261,7 +2260,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   if (_selectedSubContractors.isEmpty && _isReadOnly)
                     Text(
                       '—',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.grey[400], fontSize: valueFs),
                     ),
                 ],
@@ -2315,7 +2314,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   color: Colors.white70, size: 16),
               const SizedBox(width: 8),
               Text('ATTACHED IMAGES',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: titleFs,
@@ -2323,7 +2322,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               const Spacer(),
               if (allImages.isNotEmpty)
                 Text('${allImages.length} image(s)',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white70,
                         fontSize: titleFs * 0.85)),
             ]),
@@ -2469,7 +2468,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                         Icons.add_photo_alternate_rounded, size: 18),
                     label: Text(
                       allImages.isEmpty ? 'Attach Image(s)' : 'Add More Images',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: (aw * 0.032).clamp(11.0, 14.0)),
                     ),
                     style: OutlinedButton.styleFrom(
@@ -2516,7 +2515,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 : Icon(icon, size: 16),
             label: Text(
               label,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontWeight: FontWeight.w600, fontSize: 13),
             ),
             style: ElevatedButton.styleFrom(

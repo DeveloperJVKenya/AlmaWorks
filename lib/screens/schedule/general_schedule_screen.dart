@@ -9,7 +9,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -70,7 +69,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Error loading schedule documents',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 18,
                       color: Colors.red[600],
                       fontWeight: FontWeight.w500,
@@ -97,7 +96,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'No schedule uploaded yet',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w500,
@@ -107,7 +106,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                   if (_canManage)
                     Text(
                       'Tap the upload button to add into schedule',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[500],
                       ),
@@ -167,14 +166,14 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
         ),
         title: Text(
           document.title,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
         ),
         subtitle: Text(
           '${document.fileName} • Uploaded ${_formatDate(document.uploadedAt)}',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
           ),
@@ -268,7 +267,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           widget.logger.e('❌ GeneralScheduleScreen: File bytes are null on web — withData may not have worked');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not read file data. Please try again.', style: GoogleFonts.poppins())),
+              SnackBar(content: Text('Could not read file data. Please try again.', style: TextStyle())),
             );
           }
           return;
@@ -279,7 +278,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           widget.logger.e('❌ GeneralScheduleScreen: File path is null on native');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not access file path. Please try again.', style: GoogleFonts.poppins())),
+              SnackBar(content: Text('Could not access file path. Please try again.', style: TextStyle())),
             );
           }
           return;
@@ -301,7 +300,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           builder: (context) => AlertDialog(
             title: Text(
               'Uploading Schedule Document',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -310,7 +309,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Uploading $finalFileName...',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
               ],
             ),
@@ -334,7 +333,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             SnackBar(
               content: Text(
                 'Schedule document "$documentTitle" uploaded successfully!',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.green,
             ),
@@ -353,7 +352,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             SnackBar(
               content: Text(
                 'Upload failed: ${e.toString()}',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.red,
             ),
@@ -371,7 +370,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           SnackBar(
             content: Text(
               'Upload failed: ${e.toString()}',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
           ),
@@ -402,7 +401,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           dialogTitle,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             color: const Color(0xFF0A2E5A),
           ),
@@ -413,7 +412,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           children: [
             Text(
               contentText,
-              style: GoogleFonts.poppins(color: Colors.grey[700]),
+              style: TextStyle(color: Colors.grey[700]),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -421,20 +420,20 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
               decoration: InputDecoration(
                 hintText: hintText,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
+                hintStyle: TextStyle(color: Colors.grey[500]),
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Color(0xFF0A2E5A)),
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
               autofocus: true,
             ),
             if (showFileName && fileName != null) ...[
               const SizedBox(height: 8),
               Text(
                 'File: $fileName',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
                 ),
@@ -447,7 +446,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: GoogleFonts.poppins(color: const Color(0xFF800000)),
+              style: TextStyle(color: const Color(0xFF800000)),
             ),
           ),
           ElevatedButton(
@@ -459,7 +458,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             ),
             child: Text(
               'Confirm',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
           ),
         ],
@@ -510,7 +509,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                 SnackBar(
                   content: Text(
                     'Could not open document viewer',
-                    style: GoogleFonts.poppins(),
+                    style: TextStyle(),
                   ),
                 ),
               );
@@ -524,7 +523,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
               SnackBar(
                 content: Text(
                   'Could not open file: ${result.message}',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
                 action: SnackBarAction(
                   label: 'Download instead',
@@ -540,7 +539,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             SnackBar(
               content: Text(
                 'No internet and no cache available',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
             ),
           );
@@ -553,7 +552,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           SnackBar(
             content: Text(
               'Error viewing document: $e',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
           ),
         );
@@ -581,7 +580,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
               kIsWeb
                   ? result
                   : 'Downloaded successfully!\nLocation: $result',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
@@ -608,7 +607,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
               e.toString().contains('permission')
                   ? 'Storage permission denied. Please enable it in Settings.'
                   : 'Error downloading: $e',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
@@ -631,16 +630,16 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
       builder: (context) => AlertDialog(
         title: Text(
           'Delete Schedule Document',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: Text(
           'Are you sure you want to delete "${document.title}"? This action cannot be undone.',
-          style: GoogleFonts.poppins(),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -648,7 +647,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text('Delete', style: GoogleFonts.poppins()),
+            child: Text('Delete', style: TextStyle()),
           ),
         ],
       ),
@@ -663,7 +662,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             SnackBar(
               content: Text(
                 'Schedule document deleted successfully',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.green,
             ),
@@ -675,7 +674,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             SnackBar(
               content: Text(
                 'Failed to delete: ${e.toString()}',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.red,
             ),

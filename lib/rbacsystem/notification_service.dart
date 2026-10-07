@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 /// Same Web Push certificate key already used successfully by
 /// CommunicationNotificationService's own token-save path (see
@@ -132,7 +133,7 @@ class NotificationService {
         );
         final docId = message.data['docId'];
         _showLocalNotification(
-          title: message.notification?.title ?? 'New Notification',
+          title: message.notification?.title ?? l10nNow.newNotification,
           body: message.notification?.body ?? '',
           payload: message.data,
           id: docId != null ? stableNotificationId(docId) : null,
@@ -237,8 +238,10 @@ class NotificationService {
             final targetRoles = (data['targetRoles'] as List?)?.cast<String>();
             if (targetRoles != null && !targetRoles.contains(role)) continue;
 
-            final title = data['title'] as String? ?? '🔔 New Notification';
-            final body = data['body'] as String? ?? '';
+            // Shown in this device's language (the doc carries every
+            // language — see notificationText).
+            final title = localizedField(data, 'title') ?? l10nNow.newNotification;
+            final body = localizedField(data, 'body') ?? '';
             final payload = <String, String>{
               ...?(data['payload'] as Map<String, dynamic>?)?.map(
                 (k, v) => MapEntry(k, v.toString()),
@@ -302,8 +305,8 @@ class NotificationService {
             _shownNotificationIds.add(docId);
 
             final data = change.doc.data() as Map<String, dynamic>;
-            final title = data['title'] as String? ?? '🔔 New Notification';
-            final body = data['body'] as String? ?? '';
+            final title = localizedField(data, 'title') ?? l10nNow.newNotification;
+            final body = localizedField(data, 'body') ?? '';
             final payload = <String, String>{
               ...?(data['payload'] as Map<String, dynamic>?)?.map(
                 (k, v) => MapEntry(k, v.toString()),
@@ -386,7 +389,7 @@ class NotificationService {
         actionButtons: [
           NotificationActionButton(
             key: 'VIEW',
-            label: 'View Request',
+            label: l10nNow.viewRequest,
             actionType: ActionType.Default,
           ),
         ],
@@ -417,8 +420,6 @@ class NotificationService {
     required String requestId,
   }) async {
     try {
-      final title = '🔔 New Client Access Request';
-      final body = '$clientUsername is requesting access to projects';
       final payload = {
         'type': 'client_request',
         'route': 'client_requests',
@@ -430,8 +431,10 @@ class NotificationService {
       // though InventoryService._notifyAdmins (same collection) now scopes
       // its own notifications down to MainAdmin+SystemAdmin only.
       await _firestore.collection('AdminNotificationQueue').add({
-        'title': title,
-        'body': body,
+        ...notificationText(
+          title: (l) => l.notifNewAccessRequestTitle,
+          body: (l) => l.notifNewAccessRequestBody(clientUsername),
+        ),
         'payload': payload,
         'requestId': requestId,
         'clientUsername': clientUsername,
@@ -482,9 +485,10 @@ class NotificationService {
       final projectList = projectNames.join(', ');
       await _firestore.collection('UserNotificationQueue').add({
         'targetUid': clientUid,
-        'title': '✅ Access Granted',
-        'body':
-            'Your request has been approved! You now have access to: $projectList',
+        ...notificationText(
+          title: (l) => l.notifAccessGrantedTitle,
+          body: (l) => l.notifAccessGrantedBody(projectList),
+        ),
         'payload': {
           'type': 'client_request',
           'route': 'dashboard',
@@ -506,9 +510,11 @@ class NotificationService {
     try {
       await _firestore.collection('UserNotificationQueue').add({
         'targetUid': clientUid,
-        'title': '❌ Request Denied',
-        'body':
-            reason ?? 'Your access request was denied by an administrator.',
+        // A reason the admin typed is shown as written, in every language.
+        ...notificationText(
+          title: (l) => l.notifRequestDeniedTitle,
+          body: (l) => reason ?? l.notifRequestDeniedBody,
+        ),
         'payload': {
           'type': 'client_request',
           'route': 'dashboard',
@@ -529,23 +535,19 @@ class NotificationService {
     required List<String> revokedProjects,
   }) async {
     try {
-      String body;
-      if (addedProjects.isNotEmpty && revokedProjects.isNotEmpty) {
-        body =
-            'Your project access has been updated. Added: ${addedProjects.join(', ')}. '
-            'Removed: ${revokedProjects.join(', ')}.';
-      } else if (addedProjects.isNotEmpty) {
-        body =
-            'You have been granted access to: ${addedProjects.join(', ')}.';
-      } else {
-        body =
-            'Your access to the following projects has been revoked: ${revokedProjects.join(', ')}.';
+      final added = addedProjects.join(', ');
+      final removed = revokedProjects.join(', ');
+      String body(AppLocalizations l) {
+        if (addedProjects.isNotEmpty && revokedProjects.isNotEmpty) {
+          return l.notifProjectAccessAddedRemoved(added, removed);
+        }
+        if (addedProjects.isNotEmpty) return l.notifProjectAccessAdded(added);
+        return l.notifProjectAccessRemoved(removed);
       }
 
       await _firestore.collection('UserNotificationQueue').add({
         'targetUid': clientUid,
-        'title': '🔄 Project Access Updated',
-        'body': body,
+        ...notificationText(title: (l) => l.notifProjectAccessUpdatedTitle, body: body),
         'payload': {
           'type': 'project_update',
           'route': 'dashboard',

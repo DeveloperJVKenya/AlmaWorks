@@ -5,7 +5,7 @@ import 'package:almaworks/models/inventory/asset_booking_model.dart';
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -13,9 +13,11 @@ import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 enum CustodyEventMode { collection, returnEvent }
 
@@ -91,11 +93,12 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
   }
 
   Future<void> _submit() async {
-    final title = _isCollection ? 'Record Collection' : 'Record Return';
-    final returningFrom = widget.booking?.bookedForName ?? widget.asset.currentHolderName ?? 'storage';
+    final l = context.l10n;
+    final title = _isCollection ? l.recordCollection : l.recordReturn;
+    final returningFrom = widget.booking?.bookedForName ?? widget.asset.currentHolderName ?? l.storage;
     final message = _isCollection
-        ? 'Confirm "${widget.asset.name}" is being handed over to ${widget.booking!.bookedForName} now?'
-        : 'Record the return of "${widget.asset.name}" from $returningFrom?';
+        ? l.confirmHandoverNow(widget.asset.name, widget.booking!.bookedForName)
+        : l.confirmRecordReturnFrom(widget.asset.name, returningFrom);
 
     final confirmed = await showConfirmDialog(context, title: title, message: message, confirmLabel: title);
     if (!confirmed || !mounted) return;
@@ -146,19 +149,12 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isCollection ? 'Collection recorded' : 'Return recorded', style: GoogleFonts.poppins()),
-          backgroundColor: Colors.green,
-        ),
-      );
+      showSuccessSnack(context, _isCollection ? l.collectionRecorded : l.returnRecorded);
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ RecordCustodyEventScreen: Failed to submit', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: l.couldNotRecord);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -166,23 +162,24 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (!InventoryPermissions.canApproveAndIssue(widget.recordedByRole)) {
       return BaseLayout(
-        title: _isCollection ? 'Record Collection' : 'Record Return',
+        title: _isCollection ? l.recordCollection : l.recordReturn,
         project: widget.project,
         logger: widget.logger,
         selectedMenuItem: 'Inventory',
         onMenuItemSelected: (_) {},
         child: Center(
           child: Text(
-            'You do not have permission to record this.',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+            l.noPermissionRecord,
+            style: TextStyle(fontSize: 14, color: AppColors.inkMuted),
           ),
         ),
       );
     }
     return BaseLayout(
-      title: _isCollection ? 'Record Collection' : 'Record Return',
+      title: _isCollection ? l.recordCollection : l.recordReturn,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -199,29 +196,29 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(widget.asset.name,
-                        style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
                   ),
                   inventoryFormSection(
-                    title: _isCollection ? 'Handover' : 'Return',
+                    title: _isCollection ? l.handover : l.returnTitle,
                     icon: _isCollection ? Icons.logout : Icons.login,
                     children: [
                       _buildReadOnlyRow(
-                        _isCollection ? 'Handing over to' : 'Returning from',
-                        widget.booking?.bookedForName ?? widget.asset.currentHolderName ?? 'Unknown',
+                        _isCollection ? l.handingOverTo : l.returningFrom,
+                        widget.booking?.bookedForName ?? widget.asset.currentHolderName ?? l.unknown,
                       ),
                       if ((widget.booking?.projectName ?? widget.asset.currentProjectName) != null)
                         _buildReadOnlyRow(
-                          'Project',
+                          l.project,
                           widget.booking?.projectName ?? widget.asset.currentProjectName!,
                         ),
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Condition & Photos',
+                    title: l.conditionAndPhotos,
                     icon: Icons.fact_check_outlined,
                     children: [
                       if (!_isCollection) ...[
-                        Text('Condition rating', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[700])),
+                        Text(l.conditionRating, style: TextStyle(fontSize: 12.5, color: AppColors.inkMuted)),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
@@ -234,12 +231,12 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
                             final selected = _conditionRating == rating;
                             final color = InventoryColors.forCondition(rating);
                             return ChoiceChip(
-                              label: Text(rating, style: GoogleFonts.poppins(fontSize: 12)),
+                              label: Text(invLabel(rating), style: const TextStyle(fontSize: 12)),
                               selected: selected,
                               onSelected: (_) => setState(() => _conditionRating = rating),
                               selectedColor: color.withValues(alpha: 0.18),
-                              labelStyle: TextStyle(color: selected ? color : Colors.grey[700]),
-                              side: BorderSide(color: selected ? color : Colors.grey.withValues(alpha: 0.3)),
+                              labelStyle: TextStyle(color: selected ? color : AppColors.inkMuted),
+                              side: BorderSide(color: selected ? color : AppColors.border),
                             );
                           }).toList(),
                         ),
@@ -249,8 +246,8 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
                         controller: _conditionController,
                         maxLines: 3,
                         decoration: inventoryInputDecoration(
-                          label: 'Condition notes',
-                          hint: _isCollection ? 'Condition at handover' : 'Condition at return',
+                          label: l.conditionNotes,
+                          hint: _isCollection ? l.conditionAtHandover : l.conditionAtReturn,
                           icon: Icons.fact_check_outlined,
                         ),
                       ),
@@ -260,7 +257,7 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _isSaving ? null : _pickPhotos,
                           icon: const Icon(Icons.add_a_photo_outlined),
-                          label: Text('Add Photos', style: GoogleFonts.poppins()),
+                          label: Text(l.addPhotos),
                         ),
                       ),
                       if (_selectedPhotos.isNotEmpty) ...[
@@ -303,7 +300,7 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
                   ),
                   const SizedBox(height: 4),
                   inventoryPrimaryButton(
-                    label: _isCollection ? 'Confirm Collection' : 'Record Return',
+                    label: _isCollection ? l.confirmCollection : l.recordReturn,
                     isLoading: _isSaving,
                     onPressed: _submit,
                     icon: _isCollection ? Icons.logout : Icons.login,
@@ -324,8 +321,8 @@ class _RecordCustodyEventScreenState extends State<RecordCustodyEventScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Text('$label: ', style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
-          Text(value, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+          Text('$label: ', style: TextStyle(fontSize: 13, color: AppColors.inkMuted)),
+          Flexible(child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink))),
         ],
       ),
     );

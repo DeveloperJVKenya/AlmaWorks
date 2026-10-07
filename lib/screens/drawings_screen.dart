@@ -13,7 +13,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -143,11 +142,11 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                           unselectedLabelColor: Colors.grey[600],
                           indicatorColor: const Color(0xFF0A2E5A),
                           indicatorWeight: 3,
-                          labelStyle: GoogleFonts.poppins(
+                          labelStyle: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                           ),
-                          unselectedLabelStyle: GoogleFonts.poppins(
+                          unselectedLabelStyle: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 16,
                           ),
@@ -196,7 +195,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Error loading contract drawings',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 18,
                     color: Colors.red[600],
                     fontWeight: FontWeight.w500,
@@ -223,7 +222,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'No contract drawings uploaded yet',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
@@ -232,7 +231,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 8),
                 Text(
                   'Tap the upload button to add contract drawings',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
                   ),
@@ -275,14 +274,14 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         ),
         title: Text(
           drawing.title,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
         ),
         subtitle: Text(
           '${drawing.fileName} • Uploaded ${_formatDate(drawing.uploadedAt)}',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
           ),
@@ -377,7 +376,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not read file data. Please try again.', style: GoogleFonts.poppins())),
+              SnackBar(content: Text('Could not read file data. Please try again.', style: TextStyle())),
             );
           }
           return;
@@ -388,7 +387,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File path is null on native');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not access file path. Please try again.', style: GoogleFonts.poppins())),
+              SnackBar(content: Text('Could not access file path. Please try again.', style: TextStyle())),
             );
           }
           return;
@@ -410,7 +409,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           builder: (context) => AlertDialog(
             title: Text(
               'Uploading Contract Drawing',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -419,7 +418,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Uploading $finalFileName...',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
               ],
             ),
@@ -441,7 +440,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'Contract drawing "$drawingTitle" uploaded successfully!',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.green,
             ),
@@ -458,7 +457,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'Upload failed: ${e.toString()}',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.red,
             ),
@@ -477,7 +476,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           SnackBar(
             content: Text(
               'Upload failed: ${e.toString()}',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
           ),
@@ -539,7 +538,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Error loading drawings',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 18,
                     color: Colors.red[600],
                     fontWeight: FontWeight.w500,
@@ -566,7 +565,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'No drawings uploaded yet',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
@@ -575,7 +574,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 8),
                 Text(
                   'Tap the upload button to add your first drawing',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
                   ),
@@ -610,7 +609,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Error loading as-built drawings',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 18,
                     color: Colors.red[600],
                     fontWeight: FontWeight.w500,
@@ -637,7 +636,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'No as-built drawings yet',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
@@ -646,7 +645,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 8),
                 Text(
                   'Tap the upload button to add as-built drawings', 
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
                   ),
@@ -676,14 +675,14 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       child: ExpansionTile(
         title: Text(
           group.title,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
         ),
         subtitle: Text(
           '${group.latestRevision?.fileName ?? ''} (Latest) • ${group.revisions.length} revision${group.revisions.length != 1 ? 's' : ''}',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
           ),
@@ -722,7 +721,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         child: Center(
           child: Text(
             'Rev${drawing.revisionNumber}',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
               color: isLatest ? Colors.green[700] : Colors.grey[600],
@@ -732,11 +731,11 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       ),
       title: Text(
         drawing.fileName,
-        style: GoogleFonts.poppins(fontSize: 14),
+        style: TextStyle(fontSize: 14),
       ),
       subtitle: Text(
         'Uploaded ${_formatDate(drawing.uploadedAt)}',
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -750,7 +749,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               ),
               child: Text(
                 'Latest',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 10,
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
@@ -768,7 +767,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               ),
               child: Text(
                 'Final',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 10,
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
@@ -839,14 +838,14 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         ),
         title: Text(
           drawing.title,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
         ),
         subtitle: Text(
           '${drawing.fileName} • Uploaded ${_formatDate(drawing.uploadedAt)}',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
           ),
@@ -940,7 +939,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not read file data. Please try again.', style: GoogleFonts.poppins())),
+              SnackBar(content: Text('Could not read file data. Please try again.', style: TextStyle())),
             );
           }
           return;
@@ -951,7 +950,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File path is null on native');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not access file path. Please try again.', style: GoogleFonts.poppins())),
+              SnackBar(content: Text('Could not access file path. Please try again.', style: TextStyle())),
             );
           }
           return;
@@ -973,7 +972,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           builder: (context) => AlertDialog(
             title: Text(
               'Uploading As-Built Drawing',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -982,7 +981,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Uploading $finalFileName...',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
               ],
             ),
@@ -1004,7 +1003,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'As-Built drawing "$drawingTitle" uploaded successfully!',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.green,
             ),
@@ -1021,7 +1020,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'Upload failed: ${e.toString()}',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.red,
             ),
@@ -1040,7 +1039,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           SnackBar(
             content: Text(
               'Upload failed: ${e.toString()}',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
           ),
@@ -1061,16 +1060,16 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       builder: (context) => AlertDialog(
         title: Text(
           'Delete As-Built Drawing',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: Text(
           'Are you sure you want to delete "${drawing.title}"? This action cannot be undone.',
-          style: GoogleFonts.poppins(),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -1078,7 +1077,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text('Delete', style: GoogleFonts.poppins()),
+            child: Text('Delete', style: TextStyle()),
           ),
         ],
       ),
@@ -1093,7 +1092,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'As-Built drawing deleted successfully',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.green,
             ),
@@ -1105,7 +1104,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'Failed to delete: ${e.toString()}',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.red,
             ),
@@ -1148,7 +1147,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               SnackBar(
                 content: Text(
                   'No existing categories. Please create a new one.',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
                 backgroundColor: Colors.orange,
               ),
@@ -1208,7 +1207,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not read file data. Please try again.', style: GoogleFonts.poppins())),
+              SnackBar(content: Text('Could not read file data. Please try again.', style: TextStyle())),
             );
           }
           return;
@@ -1219,7 +1218,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File path is null on native');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not access file path. Please try again.', style: GoogleFonts.poppins())),
+              SnackBar(content: Text('Could not access file path. Please try again.', style: TextStyle())),
             );
           }
           return;
@@ -1241,7 +1240,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           builder: (context) => AlertDialog(
             title: Text(
               'Uploading Drawing',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1250,7 +1249,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Uploading $finalFileName...',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
               ],
             ),
@@ -1272,7 +1271,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'Drawing "$drawingTitle" uploaded successfully!',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.green,
             ),
@@ -1289,7 +1288,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'Upload failed: ${e.toString()}',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.red,
             ),
@@ -1308,7 +1307,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           SnackBar(
             content: Text(
               'Upload failed: ${e.toString()}',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
           ),
@@ -1331,7 +1330,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         backgroundColor: Colors.white,
         title: Text(
           'Upload Type',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
+          style: TextStyle(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1339,15 +1338,15 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           children: [
             Text(
               'Choose how to upload the drawing:',
-              style: GoogleFonts.poppins(color: Colors.grey[700]),
+              style: TextStyle(color: Colors.grey[700]),
             ),
             const SizedBox(height: 16),
             Card(
               elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                title: Text('New Category Drawing', style: GoogleFonts.poppins(fontWeight: FontWeight.w500, color: Colors.green[800])),
-                subtitle: Text('Create a new drawing category and upload the first revision.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                title: Text('New Category Drawing', style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green[800])),
+                subtitle: Text('Create a new drawing category and upload the first revision.', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                 leading: const Icon(Icons.add, color: Colors.green),
                 onTap: () => Navigator.pop(context, 'new'),
                 tileColor: Colors.green.withValues(alpha: 0.05),
@@ -1358,8 +1357,8 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                title: Text('Revision Drawing', style: GoogleFonts.poppins(fontWeight: FontWeight.w500, color: const Color(0xFF0A2E5A))),
-                subtitle: Text('Add a revision to an existing drawing category.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                title: Text('Revision Drawing', style: TextStyle(fontWeight: FontWeight.w500, color: const Color(0xFF0A2E5A))),
+                subtitle: Text('Add a revision to an existing drawing category.', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                 leading: const Icon(Icons.edit, color: Color(0xFF0A2E5A)),
                 onTap: () => Navigator.pop(context, 'revision'),
                 tileColor: const Color(0xFF0A2E5A).withValues(alpha: 0.05),
@@ -1372,7 +1371,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: GoogleFonts.poppins(color: Color(0xFF800000)),
+              style: TextStyle(color: Color(0xFF800000)),
             ),
           ),
         ],
@@ -1401,7 +1400,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         backgroundColor: Colors.white,
         title: Text(
           'Select Drawing Category',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
+          style: TextStyle(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
         ),
         content: SizedBox(
           width: min(400, MediaQuery.of(context).size.width * 0.8),
@@ -1416,7 +1415,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 color: index % 2 == 0 ? Colors.white : Colors.grey[50],
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
-                  title: Text(title, style: GoogleFonts.poppins(color: Colors.grey[800])),
+                  title: Text(title, style: TextStyle(color: Colors.grey[800])),
                   onTap: () {
                     selectedTitle = title;
                     Navigator.pop(context);
@@ -1431,7 +1430,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: GoogleFonts.poppins(color: Color(0xFF800000)),
+              style: TextStyle(color: Color(0xFF800000)),
             ),
           ),
         ],
@@ -1458,7 +1457,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           dialogTitle,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
+          style: TextStyle(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1466,7 +1465,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           children: [
             Text(
               contentText,
-              style: GoogleFonts.poppins(color: Colors.grey[700]),
+              style: TextStyle(color: Colors.grey[700]),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -1474,20 +1473,20 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               decoration: InputDecoration(
                 hintText: hintText,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
+                hintStyle: TextStyle(color: Colors.grey[500]),
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Color(0xFF0A2E5A)),
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
               autofocus: true,
             ),
             if (showFileName && fileName != null) ...[
               const SizedBox(height: 8),
               Text(
                 'File: $fileName',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
                 ),
@@ -1500,7 +1499,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: GoogleFonts.poppins(color: Color(0xFF800000)),
+              style: TextStyle(color: Color(0xFF800000)),
             ),
           ),
           ElevatedButton(
@@ -1512,7 +1511,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             ),
             child: Text(
               'Confirm',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
           ),
         ],
@@ -1556,16 +1555,16 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       builder: (context) => AlertDialog(
         title: Text(
           'Delete Drawing',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: Text(
           'Are you sure you want to delete "${drawing.fileName}"? This action cannot be undone.',
-          style: GoogleFonts.poppins(),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -1573,7 +1572,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text('Delete', style: GoogleFonts.poppins()),
+            child: Text('Delete', style: TextStyle()),
           ),
         ],
       ),
@@ -1588,7 +1587,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'Drawing deleted successfully',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.green,
             ),
@@ -1600,7 +1599,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             SnackBar(
               content: Text(
                 'Failed to delete: ${e.toString()}',
-                style: GoogleFonts.poppins(),
+                style: TextStyle(),
               ),
               backgroundColor: Colors.red,
             ),
@@ -1677,14 +1676,14 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text(name, style: GoogleFonts.poppins()),
+                title: Text(name, style: TextStyle()),
                 content: SingleChildScrollView(
-                  child: SelectableText(content, style: GoogleFonts.poppins()),
+                  child: SelectableText(content, style: TextStyle()),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Close', style: GoogleFonts.poppins()),
+                    child: Text('Close', style: TextStyle()),
                   ),
                 ],
               ),
@@ -1701,7 +1700,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               widget.logger.e('Could not launch $viewerUrl');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Could not open drawing viewer', style: GoogleFonts.poppins()),
+                  content: Text('Could not open drawing viewer', style: TextStyle()),
                 ),
               );
             }
@@ -1712,7 +1711,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: ${result.message}', style: GoogleFonts.poppins()),
+                content: Text('Could not open file: ${result.message}', style: TextStyle()),
                 action: SnackBarAction(
                   label: 'Download instead',
                   onPressed: () => _downloadDrawing(url, name),
@@ -1725,7 +1724,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('No internet and no cache available', style: GoogleFonts.poppins()),
+              content: Text('No internet and no cache available', style: TextStyle()),
             ),
           );
         }
@@ -1735,7 +1734,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error viewing drawing: $e', style: GoogleFonts.poppins()),
+            content: Text('Error viewing drawing: $e', style: TextStyle()),
           ),
         );
       }
@@ -1765,7 +1764,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               kIsWeb 
                 ? result  // Web: "Download started. Check your browser downloads."
                 : 'Downloaded successfully!\nLocation: $result',  // Mobile: Full path
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
@@ -1793,7 +1792,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               e.toString().contains('permission')
                 ? 'Storage permission denied. Please enable it in Settings.'
                 : 'Error downloading: $e',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),

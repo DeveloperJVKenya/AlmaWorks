@@ -3,7 +3,6 @@ import 'package:almaworks/screens/schedule/msproject_gantt_screen.dart';
 import 'package:almaworks/screens/schedule/purchasing_plan_screen.dart';
 import 'package:almaworks/screens/schedule/schedule_monitor_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 
 class DynamicScheduleScreen extends StatefulWidget {
@@ -70,7 +69,7 @@ class _DynamicScheduleScreenState extends State<DynamicScheduleScreen>
               labelColor: const Color(0xFF0A2E5A),
               unselectedLabelColor: Colors.grey[600],
               indicatorColor: const Color(0xFF0A2E5A),
-              labelStyle: GoogleFonts.poppins(
+              labelStyle: TextStyle(
                 fontWeight: FontWeight.w600,
               ),
               tabs: const [

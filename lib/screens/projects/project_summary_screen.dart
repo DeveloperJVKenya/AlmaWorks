@@ -10,7 +10,6 @@ import 'package:almaworks/widgets/base_layout.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ProjectSummaryScreen extends StatefulWidget {
   final ProjectModel project;
@@ -241,7 +240,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       default:
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('$menuItem section coming soon',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
         ));
     }
   }
@@ -301,7 +300,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
           padding: EdgeInsets.all(isMobile ? 12 : 16),
           child: Text(
             'Project Overview',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: isMobile ? 20 : 24,
               fontWeight: FontWeight.bold,
             ),
@@ -502,7 +501,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                             Expanded(
                               child: Text(
                                 _currentProject.location,
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -523,7 +522,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                     const SizedBox(height: 14),
                     Text(
                       _currentProject.description,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         color: Colors.grey[700],
                         fontSize: 13,
                         height: 1.55,
@@ -590,14 +589,14 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                   Row(
                     children: [
                       Text('Overall Progress',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,
                           )),
                       const Spacer(),
                       Text('${(progress * 100).toStringAsFixed(0)}%',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF0A2E5A),
@@ -642,7 +641,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       ),
       child: Text(
         _getStatusText(status ?? ''),
-        style: GoogleFonts.poppins(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: color,
@@ -656,14 +655,14 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 11,
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
             )),
         const SizedBox(height: 2),
         Text(value,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1A2744),
@@ -677,7 +676,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Health Status',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 11,
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
@@ -691,7 +690,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
           ),
           child: Text(
             h.label,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: h.color,
@@ -747,7 +746,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                           color: Colors.white70, size: 20),
                       const SizedBox(width: 10),
                       Text('Team Members',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -761,7 +760,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text('${members.length}',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -830,7 +829,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                               child: Center(
                                 child: Text(
                                   initials.isEmpty ? '?' : initials,
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 15,
@@ -849,7 +848,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                                     children: [
                                       Expanded(
                                         child: Text(member.name,
-                                            style: GoogleFonts.poppins(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w700,
                                               fontSize: 13,
                                               color: const Color(0xFF1A2744),
@@ -861,7 +860,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                                             color: Color(0xFFFFB300)),
                                         const SizedBox(width: 2),
                                         Text('PM',
-                                            style: GoogleFonts.poppins(
+                                            style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w700,
                                               color:
@@ -909,7 +908,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
         decoration: BoxDecoration(
             color: bgColor, borderRadius: BorderRadius.circular(20)),
         child: Text(label,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: textColor,

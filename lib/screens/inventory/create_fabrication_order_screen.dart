@@ -4,15 +4,17 @@ import 'package:almaworks/models/inventory/material_fabrication_order_model.dart
 import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/fabrication_form_pdf.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// MainAdmin/Admin: issue a quantity of a material for fabrication —
 /// decided per issue, not a fixed material property. Creates the order,
@@ -89,7 +91,7 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
         if (!mounted) return;
         setState(() {
           _projectsLoaded = true;
-          _projectsError = 'Could not load projects: $e';
+          _projectsError = friendlyError(e, action: l10nNow.couldNotLoadProjects);
         });
       },
     );
@@ -105,14 +107,14 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final quantity = double.tryParse(_quantityController.text.trim());
+    final quantity = double.tryParse(_quantityController.text.trim().replaceAll(',', '.'));
     if (quantity == null || quantity <= 0) return;
 
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Issue for Fabrication',
-      message: 'Issue $quantity ${widget.material.unit} of "${widget.material.name}" for fabrication?',
-      confirmLabel: 'Issue',
+      title: context.l10n.issueForFabrication,
+      message: context.l10n.confirmIssueForFabrication('$quantity', invLabel(widget.material.unit), widget.material.name),
+      confirmLabel: context.l10n.issueAction,
     );
     if (!confirmed || !mounted) return;
 
@@ -136,9 +138,7 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
     } catch (e) {
       widget.logger.e('❌ CreateFabricationOrderScreen: Failed to submit', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: context.l10n.couldNotIssue);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -152,7 +152,7 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
   @override
   Widget build(BuildContext context) {
     return BaseLayout(
-      title: 'Issue for Fabrication',
+      title: context.l10n.issueForFabrication,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -180,23 +180,25 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
   }
 
   List<Widget> _buildForm() {
+    final l = context.l10n;
+    final unit = invLabel(widget.material.unit);
     return [
       inventoryFormSection(
         title: widget.material.name,
         icon: Icons.precision_manufacturing_outlined,
-        subtitle: '${widget.material.quantityInStorage} ${widget.material.unit} currently in storage',
+        subtitle: l.currentlyInStorage('${widget.material.quantityInStorage}', unit),
         children: [
           TextFormField(
             controller: _quantityController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: inventoryInputDecoration(
-              label: 'Quantity to issue (${widget.material.unit})',
+              label: l.quantityToIssue(unit),
               icon: Icons.numbers_outlined,
             ),
             validator: (v) {
-              final q = double.tryParse((v ?? '').trim());
-              if (q == null || q <= 0) return 'Enter a valid quantity';
-              if (q > widget.material.quantityInStorage) return 'Only ${widget.material.quantityInStorage} available';
+              final q = double.tryParse((v ?? '').trim().replaceAll(',', '.'));
+              if (q == null || q <= 0) return l.enterValidQuantity;
+              if (q > widget.material.quantityInStorage) return l.onlyAvailable('${widget.material.quantityInStorage}');
               return null;
             },
           ),
@@ -210,18 +212,18 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.06),
+                color: AppColors.dangerTint,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                  Icon(Icons.error_outline, color: AppColors.danger, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(_projectsError!, style: GoogleFonts.poppins(fontSize: 12, color: Colors.red[800])),
+                    child: Text(_projectsError!, style: TextStyle(fontSize: 12, color: AppColors.danger)),
                   ),
-                  TextButton(onPressed: _subscribeProjects, child: const Text('Retry')),
+                  TextButton(onPressed: _subscribeProjects, child: Text(l.retry)),
                 ],
               ),
             )
@@ -229,11 +231,11 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
             DropdownButtonFormField<ProjectModel>(
               initialValue: _selectedProject,
               isExpanded: true,
-              decoration: inventoryInputDecoration(label: 'Destination site', icon: Icons.location_on_outlined),
+              decoration: inventoryInputDecoration(label: l.destinationSite, icon: Icons.location_on_outlined),
               items: _projects
                   .map((p) => DropdownMenuItem(
                         value: p,
-                        child: Text(p.name, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
+                        child: Text(p.name, overflow: TextOverflow.ellipsis, style: TextStyle()),
                       ))
                   .toList(),
               onChanged: (value) => setState(() => _selectedProject = value),
@@ -242,8 +244,8 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
           TextFormField(
             controller: _fabricatorController,
             decoration: inventoryInputDecoration(
-              label: 'Expected fabricator (optional)',
-              hint: 'Best guess — corrected against the scan later',
+              label: l.expectedFabricatorOptional,
+              hint: l.expectedFabricatorHint,
               icon: Icons.factory_outlined,
             ),
           ),
@@ -251,7 +253,7 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
       ),
       const SizedBox(height: 4),
       inventoryPrimaryButton(
-        label: 'Issue',
+        label: l.issueAction,
         isLoading: _isSaving,
         onPressed: _submit,
         icon: Icons.local_shipping_outlined,
@@ -261,22 +263,22 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
   }
 
   List<Widget> _buildSuccess() {
+    final l = context.l10n;
     return [
       inventoryFormSection(
-        title: 'Order Created',
+        title: l.orderCreated,
         icon: Icons.check_circle_outline,
-        subtitle: 'Form ID: ${_createdOrder!.id}',
+        subtitle: l.formId(_createdOrder!.id),
         children: [
           Text(
-            'Download and print the chain-of-custody form, then hand it to the Driver/Transporter along with '
-            '"${widget.material.name}". The completed form gets scanned back into the app once it reaches the Technician.',
-            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[700]),
+            l.orderCreatedBody(widget.material.name),
+            style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
           ),
         ],
       ),
       const SizedBox(height: 4),
       inventoryPrimaryButton(
-        label: 'Download Form',
+        label: l.downloadForm,
         isLoading: false,
         onPressed: _downloadForm,
         icon: Icons.picture_as_pdf_outlined,
@@ -286,7 +288,7 @@ class _CreateFabricationOrderScreenState extends State<CreateFabricationOrderScr
         alignment: Alignment.centerRight,
         child: TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Done', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          child: Text(l.done, style: const TextStyle(fontWeight: FontWeight.w600)),
         ),
       ),
       const SizedBox(height: 24),

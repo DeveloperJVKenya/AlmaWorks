@@ -6,7 +6,6 @@ import 'package:almaworks/models/inventory/asset_booking_model.dart';
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/asset_handover_form_pdf.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
@@ -14,10 +13,12 @@ import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// MainAdmin/Admin: book an asset/tool for a date range. If the window
 /// starts today, the physical handover is captured immediately (condition +
@@ -77,7 +78,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   bool get _isMainAdmin => widget.createdByRole == 'MainAdmin';
   bool get _startsToday => !_startDate.isAfter(DateTime.now());
   bool get _isTool => widget.asset.itemType == AssetModel.typeTool;
-  String get _itemLabel => _isTool ? 'Tool' : 'Asset';
+  String get _bookLabel => _isTool ? context.l10n.bookTool : context.l10n.bookAsset;
 
   @override
   void initState() {
@@ -115,7 +116,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
         if (!mounted) return;
         setState(() {
           _usersLoaded = true;
-          _usersError = 'Could not load users: $e';
+          _usersError = friendlyError(e, action: l10nNow.couldNotLoadUsers);
         });
       },
     );
@@ -148,7 +149,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
         if (!mounted) return;
         setState(() {
           _projectsLoaded = true;
-          _projectsError = 'Could not load projects: $e';
+          _projectsError = friendlyError(e, action: l10nNow.couldNotLoadProjects);
         });
       },
     );
@@ -203,18 +204,23 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
   Future<void> _submit() async {
     if (_selectedUserDoc == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Select who this booking is for', style: GoogleFonts.poppins())),
-      );
+      showWarningSnack(context, context.l10n.selectWhoBookingFor);
       return;
     }
 
-    final title = _startsToday ? 'Check Out Now' : 'Book $_itemLabel';
+    final l = context.l10n;
+    final who = _selectedUserDoc!['username'] as String;
+    final title = _startsToday ? l.checkOutNow : _bookLabel;
     final message = _startsToday
-        ? 'Check out "${widget.asset.name}" to ${_selectedUserDoc!['username']} now'
-            '${_selectedProject != null ? ' for project ${_selectedProject!.name}' : ''}?'
-        : 'Book "${widget.asset.name}" for ${_selectedUserDoc!['username']} from '
-            '${DateFormat('d MMM').format(_startDate)} to ${DateFormat('d MMM yyyy').format(_endDate)}?';
+        ? (_selectedProject != null
+            ? l.confirmCheckOutNowProject(widget.asset.name, who, _selectedProject!.name)
+            : l.confirmCheckOutNow(widget.asset.name, who))
+        : l.confirmBookFor(
+            widget.asset.name,
+            who,
+            DateFormat('d MMM').format(_startDate),
+            DateFormat('d MMM yyyy').format(_endDate),
+          );
 
     final confirmed = await showConfirmDialog(context, title: title, message: message, confirmLabel: title);
     if (!confirmed || !mounted) return;
@@ -252,11 +258,9 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_startsToday ? '$_itemLabel checked out' : 'Booking created', style: GoogleFonts.poppins()),
-          backgroundColor: Colors.green,
-        ),
+      showSuccessSnack(
+        context,
+        _startsToday ? (_isTool ? l.toolCheckedOut : l.assetCheckedOut) : l.bookingCreated,
       );
 
       // Driver has no app account — the pickup/receipt acknowledgment is
@@ -266,21 +270,17 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
         await showDialog<void>(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            title: Text('Handover Form', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-            content: Text(
-              'Download the printable handover form for the driver to sign at pickup, '
-              'and for ${_selectedUserDoc!['username']} to sign at receipt.',
-              style: GoogleFonts.poppins(fontSize: 13),
-            ),
+            title: Text(l.handoverForm, style: const TextStyle(fontWeight: FontWeight.w700)),
+            content: Text(l.handoverFormBody(who), style: const TextStyle(fontSize: 13)),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Skip')),
+              TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(l.skip)),
               FilledButton.icon(
                 onPressed: () async {
                   Navigator.pop(dialogContext);
                   await generateAndSaveHandoverForm(context: context, logger: widget.logger, booking: booking);
                 },
                 icon: const Icon(Icons.download_outlined, size: 18),
-                label: const Text('Download Form'),
+                label: Text(l.downloadForm),
               ),
             ],
           ),
@@ -292,9 +292,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     } catch (e) {
       widget.logger.e('❌ CreateBookingScreen: Failed to submit', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: context.l10n.couldNotCreateBooking);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -302,8 +300,9 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return BaseLayout(
-      title: 'Book $_itemLabel',
+      title: _bookLabel,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -320,14 +319,12 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(widget.asset.name,
-                        style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
                   ),
                   inventoryFormSection(
-                    title: 'Booking Window',
+                    title: l.bookingWindow,
                     icon: Icons.date_range_outlined,
-                    subtitle: _startsToday
-                        ? 'Starts today — this hands the item over immediately'
-                        : 'Future window — the item stays Available until collected on the day',
+                    subtitle: _startsToday ? l.startsTodayHint : l.futureWindowHint,
                     children: [
                       Row(
                         children: [
@@ -335,8 +332,8 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => _pickDate(isStart: true),
                               icon: const Icon(Icons.event_outlined, size: 18),
-                              label: Text('From ${DateFormat('d MMM yyyy').format(_startDate)}',
-                                  style: GoogleFonts.poppins(fontSize: 12.5)),
+                              label: Text(l.fromDate(DateFormat('d MMM yyyy').format(_startDate)),
+                                  style: const TextStyle(fontSize: 12.5)),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -344,8 +341,8 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => _pickDate(isStart: false),
                               icon: const Icon(Icons.event_outlined, size: 18),
-                              label: Text('To ${DateFormat('d MMM yyyy').format(_endDate)}',
-                                  style: GoogleFonts.poppins(fontSize: 12.5)),
+                              label: Text(l.toDate(DateFormat('d MMM yyyy').format(_endDate)),
+                                  style: const TextStyle(fontSize: 12.5)),
                             ),
                           ),
                         ],
@@ -353,26 +350,26 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Handover',
+                    title: l.handover,
                     icon: Icons.logout,
                     children: [
                       _buildUserPicker(),
                       const SizedBox(height: 12),
                       _buildProjectPicker(),
                       const SizedBox(height: 16),
-                      Text('Delivery method', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[700])),
+                      Text(l.deliveryMethod, style: TextStyle(fontSize: 12.5, color: AppColors.inkMuted)),
                       const SizedBox(height: 8),
                       SegmentedButton<String>(
-                        segments: const [
+                        segments: [
                           ButtonSegment(
                             value: AssetBookingModel.deliveryDirect,
-                            label: Text('Direct handoff'),
-                            icon: Icon(Icons.handshake_outlined, size: 16),
+                            label: Text(l.directHandoff),
+                            icon: const Icon(Icons.handshake_outlined, size: 16),
                           ),
                           ButtonSegment(
                             value: AssetBookingModel.deliveryDriver,
-                            label: Text('Via Driver/Transporter'),
-                            icon: Icon(Icons.local_shipping_outlined, size: 16),
+                            label: Text(l.viaDriver),
+                            icon: const Icon(Icons.local_shipping_outlined, size: 16),
                           ),
                         ],
                         selected: {_deliveryMethod},
@@ -383,31 +380,31 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                         TextField(
                           controller: _driverNameController,
                           decoration: inventoryInputDecoration(
-                            label: 'Driver / Transporter name',
-                            hint: 'e.g. James, company driver',
+                            label: l.driverName,
+                            hint: l.driverNameHint,
                             icon: Icons.badge_outlined,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'The recipient will need to tap "Acknowledge Receipt" once it arrives on site.',
-                          style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey[600]),
+                          l.recipientMustAcknowledge,
+                          style: TextStyle(fontSize: 11.5, color: AppColors.inkMuted),
                         ),
                       ],
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Condition & Photos',
+                    title: l.conditionAndPhotos,
                     icon: Icons.fact_check_outlined,
-                    subtitle: _startsToday ? null : 'Captured when the item is actually collected',
+                    subtitle: _startsToday ? null : l.capturedAtCollection,
                     children: [
                       TextField(
                         controller: _conditionController,
                         maxLines: 3,
                         enabled: _startsToday,
                         decoration: inventoryInputDecoration(
-                          label: 'Condition notes',
-                          hint: 'Condition at handover',
+                          label: l.conditionNotes,
+                          hint: l.conditionAtHandover,
                           icon: Icons.fact_check_outlined,
                         ),
                       ),
@@ -415,7 +412,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                       OutlinedButton.icon(
                         onPressed: (_isSaving || !_startsToday) ? null : _pickPhotos,
                         icon: const Icon(Icons.add_a_photo_outlined),
-                        label: Text('Add Photos', style: GoogleFonts.poppins()),
+                        label: Text(l.addPhotos),
                       ),
                       if (_selectedPhotos.isNotEmpty) ...[
                         const SizedBox(height: 10),
@@ -457,7 +454,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                   ),
                   const SizedBox(height: 4),
                   inventoryPrimaryButton(
-                    label: _startsToday ? 'Check Out' : 'Book $_itemLabel',
+                    label: _startsToday ? l.checkOut : _bookLabel,
                     isLoading: _isSaving,
                     onPressed: _submit,
                     icon: _startsToday ? Icons.logout : Icons.event_available,
@@ -489,11 +486,11 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
         DropdownButtonFormField<String>(
           initialValue: _selectedUserUid,
           isExpanded: true,
-          decoration: inventoryInputDecoration(label: 'Book For', icon: Icons.person_outline),
+          decoration: inventoryInputDecoration(label: context.l10n.bookFor, icon: Icons.person_outline),
           items: _users
               .map((m) => DropdownMenuItem(
                     value: m['uid'] as String,
-                    child: Text(m['username'] as String, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
+                    child: Text(m['username'] as String, overflow: TextOverflow.ellipsis, style: TextStyle()),
                   ))
               .toList(),
           onChanged: (value) => setState(() => _selectedUserUid = value),
@@ -508,7 +505,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
             child: TextButton.icon(
               onPressed: () => setState(() => _selectedUserUid = widget.createdByUid),
               icon: const Icon(Icons.person_pin_circle_outlined, size: 16),
-              label: Text('Book for myself', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              label: Text(context.l10n.bookForMyself, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -530,13 +527,13 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       initialValue: _selectedProjectId,
       isExpanded: true,
       decoration: inventoryInputDecoration(
-        label: 'Project (optional — leave blank for company storage)',
+        label: context.l10n.projectOptionalStorage,
         icon: Icons.folder_outlined,
       ),
       items: _projects
           .map((p) => DropdownMenuItem(
                 value: p.id,
-                child: Text(p.name, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
+                child: Text(p.name, overflow: TextOverflow.ellipsis, style: TextStyle()),
               ))
           .toList(),
       onChanged: (value) => setState(() => _selectedProjectId = value),
@@ -547,16 +544,16 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.06),
+        color: AppColors.dangerTint,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 18),
+          Icon(Icons.error_outline, color: AppColors.danger, size: 18),
           const SizedBox(width: 8),
-          Expanded(child: Text(message, style: GoogleFonts.poppins(fontSize: 12, color: Colors.red[800]))),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          Expanded(child: Text(message, style: TextStyle(fontSize: 12, color: AppColors.danger))),
+          TextButton(onPressed: onRetry, child: Text(context.l10n.retry)),
         ],
       ),
     );

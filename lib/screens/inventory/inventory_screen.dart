@@ -6,6 +6,7 @@ import 'package:almaworks/screens/inventory/add_asset_screen.dart';
 import 'package:almaworks/screens/inventory/add_material_screen.dart';
 import 'package:almaworks/screens/inventory/asset_detail_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/material_detail_screen.dart';
@@ -15,10 +16,19 @@ import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart' show inventoryInputDecoration;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
-const _navy = InventoryColors.navy;
+/// A filter option for display — 'All' and stock levels are internal ids.
+String _optionLabel(String value) => switch (value) {
+  'All' => l10nNow.all,
+  'In Stock' => l10nNow.inStock,
+  'Low Stock' => l10nNow.lowStock,
+  'Out of Stock' => l10nNow.outOfStock,
+  _ => invLabel(value),
+};
 
 /// Company-wide Inventory: three tabs (Assets / Tools / Materials), each
 /// with its own filters, list, detail navigation, and "Add" action — tabbed
@@ -70,7 +80,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
 
     if (roleAsync.isLoading || usernameAsync.isLoading || mirrorSyncAsync.isLoading) {
       return BaseLayout(
-        title: 'Inventory',
+        title: context.l10n.navInventory,
         project: widget.project,
         logger: widget.logger,
         selectedMenuItem: 'Inventory',
@@ -92,22 +102,22 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
 
     if (!isAuthorized) {
       return BaseLayout(
-        title: 'Inventory',
+        title: context.l10n.navInventory,
         project: widget.project,
         logger: widget.logger,
         selectedMenuItem: 'Inventory',
         onMenuItemSelected: (_) {},
         child: Center(
           child: Text(
-            'You do not have access to Inventory.',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+            context.l10n.noInventoryAccess,
+            style: TextStyle(fontSize: 14, color: AppColors.inkMuted),
           ),
         ),
       );
     }
 
     return BaseLayout(
-      title: 'Inventory',
+      title: context.l10n.navInventory,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -123,21 +133,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
+              color: AppColors.surface,
+              boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: const Offset(0, 2))],
             ),
             child: TabBar(
               controller: _tabController,
-              labelColor: _navy,
-              unselectedLabelColor: Colors.grey[600],
-              indicatorColor: _navy,
+              labelColor: AppColors.brandInk,
+              unselectedLabelColor: AppColors.inkMuted,
+              indicatorColor: AppColors.brandInk,
               indicatorWeight: 3,
-              labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 15),
-              unselectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 15),
-              tabs: const [
-                Tab(icon: Icon(Icons.precision_manufacturing_outlined, size: 20), text: 'Assets'),
-                Tab(icon: Icon(Icons.handyman_outlined, size: 20), text: 'Tools'),
-                Tab(icon: Icon(Icons.inventory_2_outlined, size: 20), text: 'Materials'),
+              labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+              tabs: [
+                Tab(icon: const Icon(Icons.precision_manufacturing_outlined, size: 20), text: context.l10n.tabAssets),
+                Tab(icon: const Icon(Icons.handyman_outlined, size: 20), text: context.l10n.tabTools),
+                Tab(icon: const Icon(Icons.inventory_2_outlined, size: 20), text: context.l10n.tabMaterials),
               ],
             ),
           ),
@@ -149,8 +159,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
                   key: const PageStorageKey('inventory-assets-tab'),
                   itemType: AssetModel.typeAsset,
                   categoryOptions: const ['All', ...InventoryCategories.asset],
-                  emptyLabel: 'No assets yet',
-                  emptyHint: 'Assets you register will show up here.',
+                  emptyLabel: context.l10n.noAssetsYet,
+                  emptyHint: context.l10n.noAssetsHint,
                   project: widget.project,
                   logger: widget.logger,
                   userRole: role,
@@ -161,8 +171,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
                   key: const PageStorageKey('inventory-tools-tab'),
                   itemType: AssetModel.typeTool,
                   categoryOptions: const ['All', ...InventoryCategories.tool],
-                  emptyLabel: 'No tools yet',
-                  emptyHint: 'Tools you register will show up here.',
+                  emptyLabel: context.l10n.noToolsYet,
+                  emptyHint: context.l10n.noToolsHint,
                   project: widget.project,
                   logger: widget.logger,
                   userRole: role,
@@ -186,9 +196,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
   }
 
   Widget _buildFab(String uid, String username) {
-    final labels = ['Add Asset', 'Add Tool', 'Add Material'];
+    final labels = [context.l10n.addAsset, context.l10n.addTool, context.l10n.addMaterial];
     return FloatingActionButton.extended(
-      backgroundColor: _navy,
+      backgroundColor: AppColors.brand,
       foregroundColor: Colors.white,
       elevation: 3,
       onPressed: () {
@@ -237,7 +247,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
         }
       },
       icon: const Icon(Icons.add),
-      label: Text(labels[_tabController.index], style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+      label: Text(labels[_tabController.index], style: TextStyle(fontWeight: FontWeight.w600)),
     );
   }
 
@@ -247,7 +257,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
         final ordersAsync = ref.watch(pendingFabricationOrdersProvider);
         final count = ordersAsync.valueOrNull?.length ?? 0;
         return IconButton(
-          tooltip: 'Fabrication Orders',
+          tooltip: context.l10n.fabricationOrders,
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -277,7 +287,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
         final requestsAsync = ref.watch(pendingRequestsProvider);
         final count = requestsAsync.valueOrNull?.length ?? 0;
         return IconButton(
-          tooltip: 'Pending Requests',
+          tooltip: context.l10n.pendingRequests,
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -342,10 +352,10 @@ Widget _filterSurface({required List<Widget> children}) {
     margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(14),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
-      border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
+      boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 3))],
+      border: Border.all(color: AppColors.border),
     ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
   );
@@ -360,6 +370,7 @@ Widget _filterSurface({required List<Widget> children}) {
 /// button is that "something," rather than requiring an app restart.
 Widget _buildStreamErrorState(Object error, {required VoidCallback onRetry}) {
   final isPermissionDenied = error.toString().contains('permission-denied');
+  final l = l10nNow;
   return Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -367,25 +378,23 @@ Widget _buildStreamErrorState(Object error, {required VoidCallback onRetry}) {
         Icon(Icons.error_outline, size: 40, color: Colors.red[300]),
         const SizedBox(height: 12),
         Text(
-          isPermissionDenied ? 'Access still syncing' : 'Error loading items',
-          style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+          isPermissionDenied ? l.accessStillSyncing : l.couldNotLoadItems,
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.ink),
         ),
         const SizedBox(height: 4),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Text(
-            isPermissionDenied
-                ? 'Your access is still being confirmed — this usually resolves in a moment.'
-                : 'Something went wrong loading this list.',
+            isPermissionDenied ? l.accessStillSyncingHint : friendlyError(error),
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
           ),
         ),
         const SizedBox(height: 14),
         OutlinedButton.icon(
           onPressed: onRetry,
           icon: const Icon(Icons.refresh, size: 18),
-          label: Text('Retry', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          label: Text(l.retry, style: const TextStyle(fontWeight: FontWeight.w600)),
         ),
       ],
     ),
@@ -399,13 +408,13 @@ Widget _emptyState({required IconData icon, required String label, required Stri
       children: [
         Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: _navy.withValues(alpha: 0.06), shape: BoxShape.circle),
-          child: Icon(icon, size: 40, color: _navy.withValues(alpha: 0.35)),
+          decoration: BoxDecoration(color: AppColors.brandTint, shape: BoxShape.circle),
+          child: Icon(icon, size: 40, color: AppColors.brandInk.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 14),
-        Text(label, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[800])),
+        Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.ink)),
         const SizedBox(height: 4),
-        Text(hint, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500])),
+        Text(hint, style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
       ],
     ),
   );
@@ -551,7 +560,7 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
       TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
         decoration: inventoryInputDecoration(
-          hint: 'Search ${widget.itemType.toLowerCase()}s...',
+          hint: widget.itemType == AssetModel.typeTool ? context.l10n.searchTools : context.l10n.searchAssets,
           icon: Icons.search,
           isDense: true,
         ),
@@ -566,9 +575,9 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: _statusFilter,
               isExpanded: true,
-              decoration: inventoryInputDecoration(label: 'Status', icon: Icons.flag_outlined, isDense: true),
+              decoration: inventoryInputDecoration(label: context.l10n.status, icon: Icons.flag_outlined, isDense: true),
               items: _statusOptions
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.poppins(fontSize: 13))))
+                  .map((s) => DropdownMenuItem(value: s, child: Text(_optionLabel(s), style: const TextStyle(fontSize: 13))))
                   .toList(),
               onChanged: (value) => setState(() => _statusFilter = value ?? 'All'),
             ),
@@ -578,9 +587,9 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: safeCategoryFilter,
               isExpanded: true,
-              decoration: inventoryInputDecoration(label: 'Category', icon: Icons.category_outlined, isDense: true),
+              decoration: inventoryInputDecoration(label: context.l10n.category, icon: Icons.category_outlined, isDense: true),
               items: dynamicCategories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.poppins(fontSize: 13))))
+                  .map((c) => DropdownMenuItem(value: c, child: Text(_optionLabel(c), style: const TextStyle(fontSize: 13))))
                   .toList(),
               onChanged: (value) => setState(() => _categoryFilter = value ?? 'All'),
             ),
@@ -614,7 +623,7 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
+        side: BorderSide(color: AppColors.border),
       ),
       clipBehavior: Clip.antiAlias,
       // A status-colored left accent strip — a quicker visual read of an
@@ -633,10 +642,10 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
 
   Widget _buildItemCardBody(AssetModel item, Color statusColor, ({int total, int available})? quantity) {
     final statusLabel = item.hasPendingRequest
-        ? 'Request Pending'
+        ? context.l10n.requestPendingStatus
         : (item.status == AssetModel.statusAvailable && item.hasUpcomingBooking)
-            ? 'Booked'
-            : item.status;
+            ? context.l10n.booked
+            : invLabel(item.status);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -682,19 +691,21 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
                     Text(item.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 2),
                     Text(
-                      item.currentHolderName != null ? '${item.category} • Held by ${item.currentHolderName}' : item.category,
+                      item.currentHolderName != null
+                          ? context.l10n.heldBy(invLabel(item.category), item.currentHolderName!)
+                          : invLabel(item.category),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                     if (quantity != null) ...[
                       const SizedBox(height: 3),
                       Text(
-                        '${quantity.available} of ${quantity.total} available',
-                        style: GoogleFonts.poppins(
+                        context.l10n.availableOfTotal(quantity.available, quantity.total),
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: quantity.available > 0 ? const Color(0xFF2E7D32) : Colors.red[700],
@@ -712,9 +723,9 @@ class _AssetLikeTabState extends ConsumerState<_AssetLikeTab> with AutomaticKeep
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(statusLabel,
-                    style: GoogleFonts.poppins(fontSize: 10, color: statusColor, fontWeight: FontWeight.w700)),
+                    style: TextStyle(fontSize: 10, color: statusColor, fontWeight: FontWeight.w700)),
               ),
-              Icon(Icons.chevron_right, size: 18, color: Colors.grey[400]),
+              Icon(Icons.chevron_right, size: 18, color: AppColors.inkFaint),
             ],
           ),
         ),
@@ -791,8 +802,8 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
               if (materials.isEmpty) {
                 return _emptyState(
                   icon: Icons.inventory_2_outlined,
-                  label: 'No materials yet',
-                  hint: 'Materials you register will show up here.',
+                  label: context.l10n.noMaterialsYet,
+                  hint: context.l10n.noMaterialsHint,
                 );
               }
 
@@ -835,7 +846,7 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
     return _filterSurface(children: [
       TextField(
         onChanged: (value) => setState(() => _searchQuery = value),
-        decoration: inventoryInputDecoration(hint: 'Search materials...', icon: Icons.search, isDense: true),
+        decoration: inventoryInputDecoration(hint: context.l10n.searchMaterials, icon: Icons.search, isDense: true),
       ),
       const SizedBox(height: 10),
       Wrap(
@@ -847,9 +858,9 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: _sourceFilter,
               isExpanded: true,
-              decoration: inventoryInputDecoration(label: 'Source', icon: Icons.public_outlined, isDense: true),
+              decoration: inventoryInputDecoration(label: context.l10n.source, icon: Icons.public_outlined, isDense: true),
               items: _sourceOptions
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.poppins(fontSize: 13))))
+                  .map((s) => DropdownMenuItem(value: s, child: Text(_optionLabel(s), style: const TextStyle(fontSize: 13))))
                   .toList(),
               onChanged: (value) => setState(() => _sourceFilter = value ?? 'All'),
             ),
@@ -859,9 +870,9 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: _stockFilter,
               isExpanded: true,
-              decoration: inventoryInputDecoration(label: 'Stock', icon: Icons.inventory_2_outlined, isDense: true),
+              decoration: inventoryInputDecoration(label: context.l10n.stock, icon: Icons.inventory_2_outlined, isDense: true),
               items: _stockOptions
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.poppins(fontSize: 13))))
+                  .map((s) => DropdownMenuItem(value: s, child: Text(_optionLabel(s), style: const TextStyle(fontSize: 13))))
                   .toList(),
               onChanged: (value) => setState(() => _stockFilter = value ?? 'All'),
             ),
@@ -871,9 +882,9 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
             child: DropdownButtonFormField<String>(
               initialValue: safeCategoryFilter,
               isExpanded: true,
-              decoration: inventoryInputDecoration(label: 'Category', icon: Icons.category_outlined, isDense: true),
+              decoration: inventoryInputDecoration(label: context.l10n.category, icon: Icons.category_outlined, isDense: true),
               items: dynamicCategories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.poppins(fontSize: 13))))
+                  .map((c) => DropdownMenuItem(value: c, child: Text(_optionLabel(c), style: const TextStyle(fontSize: 13))))
                   .toList(),
               onChanged: (value) => setState(() => _categoryFilter = value ?? 'All'),
             ),
@@ -889,14 +900,16 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
         : material.isLowStock
             ? const Color(0xFFE65100)
             : const Color(0xFF2E7D32);
-    final stockLabel = material.isOutOfStock ? 'Out of Stock' : (material.isLowStock ? 'Low Stock' : 'In Stock');
+    final stockLabel = material.isOutOfStock
+        ? context.l10n.outOfStock
+        : (material.isLowStock ? context.l10n.lowStock : context.l10n.inStock);
 
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
+        side: BorderSide(color: AppColors.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: IntrinsicHeight(
@@ -952,13 +965,13 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
                     Text(material.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 2),
                     Text(
-                      '${material.category} • ${material.quantityInStorage} ${material.unit} • ${material.source}',
+                      '${invLabel(material.category)} • ${material.quantityInStorage} ${invLabel(material.unit)} • ${invLabel(material.source)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                   ],
                 ),
@@ -971,9 +984,9 @@ class _MaterialsTabState extends ConsumerState<_MaterialsTab> with AutomaticKeep
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(stockLabel,
-                    style: GoogleFonts.poppins(fontSize: 10, color: stockColor, fontWeight: FontWeight.w700)),
+                    style: TextStyle(fontSize: 10, color: stockColor, fontWeight: FontWeight.w700)),
               ),
-              Icon(Icons.chevron_right, size: 18, color: Colors.grey[400]),
+              Icon(Icons.chevron_right, size: 18, color: AppColors.inkFaint),
             ],
           ),
         ),

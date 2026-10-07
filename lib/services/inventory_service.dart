@@ -10,8 +10,11 @@ import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// Firestore + Storage access for the Inventory module: Assets, Tools
 /// (both backed by [AssetModel]/[_assetsCollection], distinguished by
@@ -247,16 +250,16 @@ class InventoryService {
         final assetRef = _firestore.collection(_assetsCollection).doc(assetId);
         final assetSnap = await transaction.get(assetRef);
         if (!assetSnap.exists) {
-          throw Exception('Asset $assetId no longer exists');
+          throw UserFacingException(l10nNow.invItemNoLongerExists);
         }
         final assetData = assetSnap.data()!;
         final currentStatus = assetData['status'] as String?;
         final pendingRequestId = assetData['pendingRequestId'] as String?;
         if (currentStatus != AssetModel.statusAvailable) {
-          throw Exception('Asset is not available for checkout (status: $currentStatus)');
+          throw UserFacingException(l10nNow.invItemNotAvailable);
         }
         if (pendingRequestId != null) {
-          throw Exception('Asset has a pending checkout request awaiting review');
+          throw UserFacingException(l10nNow.invItemHasPendingRequest);
         }
 
         transaction.set(assignmentRef, assignment.toFirestore());
@@ -305,14 +308,14 @@ class InventoryService {
         final assetRef = _firestore.collection(_assetsCollection).doc(assetId);
         final assetSnap = await transaction.get(assetRef);
         if (!assetSnap.exists) {
-          throw Exception('Asset $assetId no longer exists');
+          throw UserFacingException(l10nNow.invItemNoLongerExists);
         }
         final data = assetSnap.data()!;
         final currentStatus = data['status'] as String?;
         final currentAssignmentId = data['currentAssignmentId'] as String?;
         if (currentStatus != AssetModel.statusCheckedOut ||
             currentAssignmentId != previousAssignmentId) {
-          throw Exception('Asset is not currently checked out under this assignment');
+          throw UserFacingException(l10nNow.invItemChangedRefresh);
         }
 
         final assignment = AssetAssignmentModel(
@@ -443,7 +446,7 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final assetRef = _firestore.collection(_assetsCollection).doc(assetId);
         final assetSnap = await transaction.get(assetRef);
-        if (!assetSnap.exists) throw Exception('Asset $assetId no longer exists');
+        if (!assetSnap.exists) throw UserFacingException(l10nNow.invItemNoLongerExists);
 
         transaction.set(requestRef, request.toFirestore());
 
@@ -461,7 +464,7 @@ class InventoryService {
         if (startsNow) {
           final data = assetSnap.data()!;
           if (data['pendingRequestId'] != null) {
-            throw Exception('Asset already has a pending request');
+            throw UserFacingException(l10nNow.invItemHasPendingRequest);
           }
           transaction.update(assetRef, {
             'pendingRequestId': requestRef.id,
@@ -471,9 +474,16 @@ class InventoryService {
       });
 
       await _notifyAdmins(
-        title: '📦 Checkout Request',
-        body: '$requestedByName requested "$assetName" from ${_fmtDate(requestedStart)} '
-            'to ${_fmtDate(requestedEnd)}${projectName != null ? ' for $projectName' : ''}.',
+        title: (l) => l.nInvCheckoutRequestTitle,
+        body: (l) => projectName != null
+            ? l.nInvCheckoutRequestBodyProject(
+                requestedByName,
+                assetName,
+                _fmtDate(requestedStart, l),
+                _fmtDate(requestedEnd, l),
+                projectName,
+              )
+            : l.nInvCheckoutRequestBody(requestedByName, assetName, _fmtDate(requestedStart, l), _fmtDate(requestedEnd, l)),
         payload: {'type': 'inventory_checkout_request', 'requestId': requestRef.id, 'assetId': assetId},
       );
 
@@ -503,10 +513,10 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final requestRef = _firestore.collection(_requestsCollection).doc(requestId);
         final requestSnap = await transaction.get(requestRef);
-        if (!requestSnap.exists) throw Exception('Request $requestId no longer exists');
+        if (!requestSnap.exists) throw UserFacingException(l10nNow.invRequestNoLongerExists);
         final requestData = requestSnap.data()!;
         if (requestData['status'] != CheckoutRequestModel.statusPending) {
-          throw Exception('Request has already been responded to');
+          throw UserFacingException(l10nNow.invRequestAlreadyHandled);
         }
         requesterUid = requestData['requestedByUid'] as String? ?? '';
         requesterName = requestData['requestedByName'] as String? ?? '';
@@ -528,18 +538,20 @@ class InventoryService {
       });
 
       await _notifyAdmins(
-        title: '❌ Checkout Request Rejected',
-        body: '$respondedByName rejected $requesterName\'s request for "$assetName"'
-            '${rejectionReason != null ? ': $rejectionReason' : '.'}',
+        title: (l) => l.nInvRequestRejectedTitle,
+        body: (l) => rejectionReason != null
+            ? l.nInvRequestRejectedAdminBodyReason(respondedByName, requesterName, assetName, rejectionReason)
+            : l.nInvRequestRejectedAdminBody(respondedByName, requesterName, assetName),
         payload: {'type': 'inventory_checkout_rejected', 'requestId': requestId, 'assetId': assetId},
       );
 
       if (requesterUid.isNotEmpty) {
         await _notifyUser(
           targetUid: requesterUid,
-          title: '❌ Checkout Request Rejected',
-          body: 'Your request for "$assetName" was rejected'
-              '${rejectionReason != null ? ': $rejectionReason' : '.'}',
+          title: (l) => l.nInvRequestRejectedTitle,
+          body: (l) => rejectionReason != null
+              ? l.nInvRequestRejectedUserBodyReason(assetName, rejectionReason)
+              : l.nInvRequestRejectedUserBody(assetName),
           payload: {'type': 'inventory_checkout_rejected', 'requestId': requestId, 'assetId': assetId},
         );
       }
@@ -627,24 +639,24 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final requestRef = _firestore.collection(_requestsCollection).doc(request.id);
         final requestSnap = await transaction.get(requestRef);
-        if (!requestSnap.exists) throw Exception('Request ${request.id} no longer exists');
+        if (!requestSnap.exists) throw UserFacingException(l10nNow.invRequestNoLongerExists);
         if (requestSnap.data()!['status'] != CheckoutRequestModel.statusPending) {
-          throw Exception('Request has already been responded to');
+          throw UserFacingException(l10nNow.invRequestAlreadyHandled);
         }
 
         final assetRef = _firestore.collection(_assetsCollection).doc(request.assetId);
         final assetSnap = await transaction.get(assetRef);
-        if (!assetSnap.exists) throw Exception('Asset ${request.assetId} no longer exists');
+        if (!assetSnap.exists) throw UserFacingException(l10nNow.invItemNoLongerExists);
         final assetData = assetSnap.data()!;
         // Only an immediate request ever locked the asset's pendingRequestId
         // (see createCheckoutRequest) — a future request never touched it,
         // so there's nothing to reconcile here for that case.
         if (startsNow) {
           if (assetData['pendingRequestId'] != request.id) {
-            throw Exception('Asset state no longer matches this request');
+            throw UserFacingException(l10nNow.invItemChangedRefresh);
           }
           if (assetData['status'] != AssetModel.statusAvailable) {
-            throw Exception('Asset is not available for an immediate checkout (status: ${assetData['status']})');
+            throw UserFacingException(l10nNow.invItemNotAvailable);
           }
         }
 
@@ -696,25 +708,27 @@ class InventoryService {
       await _refreshNextBooking(request.assetId);
 
       await _notifyAdmins(
-        title: '✅ Checkout Approved',
-        body: '$respondedByName approved ${request.requestedByName}\'s request for "${request.assetName}".',
+        title: (l) => l.nInvCheckoutApprovedTitle,
+        body: (l) => l.nInvCheckoutApprovedAdminBody(respondedByName, request.requestedByName, request.assetName),
         payload: {'type': 'inventory_checkout_approved', 'requestId': request.id, 'assetId': request.assetId},
       );
 
       await _notifyUser(
         targetUid: request.requestedByUid,
-        title: '✅ Checkout Approved',
-        body: 'Your request for "${request.assetName}" was approved by $respondedByName'
-            '${startsNow ? ' — it\'s checked out to you now.' : ' — booked for ${_fmtDate(request.requestedStart)}.'}',
+        title: (l) => l.nInvCheckoutApprovedTitle,
+        body: (l) => startsNow
+            ? l.nInvCheckoutApprovedNowBody(request.assetName, respondedByName)
+            : l.nInvCheckoutApprovedLaterBody(request.assetName, respondedByName, _fmtDate(request.requestedStart, l)),
         payload: {'type': 'inventory_checkout_approved', 'requestId': request.id, 'assetId': request.assetId},
       );
 
       if (startsNow && viaDriver) {
         await _notifyUser(
           targetUid: request.requestedByUid,
-          title: '🚚 "${request.assetName}" is on the way',
-          body: '${driverName != null ? '$driverName is bringing' : 'A driver is bringing'} '
-              '"${request.assetName}" to you — tap Acknowledge Receipt once it arrives.',
+          title: (l) => l.nInvOnTheWayTitle(request.assetName),
+          body: (l) => driverName != null
+              ? l.nInvOnTheWayBodyDriver(driverName, request.assetName)
+              : l.nInvOnTheWayBody(request.assetName),
           payload: {'type': 'inventory_delivery_dispatched', 'assetId': request.assetId, 'bookingId': bookingRef.id},
         );
       }
@@ -812,13 +826,13 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final assetRef = _firestore.collection(_assetsCollection).doc(assetId);
         final assetSnap = await transaction.get(assetRef);
-        if (!assetSnap.exists) throw Exception('Asset $assetId no longer exists');
+        if (!assetSnap.exists) throw UserFacingException(l10nNow.invItemNoLongerExists);
         final assetData = assetSnap.data()!;
 
         if (startsNow) {
           final currentStatus = assetData['status'] as String?;
           if (currentStatus != AssetModel.statusAvailable) {
-            throw Exception('Asset is not available for an immediate checkout (status: $currentStatus)');
+            throw UserFacingException(l10nNow.invItemNotAvailable);
           }
         } else {
           conflictingHolderId = assetData['currentHolderId'] as String?;
@@ -864,9 +878,8 @@ class InventoryService {
       if (!startsNow && conflictingHolderId != null && conflictingHolderId != bookedForUid) {
         await _notifyUser(
           targetUid: conflictingHolderId!,
-          title: '📅 "$assetName" has been booked',
-          body: '$bookedForName has booked "$assetName" starting ${_fmtDate(scheduledStart)}. '
-              'Please plan to return it in time.',
+          title: (l) => l.nInvBookedTitle(assetName),
+          body: (l) => l.nInvBookedBody(bookedForName, assetName, _fmtDate(scheduledStart, l)),
           payload: {'type': 'inventory_upcoming_booking', 'assetId': assetId, 'bookingId': bookingRef.id},
         );
       }
@@ -874,9 +887,8 @@ class InventoryService {
       if (startsNow && viaDriver) {
         await _notifyUser(
           targetUid: bookedForUid,
-          title: '🚚 "$assetName" is on the way',
-          body: '${driverName != null ? '$driverName is bringing' : 'A driver is bringing'} '
-              '"$assetName" to you — tap Acknowledge Receipt once it arrives.',
+          title: (l) => l.nInvOnTheWayTitle(assetName),
+          body: (l) => driverName != null ? l.nInvOnTheWayBodyDriver(driverName, assetName) : l.nInvOnTheWayBody(assetName),
           payload: {'type': 'inventory_delivery_dispatched', 'assetId': assetId, 'bookingId': bookingRef.id},
         );
       }
@@ -920,13 +932,13 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final bookingRef = _firestore.collection(_bookingsCollection).doc(bookingId);
         final bookingSnap = await transaction.get(bookingRef);
-        if (!bookingSnap.exists) throw Exception('Booking $bookingId no longer exists');
+        if (!bookingSnap.exists) throw UserFacingException(l10nNow.invBookingNoLongerExists);
         final data = bookingSnap.data()!;
         if (data['bookedForUid'] != acknowledgedByUid) {
-          throw Exception('Only the person this item is booked for can acknowledge delivery');
+          throw UserFacingException(l10nNow.invOnlyBookedPersonCanAcknowledge);
         }
         if (data['deliveryMethod'] != AssetBookingModel.deliveryDriver) {
-          throw Exception('This booking is not a driver delivery');
+          throw UserFacingException(l10nNow.invNotDriverDelivery);
         }
         assetName = data['assetName'] as String? ?? '';
         bookedForName = data['bookedForName'] as String? ?? '';
@@ -939,8 +951,8 @@ class InventoryService {
       });
 
       await _notifyAdmins(
-        title: '📬 Delivery Acknowledged',
-        body: '$bookedForName confirmed receipt of "$assetName".',
+        title: (l) => l.nInvDeliveryAckTitle,
+        body: (l) => l.nInvDeliveryAckBody(bookedForName, assetName),
         payload: {'type': 'inventory_delivery_acknowledged', 'bookingId': bookingId},
       );
 
@@ -995,15 +1007,15 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final bookingRef = _firestore.collection(_bookingsCollection).doc(booking.id);
         final bookingSnap = await transaction.get(bookingRef);
-        if (!bookingSnap.exists) throw Exception('Booking ${booking.id} no longer exists');
+        if (!bookingSnap.exists) throw UserFacingException(l10nNow.invBookingNoLongerExists);
         if (bookingSnap.data()!['status'] != AssetBookingModel.statusScheduled) {
-          throw Exception('Booking is no longer scheduled');
+          throw UserFacingException(l10nNow.invBookingNotScheduled);
         }
         final assetRef = _firestore.collection(_assetsCollection).doc(booking.assetId);
         final assetSnap = await transaction.get(assetRef);
-        if (!assetSnap.exists) throw Exception('Asset ${booking.assetId} no longer exists');
+        if (!assetSnap.exists) throw UserFacingException(l10nNow.invItemNoLongerExists);
         if (assetSnap.data()!['status'] != AssetModel.statusAvailable) {
-          throw Exception('Asset is not available for collection (status: ${assetSnap.data()!['status']})');
+          throw UserFacingException(l10nNow.invItemNotAvailable);
         }
 
         transaction.set(assignmentRef, assignment.toFirestore());
@@ -1032,9 +1044,10 @@ class InventoryService {
       if (booking.isViaDriver) {
         await _notifyUser(
           targetUid: booking.bookedForUid,
-          title: '🚚 "${booking.assetName}" is on the way',
-          body: '${booking.driverName != null ? '${booking.driverName} is bringing' : 'A driver is bringing'} '
-              '"${booking.assetName}" to you — tap Acknowledge Receipt once it arrives.',
+          title: (l) => l.nInvOnTheWayTitle(booking.assetName),
+          body: (l) => booking.driverName != null
+              ? l.nInvOnTheWayBodyDriver(booking.driverName!, booking.assetName)
+              : l.nInvOnTheWayBody(booking.assetName),
           payload: {'type': 'inventory_delivery_dispatched', 'assetId': booking.assetId, 'bookingId': booking.id},
         );
       }
@@ -1064,9 +1077,7 @@ class InventoryService {
     try {
       _logger.i('📥 InventoryService: Recording return for booking ${booking.id}');
       if (recordedByUid == booking.bookedForUid) {
-        throw Exception(
-          'You cannot record your own return — ask a different MainAdmin or System Admin to record it.',
-        );
+        throw UserFacingException(l10nNow.invCannotRecordOwnReturn);
       }
       final assignmentRef = _firestore.collection(_assignmentsCollection).doc();
       final photoUrls = await _uploadAssignmentPhotos(assignmentRef.id, photoBytesList, photoFileNames);
@@ -1094,9 +1105,9 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final bookingRef = _firestore.collection(_bookingsCollection).doc(booking.id);
         final bookingSnap = await transaction.get(bookingRef);
-        if (!bookingSnap.exists) throw Exception('Booking ${booking.id} no longer exists');
+        if (!bookingSnap.exists) throw UserFacingException(l10nNow.invBookingNoLongerExists);
         if (bookingSnap.data()!['status'] != AssetBookingModel.statusActive) {
-          throw Exception('Booking is not currently active');
+          throw UserFacingException(l10nNow.invBookingNotActive);
         }
         final assetRef = _firestore.collection(_assetsCollection).doc(booking.assetId);
 
@@ -1150,9 +1161,7 @@ class InventoryService {
     try {
       _logger.i('📥 InventoryService: Recording legacy return for asset ${asset.id}');
       if (recordedByUid == asset.currentHolderId) {
-        throw Exception(
-          'You cannot record your own return — ask a different MainAdmin or System Admin to record it.',
-        );
+        throw UserFacingException(l10nNow.invCannotRecordOwnReturn);
       }
       final assignmentRef = _firestore.collection(_assignmentsCollection).doc();
       final photoUrls = await _uploadAssignmentPhotos(assignmentRef.id, photoBytesList, photoFileNames);
@@ -1179,16 +1188,16 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final assetRef = _firestore.collection(_assetsCollection).doc(asset.id);
         final assetSnap = await transaction.get(assetRef);
-        if (!assetSnap.exists) throw Exception('Asset ${asset.id} no longer exists');
+        if (!assetSnap.exists) throw UserFacingException(l10nNow.invItemNoLongerExists);
         final assetData = assetSnap.data()!;
         if (assetData['status'] != AssetModel.statusCheckedOut) {
-          throw Exception('Asset is not currently checked out');
+          throw UserFacingException(l10nNow.invItemNotCheckedOut);
         }
         // Guards against a booking having been created for this asset
         // between the UI reading "no active booking" and this write —
         // if one now exists, recordBookingReturn is the correct path.
         if (assetData['currentAssignmentId'] != asset.currentAssignmentId) {
-          throw Exception('This item\'s custody record changed — please refresh and try again');
+          throw UserFacingException(l10nNow.invItemChangedRefresh);
         }
 
         transaction.set(assignmentRef, assignment.toFirestore());
@@ -1228,9 +1237,9 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final bookingRef = _firestore.collection(_bookingsCollection).doc(bookingId);
         final bookingSnap = await transaction.get(bookingRef);
-        if (!bookingSnap.exists) throw Exception('Booking $bookingId no longer exists');
+        if (!bookingSnap.exists) throw UserFacingException(l10nNow.invBookingNoLongerExists);
         if (bookingSnap.data()!['status'] != AssetBookingModel.statusScheduled) {
-          throw Exception('Only a scheduled (not yet collected) booking can be cancelled');
+          throw UserFacingException(l10nNow.invOnlyScheduledCanBeCancelled);
         }
         transaction.update(bookingRef, {
           'status': AssetBookingModel.statusCancelled,
@@ -1287,9 +1296,8 @@ class InventoryService {
       for (final doc in maintenanceSnap.docs) {
         final m = AssetMaintenanceWindowModel.fromFirestore(doc);
         if (_rangesOverlap(startDate, endDate, m.startDate, m.endDate)) {
-          throw Exception(
-            'This window overlaps a scheduled maintenance period '
-            '(${_fmtDate(m.startDate)} - ${_fmtDate(m.endDate)}).',
+          throw UserFacingException(
+            l10nNow.invOverlapsMaintenance(_fmtDate(m.startDate, l10nNow), _fmtDate(m.endDate, l10nNow)),
           );
         }
       }
@@ -1325,13 +1333,12 @@ class InventoryService {
             'cancelledByUid': createdByUid,
             'cancelledByName': createdByName,
             'cancelledAt': Timestamp.fromDate(DateTime.now()),
-            'cancellationReason': 'Cancelled for planned maintenance ($reason).',
+            'cancellationReason': l10nNow.invCancelledForMaintenance(reason),
           });
           await _notifyUser(
             targetUid: b.bookedForUid,
-            title: '🛠️ Booking Cancelled — Maintenance',
-            body: 'Your booked "$assetName" will not be available '
-                '${_fmtDate(startDate)} - ${_fmtDate(endDate)} due to planned maintenance ($reason).',
+            title: (l) => l.nInvBookingCancelledMaintTitle,
+            body: (l) => l.nInvBookingCancelledMaintBody(assetName, _fmtDate(startDate, l), _fmtDate(endDate, l), reason),
             payload: {'type': 'inventory_booking_cancelled_maintenance', 'assetId': assetId, 'bookingId': b.id},
           );
         } else {
@@ -1339,8 +1346,8 @@ class InventoryService {
           // so ask the current holder to bring it back in time instead.
           await _notifyUser(
             targetUid: b.bookedForUid,
-            title: '🛠️ Return Needed for Maintenance',
-            body: 'Please return "$assetName" by ${_fmtDate(startDate)} — it\'s scheduled for maintenance ($reason).',
+            title: (l) => l.nInvReturnForMaintTitle,
+            body: (l) => l.nInvReturnForMaintBody(assetName, _fmtDate(startDate, l), reason),
             payload: {'type': 'inventory_return_for_maintenance', 'assetId': assetId},
           );
           holderNotifiedViaBooking = true;
@@ -1356,8 +1363,8 @@ class InventoryService {
         if (assetData?['status'] == AssetModel.statusCheckedOut && holderId != null) {
           await _notifyUser(
             targetUid: holderId,
-            title: '🛠️ Return Needed for Maintenance',
-            body: 'Please return "$assetName" by ${_fmtDate(startDate)} — it\'s scheduled for maintenance ($reason).',
+            title: (l) => l.nInvReturnForMaintTitle,
+            body: (l) => l.nInvReturnForMaintBody(assetName, _fmtDate(startDate, l), reason),
             payload: {'type': 'inventory_return_for_maintenance', 'assetId': assetId},
           );
         }
@@ -1395,9 +1402,7 @@ class InventoryService {
     required String targetUid,
   }) {
     if (actingUid == targetUid) {
-      throw Exception(
-        'You cannot process this for yourself — ask a different MainAdmin or System Admin to handle it.',
-      );
+      throw UserFacingException(l10nNow.invCannotProcessForSelf);
     }
   }
 
@@ -1421,9 +1426,13 @@ class InventoryService {
     for (final doc in bookingsSnap.docs) {
       final b = AssetBookingModel.fromFirestore(doc);
       if (_rangesOverlap(start, end, b.scheduledStart, b.scheduledEnd)) {
-        throw Exception(
-          'This window overlaps an existing booking for "${b.assetName}" '
-          '(${b.bookedForName}, ${_fmtDate(b.scheduledStart)} - ${_fmtDate(b.scheduledEnd)}).',
+        throw UserFacingException(
+          l10nNow.invOverlapsBooking(
+            b.assetName,
+            b.bookedForName,
+            _fmtDate(b.scheduledStart, l10nNow),
+            _fmtDate(b.scheduledEnd, l10nNow),
+          ),
         );
       }
     }
@@ -1433,9 +1442,8 @@ class InventoryService {
     for (final doc in maintenanceSnap.docs) {
       final m = AssetMaintenanceWindowModel.fromFirestore(doc);
       if (_rangesOverlap(start, end, m.startDate, m.endDate)) {
-        throw Exception(
-          'This window overlaps a scheduled maintenance period '
-          '(${_fmtDate(m.startDate)} - ${_fmtDate(m.endDate)}).',
+        throw UserFacingException(
+          l10nNow.invOverlapsMaintenance(_fmtDate(m.startDate, l10nNow), _fmtDate(m.endDate, l10nNow)),
         );
       }
     }
@@ -1477,12 +1485,9 @@ class InventoryService {
     }
   }
 
-  String _fmtDate(DateTime d) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', //
-    ];
-    return '${d.day} ${months[d.month - 1]} ${d.year}';
-  }
+  /// "12 Oct 2026" / "12 ott 2026" — in [l]'s language, since notification
+  /// text is written once per language.
+  String _fmtDate(DateTime d, AppLocalizations l) => DateFormat.yMMMd(l.localeName).format(d);
 
   /// A non-manager holder (Technician) signals that they're bringing an
   /// item back. Deliberately does NOT change any state or capture
@@ -1508,8 +1513,8 @@ class InventoryService {
       _logger.e('❌ InventoryService: Failed to mark return intent for asset $assetId', error: e);
     }
     await _notifyAdmins(
-      title: '📥 Return Incoming',
-      body: '$holderName is returning "$assetName" — please record its reception.',
+      title: (l) => l.nInvReturnIncomingTitle,
+      body: (l) => l.nInvReturnIncomingBody(holderName, assetName),
       payload: {'type': 'inventory_return_intent', 'assetId': assetId},
     );
   }
@@ -1524,16 +1529,18 @@ class InventoryService {
   /// longer need (or get) these notifications; client-request notifications
   /// (NotificationService.notifyAdminsOfClientRequest) set their own broader
   /// targetRoles on the same collection and are unaffected by this default.
+  ///
+  /// [title]/[body] build the text for one language; it's stored in every
+  /// language (see `notificationText`) so each admin reads their own.
   Future<void> _notifyAdmins({
-    required String title,
-    required String body,
+    required String Function(AppLocalizations l) title,
+    required String Function(AppLocalizations l) body,
     Map<String, dynamic>? payload,
     List<String> targetRoles = const ['MainAdmin', 'SystemAdmin'],
   }) async {
     try {
       await _firestore.collection(_adminQueueCollection).add({
-        'title': title,
-        'body': body,
+        ...notificationText(title: title, body: body),
         'payload': ?payload,
         'createdAt': FieldValue.serverTimestamp(),
         'targetRoles': targetRoles,
@@ -1552,15 +1559,14 @@ class InventoryService {
   /// Cloud Function for devices where the app isn't open.
   Future<void> _notifyUser({
     required String targetUid,
-    required String title,
-    required String body,
+    required String Function(AppLocalizations l) title,
+    required String Function(AppLocalizations l) body,
     Map<String, dynamic>? payload,
   }) async {
     try {
       await _firestore.collection(_userQueueCollection).add({
         'targetUid': targetUid,
-        'title': title,
-        'body': body,
+        ...notificationText(title: title, body: body),
         'payload': ?payload,
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -1795,7 +1801,7 @@ class InventoryService {
         final materialRef = _firestore.collection(_materialsCollection).doc(materialId);
         final materialSnap = await transaction.get(materialRef);
         if (!materialSnap.exists) {
-          throw Exception('Material $materialId no longer exists');
+          throw UserFacingException(l10nNow.invMaterialNoLongerExists);
         }
         final currentQty = (materialSnap.data()?['quantityInStorage'] as num?)?.toDouble() ?? 0;
 
@@ -1856,11 +1862,11 @@ class InventoryService {
         final materialRef = _firestore.collection(_materialsCollection).doc(materialId);
         final materialSnap = await transaction.get(materialRef);
         if (!materialSnap.exists) {
-          throw Exception('Material $materialId no longer exists');
+          throw UserFacingException(l10nNow.invMaterialNoLongerExists);
         }
         final currentQty = (materialSnap.data()?['quantityInStorage'] as num?)?.toDouble() ?? 0;
         if (quantity > currentQty) {
-          throw Exception('Cannot issue $quantity — only $currentQty remaining in storage');
+          throw UserFacingException(l10nNow.invNotEnoughStock(_qty(quantity), _qty(currentQty)));
         }
 
         transaction.set(movementRef, movement.toFirestore());
@@ -1966,7 +1972,7 @@ class InventoryService {
     required String issuedByRole,
   }) async {
     if (!InventoryPermissions.canApproveAndIssue(issuedByRole)) {
-      throw Exception('You do not have permission to issue material for fabrication.');
+      throw UserFacingException(l10nNow.invNoPermissionIssueFabrication);
     }
     try {
       _logger.i('🏗️ InventoryService: Creating fabrication order for material $materialId ($quantity $unit)');
@@ -1995,8 +2001,8 @@ class InventoryService {
         projectId: projectId,
         projectName: projectName,
         fabricationOrderId: orderRef.id,
-        notes: 'Issued for fabrication — Form ID ${orderRef.id}'
-            '${expectedFabricatorName != null ? ' — Fabricator: $expectedFabricatorName' : ''}',
+        notes: l10nNow.invIssuedForFabricationNote(orderRef.id) +
+            (expectedFabricatorName != null ? l10nNow.invFabricatorNote(expectedFabricatorName) : ''),
         photoUrls: const [],
         recordedByUid: issuedByUid,
         recordedByName: issuedByName,
@@ -2008,10 +2014,10 @@ class InventoryService {
       await _firestore.runTransaction((transaction) async {
         final materialRef = _firestore.collection(_materialsCollection).doc(materialId);
         final materialSnap = await transaction.get(materialRef);
-        if (!materialSnap.exists) throw Exception('Material $materialId no longer exists');
+        if (!materialSnap.exists) throw UserFacingException(l10nNow.invMaterialNoLongerExists);
         final currentQty = (materialSnap.data()?['quantityInStorage'] as num?)?.toDouble() ?? 0;
         if (quantity > currentQty) {
-          throw Exception('Cannot issue $quantity — only $currentQty remaining in storage');
+          throw UserFacingException(l10nNow.invNotEnoughStock(_qty(quantity), _qty(currentQty)));
         }
 
         transaction.set(orderRef, order.toFirestore());
@@ -2070,7 +2076,7 @@ class InventoryService {
     required String recipientRole,
   }) async {
     if (!InventoryPermissions.canUploadFabricationScan(recipientRole)) {
-      throw Exception('You do not have permission to submit a fabrication scan.');
+      throw UserFacingException(l10nNow.invNoPermissionSubmitScan);
     }
     try {
       _logger.i('📄 InventoryService: Submitting scanned form for fabrication order ${order.id}');
@@ -2101,8 +2107,7 @@ class InventoryService {
         projectName: order.projectName,
         fabricationOrderId: order.id,
         conditionOnReceipt: fabricatorAckCondition,
-        notes: 'Received back from fabrication — Form ID ${order.id}'
-            '${hasDiscrepancy ? ' — quantities flagged for review' : ''}',
+        notes: l10nNow.invReceivedFromFabricationNote(order.id) + (hasDiscrepancy ? l10nNow.invQuantitiesFlaggedNote : ''),
         photoUrls: const [],
         recordedByUid: technicianAckByUid,
         recordedByName: technicianAckByName,
@@ -2141,16 +2146,17 @@ class InventoryService {
 
       if (isTrustedRecipient) {
         await _notifyAdmins(
-          title: hasDiscrepancy ? '⚠️ Fabrication Form: Discrepancy Flagged' : '📄 Fabrication Form Ready for Verification',
-          body: '$technicianAckByName uploaded the completed form for "${order.materialName}"'
-              '${hasDiscrepancy ? ' — quantities don\'t reconcile, please review.' : ' — ready for verification.'}',
+          title: (l) => hasDiscrepancy ? l.nInvFabDiscrepancyTitle : l.nInvFabReadyTitle,
+          body: (l) => hasDiscrepancy
+              ? l.nInvFabUploadedDiscrepancyBody(technicianAckByName, order.materialName)
+              : l.nInvFabUploadedReadyBody(technicianAckByName, order.materialName),
           payload: {'type': 'inventory_fabrication_scan', 'orderId': order.id},
           targetRoles: const ['SystemAdmin', 'MainAdmin'],
         );
       } else {
         await _notifyAdmins(
-          title: '📄 Fabrication Form Awaiting Review',
-          body: '$technicianAckByName uploaded the completed form for "${order.materialName}" — needs Admin review.',
+          title: (l) => l.nInvFabAwaitingReviewTitle,
+          body: (l) => l.nInvFabAwaitingReviewBody(technicianAckByName, order.materialName),
           payload: {'type': 'inventory_fabrication_scan', 'orderId': order.id},
           targetRoles: const ['Admin', 'MainAdmin'],
         );
@@ -2177,15 +2183,15 @@ class InventoryService {
     required String reviewerRole,
   }) async {
     if (!InventoryPermissions.canReviewFabricationScan(reviewerRole)) {
-      throw Exception('You do not have permission to review this fabrication order.');
+      throw UserFacingException(l10nNow.invNoPermissionReviewFabrication);
     }
     try {
       final orderRef = _firestore.collection(_fabricationOrdersCollection).doc(orderId);
       final snap = await orderRef.get();
-      if (!snap.exists) throw Exception('Fabrication order $orderId no longer exists');
+      if (!snap.exists) throw UserFacingException(l10nNow.invFabricationOrderNoLongerExists);
       final order = MaterialFabricationOrderModel.fromFirestore(snap);
       if (!order.isPendingAdminReview) {
-        throw Exception('This order is not awaiting Admin review.');
+        throw UserFacingException(l10nNow.invOrderNotAwaitingReview);
       }
       final now = DateTime.now();
       await orderRef.update({
@@ -2195,8 +2201,8 @@ class InventoryService {
         'adminReviewedAt': Timestamp.fromDate(now),
       });
       await _notifyAdmins(
-        title: order.hasQuantityDiscrepancy ? '⚠️ Fabrication Form: Discrepancy Flagged' : '📄 Fabrication Form Ready for Verification',
-        body: '$reviewerName reviewed the form for "${order.materialName}" — ready for verification.',
+        title: (l) => order.hasQuantityDiscrepancy ? l.nInvFabDiscrepancyTitle : l.nInvFabReadyTitle,
+        body: (l) => l.nInvFabReviewedBody(reviewerName, order.materialName),
         payload: {'type': 'inventory_fabrication_scan', 'orderId': orderId},
         targetRoles: const ['SystemAdmin', 'MainAdmin'],
       );
@@ -2219,15 +2225,15 @@ class InventoryService {
     required bool isDiscrepancy,
   }) async {
     if (!InventoryPermissions.canVerifyFabricationOrder(verifierRole)) {
-      throw Exception('You do not have permission to verify this fabrication order.');
+      throw UserFacingException(l10nNow.invNoPermissionVerifyFabrication);
     }
     try {
       final orderRef = _firestore.collection(_fabricationOrdersCollection).doc(orderId);
       final snap = await orderRef.get();
-      if (!snap.exists) throw Exception('Fabrication order $orderId no longer exists');
+      if (!snap.exists) throw UserFacingException(l10nNow.invFabricationOrderNoLongerExists);
       final order = MaterialFabricationOrderModel.fromFirestore(snap);
       if (!order.isScanUploaded) {
-        throw Exception('This order is not ready for verification.');
+        throw UserFacingException(l10nNow.invOrderNotReadyForVerification);
       }
       final now = DateTime.now();
       await orderRef.update({
@@ -2242,6 +2248,9 @@ class InventoryService {
       rethrow;
     }
   }
+
+  /// A quantity without a pointless ".0" ("12" / "2.5").
+  static String _qty(double q) => q == q.roundToDouble() ? q.toInt().toString() : q.toString();
 
   Future<String> _uploadFabricationScan(String orderId, Uint8List scanBytes, String scanFileName) async {
     final urls = await _uploadPhotos('Inventory/FabricationOrders/$orderId', [scanBytes], [scanFileName]);

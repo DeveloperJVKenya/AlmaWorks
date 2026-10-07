@@ -1,7 +1,6 @@
 // communication_message_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'communication_models.dart';
@@ -180,20 +179,20 @@ class _CommunicationMessageDetailScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Move to Trash?', style: GoogleFonts.poppins()),
+        title: Text('Move to Trash?', style: TextStyle()),
         content: Text(
           'This message will be moved to your Trash.',
-          style: GoogleFonts.poppins(),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text('Move to Trash',
-                style: GoogleFonts.poppins(color: Colors.red)),
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -221,7 +220,7 @@ class _CommunicationMessageDetailScreenState
         foregroundColor: Colors.white,
         title: Text(
           widget.message.subject,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               fontWeight: FontWeight.w600, fontSize: 16),
           overflow: TextOverflow.ellipsis,
         ),
@@ -247,17 +246,17 @@ class _CommunicationMessageDetailScreenState
               PopupMenuItem(
                 value: 'reply',
                 child:
-                    Text('Reply', style: GoogleFonts.poppins()),
+                    Text('Reply', style: TextStyle()),
               ),
               PopupMenuItem(
                 value: 'reply_all',
                 child: Text('Reply All',
-                    style: GoogleFonts.poppins()),
+                    style: TextStyle()),
               ),
               PopupMenuItem(
                 value: 'forward',
                 child: Text('Forward',
-                    style: GoogleFonts.poppins()),
+                    style: TextStyle()),
               ),
             ],
           ),
@@ -296,7 +295,7 @@ class _CommunicationMessageDetailScreenState
             // Subject
             Text(
               widget.message.subject,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: isMobile ? 18 : 22,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF0A2E5A),
@@ -334,7 +333,7 @@ class _CommunicationMessageDetailScreenState
                 Text(
                   DateFormat('MMM d, yyyy · h:mm a')
                       .format(widget.message.sentAt),
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: 12, color: Colors.grey[500]),
                 ),
                 const Spacer(),
@@ -370,7 +369,7 @@ class _CommunicationMessageDetailScreenState
           width: 44,
           child: Text(
             '$label:',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 13,
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
@@ -408,7 +407,7 @@ class _CommunicationMessageDetailScreenState
                       const SizedBox(width: 6),
                       Text(
                         p.username.isNotEmpty ? p.username : p.email,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 13,
                           color: const Color(0xFF0A2E5A),
                           fontWeight: FontWeight.w500,
@@ -444,7 +443,7 @@ class _CommunicationMessageDetailScreenState
       ),
       child: Text(
         labels[widget.message.type] ?? '',
-        style: GoogleFonts.poppins(
+        style: TextStyle(
             fontSize: 11, color: Colors.blue[700]),
       ),
     );
@@ -465,7 +464,7 @@ class _CommunicationMessageDetailScreenState
           padding: EdgeInsets.zero,
           customStyles: quill.DefaultStyles(
             paragraph: quill.DefaultTextBlockStyle(
-              GoogleFonts.poppins(
+              TextStyle(
                   fontSize: isMobile ? 13 : 14,
                   color: Colors.grey[800]),
               const quill.HorizontalSpacing(0, 0),
@@ -485,7 +484,7 @@ class _CommunicationMessageDetailScreenState
       children: [
         Text(
           '${widget.message.attachments.length} Attachment(s)',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
             color: const Color(0xFF0A2E5A),
@@ -525,13 +524,13 @@ class _CommunicationMessageDetailScreenState
                       children: [
                         Text(
                           att.name,
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500),
                         ),
                         Text(
                           att.readableSize,
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontSize: 10, color: Colors.grey[500]),
                         ),
                       ],
@@ -594,7 +593,7 @@ class _CommunicationMessageDetailScreenState
               const SizedBox(width: 6),
               Text(
                 '${replies.length} reply(ies) in this thread',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 13,
                   color: const Color(0xFF0A2E5A),
                   fontWeight: FontWeight.w500,
@@ -672,13 +671,13 @@ class _ThreadMessageTile extends StatelessWidget {
                       message.from.username.isNotEmpty
                           ? message.from.username
                           : message.from.email,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600),
                     ),
                     Text(
                       message.from.email,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 11, color: Colors.grey[500]),
                     ),
                   ],
@@ -686,7 +685,7 @@ class _ThreadMessageTile extends StatelessWidget {
               ),
               Text(
                 DateFormat('MMM d, h:mm a').format(message.sentAt),
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 11, color: Colors.grey[400]),
               ),
             ],
@@ -696,7 +695,7 @@ class _ThreadMessageTile extends StatelessWidget {
             message.bodyPlainText.isNotEmpty
                 ? message.bodyPlainText
                 : '(no content)',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 fontSize: 13, color: Colors.grey[700]),
           ),
         ],
@@ -722,7 +721,7 @@ class _ActionButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 16),
-      label: Text(label, style: GoogleFonts.poppins(fontSize: 13)),
+      label: Text(label, style: TextStyle(fontSize: 13)),
       style: OutlinedButton.styleFrom(
         foregroundColor: const Color(0xFF0A2E5A),
         side: BorderSide(color: const Color(0xFF0A2E5A).withValues(alpha: 0.4)),

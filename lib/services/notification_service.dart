@@ -1,3 +1,4 @@
+import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/models/gantt_row_model.dart';
 import 'package:almaworks/models/notification_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -679,7 +680,7 @@ class NotificationService {
         'taskId': task.firestoreId,
         'taskName': task.taskName,
         'startDate': task.startDate,
-        'message': 'Task is overdue',
+        'message': l10nNow.taskIsOverdue,
         'type': 'overdue',
         'expiresAt': now.add(const Duration(days: 7)),
       }).toList();
@@ -692,7 +693,7 @@ class NotificationService {
         'taskId': task.firestoreId,
         'taskName': task.taskName,
         'startDate': task.startDate,
-        'message': 'Task starts soon',
+        'message': l10nNow.taskStartsSoon,
         'type': 'starting_soon',
         'expiresAt': task.startDate!,
       }).toList();

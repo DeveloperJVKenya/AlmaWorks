@@ -3,6 +3,7 @@ import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/create_fabrication_order_screen.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/upload_fabrication_scan_screen.dart';
@@ -11,9 +12,11 @@ import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// The fabrication-order trail for a single material: MainAdmin/SystemAdmin
 /// can issue new orders; the site recipient (Technician or Admin/MainAdmin)
@@ -47,7 +50,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
     final ordersAsync = ref.watch(materialFabricationOrdersProvider(material.id));
 
     return BaseLayout(
-      title: 'Fabrication Orders',
+      title: context.l10n.fabricationOrders,
       project: project,
       logger: logger,
       selectedMenuItem: 'Inventory',
@@ -68,20 +71,20 @@ class FabricationOrdersScreen extends ConsumerWidget {
                 ),
               ),
               icon: const Icon(Icons.add),
-              label: Text('New Order', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              label: Text(context.l10n.newOrder, style: const TextStyle(fontWeight: FontWeight.w600)),
             )
           : null,
       child: ordersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) {
           logger.e('❌ FabricationOrdersScreen: stream error $err');
-          return Center(child: Text('Error loading orders', style: GoogleFonts.poppins()));
+          return Center(child: Text(friendlyError(err, action: context.l10n.couldNotLoadOrders), textAlign: TextAlign.center));
         },
         data: (orders) {
           if (orders.isEmpty) {
             return Center(
-              child: Text('No fabrication orders yet for "${material.name}"',
-                  style: GoogleFonts.poppins(color: Colors.grey[600])),
+              child: Text(context.l10n.noFabricationOrdersFor(material.name),
+                  style: TextStyle(color: AppColors.inkMuted)),
             );
           }
           return ListView.builder(
@@ -102,15 +105,17 @@ class FabricationOrdersScreen extends ConsumerWidget {
             : order.isScanUploaded
                 ? InventoryColors.booked
                 : InventoryColors.pendingRequest;
+    final l = context.l10n;
     final label = order.isDiscrepancy
-        ? 'Discrepancy'
+        ? l.invFabDiscrepancy
         : order.isVerified
-            ? 'Verified'
+            ? l.invFabVerified
             : order.isScanUploaded
-                ? 'Ready for Verification'
+                ? l.invFabScanUploaded
                 : order.isPendingAdminReview
-                    ? 'Awaiting Admin Review'
-                    : 'With Driver — Heading to Fabrication';
+                    ? l.invFabPendingAdminReview
+                    : l.fabStatusWithDriver;
+    final unit = invLabel(order.unit);
 
     final canUpload = InventoryPermissions.canUploadFabricationScan(userRole) && order.isIssued;
     final canReview = InventoryPermissions.canReviewFabricationScan(userRole) && order.isPendingAdminReview;
@@ -149,49 +154,49 @@ class FabricationOrdersScreen extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text('${order.quantityIssued} ${order.unit} issued',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14)),
+                    child: Text(l.quantityIssued('${order.quantityIssued}', unit),
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-                    child: Text(label, style: GoogleFonts.poppins(fontSize: 10, color: color, fontWeight: FontWeight.w700)),
+                    child: Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
-              Text('Form ID: ${order.id}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
-              Text('Issued by ${order.issuedByName} on ${DateFormat('d MMM yyyy').format(order.issuedAt)}',
-                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+              Text(l.formId(order.id), style: TextStyle(fontSize: 11, color: AppColors.inkMuted)),
+              Text(l.issuedByOn(order.issuedByName, DateFormat('d MMM yyyy').format(order.issuedAt)),
+                  style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
               if (order.projectName != null)
-                Text('Destination: ${order.projectName}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+                Text(l.destination(order.projectName!), style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
               if (order.fabricatorName != null) ...[
                 const SizedBox(height: 4),
-                Text('Fabricator: ${order.fabricatorName} (${order.fabricatorAckCondition ?? '-'})',
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+                Text(l.fabricatorWithCondition(order.fabricatorName!, invLabel(order.fabricatorAckCondition ?? '-')),
+                    style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
               ],
               if (order.technicianAckByName != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Received by ${order.technicianAckByName}: ${order.technicianAckQuantityReceived} ${order.unit}',
-                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700]),
+                  l.receivedByQuantity(order.technicianAckByName!, '${order.technicianAckQuantityReceived}', unit),
+                  style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                 ),
               ],
               if (order.adminReviewedByName != null) ...[
                 const SizedBox(height: 4),
-                Text('Reviewed by ${order.adminReviewedByName}', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+                Text(l.reviewedBy(order.adminReviewedByName!), style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
               ],
               if (order.hasQuantityDiscrepancy && !order.isVerified && !order.isDiscrepancy) ...[
                 const SizedBox(height: 4),
-                Text('⚠ Quantities don\'t fully reconcile — review before verifying',
-                    style: GoogleFonts.poppins(fontSize: 11, color: InventoryColors.damaged, fontWeight: FontWeight.w600)),
+                Text(l.quantitiesDontReconcile,
+                    style: TextStyle(fontSize: 11, color: InventoryColors.damaged, fontWeight: FontWeight.w600)),
               ],
               const SizedBox(height: 10),
-              _buildTraceTimeline(order),
+              _buildTraceTimeline(order, l),
               if (canUpload) ...[
                 const SizedBox(height: 8),
-                Text('Tap to upload the completed scanned form',
-                    style: GoogleFonts.poppins(fontSize: 11, color: InventoryColors.checkedOut, fontWeight: FontWeight.w600)),
+                Text(l.tapToUploadScan,
+                    style: TextStyle(fontSize: 11, color: InventoryColors.checkedOut, fontWeight: FontWeight.w600)),
               ],
               if (canReview) ...[
                 const SizedBox(height: 10),
@@ -222,7 +227,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
               ElevatedButton.icon(
                 onPressed: () => _reviewOrder(context, order),
                 icon: const Icon(Icons.fact_check_outlined, size: 18),
-                label: Text('Mark Reviewed', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                label: Text(context.l10n.markReviewed, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
                 style: ElevatedButton.styleFrom(backgroundColor: InventoryColors.checkedOut, foregroundColor: Colors.white),
               ),
             ]
@@ -230,14 +235,14 @@ class FabricationOrdersScreen extends ConsumerWidget {
               ElevatedButton.icon(
                 onPressed: () => _verifyOrder(context, order, isDiscrepancy: false),
                 icon: const Icon(Icons.check_circle_outline, size: 18),
-                label: Text('Verify', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                label: Text(context.l10n.verify, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
                 style: ElevatedButton.styleFrom(backgroundColor: InventoryColors.available, foregroundColor: Colors.white),
               ),
               OutlinedButton.icon(
                 onPressed: () => _verifyOrder(context, order, isDiscrepancy: true),
                 icon: const Icon(Icons.warning_amber_outlined, size: 18, color: InventoryColors.damaged),
-                label: Text('Flag Discrepancy',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12.5, color: InventoryColors.damaged)),
+                label: Text(context.l10n.flagDiscrepancy,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5, color: InventoryColors.damaged)),
                 style: OutlinedButton.styleFrom(side: const BorderSide(color: InventoryColors.damaged)),
               ),
             ],
@@ -247,10 +252,9 @@ class FabricationOrdersScreen extends ConsumerWidget {
   Future<void> _reviewOrder(BuildContext context, MaterialFabricationOrderModel order) async {
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Mark Reviewed',
-      message: 'Confirm you\'ve checked the scanned form for "${order.materialName}"? '
-          'It will then be ready for SystemAdmin verification.',
-      confirmLabel: 'Mark Reviewed',
+      title: context.l10n.markReviewed,
+      message: context.l10n.confirmMarkReviewed(order.materialName),
+      confirmLabel: context.l10n.markReviewed,
     );
     if (!confirmed) return;
     try {
@@ -263,9 +267,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
     } catch (e) {
       logger.e('❌ FabricationOrdersScreen: Failed to review order', error: e);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to mark reviewed: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-        );
+        showErrorSnack(context, e, action: context.l10n.couldNotMarkReviewed);
       }
     }
   }
@@ -273,11 +275,11 @@ class FabricationOrdersScreen extends ConsumerWidget {
   Future<void> _verifyOrder(BuildContext context, MaterialFabricationOrderModel order, {required bool isDiscrepancy}) async {
     final confirmed = await showConfirmDialog(
       context,
-      title: isDiscrepancy ? 'Flag Discrepancy' : 'Verify Order',
+      title: isDiscrepancy ? context.l10n.flagDiscrepancy : context.l10n.verifyOrder,
       message: isDiscrepancy
-          ? 'Flag "${order.materialName}" as a quantity discrepancy for follow-up?'
-          : 'Confirm "${order.materialName}" is verified and reconciled?',
-      confirmLabel: isDiscrepancy ? 'Flag Discrepancy' : 'Verify',
+          ? context.l10n.confirmFlagDiscrepancy(order.materialName)
+          : context.l10n.confirmVerifyOrder(order.materialName),
+      confirmLabel: isDiscrepancy ? context.l10n.flagDiscrepancy : context.l10n.verify,
     );
     if (!confirmed) return;
     try {
@@ -291,9 +293,7 @@ class FabricationOrdersScreen extends ConsumerWidget {
     } catch (e) {
       logger.e('❌ FabricationOrdersScreen: Failed to verify order', error: e);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to verify: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-        );
+        showErrorSnack(context, e, action: context.l10n.couldNotVerify);
       }
     }
   }
@@ -306,16 +306,16 @@ class FabricationOrdersScreen extends ConsumerWidget {
   /// by design, not an omission. The final verification outcome is shown
   /// as a third node since it's the order's end state, not an extra
   /// movement checkpoint.
-  Widget _buildTraceTimeline(MaterialFabricationOrderModel order) {
+  Widget _buildTraceTimeline(MaterialFabricationOrderModel order, AppLocalizations l) {
     final steps = <(String, DateTime?, bool)>[
-      ('Handed to driver (movement recorded)', order.issuedAt, true),
+      (l.traceHandedToDriver, order.issuedAt, true),
       (
-        'Received back — scan uploaded${order.technicianAckByName != null ? ' by ${order.technicianAckByName}' : ''} (movement recorded)',
+        order.technicianAckByName != null ? l.traceReceivedBackBy(order.technicianAckByName!) : l.traceReceivedBack,
         order.technicianAckAt,
         !order.isIssued,
       ),
       (
-        order.isDiscrepancy ? 'Discrepancy flagged' : 'Verified',
+        order.isDiscrepancy ? l.traceDiscrepancyFlagged : l.invFabVerified,
         order.verifiedAt,
         order.isVerified || order.isDiscrepancy,
       ),
@@ -331,22 +331,22 @@ class FabricationOrdersScreen extends ConsumerWidget {
                 Icon(
                   steps[i].$3 ? Icons.check_circle : Icons.radio_button_unchecked,
                   size: 14,
-                  color: steps[i].$3 ? InventoryColors.available : Colors.grey[400],
+                  color: steps[i].$3 ? InventoryColors.available : AppColors.inkFaint,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     steps[i].$1,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: steps[i].$3 ? FontWeight.w600 : FontWeight.w400,
-                      color: steps[i].$3 ? Colors.grey[800] : Colors.grey[400],
+                      color: steps[i].$3 ? AppColors.ink : AppColors.inkFaint,
                     ),
                   ),
                 ),
                 if (steps[i].$3 && steps[i].$2 != null)
                   Text(DateFormat('d MMM, HH:mm').format(steps[i].$2!),
-                      style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[500])),
+                      style: TextStyle(fontSize: 10, color: AppColors.inkFaint)),
               ],
             ),
           ),

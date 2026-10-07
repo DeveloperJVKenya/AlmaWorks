@@ -1,10 +1,13 @@
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
 import 'package:almaworks/models/safety_training/safety_training_review_model.dart';
 import 'package:almaworks/widgets/modern/modern_ui.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
-final safetyDate = DateFormat('MMM d, yyyy');
+/// Medium date in the app language ("12 ott 2026" / "Oct 12, 2026").
+DateFormat get safetyDate => DateFormat.yMMMd();
 
 /// How a worker's current determination reads *now* — a lapsed clearance
 /// or overdue retraining shows as such, not as the status first recorded.
@@ -16,23 +19,25 @@ class StandingVisual {
 
   const StandingVisual(this.label, this.color, this.icon, [this.detail]);
 
-  static const notReviewed = StandingVisual('Not Reviewed', AppPalette.inkMuted, Icons.hourglass_empty_rounded);
+  static StandingVisual get notReviewed =>
+      StandingVisual(l10nNow.stNotReviewed, AppPalette.inkMuted, Icons.hourglass_empty_rounded);
 
   factory StandingVisual.of(SafetyTrainingReviewModel? review, RetrainingProgress? retraining, DateTime now) {
     if (review == null) return notReviewed;
+    final l = l10nNow;
     if (review.isCleared) {
       return review.isClearanceExpired(now)
           ? StandingVisual(
-              'Clearance Expired',
+              l.stClearanceExpired,
               AppPalette.orange,
               Icons.history_toggle_off_rounded,
-              'Lapsed on ${safetyDate.format(review.clearanceExpiresAt)} — a new review is needed.',
+              l.stClearanceLapsedOn(safetyDate.format(review.clearanceExpiresAt)),
             )
           : StandingVisual(
-              'Cleared to Work',
+              l.stClearedToWork,
               AppPalette.green,
               Icons.verified_rounded,
-              'Valid until ${safetyDate.format(review.clearanceExpiresAt)}',
+              l.stValidUntil(safetyDate.format(review.clearanceExpiresAt)),
             );
     }
     if (review.isNeedsRetraining) {
@@ -42,29 +47,40 @@ class StandingVisual {
       final detail = retraining == null || retraining.assigned.isEmpty
           ? null
           : done
-          ? 'All ${retraining.assigned.length} assigned scenarios done — awaiting a new review.'
-          : '${retraining.done} of ${retraining.assigned.length} assigned scenarios done'
-                '${due == null
+          ? l.stAllAssignedDone(retraining.assigned.length)
+          : l.stAssignedProgress(retraining.done, retraining.assigned.length) +
+                (due == null
                     ? ''
                     : overdue
-                    ? ' · overdue since ${safetyDate.format(due)}'
-                    : ' · due ${safetyDate.format(due)}'}';
-      if (overdue) return StandingVisual('Retraining Overdue', AppPalette.coral, Icons.alarm_rounded, detail);
-      if (done) return StandingVisual('Retraining Done', AppPalette.teal, Icons.task_alt_rounded, detail);
-      return StandingVisual('Needs Retraining', AppPalette.amber, Icons.replay_circle_filled_rounded, detail);
+                    ? l.stOverdueSince(safetyDate.format(due))
+                    : l.stDue(safetyDate.format(due)));
+      if (overdue) return StandingVisual(l.stRetrainingOverdue, AppPalette.coral, Icons.alarm_rounded, detail);
+      if (done) return StandingVisual(l.stRetrainingDone, AppPalette.teal, Icons.task_alt_rounded, detail);
+      return StandingVisual(l.stNeedsRetraining, AppPalette.amber, Icons.replay_circle_filled_rounded, detail);
     }
     if (review.isEscalated) {
       final to = review.escalatedToName;
       return StandingVisual(
-        'Escalated',
+        l.stEscalated,
         AppPalette.coral,
         Icons.report_rounded,
-        to == null || to.isEmpty ? 'A supervisor will follow up.' : 'Escalated to $to for follow-up.',
+        to == null || to.isEmpty ? l.stSupervisorFollowUp : l.stEscalatedTo(to),
       );
     }
-    return const StandingVisual('Status Unknown', AppPalette.inkMuted, Icons.help_outline_rounded);
+    return StandingVisual(l.stStatusUnknown, AppPalette.inkMuted, Icons.help_outline_rounded);
   }
 }
+
+/// Display name for a stored difficulty ('Basic' / 'Intermediate' / 'Advanced').
+String difficultyLabel(String difficulty) => switch (difficulty) {
+  SafetyScenarioModel.difficultyAdvanced => l10nNow.difficultyAdvanced,
+  SafetyScenarioModel.difficultyIntermediate => l10nNow.difficultyIntermediate,
+  SafetyScenarioModel.difficultyBasic => l10nNow.difficultyBasic,
+  _ => difficulty,
+};
+
+/// Categories are typed by admins; only the default one is translated.
+String safetyCategoryLabel(String category) => category == 'General' ? l10nNow.categoryGeneral : category;
 
 Color difficultyColor(String difficulty) => switch (difficulty) {
   SafetyScenarioModel.difficultyAdvanced => AppPalette.coral,
@@ -209,22 +225,22 @@ class SearchField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: appText(13.5, color: AppPalette.inkFaint),
-        prefixIcon: const Icon(Icons.search_rounded, color: AppPalette.inkFaint),
+        prefixIcon: Icon(Icons.search_rounded, color: AppPalette.inkFaint),
         filled: true,
         fillColor: AppPalette.surface,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppPalette.border),
+          borderSide: BorderSide(color: AppPalette.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppPalette.border),
+          borderSide: BorderSide(color: AppPalette.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppPalette.brightBlue, width: 1.5),
+          borderSide: BorderSide(color: AppColors.info, width: 1.5),
         ),
       ),
     );

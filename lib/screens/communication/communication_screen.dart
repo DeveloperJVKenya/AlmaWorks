@@ -1,7 +1,6 @@
 // communication_screen.dart
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
@@ -183,7 +182,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 label: Text(
                   'Compose',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0A2E5A),
@@ -230,7 +229,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                 children: [
                   Text(
                     'PROJECT',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 10,
                       color: Colors.grey[400],
                       fontWeight: FontWeight.w600,
@@ -240,7 +239,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                   const SizedBox(height: 4),
                   Text(
                     widget.project.name,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 13,
                       color: const Color(0xFF0A2E5A),
                       fontWeight: FontWeight.w500,
@@ -287,7 +286,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                         children: [
                           Text(
                             _currentUser!.username,
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -295,7 +294,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                           ),
                           Text(
                             _currentUser!.email,
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 10,
                               color: Colors.grey[500],
                             ),
@@ -334,7 +333,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         ),
         title: Text(
           label,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             color: isSelected ? const Color(0xFF0A2E5A) : Colors.grey[700],
@@ -388,10 +387,10 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
       color: Colors.grey[50],
       child: TextField(
         controller: _searchCtrl,
-        style: GoogleFonts.poppins(fontSize: 13),
+        style: TextStyle(fontSize: 13),
         decoration: InputDecoration(
           hintText: 'Search messages…',
-          hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[400]),
+          hintStyle: TextStyle(fontSize: 13, color: Colors.grey[400]),
           prefixIcon: const Icon(Icons.search, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -544,7 +543,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
             const SizedBox(height: 12),
             Text(
               'Could not load messages',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[700],
@@ -554,7 +553,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
             Text(
               '$error',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -617,7 +616,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
           const SizedBox(height: 12),
           Text(
             label,
-            style: GoogleFonts.poppins(fontSize: 15, color: Colors.grey[400]),
+            style: TextStyle(fontSize: 15, color: Colors.grey[400]),
           ),
         ],
       ),
@@ -629,8 +628,8 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
     return BottomNavigationBar(
       currentIndex: _Folder.values.indexOf(_activeFolder),
       onTap: (i) => setState(() => _activeFolder = _Folder.values[i]),
-      selectedLabelStyle: GoogleFonts.poppins(fontSize: 11),
-      unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11),
+      selectedLabelStyle: TextStyle(fontSize: 11),
+      unselectedLabelStyle: TextStyle(fontSize: 11),
       selectedItemColor: const Color(0xFF0A2E5A),
       unselectedItemColor: Colors.grey[500],
       type: BottomNavigationBarType.fixed,
@@ -659,7 +658,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
       backgroundColor: const Color(0xFF0A2E5A),
       foregroundColor: Colors.white,
       icon: const Icon(Icons.edit_outlined),
-      label: Text('Compose', style: GoogleFonts.poppins()),
+      label: Text('Compose', style: TextStyle()),
     );
   }
 }
@@ -743,7 +742,7 @@ class _MessageTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             displayName,
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: _isUnread && !isSent
                                   ? FontWeight.w700
@@ -755,7 +754,7 @@ class _MessageTile extends StatelessWidget {
                         ),
                         Text(
                           _formatDate(message.sentAt),
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             fontSize: 11,
                             color: _isUnread && !isSent
                                 ? const Color(0xFF0A2E5A)
@@ -773,7 +772,7 @@ class _MessageTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             message.subject,
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: _isUnread && !isSent
                                   ? FontWeight.w600
@@ -796,7 +795,7 @@ class _MessageTile extends StatelessWidget {
                             ),
                             child: Text(
                               'Cc',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.grey[600],
@@ -817,7 +816,7 @@ class _MessageTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       message.bodyPlainText,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[500],
                       ),
@@ -933,7 +932,7 @@ class _DraftTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Draft',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: Colors.orange[700],
@@ -942,7 +941,7 @@ class _DraftTile extends StatelessWidget {
                       ),
                       Text(
                         DateFormat.MMMd().format(draft.savedAt),
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey[400],
                         ),
@@ -951,7 +950,7 @@ class _DraftTile extends StatelessWidget {
                   ),
                   Text(
                     draft.subject.isNotEmpty ? draft.subject : '(No subject)',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey[700],
                     ),
@@ -959,7 +958,7 @@ class _DraftTile extends StatelessWidget {
                   ),
                   Text(
                     'To: $toLabel',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[500],
                     ),

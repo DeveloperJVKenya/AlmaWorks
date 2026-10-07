@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 /// "Today" / "Tomorrow" / "In N days" for a date within the next week,
 /// falling back to an absolute `d MMM yyyy` date beyond that — makes a
@@ -12,11 +13,12 @@ String relativeDayLabel(DateTime date) {
   final target = DateTime(date.year, date.month, date.day);
   final daysDiff = target.difference(today).inDays;
 
-  if (daysDiff == 0) return 'Today';
-  if (daysDiff == 1) return 'Tomorrow';
-  if (daysDiff == -1) return 'Yesterday';
-  if (daysDiff > 1 && daysDiff <= 7) return 'In $daysDiff days';
-  if (daysDiff < -1 && daysDiff >= -7) return '${-daysDiff} days ago';
+  final l = l10nNow;
+  if (daysDiff == 0) return l.today;
+  if (daysDiff == 1) return l.tomorrow;
+  if (daysDiff == -1) return l.yesterday;
+  if (daysDiff > 1 && daysDiff <= 7) return l.inDays(daysDiff);
+  if (daysDiff < -1 && daysDiff >= -7) return l.daysAgoLong(-daysDiff);
   return DateFormat('d MMM yyyy').format(date);
 }
 

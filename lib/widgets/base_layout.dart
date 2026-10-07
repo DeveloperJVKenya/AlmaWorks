@@ -16,32 +16,18 @@ import 'package:almaworks/screens/quality_and_safety_screen.dart';
 import 'package:almaworks/screens/reports/reports_screen.dart';
 import 'package:almaworks/screens/safety_training/safety_training_screen.dart';
 import 'package:almaworks/screens/schedule/schedule_screen.dart';
-import 'package:almaworks/screens/schedule/task_progress_monitor_screen.dart'; // ← ADDED
+import 'package:almaworks/screens/schedule/task_progress_monitor_screen.dart';
+import 'package:almaworks/screens/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
-// The sidebar now switches its own surface/text colors with the app theme
-// instead of staying permanently white — it used to hardcode `color:
-// Colors.white` (see _buildSidebar) while menu item labels left their color
-// unset, so titles silently inherited the *ambient* theme's default text
-// color: near-black under light (fine, coincidentally correct), near-white
-// under dark — on a sidebar that was still hardcoded white, i.e. invisible
-// white-on-white text. Rather than keep the sidebar permanently light (a
-// workaround, not what a "dark mode" toggle should mean), both the surface
-// and every text/icon color below now branch on Theme.of(context).brightness.
-const _sidebarSurfaceLight = Colors.white;
-const _sidebarSurfaceDark = Color(0xFF1E1E1E);
-
-// Bolder + brighter than a plain light-blue would be washed out against
-// _sidebarSurfaceDark, per feedback that dark-mode sidebar text needed more
-// visual weight generally, not just to be technically visible.
-const _sidebarSelectedTextColorLight = Color(0xFF0A2E5A);
-const _sidebarSelectedTextColorDark = Color(0xFF82B1FF);
-const _sidebarTextColorLight = Color(0xFF37474F);
-const _sidebarTextColorDark = Color(0xFFECEFF1);
+// Sidebar colors follow the light/dark/high-contrast choice in Settings
+// (see AppColors): surface, text and the selected item all switch together.
 
 /// Route name tagged on ProjectSummaryScreen's push (see
 /// projects_main_screen.dart) so BaseLayout's sidebar can pop back to it
@@ -251,13 +237,13 @@ class _BaseLayoutState extends State<BaseLayout> {
     return AppBar(
       title: Text(
         widget.title,
-        style: GoogleFonts.poppins(
+        style: TextStyle(
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
       ),
       centerTitle: true,
-      backgroundColor: const Color(0xFF0A2E5A),
+      backgroundColor: AppColors.isDark ? null : AppColors.navy,
       foregroundColor: Colors.white,
       actions: [
         // Unread count comes from the same provider the notification
@@ -281,14 +267,13 @@ class _BaseLayoutState extends State<BaseLayout> {
   }
 
   Widget _buildSidebar(BuildContext context, bool isTablet) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: isTablet ? 280 : 300,
       decoration: BoxDecoration(
-        color: isDark ? _sidebarSurfaceDark : _sidebarSurfaceLight,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+            color: AppColors.shadow,
             blurRadius: 4,
             offset: const Offset(2, 0),
           ),
@@ -319,17 +304,19 @@ class _BaseLayoutState extends State<BaseLayout> {
     // restriction Client/Technician already have.
     final bool isSubContractor = _userRole == 'SubContractor';
     final bool isRestrictedRole = isClient || isTechnician || isSubContractor;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l = context.l10n;
+    final selectedTextColor = AppColors.brandInk;
+    final textColor = AppColors.ink;
 
     return ColoredBox(
-      color: isDark ? _sidebarSurfaceDark : _sidebarSurfaceLight,
+      color: AppColors.surface,
       child: Column(
         children: [
         Container(
           height: 120,
           width: double.infinity,
           decoration: const BoxDecoration(
-            color: Color(0xFF0A2E5A),
+            color: AppColors.navy,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -339,7 +326,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
                   widget.project?.name ?? 'AlmaWorks',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -351,8 +338,8 @@ class _BaseLayoutState extends State<BaseLayout> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
-                  isClient ? 'My Project Dashboard' : 'Project Dashboard',
-                  style: GoogleFonts.poppins(
+                  isClient ? l.myProjectDashboard : l.projectDashboard,
+                  style: TextStyle(
                     color: Colors.white70,
                     fontSize: 14,
                   ),
@@ -374,18 +361,16 @@ class _BaseLayoutState extends State<BaseLayout> {
             children: [
               // ── Switch Project ────────────────────────────────────────────
               ListTile(
-                leading: const Icon(Icons.swap_horiz, color: Colors.blueGrey),
+                leading: Icon(Icons.swap_horiz, color: AppColors.inkMuted),
                 title: Text(
-                  isRestrictedRole ? 'My Projects' : 'Switch Project',
-                  style: GoogleFonts.poppins(
-                    color: widget.selectedMenuItem == 'Switch Project'
-                        ? (isDark ? _sidebarSelectedTextColorDark : _sidebarSelectedTextColorLight)
-                        : (isDark ? _sidebarTextColorDark : _sidebarTextColorLight),
+                  isRestrictedRole ? l.navMyProjects : l.navSwitchProject,
+                  style: TextStyle(
+                    color: widget.selectedMenuItem == 'Switch Project' ? selectedTextColor : textColor,
                     fontWeight: widget.selectedMenuItem == 'Switch Project' ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
                 selected: widget.selectedMenuItem == 'Switch Project',
-                selectedTileColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blueGrey[50],
+                selectedTileColor: AppColors.brandTint,
                 onTap: () {
                   widget.logger.i(
                       '🧭 BaseLayout: Switch Project selected, role: $_userRole');
@@ -415,16 +400,14 @@ class _BaseLayoutState extends State<BaseLayout> {
               ListTile(
                 leading: const Icon(Icons.dashboard, color: Colors.indigo),
                 title: Text(
-                  'Overview',
-                  style: GoogleFonts.poppins(
-                    color: widget.selectedMenuItem == 'Overview'
-                        ? (isDark ? _sidebarSelectedTextColorDark : _sidebarSelectedTextColorLight)
-                        : (isDark ? _sidebarTextColorDark : _sidebarTextColorLight),
+                  l.navOverview,
+                  style: TextStyle(
+                    color: widget.selectedMenuItem == 'Overview' ? selectedTextColor : textColor,
                     fontWeight: widget.selectedMenuItem == 'Overview' ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
                 selected: widget.selectedMenuItem == 'Overview',
-                selectedTileColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blueGrey[50],
+                selectedTileColor: AppColors.brandTint,
                 onTap: () {
                   widget.logger.i('🧭 BaseLayout: Overview selected');
                   if (isMobile) Navigator.pop(context);
@@ -434,28 +417,13 @@ class _BaseLayoutState extends State<BaseLayout> {
                         !_clientProjectIds!.contains(widget.project!.id)) {
                       widget.logger.w(
                           '⚠️ BaseLayout: $_userRole attempted to access unauthorized project');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'You do not have access to this project',
-                            style: GoogleFonts.poppins(),
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      showErrorMessage(context, l.noAccessToProject);
                       return;
                     }
 
                     _goToProjectSummary(context);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'No project selected',
-                          style: GoogleFonts.poppins(),
-                        ),
-                      ),
-                    );
+                    showInfoSnack(context, l.noProjectSelected);
                   }
                 },
               ),
@@ -465,7 +433,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 context: context,
                 icon: Icons.description,
                 iconColor: Colors.blue,
-                title: 'Documents',
+                title: l.navDocuments,
                 selectedItem: 'Documents',
                 isMobile: isMobile,
                 isClient: isRestrictedRole,
@@ -487,7 +455,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 context: context,
                 icon: Icons.architecture,
                 iconColor: Colors.teal,
-                title: 'Drawings',
+                title: l.navDrawings,
                 selectedItem: 'Drawings',
                 isMobile: isMobile,
                 isClient: isRestrictedRole,
@@ -502,7 +470,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 context: context,
                 icon: Icons.schedule,
                 iconColor: Colors.orange,
-                title: 'Schedule',
+                title: l.navSchedule,
                 selectedItem: 'Schedule',
                 isMobile: isMobile,
                 isClient: isRestrictedRole,
@@ -517,7 +485,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 context: context,
                 icon: Icons.shield_sharp,
                 iconColor: Colors.green,
-                title: 'Quality & Safety',
+                title: l.navQualitySafety,
                 selectedItem: 'Quality & Safety',
                 isMobile: isMobile,
                 isClient: isRestrictedRole,
@@ -536,7 +504,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   context: context,
                   icon: Icons.health_and_safety,
                   iconColor: Colors.redAccent,
-                  title: 'Safety Training',
+                  title: l.navSafetyTraining,
                   selectedItem: 'Safety Training',
                   isMobile: isMobile,
                   isClient: isRestrictedRole,
@@ -553,7 +521,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 context: context,
                 icon: Icons.insert_chart,
                 iconColor: Colors.deepPurple,
-                title: 'Reports',
+                title: l.navReports,
                 selectedItem: 'Reports',
                 isMobile: isMobile,
                 isClient: isRestrictedRole,
@@ -571,7 +539,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   context: context,
                   icon: Icons.track_changes_rounded,
                   iconColor: Colors.cyan,
-                  title: 'Task Progress',
+                  title: l.navTaskProgress,
                   selectedItem: 'Task Progress',
                   isMobile: isMobile,
                   isClient: isRestrictedRole,
@@ -587,7 +555,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   context: context,
                   icon: Icons.photo_library,
                   iconColor: Colors.pink,
-                  title: 'Photo Gallery',
+                  title: l.navPhotoGallery,
                   selectedItem: 'Photo Gallery',
                   isMobile: isMobile,
                   isClient: isRestrictedRole,
@@ -603,7 +571,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   context: context,
                   icon: Icons.photo_album,
                   iconColor: Colors.pink,
-                  title: 'Photos',
+                  title: l.navPhotos,
                   selectedItem: 'Photos',
                   isMobile: isMobile,
                   isClient: isRestrictedRole,
@@ -621,7 +589,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   context: context,
                   icon: Icons.account_balance,
                   iconColor: Color(0xFF2E7D32),
-                  title: 'Financials',
+                  title: l.navFinancials,
                   selectedItem: 'Financials',
                   isMobile: isMobile,
                   isClient: isRestrictedRole,
@@ -641,7 +609,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                   context: context,
                   icon: Icons.inventory_2,
                   iconColor: Colors.brown,
-                  title: 'Inventory',
+                  title: l.navInventory,
                   selectedItem: 'Inventory',
                   isMobile: isMobile,
                   // Not isRestrictedRole here — Technician keeps Inventory
@@ -665,7 +633,7 @@ class _BaseLayoutState extends State<BaseLayout> {
                 context: context,
                 icon: Icons.mail_outline_rounded,
                 iconColor: Colors.blueAccent,
-                title: 'Communication',
+                title: l.navCommunication,
                 selectedItem: 'Communication',
                 isMobile: isMobile,
                 isClient: isRestrictedRole,
@@ -675,6 +643,17 @@ class _BaseLayoutState extends State<BaseLayout> {
                 ),
               ),
               ], // end if (!isSubContractor)
+
+              // ── Settings (every role) ─────────────────────────────────────
+              Divider(color: AppColors.divider),
+              ListTile(
+                leading: Icon(Icons.settings_rounded, color: AppColors.inkMuted),
+                title: Text(l.settings, style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
+                onTap: () {
+                  if (isMobile) Navigator.pop(context);
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                },
+              ),
             ],
             ),
           ),
@@ -695,9 +674,8 @@ class _BaseLayoutState extends State<BaseLayout> {
     required Widget Function() onNavigate,
   }) {
     final selected = widget.selectedMenuItem == selectedItem;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedTextColor = isDark ? _sidebarSelectedTextColorDark : _sidebarSelectedTextColorLight;
-    final unselectedTextColor = isDark ? _sidebarTextColorDark : _sidebarTextColorLight;
+    final selectedTextColor = AppColors.brandInk;
+    final unselectedTextColor = AppColors.ink;
     // A left accent bar on the active item — a clearer, more modern "you
     // are here" affordance than relying on background tint alone. A
     // Container border (not ListTile's `shape`, which draws uniformly
@@ -715,13 +693,13 @@ class _BaseLayoutState extends State<BaseLayout> {
         leading: Icon(icon, color: iconColor),
         title: Text(
           title,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             color: selected ? selectedTextColor : unselectedTextColor,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
         selected: selected,
-        selectedTileColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.blueGrey[50],
+        selectedTileColor: AppColors.brandTint,
         onTap: () {
         widget.logger.i('🧭 BaseLayout: $title selected');
         if (isMobile) Navigator.pop(context);
@@ -732,28 +710,13 @@ class _BaseLayoutState extends State<BaseLayout> {
               !_clientProjectIds!.contains(widget.project!.id)) {
             widget.logger.w(
                 '⚠️ BaseLayout: $_userRole attempted to access unauthorized project: $title');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'You do not have access to this project',
-                  style: GoogleFonts.poppins(),
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
+            showErrorMessage(context, context.l10n.noAccessToProject);
             return;
           }
 
           _goToSection(context, onNavigate);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'No project selected',
-                style: GoogleFonts.poppins(),
-              ),
-            ),
-          );
+          showInfoSnack(context, context.l10n.noProjectSelected);
         }
         },
       ),

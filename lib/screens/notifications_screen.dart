@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 /// The app-wide notification center: everything queued for the signed-in
 /// user (UserNotificationQueue, by uid), their role (AdminNotificationQueue,
@@ -42,8 +45,8 @@ class NotificationsScreen extends ConsumerWidget {
       backgroundColor: AppPalette.canvas,
       appBar: modernAppBar(
         context,
-        title: 'Notifications',
-        subtitle: unread == 0 ? 'You\'re all caught up' : '$unread unread',
+        title: context.l10n.notifications,
+        subtitle: unread == 0 ? context.l10n.allCaughtUp : context.l10n.unreadCount(unread),
         actions: [
           if (unread > 0)
             Padding(
@@ -53,7 +56,7 @@ class NotificationsScreen extends ConsumerWidget {
                 style: TextButton.styleFrom(foregroundColor: Colors.white),
                 icon: const Icon(Icons.done_all_rounded, size: 18),
                 label: Text(
-                  'Mark all read',
+                  context.l10n.markAllRead,
                   style: appText(12.5, weight: FontWeight.w600, color: Colors.white),
                 ),
               ),
@@ -64,9 +67,9 @@ class NotificationsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => EmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Couldn\'t load notifications',
-          message: 'Check your connection and try again.',
-          action: OutlinedButton(onPressed: () => ref.invalidate(notificationUserProvider), child: const Text('Retry')),
+          title: context.l10n.couldNotLoadNotifications,
+          message: friendlyError(e),
+          action: OutlinedButton(onPressed: () => ref.invalidate(notificationUserProvider), child: Text(context.l10n.retry)),
         ),
         data: (_) {
           final visible = all.where(filter.matches).toList();
@@ -100,7 +103,7 @@ class NotificationsScreen extends ConsumerWidget {
                         if (failedSources > 0) ...[
                           const SizedBox(height: 10),
                           Text(
-                            'Some notifications couldn\'t be loaded — the list may be incomplete.',
+                            context.l10n.someNotificationsMissing,
                             style: appText(12, color: AppPalette.orange),
                           ),
                         ],
@@ -115,10 +118,10 @@ class NotificationsScreen extends ConsumerWidget {
                       icon: filter is UnreadNotifications
                           ? Icons.mark_email_read_rounded
                           : Icons.notifications_none_rounded,
-                      title: filter is UnreadNotifications ? 'No unread notifications' : 'Nothing here yet',
+                      title: filter is UnreadNotifications ? context.l10n.noUnreadNotifications : context.l10n.nothingHereYet,
                       message: filter is AllNotifications
-                          ? 'Updates about your projects, inventory, safety training and messages will appear here.'
-                          : 'Try another filter to see more.',
+                          ? context.l10n.notificationsEmptyHint
+                          : context.l10n.tryAnotherFilter,
                     ),
                   )
                 else
@@ -168,10 +171,10 @@ class NotificationsScreen extends ConsumerWidget {
     if (user == null) return;
     try {
       await ref.read(notificationRepositoryProvider).markAllRead(all, user.uid);
-      if (context.mounted) showAppSnack(context, 'All notifications marked as read');
+      if (context.mounted) showSuccessSnack(context, context.l10n.allMarkedRead);
     } catch (e) {
       logger?.e('❌ NotificationsScreen: mark all read failed', error: e);
-      if (context.mounted) showAppSnack(context, 'Couldn\'t mark notifications as read', error: true);
+      if (context.mounted) showErrorSnack(context, e, action: context.l10n.couldNotMarkRead);
     }
   }
 }
@@ -185,20 +188,21 @@ class _SummaryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unread = all.where((n) => !n.isRead).toList();
-    final today = all.where((n) => notificationDayLabel(n.createdAt, DateTime.now()) == 'Today').length;
+    final now = DateTime.now();
+    final today = all.where((n) => DateUtils.isSameDay(n.createdAt, now)).length;
     final safety = unread.where((n) => n.category == NotificationCategory.safety).length;
     return ResponsiveTiles(
       minTileWidth: 150,
       children: [
-        StatTile(label: 'Unread', value: '${unread.length}', icon: Icons.mark_email_unread_rounded),
-        StatTile(label: 'Today', value: '$today', icon: Icons.today_rounded, color: AppPalette.violet),
+        StatTile(label: context.l10n.unread, value: '${unread.length}', icon: Icons.mark_email_unread_rounded),
+        StatTile(label: context.l10n.today, value: '$today', icon: Icons.today_rounded, color: AppPalette.violet),
         StatTile(
-          label: 'Safety (unread)',
+          label: context.l10n.safetyUnread,
           value: '$safety',
           icon: Icons.health_and_safety_rounded,
           color: AppPalette.teal,
         ),
-        StatTile(label: 'Total', value: '${all.length}', icon: Icons.inbox_rounded, color: AppPalette.orange),
+        StatTile(label: context.l10n.total, value: '${all.length}', icon: Icons.inbox_rounded, color: AppPalette.orange),
       ],
     );
   }
@@ -228,13 +232,13 @@ class _NotificationTile extends ConsumerWidget {
           alignment: Alignment.centerLeft,
           color: AppPalette.brightBlue,
           icon: n.isRead ? Icons.mark_email_unread_rounded : Icons.mark_email_read_rounded,
-          label: n.isRead ? 'Mark unread' : 'Mark read',
+          label: n.isRead ? context.l10n.markUnread : context.l10n.markRead,
         ),
         secondaryBackground: _swipeBackground(
           alignment: Alignment.centerRight,
           color: AppPalette.coral,
           icon: Icons.delete_outline_rounded,
-          label: 'Remove',
+          label: context.l10n.remove,
         ),
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.startToEnd) {
@@ -296,7 +300,7 @@ class _NotificationTile extends ConsumerWidget {
                         if (access != null)
                           StatusPill(label: access.pill, color: access.visual.$2, icon: access.visual.$1),
                         Text(
-                          '${relativeTime(n.createdAt, now)} · ${DateFormat('MMM d, HH:mm').format(n.createdAt)}',
+                          '${relativeTime(n.createdAt, now)} · ${DateFormat('d MMM, HH:mm').format(n.createdAt)}',
                           style: appText(11.5, color: AppPalette.inkFaint),
                         ),
                         if (canOpen)
@@ -304,10 +308,10 @@ class _NotificationTile extends ConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Open',
-                                style: appText(11.5, weight: FontWeight.w600, color: AppPalette.brightBlue),
+                                context.l10n.open,
+                                style: appText(11.5, weight: FontWeight.w600, color: AppColors.info),
                               ),
-                              const Icon(Icons.chevron_right_rounded, size: 16, color: AppPalette.brightBlue),
+                              Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.info),
                             ],
                           ),
                       ],
@@ -316,8 +320,8 @@ class _NotificationTile extends ConsumerWidget {
                 ),
               ),
               PopupMenuButton<String>(
-                tooltip: 'More',
-                icon: const Icon(Icons.more_vert_rounded, color: AppPalette.inkFaint),
+                tooltip: context.l10n.more,
+                icon: Icon(Icons.more_vert_rounded, color: AppPalette.inkFaint),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 onSelected: (action) {
                   switch (action) {
@@ -332,14 +336,14 @@ class _NotificationTile extends ConsumerWidget {
                   }
                 },
                 itemBuilder: (_) => [
-                  if (canOpen) _menuItem('open', Icons.open_in_new_rounded, 'Open'),
-                  _menuItem('details', Icons.article_outlined, 'View details'),
+                  if (canOpen) _menuItem('open', Icons.open_in_new_rounded, context.l10n.open),
+                  _menuItem('details', Icons.article_outlined, context.l10n.viewDetails),
                   _menuItem(
                     'toggle',
                     n.isRead ? Icons.mark_email_unread_outlined : Icons.mark_email_read_outlined,
-                    n.isRead ? 'Mark as unread' : 'Mark as read',
+                    n.isRead ? context.l10n.markAsUnread : context.l10n.markAsRead,
                   ),
-                  _menuItem('remove', Icons.delete_outline_rounded, 'Remove', color: AppPalette.coral),
+                  _menuItem('remove', Icons.delete_outline_rounded, context.l10n.remove, color: AppPalette.coral),
                 ],
               ),
             ],
@@ -349,7 +353,8 @@ class _NotificationTile extends ConsumerWidget {
     );
   }
 
-  PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color color = AppPalette.ink}) {
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label, {Color? color}) {
+    color ??= AppPalette.ink;
     return PopupMenuItem(
       value: value,
       child: Row(
@@ -401,7 +406,7 @@ class _NotificationTile extends ConsumerWidget {
       await ref.read(notificationRepositoryProvider).setRead(notification, user.uid, read: read);
     } catch (e) {
       logger.e('❌ NotificationsScreen: set read failed', error: e);
-      if (context.mounted) showAppSnack(context, 'Couldn\'t update the notification', error: true);
+      if (context.mounted) showErrorSnack(context, e, action: context.l10n.couldNotUpdateNotification);
     }
   }
 
@@ -410,10 +415,10 @@ class _NotificationTile extends ConsumerWidget {
     if (user == null) return;
     try {
       await ref.read(notificationRepositoryProvider).remove(notification, user.uid);
-      if (context.mounted) showAppSnack(context, 'Notification removed');
+      if (context.mounted) showSuccessSnack(context, context.l10n.notificationRemoved);
     } catch (e) {
       logger.e('❌ NotificationsScreen: remove failed', error: e);
-      if (context.mounted) showAppSnack(context, 'Couldn\'t remove the notification', error: true);
+      if (context.mounted) showErrorSnack(context, e, action: context.l10n.couldNotRemoveNotification);
     }
   }
 
@@ -456,7 +461,7 @@ class _NotificationTile extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                (access?.body ?? n.body).isEmpty ? 'No further details.' : (access?.body ?? n.body),
+                (access?.body ?? n.body).isEmpty ? context.l10n.noFurtherDetails : (access?.body ?? n.body),
                 style: appText(14.5, height: 1.55),
               ),
               const SizedBox(height: 18),
@@ -467,7 +472,7 @@ class _NotificationTile extends ConsumerWidget {
                   StatusPill(label: n.category.label, color: n.category.color, icon: n.category.icon),
                   if (access != null) StatusPill(label: access.pill, color: access.visual.$2, icon: access.visual.$1),
                   StatusPill(
-                    label: DateFormat('EEE, MMM d yyyy · HH:mm').format(n.createdAt),
+                    label: DateFormat('EEE d MMM y · HH:mm').format(n.createdAt),
                     color: AppPalette.inkMuted,
                     icon: Icons.schedule_rounded,
                   ),
@@ -476,7 +481,7 @@ class _NotificationTile extends ConsumerWidget {
               if (NotificationRouter.hasDestination(n.payload)) ...[
                 const SizedBox(height: 22),
                 PrimaryButton(
-                  label: 'Open',
+                  label: context.l10n.open,
                   icon: Icons.open_in_new_rounded,
                   expand: true,
                   onPressed: () {
@@ -508,42 +513,43 @@ class _AccessOutcome {
   static _AccessOutcome? of(AppNotification n, WidgetRef ref) {
     final id = n.accessRequestId;
     if (id == null) return null;
+    final l = l10nNow;
     final async = ref.watch(accessRequestProvider(id));
     final request = async.valueOrNull;
     if (async.isLoading && request == null) return null;
     if (request == null) {
-      return const _AccessOutcome(
+      return _AccessOutcome(
         title: null,
         body: null,
-        pill: 'Request no longer exists',
+        pill: l.requestNoLongerExists,
         visual: (Icons.help_outline_rounded, AppPalette.inkMuted),
       );
     }
-    final who = request.clientUsername.isEmpty ? 'This user' : request.clientUsername;
-    final by = (request.approvedBy ?? '').isEmpty ? 'an admin' : request.approvedBy!;
-    final when = request.approvalDate == null ? '' : ' · ${DateFormat('MMM d, HH:mm').format(request.approvalDate!)}';
+    final who = request.clientUsername.isEmpty ? l.thisUser : request.clientUsername;
+    final by = (request.approvedBy ?? '').isEmpty ? l.anAdmin : request.approvedBy!;
+    final when = request.approvalDate == null ? '' : ' · ${DateFormat('d MMM, HH:mm').format(request.approvalDate!)}';
     switch (request.status) {
       case 'approved':
         final count = request.grantedProjects.length;
         return _AccessOutcome(
-          title: '✅ Access approved — $who',
-          body: '$who was approved as ${request.grantedRole} with access to $count project${count == 1 ? '' : 's'}.',
-          pill: 'Approved by $by$when',
+          title: l.accessApprovedTitle(who),
+          body: l.accessApprovedBody(who, roleLabel(request.grantedRole, l), count),
+          pill: l.approvedByWhen(by, when),
           visual: (Icons.verified_user_rounded, AppPalette.green),
         );
       case 'denied':
         final reason = request.denialReason;
         return _AccessOutcome(
-          title: '❌ Access denied — $who',
-          body: reason == null || reason.isEmpty ? '$who\'s access request was denied.' : 'Reason: $reason',
-          pill: 'Denied by $by$when',
+          title: l.accessDeniedTitle(who),
+          body: reason == null || reason.isEmpty ? l.accessDeniedBody(who) : l.reasonLabel(reason),
+          pill: l.deniedByWhen(by, when),
           visual: (Icons.block_rounded, AppPalette.coral),
         );
       default:
-        return const _AccessOutcome(
+        return _AccessOutcome(
           title: null,
           body: null,
-          pill: 'Awaiting a decision',
+          pill: l.awaitingDecision,
           visual: (Icons.hourglass_top_rounded, AppPalette.amber),
         );
     }

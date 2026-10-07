@@ -4,16 +4,18 @@ import 'dart:typed_data';
 import 'package:almaworks/models/inventory/inventory_categories.dart';
 import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/project_model.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// MainAdmin-only screen to register a new material, or (when
 /// [existingMaterial] is supplied) edit one's descriptive fields.
@@ -62,7 +64,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
     final existing = widget.existingMaterial;
     if (existing != null) {
       _nameController.text = existing.name;
-      _categoryController.text = existing.category;
+      _categoryController.text = invLabel(existing.category);
       _descriptionController.text = existing.description ?? '';
       _reorderLevelController.text = existing.reorderLevel.toString();
       _unit = existing.unit;
@@ -93,12 +95,12 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: Text('Camera', style: GoogleFonts.poppins()),
+              title: Text(context.l10n.camera),
               onTap: () => Navigator.pop(context, 'camera'),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: Text('Gallery', style: GoogleFonts.poppins()),
+              title: Text(context.l10n.gallery),
               onTap: () => Navigator.pop(context, 'gallery'),
             ),
           ],
@@ -120,14 +122,14 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final actionLabel = _isEditing ? 'Save Changes' : 'Add Material';
+    final l = context.l10n;
+    final actionLabel = _isEditing ? l.saveChanges : l.addMaterial;
     final confirmed = await showConfirmDialog(
       context,
       title: actionLabel,
       message: _isEditing
-          ? 'Save changes to "${_nameController.text.trim()}"?'
-          : 'Register "${_nameController.text.trim()}" (${_categoryController.text.trim()}) '
-              'as a new material in the stock register?',
+          ? l.confirmSaveChangesTo(_nameController.text.trim())
+          : l.confirmRegisterMaterial(_nameController.text.trim(), _categoryController.text.trim()),
       confirmLabel: actionLabel,
     );
     if (!confirmed || !mounted) return;
@@ -156,7 +158,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
         await _inventoryService.updateMaterial(
           materialId: widget.existingMaterial!.id,
           name: _nameController.text.trim(),
-          category: _categoryController.text.trim(),
+          category: _canonicalCategory,
           unit: _unit,
           source: _source,
           description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
@@ -166,7 +168,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
       } else {
         await _inventoryService.createMaterial(
           name: _nameController.text.trim(),
-          category: _categoryController.text.trim(),
+          category: _canonicalCategory,
           unit: _unit,
           source: _source,
           description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
@@ -181,31 +183,31 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isEditing ? 'Changes saved' : 'Material added successfully', style: GoogleFonts.poppins()),
-          backgroundColor: Colors.green,
-        ),
-      );
+      showSuccessSnack(context, _isEditing ? l.changesSaved : l.materialAdded);
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ AddMaterialScreen: Failed to save material', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showErrorSnack(context, e, action: l.couldNotSaveMaterial);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
+  /// The stored (English) category for a preset shown in the app language.
+  String get _canonicalCategory {
+    final text = _categoryController.text.trim();
+    for (final option in InventoryCategories.material) {
+      if (invLabel(option) == text || option == text) return option;
+    }
+    return text;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return BaseLayout(
-      title: _isEditing ? 'Edit Material' : 'Add Material',
+      title: _isEditing ? l.editMaterial : l.addMaterial,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -222,11 +224,11 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   inventoryFormSection(
-                    title: 'Photo',
+                    title: l.photo,
                     icon: Icons.photo_camera_outlined,
                     children: [
                       Material(
-                        color: const Color(0xFFFAFBFC),
+                        color: AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(14),
                         child: InkWell(
                           onTap: _isSaving ? null : _pickPhoto,
@@ -235,7 +237,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                             height: 160,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.grey.withValues(alpha: 0.22)),
+                              border: Border.all(color: AppColors.border),
                             ),
                             child: _selectedPhoto == null
                                 ? Center(
@@ -244,12 +246,12 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                                       children: [
                                         CircleAvatar(
                                           radius: 22,
-                                          backgroundColor: inventoryNavy.withValues(alpha: 0.08),
-                                          child: Icon(Icons.add_a_photo_outlined, color: inventoryNavy, size: 22),
+                                          backgroundColor: AppColors.brandTint,
+                                          child: Icon(Icons.add_a_photo_outlined, color: AppColors.brandInk, size: 22),
                                         ),
                                         const SizedBox(height: 8),
-                                        Text('Tap to add a photo (optional)',
-                                            style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+                                        Text(l.tapToAddPhoto,
+                                            style: TextStyle(color: AppColors.inkMuted, fontSize: 12)),
                                       ],
                                     ),
                                   )
@@ -265,33 +267,33 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Details',
+                    title: l.details,
                     icon: Icons.info_outline,
                     children: [
                       TextFormField(
                         controller: _nameController,
-                        decoration: inventoryInputDecoration(label: 'Material Name', icon: Icons.inventory_2_outlined),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                        decoration: inventoryInputDecoration(label: l.materialName, icon: Icons.inventory_2_outlined),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? l.nameRequired : null,
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
                         controller: _descriptionController,
                         maxLines: 3,
-                        decoration: inventoryInputDecoration(label: 'Description (optional)', icon: Icons.notes_outlined),
+                        decoration: inventoryInputDecoration(label: l.descriptionOptional, icon: Icons.notes_outlined),
                       ),
                       if (!_isEditing) ...[
                         const SizedBox(height: 14),
                         DropdownButtonFormField<String>(
                           initialValue: _condition,
                           isExpanded: true,
-                          decoration: inventoryInputDecoration(label: 'Condition at Intake', icon: Icons.fact_check_outlined),
+                          decoration: inventoryInputDecoration(label: l.conditionAtIntakeLabel, icon: Icons.fact_check_outlined),
                           items: [
                             MaterialModel.conditionNew,
                             MaterialModel.conditionGood,
                             MaterialModel.conditionFair,
                             MaterialModel.conditionDamaged,
                           ]
-                              .map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.poppins())))
+                              .map((c) => DropdownMenuItem(value: c, child: Text(invLabel(c))))
                               .toList(),
                           onChanged: (v) => setState(() => _condition = v ?? _condition),
                         ),
@@ -299,42 +301,42 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Classification',
+                    title: l.classification,
                     icon: Icons.category_outlined,
                     children: [
                       TextFormField(
                         controller: _categoryController,
                         decoration: inventoryInputDecoration(
-                          label: 'Category',
-                          hint: 'e.g. Cement & Aggregates, Steel & Metal',
+                          label: l.category,
+                          hint: l.materialCategoryHint,
                           icon: Icons.category_outlined,
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Category is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? l.categoryRequired : null,
                       ),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: InventoryCategories.material.where((c) => c != 'Other').map((c) {
-                          final selected = _categoryController.text == c;
+                          final selected = _categoryController.text == invLabel(c);
                           return ChoiceChip(
-                            label: Text(c, style: GoogleFonts.poppins(fontSize: 12)),
+                            label: Text(invLabel(c), style: const TextStyle(fontSize: 12)),
                             selected: selected,
-                            selectedColor: inventoryNavy.withValues(alpha: 0.12),
-                            labelStyle: GoogleFonts.poppins(
+                            selectedColor: AppColors.brandTint,
+                            labelStyle: TextStyle(
                               fontSize: 12,
-                              color: selected ? inventoryNavy : Colors.grey[700],
+                              color: selected ? AppColors.brandInk : AppColors.inkMuted,
                               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                             ),
-                            side: BorderSide(color: selected ? inventoryNavy : Colors.grey.withValues(alpha: 0.3)),
-                            onSelected: (_) => setState(() => _categoryController.text = c),
+                            side: BorderSide(color: selected ? AppColors.brandInk : AppColors.border),
+                            onSelected: (_) => setState(() => _categoryController.text = invLabel(c)),
                           );
                         }).toList(),
                       ),
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Stock',
+                    title: l.stock,
                     icon: Icons.inventory_2_outlined,
                     children: [
                       Row(
@@ -343,9 +345,9 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                             child: DropdownButtonFormField<String>(
                               initialValue: _unit,
                               isExpanded: true,
-                              decoration: inventoryInputDecoration(label: 'Unit', icon: Icons.straighten_outlined),
+                              decoration: inventoryInputDecoration(label: l.unit, icon: Icons.straighten_outlined),
                               items: _units
-                                  .map((u) => DropdownMenuItem(value: u, child: Text(u, style: GoogleFonts.poppins())))
+                                  .map((u) => DropdownMenuItem(value: u, child: Text(invLabel(u))))
                                   .toList(),
                               onChanged: (v) => setState(() => _unit = v ?? _unit),
                             ),
@@ -355,9 +357,9 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                             child: DropdownButtonFormField<String>(
                               initialValue: _source,
                               isExpanded: true,
-                              decoration: inventoryInputDecoration(label: 'Source', icon: Icons.public_outlined),
+                              decoration: inventoryInputDecoration(label: l.source, icon: Icons.public_outlined),
                               items: [MaterialModel.sourceLocal, MaterialModel.sourceInternational]
-                                  .map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.poppins())))
+                                  .map((s) => DropdownMenuItem(value: s, child: Text(invLabel(s))))
                                   .toList(),
                               onChanged: (v) => setState(() => _source = v ?? _source),
                             ),
@@ -372,7 +374,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                               child: TextFormField(
                                 controller: _initialQuantityController,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                decoration: inventoryInputDecoration(label: 'Initial Quantity', icon: Icons.numbers_outlined),
+                                decoration: inventoryInputDecoration(label: l.initialQuantity, icon: Icons.numbers_outlined),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -382,8 +384,8 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                               controller: _reorderLevelController,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               decoration: inventoryInputDecoration(
-                                label: 'Reorder Level',
-                                hint: 'Low-stock threshold',
+                                label: l.reorderLevel,
+                                hint: l.reorderLevelHint,
                                 icon: Icons.warning_amber_outlined,
                               ),
                             ),
@@ -393,17 +395,18 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
                       if (_isEditing) ...[
                         const SizedBox(height: 8),
                         Text(
-                          'Quantity in storage (${widget.existingMaterial!.quantityInStorage} '
-                          '${widget.existingMaterial!.unit}) can only be changed by recording a '
-                          'receipt or issue — not by editing.',
-                          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600]),
+                          l.quantityEditNote(
+                            '${widget.existingMaterial!.quantityInStorage}',
+                            invLabel(widget.existingMaterial!.unit),
+                          ),
+                          style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
                         ),
                       ],
                     ],
                   ),
                   const SizedBox(height: 4),
                   inventoryPrimaryButton(
-                    label: _isEditing ? 'Save Changes' : 'Add Material',
+                    label: _isEditing ? l.saveChanges : l.addMaterial,
                     isLoading: _isSaving,
                     onPressed: _submit,
                     icon: _isEditing ? Icons.check : Icons.add,

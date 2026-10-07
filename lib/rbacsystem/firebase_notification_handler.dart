@@ -27,12 +27,14 @@
 //   will always exist when this handler fires.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/rbacsystem/notification_id_util.dart';
 import 'package:almaworks/services/notification_preferences.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Top-level background message handler required by `firebase_messaging`.
 ///
@@ -60,7 +62,11 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Show the notification via Awesome Notifications so it surfaces in the
   // system tray even when the app is fully terminated / backgrounded.
   try {
-    final title = message.notification?.title ?? '🔔 New Notification';
+    // No UI (and so no current translations) in this isolate — use the
+    // language saved in Settings for the fallback title.
+    final prefs = await SharedPreferences.getInstance();
+    final l = l10nFor(AppLanguage.fromStored(prefs.getString('appLanguage')) ?? AppLanguage.english);
+    final title = message.notification?.title ?? l.newNotification;
     final body  = message.notification?.body  ?? '';
     final data  = message.data;
     final docId = data['docId'];

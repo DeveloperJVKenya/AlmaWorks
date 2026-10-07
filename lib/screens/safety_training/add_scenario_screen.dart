@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
 import 'package:almaworks/screens/safety_training/safety_training_providers.dart';
+import 'package:almaworks/screens/safety_training/widgets/safety_widgets.dart';
 import 'package:almaworks/services/safety_training_service.dart';
 import 'package:almaworks/utils/lottie_assets.dart';
 import 'package:almaworks/utils/lottie_web_safety.dart';
@@ -12,10 +13,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart' as lottie;
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// Which kind of scene media the admin has chosen for this scenario — only
 /// one is shown at a time (matching HazardSceneVisual's Rive > Lottie >
@@ -49,9 +52,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
   final _sceneController = TextEditingController();
   final _questionController = TextEditingController();
   final _explanationController = TextEditingController();
-  final _reasoningPromptController = TextEditingController(
-    text: 'Explain why this could lead to injury and how to prevent it.',
-  );
+  final _reasoningPromptController = TextEditingController(text: l10nNow.defaultReasoningPrompt);
   final List<TextEditingController> _optionControllers = List.generate(4, (_) => TextEditingController());
 
   String _visualKey = SafetyScenarioModel.visualGeneric;
@@ -89,14 +90,14 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
   static const _maxOptions = 4;
   static const _maxPoints = 1000;
 
-  static const _visualOptions = <String, String>{
-    SafetyScenarioModel.visualFallingObject: 'Falling object',
-    SafetyScenarioModel.visualMissingPpe: 'Missing PPE',
-    SafetyScenarioModel.visualExposedWiring: 'Exposed wiring',
-    SafetyScenarioModel.visualUnguardedEdge: 'Unguarded edge',
-    SafetyScenarioModel.visualWetFloor: 'Wet floor / slip',
-    SafetyScenarioModel.visualUnsecuredLadder: 'Unsecured ladder',
-    SafetyScenarioModel.visualGeneric: 'Generic hazard',
+  static Map<String, String> get _visualOptions => {
+    SafetyScenarioModel.visualFallingObject: l10nNow.visualFallingObject,
+    SafetyScenarioModel.visualMissingPpe: l10nNow.visualMissingPpe,
+    SafetyScenarioModel.visualExposedWiring: l10nNow.visualExposedWiring,
+    SafetyScenarioModel.visualUnguardedEdge: l10nNow.visualUnguardedEdge,
+    SafetyScenarioModel.visualWetFloor: l10nNow.visualWetFloor,
+    SafetyScenarioModel.visualUnsecuredLadder: l10nNow.visualUnsecuredLadder,
+    SafetyScenarioModel.visualGeneric: l10nNow.visualGeneric,
   };
 
   @override
@@ -163,7 +164,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
       if (mounted) {
         setState(() {
           _isLoadingAnswerKey = false;
-          _answerKeyError = 'Could not load this scenario\'s answer key.';
+          _answerKeyError = friendlyError(e, action: l10nNow.couldNotLoadAnswerKey);
         });
       }
     }
@@ -188,12 +189,12 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     if (picked == null) return;
     final contentType = SafetyMediaLimits.imageContentType(fileName: picked.name, mimeType: picked.mimeType);
     if (contentType == null) {
-      if (mounted) _showSnack('Unsupported photo type — use a JPEG, PNG, WebP or GIF image');
+      if (mounted) _showSnack(context.l10n.unsupportedPhotoType);
       return;
     }
     if (await picked.length() > SafetyMediaLimits.maxImageBytes) {
       if (mounted) {
-        _showSnack('Photo is too large — the limit is ${SafetyMediaLimits.describe(SafetyMediaLimits.maxImageBytes)}');
+        _showSnack(context.l10n.photoTooLarge(SafetyMediaLimits.describe(SafetyMediaLimits.maxImageBytes)));
       }
       return;
     }
@@ -219,24 +220,16 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
       final proceedAnyway = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(
-            'This animation won\'t play in web browsers',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-          ),
-          content: Text(
-            'This file uses a "Trim Path" or "Merge Paths" shape, which crashes Flutter Web\'s renderer '
-            '(a known Lottie/CanvasKit compatibility issue). It plays fine on Android/iOS, but anyone viewing '
-            'this scenario in a browser will see the fallback illustration instead.',
-            style: GoogleFonts.poppins(fontSize: 13, height: 1.4),
-          ),
+          title: Text(context.l10n.lottieWebUnsafeTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(context.l10n.lottieWebUnsafeBody, style: const TextStyle(fontSize: 13, height: 1.4)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Pick another file', style: GoogleFonts.poppins()),
+              child: Text(context.l10n.pickAnotherFile),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Use it anyway', style: GoogleFonts.poppins()),
+              child: Text(context.l10n.useItAnyway),
             ),
           ],
         ),
@@ -253,9 +246,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     // Checked after embedding, since embedded images add to the size.
     if (bytes.length > SafetyMediaLimits.maxLottieBytes) {
       if (mounted) {
-        _showSnack(
-          'Animation is too large — the limit is ${SafetyMediaLimits.describe(SafetyMediaLimits.maxLottieBytes)}',
-        );
+        _showSnack(context.l10n.animationTooLarge(SafetyMediaLimits.describe(SafetyMediaLimits.maxLottieBytes)));
       }
       return;
     }
@@ -279,21 +270,19 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     final proceed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Select this animation\'s images', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text(context.l10n.selectAnimationImages, style: const TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
-          'This animation uses ${names.length} separate image file${names.length == 1 ? '' : 's'} '
-          '(${names.join(', ')}) that aren\'t inside the .json. Select ${names.length == 1 ? 'it' : 'them'} '
-          '— usually in the "images" folder exported next to it — to embed them into the animation.',
-          style: GoogleFonts.poppins(fontSize: 13, height: 1.4),
+          context.l10n.selectAnimationImagesBody(names.length, names.join(', ')),
+          style: const TextStyle(fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Select images', style: GoogleFonts.poppins()),
+            child: Text(context.l10n.selectImages),
           ),
         ],
       ),
@@ -309,7 +298,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     final missing = names.where((n) => !filesByName.containsKey(n)).toList();
     if (missing.isNotEmpty) {
       if (mounted) {
-        _showSnack('Missing image${missing.length == 1 ? '' : 's'}: ${missing.join(', ')} — animation not added');
+        _showSnack(context.l10n.missingImagesNotAdded(missing.join(', ')));
       }
       return null;
     }
@@ -317,7 +306,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
       return embedLottieImages(bytes, filesByName);
     } catch (e) {
       widget.logger.e('❌ AddScenarioScreen: Failed to embed Lottie images: $e');
-      if (mounted) _showSnack('Could not embed the images into this animation');
+      if (mounted) _showSnack(context.l10n.couldNotEmbedImages);
       return null;
     }
   }
@@ -328,9 +317,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     if (file?.bytes == null) return;
     if (file!.bytes!.length > SafetyMediaLimits.maxRiveBytes) {
       if (mounted) {
-        _showSnack(
-          'Animation is too large — the limit is ${SafetyMediaLimits.describe(SafetyMediaLimits.maxRiveBytes)}',
-        );
+        _showSnack(context.l10n.animationTooLarge(SafetyMediaLimits.describe(SafetyMediaLimits.maxRiveBytes)));
       }
       return;
     }
@@ -353,9 +340,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     });
   }
 
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: GoogleFonts.poppins())));
-  }
+  void _showSnack(String message) => showWarningSnack(context, message);
 
   /// Uploads newly picked media (if any) to this scenario's Storage path
   /// and returns the URLs the scenario should point at.
@@ -406,18 +391,18 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
         if (_optionControllers[i].text.trim().isNotEmpty) i,
     ];
     if (filledSlots.length < 2) {
-      _showSnack('Add at least two answer options');
+      _showSnack(context.l10n.addTwoOptions);
       return;
     }
     if (!filledSlots.contains(_correctIndex)) {
-      _showSnack('The option marked correct is empty — fill it in or mark a different option');
+      _showSnack(context.l10n.correctOptionEmpty);
       return;
     }
     final options = [for (final i in filledSlots) _optionControllers[i].text.trim()];
     final correctOptionIndex = filledSlots.indexOf(_correctIndex);
     final user = ref.read(safetyUserProvider).valueOrNull;
     if (user == null || !user.isAdmin) {
-      _showSnack('Only admins can save scenarios.');
+      _showSnack(context.l10n.onlyAdminsSaveScenarios);
       return;
     }
 
@@ -466,7 +451,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       widget.logger.e('❌ AddScenarioScreen: Failed to save scenario: $e');
-      if (mounted) _showSnack('Failed to save scenario: $e');
+      if (mounted) showErrorSnack(context, e, action: context.l10n.couldNotSaveScenario);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -477,8 +462,8 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     final mediaSection = _FormSection(
       icon: Icons.movie_creation_rounded,
       color: AppPalette.violet,
-      title: 'Scene media',
-      subtitle: 'Optional — falls back to a built-in animated illustration',
+      title: context.l10n.sceneMedia,
+      subtitle: context.l10n.sceneMediaHint,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -490,26 +475,26 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
             children: [
               _mediaChip(
                 icon: Icons.movie_creation_outlined,
-                label: _pickedRiveName ?? 'Rive (.riv)',
+                label: _pickedRiveName ?? context.l10n.riveFile,
                 active: _mediaKind == _SceneMediaKind.riveAnim,
                 onTap: _pickRive,
               ),
               _mediaChip(
                 icon: Icons.animation_rounded,
-                label: _pickedLottieName ?? 'Lottie (.json)',
+                label: _pickedLottieName ?? context.l10n.lottieFile,
                 active: _mediaKind == _SceneMediaKind.lottieAnim,
                 onTap: _pickLottie,
               ),
               _mediaChip(
                 icon: Icons.image_outlined,
-                label: _pickedImage == null ? 'Real photo' : 'Photo selected',
+                label: _pickedImage == null ? context.l10n.realPhoto : context.l10n.photoSelected,
                 active: _mediaKind == _SceneMediaKind.photo,
                 onTap: _pickImage,
               ),
               if (_mediaKind != _SceneMediaKind.none)
                 _mediaChip(
                   icon: Icons.close_rounded,
-                  label: 'Clear',
+                  label: context.l10n.clear,
                   active: false,
                   onTap: _clearMedia,
                   isDestructive: true,
@@ -519,7 +504,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
             initialValue: _visualKey,
-            decoration: _inputDecoration('Fallback illustration'),
+            decoration: _inputDecoration(context.l10n.fallbackIllustration),
             items: _visualOptions.entries
                 .map(
                   (e) => DropdownMenuItem(
@@ -537,13 +522,13 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     final detailsSection = _FormSection(
       icon: Icons.description_rounded,
       color: AppPalette.brightBlue,
-      title: 'Scenario details',
+      title: context.l10n.scenarioDetails,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _field(_titleController, 'Scenario title *', required: true, topPadding: 0),
-          _field(_categoryController, 'Category (e.g. Falling Objects, PPE, Electrical)'),
-          _field(_sceneController, 'Scene description — what the worker sees *', maxLines: 3, required: true),
+          _field(_titleController, context.l10n.scenarioTitleField, required: true, topPadding: 0),
+          _field(_categoryController, context.l10n.categoryField),
+          _field(_sceneController, context.l10n.sceneDescriptionField, maxLines: 3, required: true),
         ],
       ),
     );
@@ -551,12 +536,12 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     final questionSection = _FormSection(
       icon: Icons.quiz_rounded,
       color: AppPalette.teal,
-      title: 'Question & answers',
-      subtitle: 'Mark the correct answer with the radio button',
+      title: context.l10n.questionAndAnswers,
+      subtitle: context.l10n.markCorrectHint,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _field(_questionController, 'Question (e.g. "What is the hazard here?") *', required: true, topPadding: 0),
+          _field(_questionController, context.l10n.questionField, required: true, topPadding: 0),
           const SizedBox(height: 12),
           RadioGroup<int>(
             groupValue: _correctIndex,
@@ -598,12 +583,14 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
                         child: TextFormField(
                           controller: _optionControllers[i],
                           style: appText(14),
-                          decoration: _inputDecoration(i < 2 ? 'Option ${i + 1} *' : 'Option ${i + 1} (optional)'),
+                          decoration: _inputDecoration(
+                            i < 2 ? context.l10n.optionRequired(i + 1) : context.l10n.optionOptional(i + 1),
+                          ),
                         ),
                       ),
                       if (isCorrect) ...[
                         const SizedBox(width: 8),
-                        const StatusPill(label: 'Correct', color: AppPalette.green, icon: Icons.check_rounded),
+                        StatusPill(label: context.l10n.correct, color: AppPalette.green, icon: Icons.check_rounded),
                       ],
                     ],
                   ),
@@ -618,18 +605,18 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
     final scoringSection = _FormSection(
       icon: Icons.lightbulb_rounded,
       color: AppPalette.amber,
-      title: 'Feedback & scoring',
+      title: context.l10n.feedbackAndScoring,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _field(
             _explanationController,
-            'Explanation shown after answering *',
+            context.l10n.explanationField,
             maxLines: 3,
             required: true,
             topPadding: 0,
           ),
-          _field(_reasoningPromptController, 'Free-text reasoning prompt *', maxLines: 2, required: true),
+          _field(_reasoningPromptController, context.l10n.reasoningPromptField, maxLines: 2, required: true),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,7 +624,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
               Expanded(
                 child: DropdownButtonFormField<String>(
                   initialValue: _difficulty,
-                  decoration: _inputDecoration('Difficulty'),
+                  decoration: _inputDecoration(context.l10n.difficulty),
                   items:
                       const [
                             SafetyScenarioModel.difficultyBasic,
@@ -647,7 +634,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
                           .map(
                             (d) => DropdownMenuItem(
                               value: d,
-                              child: Text(d, style: appText(14)),
+                              child: Text(difficultyLabel(d), style: appText(14)),
                             ),
                           )
                           .toList(),
@@ -659,7 +646,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
                 child: TextFormField(
                   initialValue: '$_points',
                   style: appText(14),
-                  decoration: _inputDecoration('Points (1–$_maxPoints)'),
+                  decoration: _inputDecoration(context.l10n.pointsRange(_maxPoints)),
                   keyboardType: TextInputType.number,
                   onChanged: (v) => _points = int.tryParse(v.trim()) ?? 0,
                   validator: (v) {
@@ -680,20 +667,20 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
         _buildNotice(
           color: AppPalette.brightBlue,
           icon: Icons.hourglass_top_rounded,
-          message: 'Loading this scenario\'s answer key…',
+          message: context.l10n.loadingAnswerKey,
         )
       else if (_answerKeyError != null)
         _buildNotice(
           color: AppPalette.coral,
           icon: Icons.error_outline_rounded,
-          message: '$_answerKeyError Saving is disabled so the current answer isn\'t overwritten.',
-          action: TextButton(onPressed: _retryLoadAnswerKey, child: const Text('Retry')),
+          message: context.l10n.savingDisabledAnswerKey(_answerKeyError!),
+          action: TextButton(onPressed: _retryLoadAnswerKey, child: Text(context.l10n.retry)),
         )
       else if (_answerKeyMissing)
         _buildNotice(
           color: AppPalette.orange,
           icon: Icons.warning_amber_rounded,
-          message: 'This scenario has no answer key yet. Mark the correct option and add an explanation, then save.',
+          message: context.l10n.noAnswerKeyYet,
         ),
     ];
 
@@ -701,18 +688,18 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
       backgroundColor: AppPalette.canvas,
       appBar: modernAppBar(
         context,
-        title: _isEditing ? 'Edit Scenario' : 'Author Scenario',
-        subtitle: 'Fields marked * are required',
+        title: _isEditing ? context.l10n.editScenario : context.l10n.authorScenario,
+        subtitle: context.l10n.requiredFieldsNote,
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           decoration: BoxDecoration(
             color: AppPalette.surface,
-            border: const Border(top: BorderSide(color: AppPalette.border)),
+            border: Border(top: BorderSide(color: AppPalette.border)),
             boxShadow: [
               BoxShadow(
-                color: AppPalette.deepBlue.withValues(alpha: 0.06),
+                color: AppColors.shadow,
                 blurRadius: 12,
                 offset: const Offset(0, -4),
               ),
@@ -726,13 +713,15 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
                 TextButton(
                   onPressed: _isSaving ? null : () => Navigator.pop(context),
                   child: Text(
-                    'Cancel',
+                    context.l10n.cancel,
                     style: appText(14, weight: FontWeight.w600, color: AppPalette.inkMuted),
                   ),
                 ),
                 const SizedBox(width: 10),
                 PrimaryButton(
-                  label: _isSaving ? 'Saving…' : (_isEditing ? 'Save changes' : 'Publish scenario'),
+                  label: _isSaving
+                      ? context.l10n.saving
+                      : (_isEditing ? context.l10n.saveChanges : context.l10n.publishScenario),
                   icon: Icons.check_rounded,
                   loading: _isSaving,
                   onPressed: (_isLoadingAnswerKey || _answerKeyError != null) ? null : _save,
@@ -840,11 +829,11 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppPalette.border),
+        borderSide: BorderSide(color: AppPalette.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppPalette.brightBlue, width: 1.5),
+        borderSide: BorderSide(color: AppColors.info, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
     );
@@ -859,15 +848,15 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
           child: Container(
             height: 160,
             width: double.infinity,
-            color: const Color(0xFFECEFF1),
+            color: AppColors.surfaceMuted,
             alignment: Alignment.center,
             padding: const EdgeInsets.all(12),
             child: bytes == null
                 ? const SizedBox()
                 : (kIsWeb && _pickedLottieWebUnsafe)
                 ? Text(
-                    'Preview unavailable in the browser for this animation — it will play on Android/iOS.',
-                    style: GoogleFonts.poppins(fontSize: 12),
+                    context.l10n.lottiePreviewUnavailableWeb,
+                    style: const TextStyle(fontSize: 12),
                     textAlign: TextAlign.center,
                   )
                 : lottie.Lottie.memory(
@@ -878,8 +867,8 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => Center(
                       child: Text(
-                        'Could not preview this file — is it a valid Lottie JSON?',
-                        style: GoogleFonts.poppins(fontSize: 12),
+                        context.l10n.lottiePreviewFailed,
+                        style: const TextStyle(fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -895,17 +884,20 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
           height: 160,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: const Color(0xFF0A2E5A).withValues(alpha: 0.06),
+            color: AppColors.brandTint,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF0A2E5A).withValues(alpha: 0.2)),
+            border: Border.all(color: AppColors.border),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.movie_creation_outlined, size: 40, color: Color(0xFF0A2E5A)),
+              Icon(Icons.movie_creation_outlined, size: 40, color: AppColors.brandInk),
               const SizedBox(height: 8),
-              Text('${_pickedRiveName ?? "Rive file"} selected', style: appText(13, weight: FontWeight.w600)),
-              Text('Preview available after saving', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600])),
+              Text(
+                context.l10n.riveSelected(_pickedRiveName ?? context.l10n.riveFileDefault),
+                style: appText(13, weight: FontWeight.w600),
+              ),
+              Text(context.l10n.previewAfterSaving, style: TextStyle(fontSize: 11, color: AppColors.inkMuted)),
             ],
           ),
         );
@@ -974,7 +966,7 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
         maxLines: maxLines,
         style: appText(14),
         decoration: _inputDecoration(label),
-        validator: required ? (v) => (v == null || v.trim().isEmpty) ? 'Required' : null : null,
+        validator: required ? (v) => (v == null || v.trim().isEmpty) ? context.l10n.required : null : null,
       ),
     );
   }

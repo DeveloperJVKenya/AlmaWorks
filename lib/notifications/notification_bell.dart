@@ -3,6 +3,7 @@ import 'package:almaworks/screens/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 /// App-bar bell with the live unread count (from the same provider the
 /// notification center lists), opening the notification center.
@@ -16,7 +17,7 @@ class NotificationBell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final unread = ref.watch(unreadNotificationCountProvider);
     return IconButton(
-      tooltip: unread == 0 ? 'Notifications' : 'Notifications ($unread unread)',
+      tooltip: unread == 0 ? context.l10n.notifications : context.l10n.notificationsUnread(unread),
       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen(logger: logger))),
       icon: Badge(
         isLabelVisible: unread > 0,

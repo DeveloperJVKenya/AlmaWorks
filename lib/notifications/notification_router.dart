@@ -15,6 +15,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 /// Opens the screen a notification is about, from its payload — the one
 /// place that knows every notification type's destination, used both for a
@@ -125,7 +126,7 @@ class NotificationRouter {
   void _fail(String message) {
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: Text(message), backgroundColor: const Color(0xFFD93A3F)));
   }
 
   // ── Access requests ───────────────────────────────────────────────────────
@@ -182,10 +183,10 @@ class NotificationRouter {
         return;
       }
 
-      _progress('Opening Safety Training…');
+      _progress(l10nNow.openingSafetyTraining);
       final project = await _chromeProject();
       if (project == null) {
-        _fail('Could not open Safety Training right now.');
+        _fail(l10nNow.couldNotOpenSafetyTraining);
         return;
       }
       messenger.hideCurrentSnackBar();
@@ -196,7 +197,7 @@ class NotificationRouter {
       );
     } catch (e, st) {
       logger.e('❌ NotificationRouter: Safety Training navigation failed', error: e, stackTrace: st);
-      _fail('Could not open Safety Training. Please try again.');
+      _fail(l10nNow.couldNotOpenSafetyTraining);
     }
   }
 
@@ -205,11 +206,11 @@ class NotificationRouter {
   /// Task Progress Monitor surfaces date-extension requests/decisions and
   /// task schedule alerts for the project.
   Future<void> _openTaskProgressMonitor({required String projectId}) async {
-    _progress('Opening project…');
+    _progress(l10nNow.openingProject);
     try {
       final doc = await FirebaseFirestore.instance.collection('Projects').doc(projectId).get();
       if (!doc.exists) {
-        _fail('That project no longer exists.');
+        _fail(l10nNow.projectNoLongerExists);
         return;
       }
       messenger.hideCurrentSnackBar();
@@ -220,7 +221,7 @@ class NotificationRouter {
       );
     } catch (e, st) {
       logger.e('❌ NotificationRouter: project navigation failed', error: e, stackTrace: st);
-      _fail('Could not open the project. Please try again.');
+      _fail(l10nNow.couldNotOpenProject);
     }
   }
 
@@ -228,19 +229,19 @@ class NotificationRouter {
 
   /// Opens the inbox, then the message on top, so Back lands on the inbox.
   Future<void> _openMessage({required String messageId, required String projectId}) async {
-    _progress('Opening message…');
+    _progress(l10nNow.openingMessage);
     try {
       final db = FirebaseFirestore.instance;
       final commService = CommunicationService();
       final msgDoc = await db.collection('Communication').doc(messageId).get();
       if (!msgDoc.exists) {
-        _fail('Message not found or has been deleted.');
+        _fail(l10nNow.messageNotFound);
         return;
       }
       final message = CommunicationMessage.fromDoc(msgDoc);
       final projectDoc = await db.collection('Projects').doc(projectId).get();
       if (!projectDoc.exists) {
-        _fail('Project not found.');
+        _fail(l10nNow.projectNotFound);
         return;
       }
       final project = ProjectModel.fromFirestore(projectDoc);
@@ -269,7 +270,7 @@ class NotificationRouter {
       );
     } catch (e, st) {
       logger.e('❌ NotificationRouter: message navigation failed', error: e, stackTrace: st);
-      _fail('Could not open message. Please try again.');
+      _fail(l10nNow.couldNotOpenMessage);
     }
   }
 
@@ -278,7 +279,7 @@ class NotificationRouter {
   /// The asset's detail screen — where Record Return, Acknowledge Receipt
   /// and every other Inventory action lives.
   Future<void> _openInventoryAsset({required String assetId, String? projectId}) async {
-    _progress('Opening asset…');
+    _progress(l10nNow.openingAsset);
     try {
       final user = await _currentUser();
       if (user == null) {
@@ -287,12 +288,12 @@ class NotificationRouter {
       }
       final assetDoc = await FirebaseFirestore.instance.collection('InventoryAssets').doc(assetId).get();
       if (!assetDoc.exists) {
-        _fail('Asset not found or has been removed.');
+        _fail(l10nNow.assetNotFound);
         return;
       }
       final project = await _chromeProject(projectId ?? assetDoc.data()?['currentProjectId'] as String?);
       if (project == null) {
-        _fail('Could not open Inventory right now.');
+        _fail(l10nNow.couldNotOpenInventory);
         return;
       }
       messenger.hideCurrentSnackBar();
@@ -310,21 +311,21 @@ class NotificationRouter {
       );
     } catch (e, st) {
       logger.e('❌ NotificationRouter: asset navigation failed', error: e, stackTrace: st);
-      _fail('Could not open asset. Please try again.');
+      _fail(l10nNow.couldNotOpenAsset);
     }
   }
 
   /// A pending checkout request opens its review screen; one already handled
   /// falls back to the asset.
   Future<void> _openInventoryRequest({required String requestId, String? assetId}) async {
-    _progress('Opening request…');
+    _progress(l10nNow.openingRequest);
     try {
       final requestDoc = await FirebaseFirestore.instance.collection('InventoryCheckoutRequests').doc(requestId).get();
       if (!requestDoc.exists || requestDoc.data()?['status'] != CheckoutRequestModel.statusPending) {
         if (assetId != null) {
           await _openInventoryAsset(assetId: assetId);
         } else {
-          _fail('This request has already been handled.');
+          _fail(l10nNow.requestAlreadyHandled);
         }
         return;
       }
@@ -336,7 +337,7 @@ class NotificationRouter {
       }
       final project = await _chromeProject(request.projectId);
       if (project == null) {
-        _fail('Could not open Inventory right now.');
+        _fail(l10nNow.couldNotOpenInventory);
         return;
       }
       messenger.hideCurrentSnackBar();
@@ -354,7 +355,7 @@ class NotificationRouter {
       );
     } catch (e, st) {
       logger.e('❌ NotificationRouter: request navigation failed', error: e, stackTrace: st);
-      _fail('Could not open request. Please try again.');
+      _fail(l10nNow.couldNotOpenRequest);
     }
   }
 }

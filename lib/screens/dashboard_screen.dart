@@ -17,7 +17,10 @@ import 'package:provider/provider.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:almaworks/main.dart' show localeProvider, themeProvider;
+import 'package:almaworks/screens/settings/settings_screen.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Logger logger;
@@ -166,7 +169,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     if (_isLoadingRole) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0A2E5A),
+        backgroundColor: AppColors.navy,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -174,7 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const CircularProgressIndicator(color: Colors.white),
               const SizedBox(height: 16),
               Text(
-                'Loading Dashboard...',
+                context.l10n.loadingDashboard,
                 style: const TextStyle(color: Colors.white, fontSize: 16),
               ),
             ],
@@ -196,7 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Scaffold(
-              backgroundColor: const Color(0xFF0A2E5A),
+              backgroundColor: AppColors.navy,
               body: Center(
                 child: CircularProgressIndicator(color: Colors.white),
               ),
@@ -250,20 +253,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StatefulBuilder(
       builder: (context, setModalState) {
         return Scaffold(
-          backgroundColor: const Color(0xFF0A2E5A),
+          backgroundColor: AppColors.navy,
           appBar: AppBar(
             title: Text(
               'AlmaWorks',
               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
-            backgroundColor: const Color(0xFF0A2E5A),
+            backgroundColor: AppColors.navy,
             actions: [
+              _settingsButton(context),
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AccountScreen(localeProvider: localeProvider, themeProvider: themeProvider),
+                      builder: (context) => const AccountScreen(),
                     ),
                   );
                 },
@@ -272,7 +276,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: CircleAvatar(
                     radius: 16,
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 20, color: Color(0xFF0A2E5A)),
+                    child: Icon(Icons.person, size: 20, color: AppColors.navy),
                   ),
                 ),
               ),
@@ -294,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Welcome to AlmaWorks',
+                        context.l10n.welcomeToAlmaWorks,
                         style: TextStyle(
                           fontSize: isMobile ? 24 : 32,
                           fontWeight: FontWeight.bold,
@@ -336,7 +340,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -351,23 +355,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Icon(
                 Icons.info_outline,
                 size: 48,
-                color: const Color(0xFF0A2E5A),
+                color: AppColors.brandInk,
               ),
               const SizedBox(height: 16),
               Text(
-                'Get Started',
+                context.l10n.getStarted,
                 style: TextStyle(
                   fontSize: isMobile ? 20 : 24,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF0A2E5A),
+                  color: AppColors.brandInk,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                'To access construction projects and collaborate with your team, you\'ll need to request access from our administrators.',
+                context.l10n.requestAccessIntro,
                 style: TextStyle(
                   fontSize: isMobile ? 14 : 16,
-                  color: Colors.grey[700],
+                  color: AppColors.inkMuted,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -376,7 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -384,19 +388,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     _buildStepItem(
                       1,
-                      'Click the button below to send your request',
+                      context.l10n.requestAccessStep1,
                       Icons.touch_app,
                     ),
                     const SizedBox(height: 12),
                     _buildStepItem(
                       2,
-                      'An administrator will review your request',
+                      context.l10n.requestAccessStep2,
                       Icons.admin_panel_settings,
                     ),
                     const SizedBox(height: 12),
                     _buildStepItem(
                       3,
-                      'You\'ll be notified once access is granted',
+                      context.l10n.requestAccessStep3,
                       Icons.notifications_active,
                     ),
                   ],
@@ -411,23 +415,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.orange[100],
+              color: AppColors.warningTint,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.orange[300]!),
+              border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info, color: Colors.orange[900]),
+                Icon(Icons.info, color: AppColors.warning),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Previous request was not approved',
+                        context.l10n.previousRequestDenied,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange[900],
+                          color: AppColors.warning,
                         ),
                       ),
                       if (request?.denialReason != null)
@@ -435,7 +439,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           request!.denialReason!,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.orange[800],
+                            color: AppColors.ink,
                           ),
                         ),
                     ],
@@ -455,7 +459,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     try {
                       final userData = await authService.getUserData();
                       if (userData == null) {
-                        throw Exception('User data not found');
+                        throw UserFacingException(l10nNow.profileNotFound);
                       }
 
                       final error = await _requestService.submitClientRequest(
@@ -467,28 +471,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       if (!mounted) return;
 
                       if (error != null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(error),
-                            backgroundColor: Colors.orange,
-                          ),
-                        );
+                        showWarningSnack(context, error);
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Access request sent successfully!'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                        showSuccessSnack(context, context.l10n.accessRequestSent);
                       }
                     } catch (e) {
+                      _logger.e('❌ DashboardScreen: access request failed', error: e);
                       if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      showErrorSnack(context, e, action: context.l10n.couldNotSendAccessRequest);
                     } finally {
                       if (mounted) {
                         setModalState(() => isSubmitting = false);
@@ -505,9 +495,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   )
                 : const Icon(Icons.send),
-            label: Text(isSubmitting ? 'Sending...' : 'Request Access'),
+            label: Text(isSubmitting ? context.l10n.sending : context.l10n.requestAccess),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0A2E5A),
+              backgroundColor: AppColors.navy,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -524,7 +514,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -539,19 +529,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const Icon(Icons.pending_actions, size: 48, color: Colors.orange),
           const SizedBox(height: 16),
           Text(
-            'Request Pending',
+            context.l10n.requestPending,
             style: TextStyle(
               fontSize: isMobile ? 20 : 24,
               fontWeight: FontWeight.bold,
-              color: Colors.orange[700],
+              color: AppColors.warning,
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            'Your access request is being reviewed by our administrators. You\'ll receive access once approved.',
+            context.l10n.requestPendingMessage,
             style: TextStyle(
               fontSize: isMobile ? 14 : 16,
-              color: Colors.grey[700],
+              color: AppColors.inkMuted,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -566,50 +556,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         CircleAvatar(
           radius: 16,
-          backgroundColor: const Color(0xFF0A2E5A),
+          backgroundColor: AppColors.navy,
           child: Text(
             '$step',
             style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
         ),
         const SizedBox(width: 12),
-        Icon(icon, size: 20, color: Colors.grey[600]),
+        Icon(icon, size: 20, color: AppColors.inkMuted),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 13, color: AppColors.ink),
           ),
         ),
       ],
     );
   }
 
-  // ── Layout builders (unchanged) ─────────────────────────────────────────────
+  Widget _settingsButton(BuildContext context) => IconButton(
+    icon: const Icon(Icons.settings_rounded, color: Colors.white),
+    tooltip: context.l10n.settings,
+    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+  );
+
+  // ── Layout builders ─────────────────────────────────────────────────────────
 
   Widget _buildMobileLayout(SelectedProjectProvider projectProvider) {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
         title: const Text('AlmaWorks', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF0A2E5A),
+        backgroundColor: AppColors.navy,
         iconTheme: const IconThemeData(color: Colors.white),
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         actions: [
+          _settingsButton(context),
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider, themeProvider: themeProvider)),
+              MaterialPageRoute(builder: (context) => const AccountScreen()),
             ),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 20, color: Color(0xFF0A2E5A)),
+                child: Icon(Icons.person, size: 20, color: AppColors.navy),
               ),
             ),
           ),
@@ -624,20 +621,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AlmaWorks', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF0A2E5A),
+        backgroundColor: AppColors.navy,
         automaticallyImplyLeading: false,
         actions: [
+          _settingsButton(context),
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider, themeProvider: themeProvider)),
+              MaterialPageRoute(builder: (context) => const AccountScreen()),
             ),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 20, color: Color(0xFF0A2E5A)),
+                child: Icon(Icons.person, size: 20, color: AppColors.navy),
               ),
             ),
           ),
@@ -657,20 +655,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AlmaWorks', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF0A2E5A),
+        backgroundColor: AppColors.navy,
         automaticallyImplyLeading: false,
         actions: [
+          _settingsButton(context),
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AccountScreen(localeProvider: localeProvider, themeProvider: themeProvider)),
+              MaterialPageRoute(builder: (context) => const AccountScreen()),
             ),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 20, color: Color(0xFF0A2E5A)),
+                child: Icon(Icons.person, size: 20, color: AppColors.navy),
               ),
             ),
           ),
@@ -691,7 +690,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         children: [
           DrawerHeader(
-            decoration: const BoxDecoration(color: Color(0xFF0A2E5A)),
+            decoration: const BoxDecoration(color: AppColors.navy),
             child: const Align(
               alignment: Alignment.bottomLeft,
               child: Text(
@@ -710,13 +709,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildSideNav(SelectedProjectProvider projectProvider) {
     return Container(
-      color: Colors.grey[50],
+      color: AppColors.surfaceAlt,
       child: Column(
         children: [
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
-            color: const Color(0xFF0A2E5A),
+            color: AppColors.navy,
             child: const Text(
               'AlmaWorks',
               style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
@@ -736,7 +735,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         ListTile(
           leading: const Icon(Icons.dashboard),
-          title: const Text('Dashboard'),
+          title: Text(context.l10n.navDashboard),
           selected: _selectedIndex == 0,
           onTap: () {
             _logger.i('🏠 DashboardScreen: Dashboard menu item tapped');
@@ -747,7 +746,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         ListTile(
           leading: const Icon(Icons.folder),
-          title: const Text('Projects'),
+          title: Text(context.l10n.navProjects),
           selected: _selectedIndex == 1,
           onTap: () {
             _logger.i('📁 DashboardScreen: Projects menu item tapped');
@@ -764,7 +763,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (_userRole == 'MainAdmin' || _userRole == 'Admin' || _userRole == 'SystemAdmin')
           ListTile(
             leading: const Icon(Icons.supervised_user_circle),
-            title: const Text('Client Access Requests'),
+            title: Text(context.l10n.navClientAccessRequests),
             selected: _selectedIndex == 2,
             onTap: () {
               _logger.i('👥 DashboardScreen: Client Access Requests tapped');
@@ -826,7 +825,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e, stackTrace) {
       _logger.e('❌ DashboardScreen: Error getting selected screen',
           error: e, stackTrace: stackTrace);
-      return _buildErrorScreen('Error loading screen', e.toString());
+      return _buildErrorScreen(context.l10n.couldNotLoadScreen, friendlyError(e));
     }
   }
 
@@ -840,16 +839,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             const Icon(Icons.error, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(error, style: const TextStyle(color: Colors.grey), textAlign: TextAlign.center),
+            Text(error, style: TextStyle(color: AppColors.inkMuted), textAlign: TextAlign.center),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 _logger.i('🔄 DashboardScreen: Retry button pressed');
                 setState(() { _selectedIndex = 0; });
               },
-              child: const Text('Go to Dashboard'),
+              child: Text(context.l10n.goToDashboard),
             ),
           ],
         ),
@@ -961,8 +960,8 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
           Padding(
             padding: EdgeInsets.all(isMobile ? 12 : 16),
             child: Text(
-              _isRestrictedRole ? 'My Projects Overview' : 'General Overview',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              _isRestrictedRole ? context.l10n.myProjectsOverview : context.l10n.generalOverview,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.ink),
             ),
           ),
           _buildMetricsGrid(context),
@@ -995,7 +994,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
               ),
               builder: (context, snapshot) {
                 return DashboardCard(
-                  title: 'Total Projects',
+                  title: context.l10n.totalProjects,
                   value: snapshot.hasData ? '${snapshot.data}' : (snapshot.hasError ? '0' : '...'),
                   icon: Icons.folder,
                   color: Colors.blue,
@@ -1018,7 +1017,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
               ),
               builder: (context, snapshot) {
                 return DashboardCard(
-                  title: 'Active Projects',
+                  title: context.l10n.activeProjects,
                   value: snapshot.hasData ? '${snapshot.data}' : (snapshot.hasError ? '0' : '...'),
                   icon: Icons.work,
                   color: Colors.green,
@@ -1041,7 +1040,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
               ),
               builder: (context, snapshot) {
                 return DashboardCard(
-                  title: 'Completed Projects',
+                  title: context.l10n.completedProjects,
                   value: snapshot.hasData ? '${snapshot.data}' : (snapshot.hasError ? '0' : '...'),
                   icon: Icons.check_circle,
                   color: Colors.orange,
@@ -1141,7 +1140,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
                       );
                     },
                     mini: true,
-                    backgroundColor: const Color(0xFF0A2E5A),
+                    heroTag: null,
+                    tooltip: context.l10n.previous,
+                    backgroundColor: AppColors.navy,
                     child: const Icon(Icons.arrow_left, color: Colors.white, size: 30),
                   )
                 : const SizedBox.shrink(),
@@ -1157,7 +1158,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
                       );
                     },
                     mini: true,
-                    backgroundColor: const Color(0xFF0A2E5A),
+                    heroTag: null,
+                    tooltip: context.l10n.next,
+                    backgroundColor: AppColors.navy,
                     child: const Icon(Icons.arrow_right, color: Colors.white, size: 30),
                   )
                 : const SizedBox.shrink(),
@@ -1175,8 +1178,8 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentPage == index
-                        ? const Color(0xFF0A2E5A)
-                        : Colors.grey.withValues(alpha: 0.4),
+                        ? AppColors.brandInk
+                        : AppColors.inkFaint.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -1191,9 +1194,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isMobile ? 12 : 16),
-      color: const Color(0xFF0A2E5A),
+      color: AppColors.navy,
       child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,

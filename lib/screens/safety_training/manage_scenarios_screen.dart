@@ -7,15 +7,18 @@ import 'package:almaworks/widgets/safety_training/hazard_scene_visual.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 enum _ManageFilter { all, active, inactive, incomplete }
 
 extension on _ManageFilter {
   String get label => switch (this) {
-    _ManageFilter.all => 'All',
-    _ManageFilter.active => 'Visible to workers',
-    _ManageFilter.inactive => 'Hidden',
-    _ManageFilter.incomplete => 'Needs fixing',
+    _ManageFilter.all => l10nNow.all,
+    _ManageFilter.active => l10nNow.visibleToWorkers,
+    _ManageFilter.inactive => l10nNow.hidden,
+    _ManageFilter.incomplete => l10nNow.needsFixing,
   };
 
   bool matches(SafetyScenarioModel s) => switch (this) {
@@ -48,19 +51,15 @@ class _ManageScenariosScreenState extends ConsumerState<ManageScenariosScreen> {
     try {
       await ref.read(safetyServiceProvider).setScenarioActive(scenario.id, isActive);
       if (mounted) {
-        showAppSnack(
+        showSuccessSnack(
           context,
-          isActive ? '"${scenario.title}" is now visible to workers' : '"${scenario.title}" is hidden from workers',
+          isActive ? context.l10n.scenarioNowVisible(scenario.title) : context.l10n.scenarioNowHidden(scenario.title),
         );
       }
     } catch (e) {
       widget.logger.e('❌ ManageScenariosScreen: Failed to toggle ${scenario.id}: $e');
       if (mounted) {
-        showAppSnack(
-          context,
-          'Could not update "${scenario.title}". Open it with Edit and save to repair it.',
-          error: true,
-        );
+        showErrorMessage(context, context.l10n.couldNotUpdateScenario(scenario.title));
       }
     } finally {
       if (mounted) setState(() => _togglingIds.remove(scenario.id));
@@ -81,14 +80,14 @@ class _ManageScenariosScreenState extends ConsumerState<ManageScenariosScreen> {
     final async = ref.watch(allScenariosProvider);
     return Scaffold(
       backgroundColor: AppPalette.canvas,
-      appBar: modernAppBar(context, title: 'Manage Scenarios', subtitle: 'Edit, publish or hide safety scenarios'),
+      appBar: modernAppBar(context, title: context.l10n.manageScenarios, subtitle: context.l10n.manageScenariosSubtitle),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openEditor,
-        backgroundColor: AppPalette.deepBlue,
+        backgroundColor: AppColors.brand,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
         label: Text(
-          'Author Scenario',
+          context.l10n.authorScenario,
           style: appText(13.5, weight: FontWeight.w600, color: Colors.white),
         ),
       ),
@@ -96,10 +95,10 @@ class _ManageScenariosScreenState extends ConsumerState<ManageScenariosScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) {
           widget.logger.e('❌ ManageScenariosScreen: stream error: $e');
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.cloud_off_rounded,
-            title: 'Couldn\'t load scenarios',
-            message: 'Check your connection and try again.',
+            title: context.l10n.couldNotLoadScenarios,
+            message: friendlyError(e),
           );
         },
         data: (scenarios) {
@@ -125,15 +124,15 @@ class _ManageScenariosScreenState extends ConsumerState<ManageScenariosScreen> {
                     ResponsiveTiles(
                       minTileWidth: 170,
                       children: [
-                        StatTile(label: 'Scenarios', value: '${scenarios.length}', icon: Icons.layers_rounded),
+                        StatTile(label: context.l10n.scenarios, value: '${scenarios.length}', icon: Icons.layers_rounded),
                         StatTile(
-                          label: 'Visible',
+                          label: context.l10n.visible,
                           value: '$activeCount',
                           icon: Icons.visibility_rounded,
                           color: AppPalette.green,
                         ),
                         StatTile(
-                          label: 'Hidden',
+                          label: context.l10n.hiddenSingular,
                           value: '${scenarios.length - activeCount}',
                           icon: Icons.visibility_off_rounded,
                           color: AppPalette.inkMuted,
@@ -141,7 +140,7 @@ class _ManageScenariosScreenState extends ConsumerState<ManageScenariosScreen> {
                       ],
                     ),
                     const SizedBox(height: 18),
-                    SearchField(hint: 'Search scenarios', onChanged: (v) => setState(() => _query = v)),
+                    SearchField(hint: context.l10n.searchScenarios, onChanged: (v) => setState(() => _query = v)),
                     const SizedBox(height: 12),
                     FilterChipBar<_ManageFilter>(
                       options: [
@@ -155,16 +154,16 @@ class _ManageScenariosScreenState extends ConsumerState<ManageScenariosScreen> {
                     ),
                     const SizedBox(height: 18),
                     if (scenarios.isEmpty)
-                      const EmptyState(
+                      EmptyState(
                         icon: Icons.health_and_safety_outlined,
-                        title: 'No scenarios yet',
-                        message: 'Tap "Author Scenario" to create the first one.',
+                        title: context.l10n.noScenariosYet,
+                        message: context.l10n.noScenariosAuthorHint,
                       )
                     else if (visible.isEmpty)
-                      const EmptyState(
+                      EmptyState(
                         icon: Icons.filter_alt_off_rounded,
-                        title: 'Nothing matches',
-                        message: 'Try another search or filter.',
+                        title: context.l10n.nothingMatches,
+                        message: context.l10n.tryDifferentSearch,
                       )
                     else
                       ResponsiveCardGrid(
@@ -226,7 +225,7 @@ class _ManageCard extends StatelessWidget {
                 left: 10,
                 top: 10,
                 child: StatusPill(
-                  label: s.isActive ? 'Visible' : 'Hidden',
+                  label: s.isActive ? context.l10n.visible : context.l10n.hiddenSingular,
                   color: s.isActive ? AppPalette.green : AppPalette.inkMuted,
                   icon: s.isActive ? Icons.visibility_rounded : Icons.visibility_off_rounded,
                   solid: true,
@@ -253,14 +252,14 @@ class _ManageCard extends StatelessWidget {
                         spacing: 6,
                         runSpacing: 6,
                         children: [
-                          StatusPill(label: s.difficulty, color: difficultyColor(s.difficulty)),
-                          StatusPill(label: '${s.points} pts', color: AppPalette.brightBlue),
-                          StatusPill(label: s.category, color: AppPalette.violet),
-                          if (s.options.length < 2) const StatusPill(label: 'Incomplete', color: AppPalette.coral),
+                          StatusPill(label: difficultyLabel(s.difficulty), color: difficultyColor(s.difficulty)),
+                          StatusPill(label: context.l10n.pointsShort(s.points), color: AppPalette.brightBlue),
+                          StatusPill(label: safetyCategoryLabel(s.category), color: AppPalette.violet),
+                          if (s.options.length < 2) StatusPill(label: context.l10n.incomplete, color: AppPalette.coral),
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text('Updated ${safetyDate.format(updated)}', style: appText(11.5, color: AppPalette.inkFaint)),
+                      Text(context.l10n.updatedOn(safetyDate.format(updated)), style: appText(11.5, color: AppPalette.inkFaint)),
                     ],
                   ),
                 ),
@@ -271,11 +270,11 @@ class _ManageCard extends StatelessWidget {
                             padding: EdgeInsets.all(14),
                             child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                           )
-                        : Switch(value: s.isActive, activeThumbColor: AppPalette.deepBlue, onChanged: onToggle),
+                        : Switch(value: s.isActive, onChanged: onToggle),
                     IconButton(
-                      tooltip: 'Edit scenario',
+                      tooltip: context.l10n.editScenario,
                       onPressed: onEdit,
-                      icon: const Icon(Icons.edit_rounded, color: AppPalette.brightBlue),
+                      icon: Icon(Icons.edit_rounded, color: AppColors.info),
                     ),
                   ],
                 ),

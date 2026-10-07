@@ -1,5 +1,5 @@
+import 'package:almaworks/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Shared building blocks for the modernized screens (Notifications and
 /// Safety Training): a brighter palette anchored on the app's deep blue,
@@ -14,7 +14,7 @@ class AppPalette {
   static const deepBlue = Color(0xFF0A2E5A);
   static const royalBlue = Color(0xFF1652A8);
   static const brightBlue = Color(0xFF2F7BF6);
-  static const skyBlue = Color(0xFFE8F1FF);
+  static Color get skyBlue => AppColors.infoTint;
 
   // Accents — used for categories and statuses, never for large fills.
   static const teal = Color(0xFF0EA5A0);
@@ -25,13 +25,14 @@ class AppPalette {
   static const violet = Color(0xFF7C5CFF);
   static const pink = Color(0xFFDB3D8B);
 
-  // Neutrals — a light, slightly blue-tinted canvas instead of flat grey.
-  static const canvas = Color(0xFFF3F6FC);
-  static const surface = Colors.white;
-  static const border = Color(0xFFE1E7F2);
-  static const ink = Color(0xFF14213D);
-  static const inkMuted = Color(0xFF5B6B85);
-  static const inkFaint = Color(0xFF8C99AE);
+  // Neutrals — follow the light/dark/high-contrast choice in Settings
+  // (see AppColors), so they're getters rather than constants.
+  static Color get canvas => AppColors.canvas;
+  static Color get surface => AppColors.surface;
+  static Color get border => AppColors.border;
+  static Color get ink => AppColors.ink;
+  static Color get inkMuted => AppColors.inkMuted;
+  static Color get inkFaint => AppColors.inkFaint;
 
   static const heroGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -57,8 +58,9 @@ class Breakpoints {
   }
 }
 
-TextStyle appText(double size, {FontWeight weight = FontWeight.w400, Color color = AppPalette.ink, double? height}) =>
-    GoogleFonts.poppins(fontSize: size, fontWeight: weight, color: color, height: height);
+/// Text in the app font (chosen in Settings, inherited from the theme).
+TextStyle appText(double size, {FontWeight weight = FontWeight.w400, Color? color, double? height}) =>
+    TextStyle(fontSize: size, fontWeight: weight, color: color ?? AppColors.ink, height: height);
 
 /// Centers content at a comfortable reading width on large screens.
 class ResponsiveCenter extends StatelessWidget {
@@ -88,7 +90,7 @@ PreferredSizeWidget modernAppBar(
   PreferredSizeWidget? bottom,
 }) {
   return AppBar(
-    backgroundColor: AppPalette.deepBlue,
+    backgroundColor: AppColors.isDark ? const Color(0xFF0B2240) : AppPalette.deepBlue,
     foregroundColor: Colors.white,
     elevation: 0,
     scrolledUnderElevation: 0,
@@ -154,7 +156,9 @@ class _AppCardState extends State<AppCard> {
           border: Border.all(color: lifted ? AppPalette.brightBlue.withValues(alpha: 0.35) : AppPalette.border),
           boxShadow: [
             BoxShadow(
-              color: AppPalette.deepBlue.withValues(alpha: lifted ? 0.12 : 0.05),
+              color: AppColors.isDark
+                  ? Colors.black.withValues(alpha: lifted ? 0.5 : 0.3)
+                  : AppPalette.deepBlue.withValues(alpha: lifted ? 0.12 : 0.05),
               blurRadius: lifted ? 22 : 12,
               offset: Offset(0, lifted ? 8 : 4),
             ),
@@ -388,8 +392,8 @@ class EmptyState extends StatelessWidget {
               Container(
                 width: 76,
                 height: 76,
-                decoration: const BoxDecoration(color: AppPalette.skyBlue, shape: BoxShape.circle),
-                child: Icon(icon, size: 36, color: AppPalette.brightBlue),
+                decoration: BoxDecoration(color: AppPalette.skyBlue, shape: BoxShape.circle),
+                child: Icon(icon, size: 36, color: AppColors.info),
               ),
               const SizedBox(height: 16),
               Text(
@@ -505,9 +509,9 @@ class FilterChipBar<T> extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
       decoration: BoxDecoration(
-        color: isSelected ? AppPalette.deepBlue : AppPalette.surface,
+        color: isSelected ? AppColors.brand : AppPalette.surface,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: isSelected ? AppPalette.deepBlue : AppPalette.border),
+        border: Border.all(color: isSelected ? AppColors.brand : AppPalette.border),
       ),
       child: Material(
         type: MaterialType.transparency,
@@ -540,7 +544,7 @@ class FilterChipBar<T> extends StatelessWidget {
                       style: appText(
                         11,
                         weight: FontWeight.w700,
-                        color: isSelected ? Colors.white : AppPalette.royalBlue,
+                        color: isSelected ? Colors.white : AppColors.brandInk,
                       ),
                     ),
                   ),
@@ -562,7 +566,7 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.loading = false,
-    this.color = AppPalette.deepBlue,
+    this.color,
     this.expand = false,
   });
 
@@ -570,11 +574,13 @@ class PrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool loading;
-  final Color color;
+  /// Defaults to the brand fill for the current theme.
+  final Color? color;
   final bool expand;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? AppColors.brand;
     final button = FilledButton(
       onPressed: loading ? null : onPressed,
       style: FilledButton.styleFrom(
@@ -652,7 +658,7 @@ void showAppSnack(BuildContext context, String message, {bool error = false}) {
     ..showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: error ? AppPalette.coral : AppPalette.ink,
+        backgroundColor: error ? AppPalette.coral : (AppColors.isDark ? const Color(0xFF2A3546) : const Color(0xFF14213D)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         content: Text(message, style: appText(13, color: Colors.white)),
       ),

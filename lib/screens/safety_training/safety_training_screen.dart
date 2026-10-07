@@ -14,16 +14,19 @@ import 'package:almaworks/widgets/safety_training/hazard_scene_visual.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 enum _ScenarioFilter { all, todo, passed, missed, assigned }
 
 extension on _ScenarioFilter {
   String get label => switch (this) {
-    _ScenarioFilter.all => 'All',
-    _ScenarioFilter.todo => 'Not started',
-    _ScenarioFilter.passed => 'Passed',
-    _ScenarioFilter.missed => 'Missed',
-    _ScenarioFilter.assigned => 'Assigned to me',
+    _ScenarioFilter.all => l10nNow.all,
+    _ScenarioFilter.todo => l10nNow.filterNotStarted,
+    _ScenarioFilter.passed => l10nNow.filterPassed,
+    _ScenarioFilter.missed => l10nNow.filterMissed,
+    _ScenarioFilter.assigned => l10nNow.filterAssignedToMe,
   };
 
   IconData get icon => switch (this) {
@@ -84,7 +87,7 @@ class _SafetyTrainingScreenState extends ConsumerState<SafetyTrainingScreen> {
     if (user != null) _secureLegacyOnce(user);
 
     return BaseLayout(
-      title: 'Safety Training',
+      title: context.l10n.navSafetyTraining,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Safety Training',
@@ -95,16 +98,16 @@ class _SafetyTrainingScreenState extends ConsumerState<SafetyTrainingScreen> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => EmptyState(
             icon: Icons.cloud_off_rounded,
-            title: 'Couldn\'t load your account',
-            message: 'Check your connection and try again.',
-            action: OutlinedButton(onPressed: () => ref.invalidate(safetyUserProvider), child: const Text('Retry')),
+            title: context.l10n.couldNotLoadAccount,
+            message: friendlyError(e),
+            action: OutlinedButton(onPressed: () => ref.invalidate(safetyUserProvider), child: Text(context.l10n.retry)),
           ),
           data: (user) {
             if (user == null || user.roleMissing) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.lock_outline_rounded,
-                title: 'Safety Training isn\'t available yet',
-                message: 'Your account\'s access role hasn\'t been set up. Please contact an administrator.',
+                title: context.l10n.safetyTrainingUnavailable,
+                message: context.l10n.roleNotSetUp,
               );
             }
             return _buildBody(user);
@@ -202,19 +205,21 @@ class _SafetyTrainingScreenState extends ConsumerState<SafetyTrainingScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Safety Scenarios${scenarios == null ? '' : ' (${playable.length})'}',
+                              scenarios == null
+                                  ? context.l10n.safetyScenarios
+                                  : context.l10n.safetyScenariosCount(playable.length),
                               style: appText(compact ? 16 : 17, weight: FontWeight.w700),
                             ),
                           ),
                           IconButton(
-                            tooltip: _searchOpen ? 'Close search' : 'Search scenarios',
+                            tooltip: _searchOpen ? context.l10n.closeSearch : context.l10n.searchScenarios,
                             onPressed: () => setState(() {
                               _searchOpen = !_searchOpen;
                               if (!_searchOpen) _query = '';
                             }),
                             icon: Icon(
                               _searchOpen ? Icons.close_rounded : Icons.search_rounded,
-                              color: AppPalette.deepBlue,
+                              color: AppColors.brandInk,
                             ),
                           ),
                         ],
@@ -225,7 +230,7 @@ class _SafetyTrainingScreenState extends ConsumerState<SafetyTrainingScreen> {
                             ? Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: SearchField(
-                                  hint: 'Search by title, category or scene',
+                                  hint: context.l10n.searchScenariosHint,
                                   onChanged: (v) => setState(() => _query = v),
                                 ),
                               )
@@ -254,23 +259,21 @@ class _SafetyTrainingScreenState extends ConsumerState<SafetyTrainingScreen> {
                   ),
                 )
               else if (scenariosAsync.hasError)
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: EmptyState(
                     icon: Icons.cloud_off_rounded,
-                    title: 'Couldn\'t load scenarios',
-                    message: 'Pull down to try again.',
+                    title: context.l10n.couldNotLoadScenarios,
+                    message: context.l10n.pullToRetry,
                   ),
                 )
               else if (visible.isEmpty)
                 SliverToBoxAdapter(
                   child: EmptyState(
                     icon: Icons.health_and_safety_outlined,
-                    title: playable.isEmpty ? 'No scenarios yet' : 'No scenarios match',
+                    title: playable.isEmpty ? context.l10n.noScenariosYet : context.l10n.noScenariosMatch,
                     message: playable.isEmpty
-                        ? (user.isAdmin
-                              ? 'Tap "New scenario" in the toolbar to create the first one.'
-                              : 'Safety scenarios will appear here once an admin publishes them.')
-                        : 'Try a different search or filter.',
+                        ? (user.isAdmin ? context.l10n.noScenariosAdminHint : context.l10n.noScenariosWorkerHint)
+                        : context.l10n.tryDifferentSearch,
                   ),
                 )
               else
@@ -375,44 +378,45 @@ class _SafetyToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final standing = StandingVisual.of(review, retraining, DateTime.now());
+    final l = context.l10n;
     final items = <Widget>[
       _ToolChip(
         icon: standing.icon,
         color: standing.color,
         label: review == null
-            ? 'Not reviewed'
+            ? l.stNotReviewed
             : review!.isCleared && !review!.isClearanceExpired(DateTime.now())
-            ? 'Cleared · until ${safetyDate.format(review!.clearanceExpiresAt)}'
+            ? l.clearedUntil(safetyDate.format(review!.clearanceExpiresAt))
             : standing.label,
         emphasized: true,
         onTap: onStanding,
-        tooltip: 'My standing',
+        tooltip: l.myStanding,
       ),
       _ToolChip(
         icon: Icons.history_rounded,
         color: AppPalette.teal,
-        label: user.isAdmin ? 'My attempts' : 'My history',
+        label: user.isAdmin ? l.myAttempts : l.myHistory,
         onTap: onMyHistory,
       ),
       if (user.isReviewer)
         _ToolChip(
           icon: Icons.fact_check_rounded,
           color: AppPalette.brightBlue,
-          label: 'Review standing',
+          label: l.reviewStanding,
           onTap: onReview,
         ),
       if (user.isAdmin) ...[
-        _ToolChip(icon: Icons.groups_rounded, color: AppPalette.orange, label: 'All attempts', onTap: onAllAttempts),
-        _ToolChip(icon: Icons.dashboard_customize_rounded, color: AppPalette.violet, label: 'Manage', onTap: onManage),
-        _ToolChip(icon: Icons.add_circle_rounded, color: AppPalette.green, label: 'New scenario', onTap: onNewScenario),
+        _ToolChip(icon: Icons.groups_rounded, color: AppPalette.orange, label: l.allAttempts, onTap: onAllAttempts),
+        _ToolChip(icon: Icons.dashboard_customize_rounded, color: AppPalette.violet, label: l.manage, onTap: onManage),
+        _ToolChip(icon: Icons.add_circle_rounded, color: AppPalette.green, label: l.newScenario, onTap: onNewScenario),
       ],
     ];
     return Container(
       decoration: BoxDecoration(
         color: AppPalette.surface,
-        border: const Border(bottom: BorderSide(color: AppPalette.border)),
+        border: Border(bottom: BorderSide(color: AppPalette.border)),
         boxShadow: [
-          BoxShadow(color: AppPalette.deepBlue.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
+          BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       alignment: Alignment.centerLeft,
@@ -512,16 +516,16 @@ class _ScoreStrip extends StatelessWidget {
     );
 
     return Tooltip(
-      message: 'Only your first attempt at each scenario counts toward your score — replays are practice.',
+      message: context.l10n.firstAttemptCountsHint,
       child: HeroPanel(
         padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 20, vertical: compact ? 12 : 14),
         child: Row(
           children: [
             const Icon(Icons.shield_rounded, color: Colors.white, size: 26),
             SizedBox(width: compact ? 10 : 16),
-            metric('${summary.totalPoints}', 'Points'),
-            metric('${(summary.accuracy * 100).round()}%', 'First-try accuracy'),
-            metric(total == 0 ? '—' : '$completed/$total', 'Completed'),
+            metric('${summary.totalPoints}', context.l10n.points),
+            metric('${(summary.accuracy * 100).round()}%', context.l10n.firstTryAccuracy),
+            metric(total == 0 ? '—' : '$completed/$total', context.l10n.completed),
             if (total > 0 && !compact) ScoreRing(value: completed / total, size: 46, onDark: true),
           ],
         ),
@@ -554,7 +558,7 @@ class _StandingDetails extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('My safety standing', style: appText(12.5, color: AppPalette.inkMuted)),
+                  Text(context.l10n.mySafetyStanding, style: appText(12.5, color: AppPalette.inkMuted)),
                   Text(
                     standing.label,
                     style: appText(19, weight: FontWeight.w800, color: standing.color),
@@ -567,8 +571,7 @@ class _StandingDetails extends StatelessWidget {
         const SizedBox(height: 16),
         if (r == null)
           Text(
-            'A reviewer hasn\'t assessed your training yet. Keep working through the scenarios — your first '
-            'attempts are what they\'ll look at.',
+            context.l10n.notAssessedYet,
             style: appText(13.5, height: 1.5),
           )
         else ...[
@@ -577,25 +580,25 @@ class _StandingDetails extends StatelessWidget {
           if (r.isCleared) ...[
             const SizedBox(height: 14),
             LabeledProgress(
-              label: 'Clearance validity',
+              label: context.l10n.clearanceValidity,
               value: _validityLeft(r),
               trailing: r.isClearanceExpired(DateTime.now())
-                  ? 'Expired'
-                  : '${r.clearanceExpiresAt.difference(DateTime.now()).inDays} days left',
+                  ? context.l10n.expired
+                  : context.l10n.daysLeft(r.clearanceExpiresAt.difference(DateTime.now()).inDays),
               color: standing.color,
             ),
           ],
           if (rt != null && rt.assigned.isNotEmpty) ...[
             const SizedBox(height: 14),
             LabeledProgress(
-              label: 'Retraining progress',
+              label: context.l10n.retrainingProgress,
               value: rt.done / rt.assigned.length,
               trailing: '${rt.done}/${rt.assigned.length}',
               color: standing.color,
             ),
             const SizedBox(height: 6),
             Text(
-              'Assigned scenarios are listed first on the Safety Training screen.',
+              context.l10n.assignedListedFirst,
               style: appText(12, color: AppPalette.inkMuted),
             ),
           ],
@@ -609,7 +612,10 @@ class _StandingDetails extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           Text(
-            'Reviewed by ${r.reviewedByName.isEmpty ? 'a reviewer' : r.reviewedByName} on ${safetyDate.format(r.reviewedAt)}',
+            context.l10n.reviewedByOn(
+              r.reviewedByName.isEmpty ? context.l10n.aReviewer : r.reviewedByName,
+              safetyDate.format(r.reviewedAt),
+            ),
             style: appText(12, color: AppPalette.inkFaint),
           ),
         ],
@@ -647,18 +653,19 @@ class _ScenarioCard extends StatelessWidget {
     final r = retraining;
     final retrainingDone = r != null && !r.remaining.contains(scenario.id);
     final first = firstAttempt;
+    final l = context.l10n;
 
     final (statusLabel, statusColor, statusIcon) = switch (first) {
-      _ when incomplete => ('Incomplete — fix in Manage', AppPalette.coral, Icons.error_outline_rounded),
+      _ when incomplete => (l.incompleteFixInManage, AppPalette.coral, Icons.error_outline_rounded),
       _ when r != null && !retrainingDone => (
-        'Retraining${r.dueAt == null ? '' : ' · due ${safetyDate.format(r.dueAt!)}'}',
+        r.dueAt == null ? l.retraining : l.retrainingDue(safetyDate.format(r.dueAt!)),
         AppPalette.orange,
         Icons.assignment_late_rounded,
       ),
-      _ when retrainingDone => ('Retraining done', AppPalette.teal, Icons.task_alt_rounded),
-      null => ('Not started', AppPalette.brightBlue, Icons.play_circle_rounded),
-      (correct: true, points: final p) => ('Passed · +$p pts', AppPalette.green, Icons.check_circle_rounded),
-      _ => ('Missed · practise again', AppPalette.amber, Icons.replay_rounded),
+      _ when retrainingDone => (l.stRetrainingDone, AppPalette.teal, Icons.task_alt_rounded),
+      null => (l.filterNotStarted, AppPalette.brightBlue, Icons.play_circle_rounded),
+      (correct: true, points: final p) => (l.passedPoints(p), AppPalette.green, Icons.check_circle_rounded),
+      _ => (l.missedPractise, AppPalette.amber, Icons.replay_rounded),
     };
 
     return AppCard(
@@ -685,13 +692,17 @@ class _ScenarioCard extends StatelessWidget {
               Positioned(
                 left: 10,
                 top: 10,
-                child: StatusPill(label: scenario.difficulty, color: difficultyColor(scenario.difficulty), solid: true),
+                child: StatusPill(
+                  label: difficultyLabel(scenario.difficulty),
+                  color: difficultyColor(scenario.difficulty),
+                  solid: true,
+                ),
               ),
               Positioned(
                 right: 10,
                 top: 10,
                 child: StatusPill(
-                  label: '${scenario.points} pts',
+                  label: l.pointsShort(scenario.points),
                   color: AppPalette.deepBlue,
                   solid: true,
                   icon: Icons.star_rounded,
@@ -706,7 +717,7 @@ class _ScenarioCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    scenario.category.toUpperCase(),
+                    safetyCategoryLabel(scenario.category).toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: appText(10.5, weight: FontWeight.w700, color: AppPalette.inkFaint),
@@ -737,10 +748,10 @@ class _ScenarioCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        first == null ? 'Start' : 'Practice',
-                        style: appText(13, weight: FontWeight.w700, color: AppPalette.brightBlue),
+                        first == null ? l.start : l.practice,
+                        style: appText(13, weight: FontWeight.w700, color: AppColors.info),
                       ),
-                      const Icon(Icons.arrow_forward_rounded, size: 18, color: AppPalette.brightBlue),
+                      Icon(Icons.arrow_forward_rounded, size: 18, color: AppColors.info),
                     ],
                   ),
                 ],

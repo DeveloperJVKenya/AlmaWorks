@@ -1,6 +1,8 @@
 import 'package:almaworks/widgets/modern/modern_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 /// The three Firestore sources the notification center merges.
 class NotificationSources {
@@ -22,12 +24,12 @@ enum NotificationCategory { safety, projects, inventory, messages, access, other
 
 extension NotificationCategoryX on NotificationCategory {
   String get label => switch (this) {
-    NotificationCategory.safety => 'Safety',
-    NotificationCategory.projects => 'Projects',
-    NotificationCategory.inventory => 'Inventory',
-    NotificationCategory.messages => 'Messages',
-    NotificationCategory.access => 'Access',
-    NotificationCategory.other => 'Other',
+    NotificationCategory.safety => l10nNow.catSafety,
+    NotificationCategory.projects => l10nNow.catProjects,
+    NotificationCategory.inventory => l10nNow.catInventory,
+    NotificationCategory.messages => l10nNow.catMessages,
+    NotificationCategory.access => l10nNow.catAccess,
+    NotificationCategory.other => l10nNow.catOther,
   };
 
   IconData get icon => switch (this) {
@@ -53,8 +55,13 @@ extension NotificationCategoryX on NotificationCategory {
 class AppNotification {
   final String id;
   final String collection;
-  final String title;
-  final String body;
+  final String _title;
+  final String _body;
+
+  /// Other-language versions of the title/body (`{'it': {'title', 'body'}}`,
+  /// see `notificationText` in core/l10n). Read at display time, so the
+  /// inbox follows a language change without reloading.
+  final Map<String, dynamic>? i18n;
   final Map<String, dynamic> payload;
   final DateTime createdAt;
   final bool isRead;
@@ -62,12 +69,17 @@ class AppNotification {
   const AppNotification({
     required this.id,
     required this.collection,
-    required this.title,
-    required this.body,
+    required String title,
+    required String body,
+    this.i18n,
     required this.payload,
     required this.createdAt,
     required this.isRead,
-  });
+  }) : _title = title,
+       _body = body;
+
+  String get title => localizedField({'title': _title, 'i18n': ?i18n}, 'title') ?? _title;
+  String get body => localizedField({'body': _body, 'i18n': ?i18n}, 'body') ?? _body;
 
   String get type => payload['type']?.toString() ?? '';
 
@@ -133,8 +145,9 @@ class AppNotification {
     return AppNotification(
       id: doc.id,
       collection: collection,
-      title: data['title'] as String? ?? 'Notification',
+      title: data['title'] as String? ?? l10nNow.notificationFallbackTitle,
       body: data['body'] as String? ?? '',
+      i18n: data['i18n'] is Map ? Map<String, dynamic>.from(data['i18n'] as Map) : null,
       payload: Map<String, dynamic>.from(data['payload'] as Map? ?? const {}),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       // Shared docs: read is per person. A legacy shared doc marked isRead
@@ -150,8 +163,15 @@ class AppNotification {
     return AppNotification(
       id: doc.id,
       collection: NotificationSources.schedule,
-      title: data['taskName'] as String? ?? 'Task update',
-      body: data['message'] as String? ?? '',
+      title: data['taskName'] as String? ?? l10nNow.taskUpdate,
+      // The stored message is fixed text; overdue / starting-soon alerts
+      // are shown from their type instead so they follow the language.
+      body: switch (data['type']) {
+        'overdue' => l10nNow.taskIsOverdue,
+        'starting_soon' => l10nNow.taskStartsSoon,
+        _ => data['message'] as String? ?? '',
+      },
+      i18n: data['i18n'] is Map ? Map<String, dynamic>.from(data['i18n'] as Map) : null,
       payload: {
         'type': 'schedule_${data['type'] ?? 'unknown'}',
         'projectId': data['projectId'],
@@ -171,22 +191,20 @@ String notificationDayLabel(DateTime when, DateTime now) {
   final today = DateTime(now.year, now.month, now.day);
   final day = DateTime(when.year, when.month, when.day);
   final diff = today.difference(day).inDays;
-  if (diff <= 0) return 'Today';
-  if (diff == 1) return 'Yesterday';
-  if (diff < 7) {
-    const names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    return names[when.weekday - 1];
-  }
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return '${when.day} ${months[when.month - 1]}${when.year == now.year ? '' : ' ${when.year}'}';
+  if (diff <= 0) return l10nNow.today;
+  if (diff == 1) return l10nNow.yesterday;
+  // Weekday / month names follow the app language (Intl.defaultLocale).
+  if (diff < 7) return toBeginningOfSentenceCase(DateFormat('EEEE').format(when));
+  return DateFormat(when.year == now.year ? 'd MMM' : 'd MMM y').format(when);
 }
 
 /// "just now" / "5m ago" / "3h ago" / "2d ago".
 String relativeTime(DateTime when, DateTime now) {
   final d = now.difference(when);
-  if (d.inMinutes < 1) return 'just now';
-  if (d.inMinutes < 60) return '${d.inMinutes}m ago';
-  if (d.inHours < 24) return '${d.inHours}h ago';
-  if (d.inDays < 30) return '${d.inDays}d ago';
-  return '${(d.inDays / 30).floor()}mo ago';
+  final l = l10nNow;
+  if (d.inMinutes < 1) return l.justNow;
+  if (d.inMinutes < 60) return l.minutesAgo(d.inMinutes);
+  if (d.inHours < 24) return l.hoursAgo(d.inHours);
+  if (d.inDays < 30) return l.daysAgo(d.inDays);
+  return l.monthsAgo((d.inDays / 30).floor());
 }

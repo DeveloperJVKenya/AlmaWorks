@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
@@ -123,7 +122,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                           labelColor: const Color(0xFF0A2E5A),
                           unselectedLabelColor: Colors.grey[600],
                           indicatorColor: const Color(0xFF0A2E5A),
-                          labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                          labelStyle: TextStyle(fontWeight: FontWeight.w600),
                           tabs: const [
                             Tab(text: 'Quality'),
                             Tab(text: 'Safety'),
@@ -188,7 +187,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
           return Center(
             child: Text(
               'Error loading documents: ${snapshot.error}',
-              style: GoogleFonts.poppins(color: Colors.red[600]),
+              style: TextStyle(color: Colors.red[600]),
             ),
           );
         }
@@ -201,7 +200,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         widget.logger.d('📄 QualityAndSafetyScreen: Rendering Quality tab');
         if (documents.isEmpty) {
           return Center(
-            child: Text('No documents added yet', style: GoogleFonts.poppins(color: Colors.grey[600])),
+            child: Text('No documents added yet', style: TextStyle(color: Colors.grey[600])),
           );
         }
         return ListView(
@@ -218,7 +217,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                   Flexible(
                     child: Text(
                       'Quality Documents',
-                      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -270,7 +269,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
           return Center(
             child: Text(
               'Error loading documents: ${snapshot.error}',
-              style: GoogleFonts.poppins(color: Colors.red[600]),
+              style: TextStyle(color: Colors.red[600]),
             ),
           );
         }
@@ -283,7 +282,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         widget.logger.d('📄 QualityAndSafetyScreen: Rendering Safety tab');
         if (documents.isEmpty) {
           return Center(
-            child: Text('No documents added yet', style: GoogleFonts.poppins(color: Colors.grey[600])),
+            child: Text('No documents added yet', style: TextStyle(color: Colors.grey[600])),
           );
         }
         return ListView(
@@ -300,7 +299,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                   Flexible(
                     child: Text(
                       'Safety Documents',
-                      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -341,10 +340,10 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(_getDocumentIcon(type), color: _getFileIconColor(type)),
-        title: Text(name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16)),
+        title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
         subtitle: Text(
           'Uploaded: ${_dateFormat.format(uploadedAt)}',
-          style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
+          style: TextStyle(color: Colors.grey[600], fontSize: 14),
         ),
         trailing: PopupMenuButton<String>(
           onSelected: (value) => _handleDocumentAction(value, id, name, url, collection, type),
@@ -355,7 +354,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 children: [
                   Icon(Icons.visibility, color: Colors.blue[600]),
                   const SizedBox(width: 8),
-                  Text('View', style: GoogleFonts.poppins()),
+                  Text('View', style: TextStyle()),
                 ],
               ),
             ),
@@ -365,7 +364,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 children: [
                   Icon(Icons.download, color: Colors.green[600]),
                   const SizedBox(width: 8),
-                  Text('Download', style: GoogleFonts.poppins()),
+                  Text('Download', style: TextStyle()),
                 ],
               ),
             ),
@@ -376,7 +375,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                   children: [
                     Icon(Icons.delete, color: Colors.red[600]),
                     const SizedBox(width: 8),
-                    Text('Delete', style: GoogleFonts.poppins()),
+                    Text('Delete', style: TextStyle()),
                   ],
                 ),
               ),
@@ -454,14 +453,14 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       widget.logger.i('✅ QualityAndSafetyScreen: Document uploaded successfully: $fileName');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Document uploaded successfully', style: GoogleFonts.poppins())),
+          SnackBar(content: Text('Document uploaded successfully', style: TextStyle())),
         );
       }
     } catch (e, stackTrace) {
       widget.logger.e('❌ QualityAndSafetyScreen: Error uploading document', error: e, stackTrace: stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading document: $e', style: GoogleFonts.poppins())),
+          SnackBar(content: Text('Error uploading document: $e', style: TextStyle())),
         );
       }
     } finally {
@@ -480,22 +479,22 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('Enter Document Title', style: GoogleFonts.poppins()),
+          title: Text('Enter Document Title', style: TextStyle()),
           content: TextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
               labelText: 'Title (e.g., RFI, Close Out doc)',
               border: const OutlineInputBorder(),
-              labelStyle: GoogleFonts.poppins(),
+              labelStyle: TextStyle(),
             ),
-            style: GoogleFonts.poppins(),
+            style: TextStyle(),
             onChanged: (val) => title = val.trim(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: GoogleFonts.poppins()),
+              child: Text('Cancel', style: TextStyle()),
             ),
             TextButton(
               onPressed: () {
@@ -504,11 +503,11 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 } else {
                   if (!mounted) return;
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('Please enter a title', style: GoogleFonts.poppins())),
+                    SnackBar(content: Text('Please enter a title', style: TextStyle())),
                   );
                 }
               },
-              child: Text('OK', style: GoogleFonts.poppins()),
+              child: Text('OK', style: TextStyle()),
             ),
           ],
         );
@@ -602,14 +601,14 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text(name, style: GoogleFonts.poppins()),
+                title: Text(name, style: TextStyle()),
                 content: SingleChildScrollView(
-                  child: SelectableText(content, style: GoogleFonts.poppins()),
+                  child: SelectableText(content, style: TextStyle()),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Close', style: GoogleFonts.poppins()),
+                    child: Text('Close', style: TextStyle()),
                   ),
                 ],
               ),
@@ -626,7 +625,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
               widget.logger.e('Could not launch $viewerUrl');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Could not open document viewer', style: GoogleFonts.poppins()),
+                  content: Text('Could not open document viewer', style: TextStyle()),
                 ),
               );
             }
@@ -637,7 +636,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: ${result.message}', style: GoogleFonts.poppins()),
+                content: Text('Could not open file: ${result.message}', style: TextStyle()),
                 action: SnackBarAction(
                   label: 'Download instead',
                   onPressed: () => _downloadDocument(url, name),
@@ -650,7 +649,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('No internet and no cache available', style: GoogleFonts.poppins()),
+              content: Text('No internet and no cache available', style: TextStyle()),
             ),
           );
         }
@@ -660,7 +659,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error viewing document: $e', style: GoogleFonts.poppins()),
+            content: Text('Error viewing document: $e', style: TextStyle()),
           ),
         );
       }
@@ -688,7 +687,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
           SnackBar(
             content: Text(
               'Downloaded successfully!\nLocation: $result',  // Mobile: Full path
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
@@ -714,7 +713,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
               e.toString().contains('permission')
                 ? 'Storage permission denied. Please enable it in Settings.'
                 : 'Error downloading: $e',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
@@ -743,7 +742,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         widget.logger.i('✅ QualityAndSafetyScreen: Document deleted successfully');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Document deleted successfully', style: GoogleFonts.poppins()),
+            content: Text('Document deleted successfully', style: TextStyle()),
           ),
         );
       }
@@ -752,7 +751,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting: $e', style: GoogleFonts.poppins()),
+            content: Text('Error deleting: $e', style: TextStyle()),
           ),
         );
       }
@@ -768,17 +767,17 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Delete Document', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-          content: Text('Are you sure you want to delete "$name"?', style: GoogleFonts.poppins()),
+          title: Text('Delete Document', style: TextStyle(fontWeight: FontWeight.w600)),
+          content: Text('Are you sure you want to delete "$name"?', style: TextStyle()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancel', style: GoogleFonts.poppins()),
+              child: Text('Cancel', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-              child: Text('Delete', style: GoogleFonts.poppins()),
+              child: Text('Delete', style: TextStyle()),
             ),
           ],
         ),

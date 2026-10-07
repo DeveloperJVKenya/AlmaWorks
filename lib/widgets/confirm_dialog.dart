@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 /// Shared confirmation dialog. Matches the inline `showDialog<bool>` +
 /// `AlertDialog` pattern already used throughout the app (see
@@ -13,27 +14,27 @@ Future<bool> showConfirmDialog(
   BuildContext context, {
   required String title,
   required String message,
-  String confirmLabel = 'Confirm',
+  String? confirmLabel,
   bool isDestructive = false,
 }) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-      content: Text(message, style: GoogleFonts.poppins()),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      content: Text(message),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: Text('Cancel', style: GoogleFonts.poppins()),
+          child: Text(context.l10n.cancel),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: isDestructive ? Colors.red : const Color(0xFF0A2E5A),
+            backgroundColor: isDestructive ? AppColors.danger : AppColors.brand,
             foregroundColor: Colors.white,
           ),
-          child: Text(confirmLabel, style: GoogleFonts.poppins()),
+          child: Text(confirmLabel ?? context.l10n.confirm),
         ),
       ],
     ),

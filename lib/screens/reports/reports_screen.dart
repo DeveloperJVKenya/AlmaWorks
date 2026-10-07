@@ -10,7 +10,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:almaworks/services/file_pick_helper.dart';
@@ -149,9 +148,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                   labelColor: const Color(0xFF0A2E5A),
                   unselectedLabelColor: Colors.grey[600],
                   indicatorColor: const Color(0xFF0A2E5A),
-                  labelStyle: GoogleFonts.poppins(
+                  labelStyle: TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 13),
-                  unselectedLabelStyle: GoogleFonts.poppins(
+                  unselectedLabelStyle: TextStyle(
                       fontWeight: FontWeight.w400, fontSize: 13),
                   tabs: _tabs.map((t) => Tab(text: t['label'])).toList(),
                 );
@@ -188,7 +187,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       color: const Color(0xFF0A2E5A),
       child: Text(
         '© 2026 JV Alma C.I.S Site Management System',
-        style: GoogleFonts.poppins(
+        style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
           fontWeight: FontWeight.w400,
@@ -220,7 +219,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           return Center(
             child: Text(
               'Error loading documents: ${snapshot.error}',
-              style: GoogleFonts.poppins(color: Colors.red[600]),
+              style: TextStyle(color: Colors.red[600]),
             ),
           );
         }
@@ -298,7 +297,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           return Center(
             child: Text(
               'Error loading safety reports: ${snapshot.error}',
-              style: GoogleFonts.poppins(color: Colors.red[600]),
+              style: TextStyle(color: Colors.red[600]),
             ),
           );
         }
@@ -366,7 +365,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           const SizedBox(height: 16),
           Text(
             'No $type reports added yet',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 color: Colors.grey[600], fontSize: 16),
           ),
           const SizedBox(height: 8),
@@ -374,7 +373,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           if (!widget.isClient && !widget.isTechnician)
             Text(
               'Tap the upload button to add one',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   color: Colors.grey[400], fontSize: 13),
             ),
         ],
@@ -392,7 +391,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       ),
       child: Text(
         title,
-        style: GoogleFonts.poppins(
+        style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: const Color(0xFF0A2E5A)),
@@ -427,7 +426,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         ),
         title: Text(
           report.name,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               fontWeight: FontWeight.w600, fontSize: 15),
         ),
         subtitle: Column(
@@ -436,7 +435,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             const SizedBox(height: 2),
             Text(
               'Uploaded: ${_dateFormat.format(report.uploadedAt)}',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   color: Colors.grey[600], fontSize: 13),
             ),
             ...[
@@ -451,7 +450,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               ),
               child: Text(
                 report.type,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 11,
                     color: const Color(0xFF0A2E5A),
                     fontWeight: FontWeight.w500),
@@ -499,7 +498,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 10),
-          Text(label, style: GoogleFonts.poppins()),
+          Text(label, style: TextStyle()),
         ],
       ),
     );
@@ -577,7 +576,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           ),
           title: Text(
             displayName,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 15),
           ),
           subtitle: Column(
@@ -587,7 +586,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               Text(
                 'Saved: ${_dateFormat.format(savedAt)}',
                 style:
-                    GoogleFonts.poppins(color: Colors.grey[600], fontSize: 13),
+                    TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
               const SizedBox(height: 2),
               Container(
@@ -599,7 +598,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                 ),
                 child: Text(
                   '$type Form',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: 11,
                       color: const Color(0xFF0A2E5A),
                       fontWeight: FontWeight.w500),
@@ -674,22 +673,22 @@ class _ReportsScreenState extends State<ReportsScreen>
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
             title: Text('Delete Report',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.w600)),
             content: Text(
                 'Are you sure you want to delete "${report.name}"?',
-                style: GoogleFonts.poppins()),
+                style: TextStyle()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel', style: GoogleFonts.poppins()),
+                child: Text('Cancel', style: TextStyle()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white),
-                child: Text('Delete', style: GoogleFonts.poppins()),
+                child: Text('Delete', style: TextStyle()),
               ),
             ],
           ),
@@ -764,7 +763,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('In-app viewer not available for $type reports.',
-                style: GoogleFonts.poppins()),
+                style: TextStyle()),
           ));
         }
       }
@@ -774,7 +773,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error opening report: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red,
         ));
       }
@@ -828,7 +827,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           ),
           title: Text(
             displayName,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 15),
           ),
           subtitle: Column(
@@ -837,7 +836,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               const SizedBox(height: 2),
               Text(
                 'Saved: ${_dateFormat.format(savedAt)}',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     color: Colors.grey[600], fontSize: 13),
               ),
               const SizedBox(height: 2),
@@ -850,7 +849,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                 ),
                 child: Text(
                   'Safety Form',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: 11,
                       color: const Color(0xFF0A2E5A),
                       fontWeight: FontWeight.w500),
@@ -919,21 +918,21 @@ class _ReportsScreenState extends State<ReportsScreen>
                 borderRadius: BorderRadius.circular(16)),
             title: Text('Delete Report',
                 style:
-                    GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    TextStyle(fontWeight: FontWeight.w600)),
             content: Text(
                 'Are you sure you want to delete this safety report?',
-                style: GoogleFonts.poppins()),
+                style: TextStyle()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel', style: GoogleFonts.poppins()),
+                child: Text('Cancel', style: TextStyle()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white),
-                child: Text('Delete', style: GoogleFonts.poppins()),
+                child: Text('Delete', style: TextStyle()),
               ),
             ],
           ),
@@ -965,7 +964,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Report deleted successfully',
-                  style: GoogleFonts.poppins()),
+                  style: TextStyle()),
               backgroundColor: Colors.green,
             ));
           }
@@ -1006,7 +1005,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error opening report: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red,
         ));
       }
@@ -1036,7 +1035,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: Colors.white)),
           const SizedBox(width: 14),
-          Text('Preparing PDF…', style: GoogleFonts.poppins()),
+          Text('Preparing PDF…', style: TextStyle()),
         ]),
         duration: const Duration(seconds: 30),
       ));
@@ -1229,7 +1228,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error generating PDF: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red,
         ));
       }
@@ -1276,7 +1275,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Report deleted successfully',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.green,
         ));
       }
@@ -1286,7 +1285,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error deleting report: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red,
         ));
       }
@@ -1343,7 +1342,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
                 'Daily Report',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: const Color(0xFF0A2E5A)),
@@ -1355,10 +1354,10 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F0FB),
                 child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
               ),
-              title: Text('Fill Daily Report Form', style: GoogleFonts.poppins()),
+              title: Text('Fill Daily Report Form', style: TextStyle()),
               subtitle: Text(
                 'Complete the structured form within the app',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1380,10 +1379,10 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
-              title: Text('Upload Daily Report File', style: GoogleFonts.poppins()),
+              title: Text('Upload Daily Report File', style: TextStyle()),
               subtitle: Text(
                 'PDF, DOCX, PPTX, or TXT file from your device',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1421,7 +1420,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
                 'Weekly Report',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: const Color(0xFF0A2E5A)),
@@ -1433,10 +1432,10 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F0FB),
                 child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
               ),
-              title: Text('Fill Weekly Report Form', style: GoogleFonts.poppins()),
+              title: Text('Fill Weekly Report Form', style: TextStyle()),
               subtitle: Text(
                 'Complete the structured form within the app',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1458,10 +1457,10 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
-              title: Text('Upload Weekly Report File', style: GoogleFonts.poppins()),
+              title: Text('Upload Weekly Report File', style: TextStyle()),
               subtitle: Text(
                 'PDF, DOCX, PPTX, or TXT file from your device',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1499,7 +1498,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
                 'Monthly Report',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: const Color(0xFF0A2E5A)),
@@ -1511,10 +1510,10 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F0FB),
                 child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
               ),
-              title: Text('Fill Monthly Report Form', style: GoogleFonts.poppins()),
+              title: Text('Fill Monthly Report Form', style: TextStyle()),
               subtitle: Text(
                 'Complete the structured form within the app',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1536,10 +1535,10 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
-              title: Text('Upload Monthly Report File', style: GoogleFonts.poppins()),
+              title: Text('Upload Monthly Report File', style: TextStyle()),
               subtitle: Text(
                 'PDF, DOCX, PPTX, or TXT file from your device',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1576,7 +1575,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
                 'Safety Meeting Report',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: const Color(0xFF0A2E5A)),
@@ -1590,9 +1589,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                     Icon(Icons.edit_note, color: Color(0xFF0A2E5A)),
               ),
               title:
-                  Text('Fill Safety Form', style: GoogleFonts.poppins()),
+                  Text('Fill Safety Form', style: TextStyle()),
               subtitle: Text('Complete the form within the app',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: 12, color: Colors.grey[600])),
               onTap: () {
                 Navigator.pop(context);
@@ -1615,9 +1614,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                 child: Icon(Icons.upload_file, color: Colors.green),
               ),
               title: Text('Upload Safety File',
-                  style: GoogleFonts.poppins()),
+                  style: TextStyle()),
               subtitle: Text('PDF, DOCX, PPTX, or TXT file',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: 12, color: Colors.grey[600])),
               onTap: () {
                 Navigator.pop(context);
@@ -1683,14 +1682,14 @@ class _ReportsScreenState extends State<ReportsScreen>
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
             title: Text('Uploading Report',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                style: TextStyle(fontWeight: FontWeight.w600)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text('Uploading $finalFileName...',
-                    style: GoogleFonts.poppins()),
+                    style: TextStyle()),
               ],
             ),
           ),
@@ -1730,7 +1729,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         Navigator.pop(context); // close progress dialog
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Report uploaded successfully',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.green,
         ));
       }
@@ -1741,7 +1740,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         if (Navigator.canPop(context)) Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error uploading report: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red,
         ));
       }
@@ -1768,7 +1767,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           dialogTitle,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               fontWeight: FontWeight.w600,
               color: const Color(0xFF0A2E5A)),
         ),
@@ -1777,16 +1776,16 @@ class _ReportsScreenState extends State<ReportsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(contentText,
-                style: GoogleFonts.poppins(color: Colors.grey[700])),
+                style: TextStyle(color: Colors.grey[700])),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               autofocus: true,
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle:
-                    GoogleFonts.poppins(color: Colors.grey[500]),
+                    TextStyle(color: Colors.grey[500]),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8)),
                 focusedBorder: OutlineInputBorder(
@@ -1799,7 +1798,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             if (showFileName && fileName != null) ...[
               const SizedBox(height: 8),
               Text('File: $fileName',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: 12, color: Colors.grey[600])),
             ],
           ],
@@ -1809,7 +1808,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             onPressed: () => Navigator.pop(context),
             child: Text('Cancel',
                 style:
-                    GoogleFonts.poppins(color: const Color(0xFF800000))),
+                    TextStyle(color: const Color(0xFF800000))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1818,7 +1817,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content: Text('Title cannot be empty',
-                      style: GoogleFonts.poppins()),
+                      style: TextStyle()),
                 ));
               }
             },
@@ -1828,7 +1827,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text('Confirm', style: GoogleFonts.poppins()),
+            child: Text('Confirm', style: TextStyle()),
           ),
         ],
       ),
@@ -1861,22 +1860,22 @@ class _ReportsScreenState extends State<ReportsScreen>
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
             title: Text('Delete Report',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.w600)),
             content: Text(
                 'Are you sure you want to delete "${report.name}"?',
-                style: GoogleFonts.poppins()),
+                style: TextStyle()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel', style: GoogleFonts.poppins()),
+                child: Text('Cancel', style: TextStyle()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white),
-                child: Text('Delete', style: GoogleFonts.poppins()),
+                child: Text('Delete', style: TextStyle()),
               ),
             ],
           ),
@@ -1915,16 +1914,16 @@ class _ReportsScreenState extends State<ReportsScreen>
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text(name, style: GoogleFonts.poppins()),
+                title: Text(name, style: TextStyle()),
                 content: SingleChildScrollView(
                   child: SelectableText(content,
-                      style: GoogleFonts.poppins()),
+                      style: TextStyle()),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child:
-                        Text('Close', style: GoogleFonts.poppins()),
+                        Text('Close', style: TextStyle()),
                   ),
                 ],
               ),
@@ -1939,7 +1938,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           } else if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Could not open document viewer',
-                  style: GoogleFonts.poppins()),
+                  style: TextStyle()),
             ));
           }
         } else {
@@ -1947,7 +1946,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Could not open file: ${result.message}',
-                  style: GoogleFonts.poppins()),
+                  style: TextStyle()),
               action: SnackBarAction(
                 label: 'Download instead',
                 onPressed: () => _downloadDocument(url, name),
@@ -1958,7 +1957,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('No internet and no cache available',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
         ));
       }
     } catch (e) {
@@ -1966,7 +1965,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content:
-              Text('Error viewing document: $e', style: GoogleFonts.poppins()),
+              Text('Error viewing document: $e', style: TextStyle()),
         ));
       }
     }
@@ -1989,7 +1988,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             'Downloaded successfully!\nLocation: $result',
-            style: GoogleFonts.poppins(),
+            style: TextStyle(),
           ),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 4),
@@ -2008,7 +2007,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             e.toString().contains('permission')
                 ? 'Storage permission denied. Please enable it in Settings.'
                 : 'Error downloading: $e',
-            style: GoogleFonts.poppins(),
+            style: TextStyle(),
           ),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
@@ -2041,7 +2040,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Document deleted successfully',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
         ));
       }
     } catch (e) {
@@ -2050,7 +2049,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error deleting: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
         ));
       }
     }
@@ -2064,15 +2063,15 @@ class _ReportsScreenState extends State<ReportsScreen>
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(report.name, style: GoogleFonts.poppins()),
+          title: Text(report.name, style: TextStyle()),
           content: SingleChildScrollView(
             child:
-                SelectableText(content, style: GoogleFonts.poppins()),
+                SelectableText(content, style: TextStyle()),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Close', style: GoogleFonts.poppins()),
+              child: Text('Close', style: TextStyle()),
             ),
           ],
         ),
@@ -2124,7 +2123,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('No form data or file available for download.',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
         ));
       }
       return;
@@ -2140,7 +2139,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: Colors.white)),
           const SizedBox(width: 14),
-          Text('Preparing PDF…', style: GoogleFonts.poppins()),
+          Text('Preparing PDF…', style: TextStyle()),
         ]),
         duration: const Duration(seconds: 30),
       ));
@@ -2262,7 +2261,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error generating PDF: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red,
         ));
       }
@@ -2313,7 +2312,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       await OpenFile.open(filePath);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('PDF saved: $fileName', style: GoogleFonts.poppins()),
+        content: Text('PDF saved: $fileName', style: TextStyle()),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 4),
         action: SnackBarAction(

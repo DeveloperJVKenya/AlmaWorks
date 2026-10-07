@@ -3,15 +3,18 @@ import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/add_material_screen.dart';
 import 'package:almaworks/screens/inventory/fabrication_orders_screen.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/record_material_movement_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// Full traceability view for a single material: current stock level plus
 /// the complete, immutable movement history (receipts/issues with
@@ -39,7 +42,7 @@ class MaterialDetailScreen extends ConsumerWidget {
     final materialAsync = ref.watch(materialByIdProvider(materialId));
 
     return BaseLayout(
-      title: 'Material Details',
+      title: context.l10n.materialDetails,
       project: project,
       logger: logger,
       selectedMenuItem: 'Inventory',
@@ -51,7 +54,7 @@ class MaterialDetailScreen extends ConsumerWidget {
                     ? const SizedBox.shrink()
                     : IconButton(
                         icon: const Icon(Icons.edit_outlined),
-                        tooltip: 'Edit',
+                        tooltip: context.l10n.edit,
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -73,11 +76,11 @@ class MaterialDetailScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) {
           logger.e('❌ MaterialDetailScreen: stream error $err');
-          return Center(child: Text('Error loading material', style: GoogleFonts.poppins()));
+          return Center(child: Text(friendlyError(err, action: context.l10n.couldNotLoadMaterial), textAlign: TextAlign.center));
         },
         data: (material) {
           if (material == null) {
-            return Center(child: Text('Material not found', style: GoogleFonts.poppins()));
+            return Center(child: Text(context.l10n.materialNotFound));
           }
 
           return ListView(
@@ -87,7 +90,7 @@ class MaterialDetailScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               _buildActionButtons(context, material),
               const SizedBox(height: 20),
-              Text('Movement History', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(context.l10n.movementHistory, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
               const SizedBox(height: 8),
               Consumer(
                 builder: (context, ref, _) {
@@ -101,14 +104,14 @@ class MaterialDetailScreen extends ConsumerWidget {
                       logger.e('❌ MaterialDetailScreen: history stream error $err');
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Text('Error loading history', style: GoogleFonts.poppins(color: Colors.grey[600])),
+                        child: Text(friendlyError(err, action: context.l10n.couldNotLoadHistoryShort), style: TextStyle(color: AppColors.inkMuted)),
                       );
                     },
                     data: (history) {
                       if (history.isEmpty) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Text('No movements yet', style: GoogleFonts.poppins(color: Colors.grey[600])),
+                          child: Text(context.l10n.noMovementsYet, style: TextStyle(color: AppColors.inkMuted)),
                         );
                       }
                       return Column(
@@ -131,7 +134,8 @@ class MaterialDetailScreen extends ConsumerWidget {
         : material.isLowStock
             ? const Color(0xFFE65100)
             : const Color(0xFF2E7D32);
-    final stockLabel = material.isOutOfStock ? 'Out of Stock' : (material.isLowStock ? 'Low Stock' : 'In Stock');
+    final l = l10nNow;
+    final stockLabel = material.isOutOfStock ? l.outOfStock : (material.isLowStock ? l.lowStock : l.inStock);
 
     return Card(
       child: Padding(
@@ -143,7 +147,7 @@ class MaterialDetailScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(material.name,
-                      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -153,21 +157,21 @@ class MaterialDetailScreen extends ConsumerWidget {
                     border: Border.all(color: stockColor.withValues(alpha: 0.35)),
                   ),
                   child: Text(stockLabel,
-                      style: GoogleFonts.poppins(fontSize: 12, color: stockColor, fontWeight: FontWeight.w600)),
+                      style: TextStyle(fontSize: 12, color: stockColor, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Text('${material.category} • ${material.source}', style: GoogleFonts.poppins(color: Colors.grey[700])),
+            Text('${invLabel(material.category)} • ${invLabel(material.source)}', style: TextStyle(color: AppColors.inkMuted)),
             const SizedBox(height: 10),
-            Text('${material.quantityInStorage} ${material.unit} in storage',
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: stockColor)),
+            Text(l.inStorageQuantity('${material.quantityInStorage}', invLabel(material.unit)),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: stockColor)),
             const SizedBox(height: 4),
-            Text('Condition at intake: ${material.initialCondition}',
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+            Text(l.conditionAtIntake(invLabel(material.initialCondition)),
+                style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
             if (material.description != null) ...[
               const SizedBox(height: 8),
-              Text(material.description!, style: GoogleFonts.poppins(fontSize: 13)),
+              Text(material.description!, style: TextStyle(fontSize: 13)),
             ],
           ],
         ),
@@ -191,7 +195,7 @@ class MaterialDetailScreen extends ConsumerWidget {
           ElevatedButton.icon(
             onPressed: () => _navigateToMovement(context, MaterialMovementMode.receive, material),
             icon: const Icon(Icons.call_received),
-            label: Text('Record Receipt', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5)),
+            label: Text(context.l10n.recordReceipt, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2E7D32),
               foregroundColor: Colors.white,
@@ -203,7 +207,7 @@ class MaterialDetailScreen extends ConsumerWidget {
                 ? null
                 : () => _navigateToMovement(context, MaterialMovementMode.issue, material),
             icon: const Icon(Icons.call_made),
-            label: Text('Record Issue', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5)),
+            label: Text(context.l10n.recordIssue, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1565C0),
               foregroundColor: Colors.white,
@@ -226,7 +230,7 @@ class MaterialDetailScreen extends ConsumerWidget {
             ),
           ),
           icon: const Icon(Icons.precision_manufacturing_outlined),
-          label: Text('Fabrication Orders', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5)),
+          label: Text(context.l10n.fabricationOrders, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
           style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13)),
         ),
       ],
@@ -252,6 +256,8 @@ class MaterialDetailScreen extends ConsumerWidget {
 
   Widget _buildHistoryEntry(BuildContext context, MaterialMovementModel entry, String unit) {
     final isReceived = entry.isReceived;
+    final l = context.l10n;
+    final unitLabel = invLabel(unit);
     final color = isReceived ? const Color(0xFF2E7D32) : const Color(0xFF1565C0);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -265,39 +271,41 @@ class MaterialDetailScreen extends ConsumerWidget {
                 Icon(isReceived ? Icons.call_received : Icons.call_made, color: color, size: 18),
                 const SizedBox(width: 6),
                 Text(
-                  '${isReceived ? 'Received' : 'Issued'}: ${entry.quantity} $unit',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: color),
+                  isReceived
+                      ? l.receivedQuantity('${entry.quantity}', unitLabel)
+                      : l.issuedQuantity('${entry.quantity}', unitLabel),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: color),
                 ),
                 const Spacer(),
                 Text(
                   DateFormat('d MMM yyyy, HH:mm').format(entry.eventAt),
-                  style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
                 ),
               ],
             ),
             if (entry.isIssued && entry.projectName != null) ...[
               const SizedBox(height: 4),
-              Text('To project: ${entry.projectName}', style: GoogleFonts.poppins(fontSize: 13)),
+              Text(l.toProject(entry.projectName!), style: const TextStyle(fontSize: 13)),
             ],
             if (entry.isReceived) ...[
               if (entry.conditionOnReceipt != null) ...[
                 const SizedBox(height: 4),
-                Text('Condition: ${entry.conditionOnReceipt}', style: GoogleFonts.poppins(fontSize: 13)),
+                Text(l.conditionLabel(invLabel(entry.conditionOnReceipt)), style: const TextStyle(fontSize: 13)),
               ],
               if (entry.portVerifiedByName != null) ...[
                 const SizedBox(height: 4),
-                Text('Verified at port by: ${entry.portVerifiedByName}',
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+                Text(l.verifiedAtPortByName(entry.portVerifiedByName!),
+                    style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
               ],
               if (entry.receivedByName != null) ...[
                 const SizedBox(height: 4),
-                Text('Received into storage by: ${entry.receivedByName}',
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+                Text(l.receivedIntoStorageByName(entry.receivedByName!),
+                    style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
               ],
             ],
             if (entry.notes.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text(entry.notes, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700])),
+              Text(entry.notes, style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
             ],
             if (entry.photoUrls.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -318,8 +326,8 @@ class MaterialDetailScreen extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 6),
-            Text('Recorded by ${entry.recordedByName} (${entry.recordedByRole})',
-                style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[500])),
+            Text(l.recordedBy(entry.recordedByName, roleLabel(entry.recordedByRole)),
+                style: TextStyle(fontSize: 10, color: AppColors.inkFaint)),
           ],
         ),
       ),

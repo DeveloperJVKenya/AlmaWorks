@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:almaworks/models/inventory/material_model.dart';
 import 'package:almaworks/models/inventory/material_movement_model.dart';
 import 'package:almaworks/models/project_model.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -14,9 +14,11 @@ import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 enum MaterialMovementMode { receive, issue }
 
@@ -118,7 +120,7 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
         if (!mounted) return;
         setState(() {
           _projectsLoaded = true;
-          _projectsError = 'Could not load projects: $e';
+          _projectsError = friendlyError(e, action: l10nNow.couldNotLoadProjects);
         });
       },
     );
@@ -144,31 +146,25 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final quantity = double.tryParse(_quantityController.text.trim());
+    final l = context.l10n;
+    final unit = invLabel(widget.material.unit);
+    final quantity = double.tryParse(_quantityController.text.trim().replaceAll(',', '.'));
     if (quantity == null || quantity <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Enter a valid quantity', style: GoogleFonts.poppins())),
-      );
+      showWarningSnack(context, l.enterValidQuantity);
       return;
     }
 
     if (!_isReceive && quantity > widget.material.quantityInStorage) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Only ${widget.material.quantityInStorage} ${widget.material.unit} remaining in storage',
-            style: GoogleFonts.poppins(),
-          ),
-        ),
-      );
+      showWarningSnack(context, l.onlyRemainingInStorage('${widget.material.quantityInStorage}', unit));
       return;
     }
 
-    final title = _isReceive ? 'Record Receipt' : 'Record Issue';
+    final title = _isReceive ? l.recordReceipt : l.recordIssue;
     final message = _isReceive
-        ? 'Record receipt of $quantity ${widget.material.unit} of "${widget.material.name}" into storage?'
-        : 'Issue $quantity ${widget.material.unit} of "${widget.material.name}"'
-            '${_selectedProject != null ? ' to project ${_selectedProject!.name}' : ''}?';
+        ? l.confirmRecordReceipt('$quantity', unit, widget.material.name)
+        : (_selectedProject != null
+            ? l.confirmIssueToProject('$quantity', unit, widget.material.name, _selectedProject!.name)
+            : l.confirmIssue('$quantity', unit, widget.material.name));
 
     final confirmed = await showConfirmDialog(context, title: title, message: message, confirmLabel: title);
     if (!confirmed || !mounted) return;
@@ -218,19 +214,12 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isReceive ? 'Receipt recorded' : 'Issue recorded', style: GoogleFonts.poppins()),
-          backgroundColor: Colors.green,
-        ),
-      );
+      showSuccessSnack(context, _isReceive ? l.receiptRecorded : l.issueRecorded);
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ RecordMaterialMovementScreen: Failed to submit', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: l.couldNotRecord);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -238,23 +227,25 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
+    final unit = invLabel(widget.material.unit);
     if (!InventoryPermissions.canApproveAndIssue(widget.recordedByRole)) {
       return BaseLayout(
-        title: _isReceive ? 'Record Receipt' : 'Record Issue',
+        title: _isReceive ? l.recordReceipt : l.recordIssue,
         project: widget.project,
         logger: widget.logger,
         selectedMenuItem: 'Inventory',
         onMenuItemSelected: (_) {},
         child: Center(
           child: Text(
-            'You do not have permission to record material movements.',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+            l.noPermissionMaterialMovement,
+            style: TextStyle(fontSize: 14, color: AppColors.inkMuted),
           ),
         ),
       );
     }
     return BaseLayout(
-      title: _isReceive ? 'Record Receipt' : 'Record Issue',
+      title: _isReceive ? l.recordReceipt : l.recordIssue,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -275,37 +266,37 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.material.name, style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
-                        Text('${widget.material.quantityInStorage} ${widget.material.unit} currently in storage',
-                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                        Text(widget.material.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                        Text(l.currentlyInStorage('${widget.material.quantityInStorage}', unit),
+                            style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                       ],
                     ),
                   ),
                   inventoryFormSection(
-                    title: _isReceive ? 'Receipt' : 'Issue',
+                    title: _isReceive ? l.receipt : l.issue,
                     icon: _isReceive ? Icons.call_received : Icons.call_made,
                     children: [
                       TextFormField(
                         controller: _quantityController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: inventoryInputDecoration(
-                          label: 'Quantity (${widget.material.unit})',
+                          label: l.quantityWithUnit(unit),
                           icon: Icons.numbers_outlined,
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Quantity is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? l.quantityRequired : null,
                       ),
                       const SizedBox(height: 14),
                       if (_isReceive) ...[
                         DropdownButtonFormField<String>(
                           initialValue: _condition,
                           isExpanded: true,
-                          decoration: inventoryInputDecoration(label: 'Condition on Receipt', icon: Icons.fact_check_outlined),
+                          decoration: inventoryInputDecoration(label: l.conditionOnReceipt, icon: Icons.fact_check_outlined),
                           items: [
                             MaterialMovementModel.conditionGood,
                             MaterialMovementModel.conditionPartial,
                             MaterialMovementModel.conditionDamaged,
                           ]
-                              .map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.poppins())))
+                              .map((c) => DropdownMenuItem(value: c, child: Text(invLabel(c))))
                               .toList(),
                           onChanged: (v) => setState(() => _condition = v ?? _condition),
                         ),
@@ -314,8 +305,8 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                           TextFormField(
                             controller: _portVerifiedByController,
                             decoration: inventoryInputDecoration(
-                              label: 'Verified at Port of Arrival By',
-                              hint: 'Name of person who verified this shipment',
+                              label: l.verifiedAtPortBy,
+                              hint: l.verifiedAtPortHint,
                               icon: Icons.anchor_outlined,
                             ),
                           ),
@@ -324,8 +315,8 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                         TextFormField(
                           controller: _receivedByController,
                           decoration: inventoryInputDecoration(
-                            label: 'Received Into Storage By',
-                            hint: 'Name of person who signed for it',
+                            label: l.receivedIntoStorageBy,
+                            hint: l.receivedIntoStorageHint,
                             icon: Icons.badge_outlined,
                           ),
                         ),
@@ -334,15 +325,15 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Notes & Photos',
+                    title: l.notesAndPhotos,
                     icon: Icons.fact_check_outlined,
                     children: [
                       TextField(
                         controller: _notesController,
                         maxLines: 3,
                         decoration: inventoryInputDecoration(
-                          label: 'Notes',
-                          hint: _isReceive ? 'Condition/state details on receipt' : 'Reason / additional notes',
+                          label: l.notes,
+                          hint: _isReceive ? l.receiptNotesHint : l.issueNotesHint,
                           icon: Icons.notes_outlined,
                         ),
                       ),
@@ -352,7 +343,7 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                         child: OutlinedButton.icon(
                           onPressed: _isSaving ? null : _pickPhotos,
                           icon: const Icon(Icons.add_a_photo_outlined),
-                          label: Text('Add Photos', style: GoogleFonts.poppins()),
+                          label: Text(l.addPhotos),
                         ),
                       ),
                       if (_selectedPhotos.isNotEmpty) ...[
@@ -395,7 +386,7 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
                   ),
                   const SizedBox(height: 4),
                   inventoryPrimaryButton(
-                    label: _isReceive ? 'Record Receipt' : 'Record Issue',
+                    label: _isReceive ? l.recordReceipt : l.recordIssue,
                     isLoading: _isSaving,
                     onPressed: _submit,
                     icon: _isReceive ? Icons.call_received : Icons.call_made,
@@ -422,16 +413,16 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.red.withValues(alpha: 0.06),
+          color: AppColors.dangerTint,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 18),
+            Icon(Icons.error_outline, color: AppColors.danger, size: 18),
             const SizedBox(width: 8),
-            Expanded(child: Text(_projectsError!, style: GoogleFonts.poppins(fontSize: 12, color: Colors.red[800]))),
-            TextButton(onPressed: _subscribeProjects, child: const Text('Retry')),
+            Expanded(child: Text(_projectsError!, style: TextStyle(fontSize: 12, color: AppColors.danger))),
+            TextButton(onPressed: _subscribeProjects, child: Text(context.l10n.retry)),
           ],
         ),
       );
@@ -439,11 +430,11 @@ class _RecordMaterialMovementScreenState extends State<RecordMaterialMovementScr
     return DropdownButtonFormField<String>(
       initialValue: _selectedProjectId,
       isExpanded: true,
-      decoration: inventoryInputDecoration(label: 'Destination Project', icon: Icons.folder_outlined),
+      decoration: inventoryInputDecoration(label: context.l10n.destinationProject, icon: Icons.folder_outlined),
       items: _projects
           .map((p) => DropdownMenuItem(
                 value: p.id,
-                child: Text(p.name, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
+                child: Text(p.name, overflow: TextOverflow.ellipsis, style: TextStyle()),
               ))
           .toList(),
       onChanged: (value) => setState(() => _selectedProjectId = value),

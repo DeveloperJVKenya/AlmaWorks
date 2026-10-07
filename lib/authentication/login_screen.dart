@@ -6,8 +6,10 @@ import 'package:almaworks/rbacsystem/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,7 +43,7 @@ class LoginScreenState extends State<LoginScreen> {
 
       final user = userCredential.user;
       if (user == null) {
-        throw Exception('User not found after login');
+        throw UserFacingException(l10nNow.errSignInAgain);
       }
 
       // Fetch user document by uid
@@ -52,7 +54,7 @@ class LoginScreenState extends State<LoginScreen> {
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        throw Exception('User document not found');
+        throw UserFacingException(l10nNow.profileNotFound);
       }
 
       final userData = querySnapshot.docs.first.data();
@@ -78,33 +80,18 @@ class LoginScreenState extends State<LoginScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
+      final l = l10nNow;
       setState(() {
-        switch (e.code) {
-          case 'user-not-found':
-            _errorMessage = 'No account found with this email address. Please check and try again.';
-            break;
-          case 'wrong-password':
-            _errorMessage = 'Incorrect password. Please try again or reset your password.';
-            break;
-          case 'invalid-email':
-            _errorMessage = 'The email address format is invalid. Please enter a valid email.';
-            break;
-          case 'user-disabled':
-            _errorMessage = 'This account has been disabled. Please contact support.';
-            break;
-          case 'invalid-credential':
-            _errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-            break;
-          case 'too-many-requests':
-            _errorMessage = 'Too many failed login attempts. Please try again later or reset your password.';
-            break;
-          default:
-            _errorMessage = 'Login failed: ${e.message ?? "Unknown error occurred"}';
-        }
+        _errorMessage = switch (e.code) {
+          'user-not-found' => l.accountNotFound,
+          'wrong-password' => l.incorrectPassword,
+          'too-many-requests' => l.tooManyLoginAttempts,
+          _ => friendlyError(e, action: l.signInFailed),
+        };
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again later.';
+        _errorMessage = friendlyError(e, action: l10nNow.signInFailed);
       });
     } finally {
       if (mounted) {
@@ -117,59 +104,28 @@ class LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleForgotPassword() async {
     final email = _emailController.text.trim();
-    
+
+    final l = context.l10n;
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your email address first'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      showWarningSnack(context, l.enterEmailFirst);
       return;
     }
 
     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid email address'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      showWarningSnack(context, l.errInvalidEmail);
       return;
     }
 
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Password reset email sent to $email. Please check your inbox.'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
+
+      if (mounted) showSuccessSnack(context, l.passwordResetSent(email));
     } on FirebaseAuthException catch (e) {
-      String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No account found with this email address.';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address format.';
-          break;
-        default:
-          message = 'Failed to send reset email. Please try again.';
-      }
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (!mounted) return;
+      if (e.code == 'user-not-found') {
+        showErrorMessage(context, l.accountNotFound);
+      } else {
+        showErrorSnack(context, e, action: l.couldNotSendResetEmail);
       }
     }
   }
@@ -185,9 +141,8 @@ class LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return AuthResponsiveShell(
       brandIcon: Icons.lock_outline_rounded,
-      brandHeadline: 'Welcome back to\nAlmaWorks',
-      brandSubtext:
-          'Sign in to manage your projects, inventory, and team communication — all in one place.',
+      brandHeadline: context.l10n.welcomeBackHeadline,
+      brandSubtext: context.l10n.welcomeBackSubtext,
       form: AuthFormCard(
         child: Form(
           key: _formKey,
@@ -196,30 +151,30 @@ class LoginScreenState extends State<LoginScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Sign In',
-                style: GoogleFonts.poppins(
+                context.l10n.signIn,
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: AuthColors.navy,
+                  color: AppColors.brandInk,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                'Enter your details to access your account',
-                style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.grey[600]),
+                context.l10n.signInSubtitle,
+                style: TextStyle(fontSize: 13.5, color: AppColors.inkMuted),
               ),
               const SizedBox(height: 28),
               AuthTextField(
                 controller: _emailController,
-                label: 'Email',
-                hint: 'you@company.com',
+                label: context.l10n.email,
+                hint: context.l10n.emailHint,
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Email is required';
+                  if (value == null || value.isEmpty) return context.l10n.emailRequired;
                   if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                    return 'Enter a valid email address';
+                    return context.l10n.errInvalidEmail;
                   }
                   return null;
                 },
@@ -227,8 +182,8 @@ class LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               AuthTextField(
                 controller: _passwordController,
-                label: 'Password',
-                hint: 'Enter your password',
+                label: context.l10n.password,
+                hint: context.l10n.passwordHint,
                 icon: Icons.lock_outline_rounded,
                 obscureText: _obscurePassword,
                 textInputAction: TextInputAction.done,
@@ -236,20 +191,20 @@ class LoginScreenState extends State<LoginScreen> {
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                    color: Colors.grey[500],
+                    color: AppColors.inkFaint,
                     size: 20,
                   ),
                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Password is required';
+                  if (value == null || value.isEmpty) return context.l10n.passwordRequired;
                   return null;
                 },
               ),
               const SizedBox(height: 6),
               Align(
                 alignment: Alignment.centerRight,
-                child: AuthLinkButton(text: 'Forgot Password?', onPressed: _handleForgotPassword),
+                child: AuthLinkButton(text: context.l10n.forgotPassword, onPressed: _handleForgotPassword),
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 6),
@@ -257,7 +212,7 @@ class LoginScreenState extends State<LoginScreen> {
               ],
               const SizedBox(height: 22),
               AuthPrimaryButton(
-                label: 'Login',
+                label: context.l10n.login,
                 isLoading: _isLoading,
                 onPressed: _isLoading ? null : _handleLogin,
               ),
@@ -266,11 +221,11 @@ class LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Don't have an account? ",
-                    style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 13.5),
+                    context.l10n.noAccountYet,
+                    style: TextStyle(color: AppColors.inkMuted, fontSize: 13.5),
                   ),
                   AuthLinkButton(
-                    text: 'Sign Up',
+                    text: context.l10n.signUp,
                     onPressed: () {
                       Navigator.push(
                         context,

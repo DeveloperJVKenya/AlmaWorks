@@ -9,17 +9,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 enum _HistoryFilter { all, correct, incorrect, scoring, practice, feedback }
 
 extension on _HistoryFilter {
   String get label => switch (this) {
-    _HistoryFilter.all => 'All',
-    _HistoryFilter.correct => 'Correct',
-    _HistoryFilter.incorrect => 'Incorrect',
-    _HistoryFilter.scoring => 'First attempts',
-    _HistoryFilter.practice => 'Practice',
-    _HistoryFilter.feedback => 'With feedback',
+    _HistoryFilter.all => l10nNow.all,
+    _HistoryFilter.correct => l10nNow.filterCorrect,
+    _HistoryFilter.incorrect => l10nNow.filterIncorrect,
+    _HistoryFilter.scoring => l10nNow.filterFirstAttempts,
+    _HistoryFilter.practice => l10nNow.filterPractice,
+    _HistoryFilter.feedback => l10nNow.filterWithFeedback,
   };
 
   IconData get icon => switch (this) {
@@ -60,17 +63,17 @@ class _TrainingHistoryScreenState extends ConsumerState<TrainingHistoryScreen> {
   Widget build(BuildContext context) {
     final userAsync = ref.watch(safetyUserProvider);
     return userAsync.when(
-      loading: () => const Scaffold(
+      loading: () => Scaffold(
         backgroundColor: AppPalette.canvas,
-        body: Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
         backgroundColor: AppPalette.canvas,
-        appBar: modernAppBar(context, title: 'Safety History'),
-        body: const EmptyState(
+        appBar: modernAppBar(context, title: context.l10n.safetyHistory),
+        body: EmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Couldn\'t load your account',
-          message: 'Try again later.',
+          title: context.l10n.couldNotLoadAccount,
+          message: friendlyError(e),
         ),
       ),
       data: (user) {
@@ -78,17 +81,18 @@ class _TrainingHistoryScreenState extends ConsumerState<TrainingHistoryScreen> {
         // Non-admins only ever see their own history.
         final workerUid = widget.workerUid ?? (user.isAdmin ? null : user.uid);
         final own = workerUid == user.uid;
+        final l = context.l10n;
         final title = own
-            ? 'My Safety History'
-            : (workerUid == null ? 'All Attempts' : '${widget.workerName ?? 'Worker'}\'s History');
+            ? l.mySafetyHistory
+            : (workerUid == null ? l.allAttempts : l.workersHistory(widget.workerName ?? l.worker));
         return Scaffold(
           backgroundColor: AppPalette.canvas,
           appBar: modernAppBar(
             context,
             title: title,
             subtitle: workerUid == null
-                ? 'Every worker\'s answers, reasoning and feedback'
-                : 'Answers, reasoning and trainer feedback',
+                ? l.everyWorkersAnswers
+                : l.answersReasoningFeedback,
           ),
           body: _buildBody(user, workerUid),
         );
@@ -115,10 +119,10 @@ class _TrainingHistoryScreenState extends ConsumerState<TrainingHistoryScreen> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) {
         widget.logger.e('❌ TrainingHistoryScreen: stream error: $e');
-        return const EmptyState(
+        return EmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Couldn\'t load history',
-          message: 'Check your connection and try again.',
+          title: context.l10n.couldNotLoadHistory,
+          message: friendlyError(e),
         );
       },
       data: (sessions) {
@@ -152,7 +156,7 @@ class _TrainingHistoryScreenState extends ConsumerState<TrainingHistoryScreen> {
                     const SizedBox(height: 18),
                   ],
                   SearchField(
-                    hint: workerUid == null ? 'Search by scenario or worker' : 'Search by scenario',
+                    hint: workerUid == null ? context.l10n.searchScenarioOrWorker : context.l10n.searchByScenario,
                     onChanged: (v) => setState(() => _query = v),
                   ),
                   const SizedBox(height: 12),
@@ -165,16 +169,16 @@ class _TrainingHistoryScreenState extends ConsumerState<TrainingHistoryScreen> {
                   ),
                   const SizedBox(height: 16),
                   if (sessions.isEmpty)
-                    const EmptyState(
+                    EmptyState(
                       icon: Icons.history_rounded,
-                      title: 'No attempts yet',
-                      message: 'Completed scenarios will appear here with the answer and reasoning given.',
+                      title: context.l10n.noAttemptsYet,
+                      message: context.l10n.noAttemptsHint,
                     )
                   else if (visible.isEmpty)
-                    const EmptyState(
+                    EmptyState(
                       icon: Icons.filter_alt_off_rounded,
-                      title: 'Nothing matches',
-                      message: 'Try another search or filter.',
+                      title: context.l10n.nothingMatches,
+                      message: context.l10n.tryDifferentSearch,
                     )
                   else
                     for (var i = 0; i < visible.length; i++)
@@ -200,8 +204,8 @@ class _TrainingHistoryScreenState extends ConsumerState<TrainingHistoryScreen> {
                         onPressed: () => setState(() => _limit += _pageSize),
                         icon: const Icon(Icons.expand_more_rounded),
                         label: Text(
-                          'Load older attempts',
-                          style: appText(13, weight: FontWeight.w600, color: AppPalette.brightBlue),
+                          context.l10n.loadOlderAttempts,
+                          style: appText(13, weight: FontWeight.w600, color: AppColors.info),
                         ),
                       ),
                     ),
@@ -265,10 +269,10 @@ class _TrainingHistoryScreenState extends ConsumerState<TrainingHistoryScreen> {
               createdAt: DateTime.now(),
             ),
           );
-      if (mounted) showAppSnack(context, 'Feedback sent to ${s.workerName}');
+      if (mounted) showSuccessSnack(context, context.l10n.feedbackSentTo(s.workerName));
     } catch (e) {
       widget.logger.e('❌ TrainingHistoryScreen: Failed to add feedback: $e');
-      if (mounted) showAppSnack(context, 'Failed to send feedback', error: true);
+      if (mounted) showErrorSnack(context, e, action: context.l10n.couldNotSendFeedback);
     }
   }
 }
@@ -299,11 +303,11 @@ class _WorkerSummary extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      name.isEmpty ? 'Worker' : name,
+                      name.isEmpty ? context.l10n.worker : name,
                       style: appText(17, weight: FontWeight.w700, color: Colors.white),
                     ),
                     Text(
-                      '${summary.totalPoints} points',
+                      context.l10n.pointsCount(summary.totalPoints),
                       style: appText(13, color: Colors.white.withValues(alpha: 0.85)),
                     ),
                   ],
@@ -318,17 +322,17 @@ class _WorkerSummary extends ConsumerWidget {
             children: [
               StatTile(
                 onDark: true,
-                label: 'Passed first try',
+                label: context.l10n.passedFirstTry,
                 value: '${summary.firstTryCorrect}/${summary.scenariosAttempted}',
                 icon: Icons.emoji_events_rounded,
               ),
               StatTile(
                 onDark: true,
-                label: 'Completed',
+                label: context.l10n.completed,
                 value: completed == null ? '—' : '$completed/${active!.length}',
                 icon: Icons.task_alt_rounded,
               ),
-              StatTile(onDark: true, label: 'Attempts', value: '${summary.totalAttempts}', icon: Icons.replay_rounded),
+              StatTile(onDark: true, label: context.l10n.attempts, value: '${summary.totalAttempts}', icon: Icons.replay_rounded),
             ],
           ),
         ],
@@ -397,7 +401,7 @@ class _AttemptCard extends StatelessWidget {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                '${s.workerName} · ${s.workerRole}',
+                                '${s.workerName} · ${roleLabel(s.workerRole)}',
                                 overflow: TextOverflow.ellipsis,
                                 style: appText(12.5, weight: FontWeight.w500, color: AppPalette.inkMuted),
                               ),
@@ -411,11 +415,11 @@ class _AttemptCard extends StatelessWidget {
               const SizedBox(width: 8),
               isFirstAttempt
                   ? StatusPill(
-                      label: '+${s.pointsEarned} pts',
+                      label: '+${context.l10n.pointsShort(s.pointsEarned)}',
                       color: s.pointsEarned > 0 ? AppPalette.green : AppPalette.inkMuted,
                       icon: Icons.star_rounded,
                     )
-                  : const StatusPill(label: 'Practice', color: AppPalette.brightBlue, icon: Icons.replay_rounded),
+                  : StatusPill(label: context.l10n.filterPractice, color: AppPalette.brightBlue, icon: Icons.replay_rounded),
             ],
           ),
           const SizedBox(height: 10),
@@ -423,16 +427,19 @@ class _AttemptCard extends StatelessWidget {
             spacing: 14,
             runSpacing: 4,
             children: [
-              _meta(Icons.schedule_rounded, DateFormat('MMM d, yyyy · HH:mm').format(s.completedAt)),
-              if (s.timeTakenSeconds > 0) _meta(Icons.timer_outlined, 'took ${_duration(s.timeTakenSeconds)}'),
+              _meta(Icons.schedule_rounded, '${DateFormat.yMMMd().format(s.completedAt)} · ${DateFormat.Hm().format(s.completedAt)}'),
+              if (s.timeTakenSeconds > 0) _meta(Icons.timer_outlined, context.l10n.tookDuration(_duration(s.timeTakenSeconds))),
               if ((s.projectName ?? '').isNotEmpty) _meta(Icons.apartment_rounded, s.projectName!),
             ],
           ),
           if (answered != null) ...[
             const SizedBox(height: 12),
-            _answerRow('Answered', answered, s.isCorrect ? AppPalette.green : AppPalette.coral),
+            _answerRow(context.l10n.answered, answered, s.isCorrect ? AppPalette.green : AppPalette.coral),
           ],
-          if (correct != null) ...[const SizedBox(height: 6), _answerRow('Correct', correct, AppPalette.green)],
+          if (correct != null) ...[
+            const SizedBox(height: 6),
+            _answerRow(context.l10n.correctAnswer, correct, AppPalette.green),
+          ],
           if (s.reasoningAnswer.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
@@ -443,7 +450,7 @@ class _AttemptCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'REASONING',
+                    context.l10n.reasoningLabel,
                     style: appText(10.5, weight: FontWeight.w700, color: AppPalette.inkFaint),
                   ),
                   const SizedBox(height: 4),
@@ -462,7 +469,7 @@ class _AttemptCard extends StatelessWidget {
                   onPressed: onAddFeedback,
                   icon: const Icon(Icons.rate_review_rounded, size: 18),
                   label: Text(
-                    'Give feedback',
+                    context.l10n.giveFeedback,
                     style: appText(13, weight: FontWeight.w600, color: AppPalette.violet),
                   ),
                   style: TextButton.styleFrom(foregroundColor: AppPalette.violet),
@@ -487,7 +494,7 @@ class _AttemptCard extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       SizedBox(
-        width: 74,
+        width: 96,
         child: Text(
           label,
           style: appText(12, weight: FontWeight.w600, color: AppPalette.inkMuted),
@@ -511,6 +518,7 @@ class _FeedbackBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final f = feedback;
+    final by = f.byName.isEmpty ? context.l10n.trainer : f.byName;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 10),
@@ -523,14 +531,14 @@ class _FeedbackBubble extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          WorkerAvatar(name: f.byName.isEmpty ? 'Trainer' : f.byName, size: 30),
+          WorkerAvatar(name: by, size: 30),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${f.byName.isEmpty ? 'Trainer' : f.byName} · ${DateFormat('MMM d, HH:mm').format(f.createdAt)}',
+                  '$by · ${DateFormat('d MMM, HH:mm').format(f.createdAt)}',
                   style: appText(11.5, weight: FontWeight.w700, color: AppPalette.violet),
                 ),
                 const SizedBox(height: 2),
@@ -573,7 +581,7 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Feedback for ${widget.session.workerName}', style: appText(17, weight: FontWeight.w700)),
+          Text(context.l10n.feedbackFor(widget.session.workerName), style: appText(17, weight: FontWeight.w700)),
           Text(widget.session.scenarioTitle, style: appText(12.5, color: AppPalette.inkMuted)),
           const SizedBox(height: 14),
           TextField(
@@ -584,7 +592,7 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
             maxLength: SafetyTrainingFeedbackModel.maxLength,
             style: appText(14, height: 1.45),
             decoration: InputDecoration(
-              hintText: 'What did they get right, and what should they reconsider?',
+              hintText: context.l10n.feedbackHint,
               hintStyle: appText(13, color: AppPalette.inkFaint),
               filled: true,
               fillColor: AppPalette.canvas,
@@ -594,7 +602,7 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
           ),
           const SizedBox(height: 8),
           PrimaryButton(
-            label: 'Send feedback',
+            label: context.l10n.sendFeedback,
             icon: Icons.send_rounded,
             color: AppPalette.violet,
             expand: true,

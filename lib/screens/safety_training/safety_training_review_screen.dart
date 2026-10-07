@@ -9,6 +9,9 @@ import 'package:almaworks/widgets/modern/modern_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// One roster entry: a worker, their server-maintained stats (null if they
 /// have never completed a scenario) and their current determination.
@@ -49,13 +52,13 @@ enum _RosterFilter { all, attention, notReviewed, neverTrained, cleared, retrain
 
 extension on _RosterFilter {
   String get label => switch (this) {
-    _RosterFilter.all => 'All',
-    _RosterFilter.attention => 'Needs attention',
-    _RosterFilter.notReviewed => 'Not reviewed',
-    _RosterFilter.neverTrained => 'Never trained',
-    _RosterFilter.cleared => 'Cleared',
-    _RosterFilter.retraining => 'Retraining',
-    _RosterFilter.escalated => 'Escalated',
+    _RosterFilter.all => l10nNow.all,
+    _RosterFilter.attention => l10nNow.filterNeedsAttention,
+    _RosterFilter.notReviewed => l10nNow.stNotReviewed,
+    _RosterFilter.neverTrained => l10nNow.filterNeverTrained,
+    _RosterFilter.cleared => l10nNow.filterCleared,
+    _RosterFilter.retraining => l10nNow.retraining,
+    _RosterFilter.escalated => l10nNow.stEscalated,
   };
 
   IconData get icon => switch (this) {
@@ -109,16 +112,16 @@ class _SafetyTrainingReviewScreenState extends ConsumerState<SafetyTrainingRevie
       backgroundColor: AppPalette.canvas,
       appBar: modernAppBar(
         context,
-        title: 'Worker Safety Standing',
-        subtitle: 'Review training results and decide next steps',
+        title: context.l10n.workerSafetyStanding,
+        subtitle: context.l10n.workerSafetyStandingSubtitle,
       ),
       body: user == null
           ? const Center(child: CircularProgressIndicator())
           : !user.isReviewer
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.lock_outline_rounded,
-              title: 'Reviewers only',
-              message: 'Only MainAdmin and SystemAdmin accounts can review worker standing.',
+              title: context.l10n.reviewersOnly,
+              message: context.l10n.reviewersOnlyHint,
             )
           : _buildRoster(user),
     );
@@ -138,10 +141,10 @@ class _SafetyTrainingReviewScreenState extends ConsumerState<SafetyTrainingRevie
     }
     if (traineesAsync.hasError || statsAsync.hasError) {
       widget.logger.e('❌ SafetyTrainingReviewScreen: roster error: ${traineesAsync.error ?? statsAsync.error}');
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.cloud_off_rounded,
-        title: 'Couldn\'t load workers',
-        message: 'Check your connection and try again.',
+        title: context.l10n.couldNotLoadWorkers,
+        message: friendlyError(traineesAsync.error ?? statsAsync.error!),
       );
     }
 
@@ -165,23 +168,23 @@ class _SafetyTrainingReviewScreenState extends ConsumerState<SafetyTrainingRevie
             children: [
               if (build.isLoading)
                 _notice(
-                  'Building training statistics from past attempts…',
+                  context.l10n.buildingStats,
                   AppPalette.brightBlue,
                   Icons.hourglass_top_rounded,
                 ),
               if (build.hasError)
                 _notice(
-                  'Couldn\'t build training statistics from past attempts — some workers may show no results.',
+                  context.l10n.couldNotBuildStats,
                   AppPalette.orange,
                   Icons.warning_amber_rounded,
                   action: TextButton(
                     onPressed: () => ref.invalidate(ensureStatsBuiltProvider),
-                    child: const Text('Retry'),
+                    child: Text(context.l10n.retry),
                   ),
                 ),
               if (reviewsAsync.hasError)
                 _notice(
-                  'Couldn\'t load past determinations — statuses below may be missing.',
+                  context.l10n.couldNotLoadDeterminations,
                   AppPalette.orange,
                   Icons.warning_amber_rounded,
                 ),
@@ -190,22 +193,22 @@ class _SafetyTrainingReviewScreenState extends ConsumerState<SafetyTrainingRevie
                 child: ResponsiveTiles(
                   minTileWidth: 150,
                   children: [
-                    StatTile(onDark: true, label: 'Workers', value: '${roster.length}', icon: Icons.groups_rounded),
+                    StatTile(onDark: true, label: context.l10n.workers, value: '${roster.length}', icon: Icons.groups_rounded),
                     StatTile(
                       onDark: true,
-                      label: 'Need attention',
+                      label: context.l10n.needAttention,
                       value: '${count(_RosterFilter.attention)}',
                       icon: Icons.priority_high_rounded,
                     ),
                     StatTile(
                       onDark: true,
-                      label: 'Never trained',
+                      label: context.l10n.filterNeverTrained,
                       value: '${count(_RosterFilter.neverTrained)}',
                       icon: Icons.person_off_rounded,
                     ),
                     StatTile(
                       onDark: true,
-                      label: 'Cleared',
+                      label: context.l10n.filterCleared,
                       value: '${count(_RosterFilter.cleared)}',
                       icon: Icons.verified_rounded,
                     ),
@@ -213,7 +216,7 @@ class _SafetyTrainingReviewScreenState extends ConsumerState<SafetyTrainingRevie
                 ),
               ),
               const SizedBox(height: 20),
-              SearchField(hint: 'Search workers', onChanged: (v) => setState(() => _query = v)),
+              SearchField(hint: context.l10n.searchWorkers, onChanged: (v) => setState(() => _query = v)),
               const SizedBox(height: 12),
               FilterChipBar<_RosterFilter>(
                 options: _RosterFilter.values,
@@ -225,16 +228,16 @@ class _SafetyTrainingReviewScreenState extends ConsumerState<SafetyTrainingRevie
               ),
               const SizedBox(height: 18),
               if (roster.isEmpty)
-                const EmptyState(
+                EmptyState(
                   icon: Icons.groups_rounded,
-                  title: 'No workers yet',
-                  message: 'Technicians and anyone who has trained will appear here.',
+                  title: context.l10n.noWorkersYet,
+                  message: context.l10n.noWorkersHint,
                 )
               else if (visible.isEmpty)
-                const EmptyState(
+                EmptyState(
                   icon: Icons.filter_alt_off_rounded,
-                  title: 'No workers match',
-                  message: 'Try another search or filter.',
+                  title: context.l10n.noWorkersMatch,
+                  message: context.l10n.tryDifferentSearch,
                 )
               else
                 ResponsiveCardGrid(
@@ -370,10 +373,10 @@ class _SafetyTrainingReviewScreenState extends ConsumerState<SafetyTrainingRevie
               reviewedAt: reviewedAt,
             ),
           );
-      if (mounted) showAppSnack(context, 'Determination recorded — ${standing.name} has been notified');
+      if (mounted) showSuccessSnack(context, context.l10n.determinationRecorded(standing.name));
     } catch (e) {
       widget.logger.e('❌ SafetyTrainingReviewScreen: Error recording review: $e');
-      if (mounted) showAppSnack(context, 'Failed to record determination', error: true);
+      if (mounted) showErrorSnack(context, e, action: context.l10n.couldNotRecordDetermination);
     }
   }
 }
@@ -403,7 +406,7 @@ class _WorkerCard extends StatelessWidget {
     // A worker with no attempts and no review shows as never trained, not
     // as "Not Reviewed" — there's nothing for a reviewer to assess yet.
     final visual = s.review == null && !s.hasTrained
-        ? const StandingVisual('Never Trained', AppPalette.orange, Icons.person_off_rounded)
+        ? StandingVisual(context.l10n.filterNeverTrained, AppPalette.orange, Icons.person_off_rounded)
         : StandingVisual.of(s.review, s.retraining, now);
     final total = activeIds?.length;
     final completed = activeIds == null ? 0 : summary.completedOf(activeIds!);
@@ -423,8 +426,8 @@ class _WorkerCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.name.isEmpty ? 'Unknown worker' : s.name, style: appText(15, weight: FontWeight.w700)),
-                    Text(s.role, style: appText(12, color: AppPalette.inkMuted)),
+                    Text(s.name.isEmpty ? context.l10n.unknownWorker : s.name, style: appText(15, weight: FontWeight.w700)),
+                    Text(roleLabel(s.role), style: appText(12, color: AppPalette.inkMuted)),
                   ],
                 ),
               ),
@@ -449,13 +452,13 @@ class _WorkerCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${summary.totalPoints} pts · ${summary.firstTryCorrect}/${summary.scenariosAttempted} first try',
+                        context.l10n.workerScoreLine(summary.totalPoints, summary.firstTryCorrect, summary.scenariosAttempted),
                         style: appText(13, weight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
                       if (total != null && total > 0)
                         LabeledProgress(
-                          label: 'Scenarios completed',
+                          label: context.l10n.scenariosCompleted,
                           value: completed / total,
                           trailing: '$completed/$total',
                         ),
@@ -478,7 +481,7 @@ class _WorkerCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Has never completed a scenario',
+                      context.l10n.neverCompletedScenario,
                       style: appText(12.5, weight: FontWeight.w500, color: AppPalette.orange),
                     ),
                   ),
@@ -492,7 +495,7 @@ class _WorkerCard extends StatelessWidget {
           if (s.newAttempts > 0) ...[
             const SizedBox(height: 8),
             StatusPill(
-              label: '${s.newAttempts} new attempt${s.newAttempts == 1 ? '' : 's'} since last review',
+              label: context.l10n.newAttemptsSinceReview(s.newAttempts),
               color: AppPalette.brightBlue,
               icon: Icons.fiber_new_rounded,
             ),
@@ -500,11 +503,11 @@ class _WorkerCard extends StatelessWidget {
           if (s.review != null) ...[
             const SizedBox(height: 8),
             Text(
-              'Reviewed by ${s.review!.reviewedByName} on ${safetyDate.format(s.review!.reviewedAt)}',
+              context.l10n.reviewedByOn(s.review!.reviewedByName, safetyDate.format(s.review!.reviewedAt)),
               style: appText(11.5, color: AppPalette.inkFaint),
             ),
           ],
-          const Divider(height: 22, color: AppPalette.border),
+          Divider(height: 22, color: AppPalette.border),
           Row(
             children: [
               if (s.hasTrained)
@@ -512,25 +515,25 @@ class _WorkerCard extends StatelessWidget {
                   onPressed: onAttempts,
                   icon: const Icon(Icons.history_rounded, size: 18),
                   label: Text(
-                    'Attempts',
-                    style: appText(13, weight: FontWeight.w600, color: AppPalette.brightBlue),
+                    context.l10n.attempts,
+                    style: appText(13, weight: FontWeight.w600, color: AppColors.info),
                   ),
                 ),
               const Spacer(),
               // A reviewer can't determine their own standing (also
               // enforced by firestore.rules).
               if (isSelf)
-                Text('Reviewed by another reviewer', style: appText(11.5, color: AppPalette.inkFaint))
+                Text(context.l10n.reviewedByAnother, style: appText(11.5, color: AppPalette.inkFaint))
               else
                 FilledButton.icon(
                   onPressed: onReview,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppPalette.deepBlue,
+                    backgroundColor: AppColors.brand,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.fact_check_rounded, size: 18),
                   label: Text(
-                    'Review',
+                    context.l10n.review,
                     style: appText(13, weight: FontWeight.w600, color: Colors.white),
                   ),
                 ),
@@ -660,12 +663,16 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Review ${s.name}', style: appText(18, weight: FontWeight.w700)),
+                        Text(context.l10n.reviewName(s.name), style: appText(18, weight: FontWeight.w700)),
                         Text(
                           s.hasTrained
-                              ? '${summary.firstTryCorrect}/${summary.scenariosAttempted} correct first try · '
-                                    '${(summary.accuracy * 100).round()}% · ${summary.totalPoints} pts'
-                              : 'Has not completed any scenario yet',
+                              ? context.l10n.reviewSummaryLine(
+                                  summary.firstTryCorrect,
+                                  summary.scenariosAttempted,
+                                  (summary.accuracy * 100).round(),
+                                  summary.totalPoints,
+                                )
+                              : context.l10n.noScenarioCompletedYet,
                           style: appText(12.5, color: AppPalette.inkMuted),
                         ),
                       ],
@@ -675,8 +682,8 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
               ),
               const SizedBox(height: 20),
               Text(
-                'NEXT STEP',
-                style: appText(11, weight: FontWeight.w700, color: AppPalette.brightBlue),
+                context.l10n.nextStep,
+                style: appText(11, weight: FontWeight.w700, color: AppColors.info),
               ),
               const SizedBox(height: 10),
               ResponsiveTiles(
@@ -687,34 +694,35 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
                     SafetyTrainingReviewModel.statusCleared,
                     Icons.verified_rounded,
                     AppPalette.green,
-                    'Fit to work for 90 days',
+                    context.l10n.fitToWork90,
                   ),
                   _statusOption(
                     SafetyTrainingReviewModel.statusNeedsRetraining,
                     Icons.replay_circle_filled_rounded,
                     AppPalette.amber,
-                    'Assign scenarios to redo',
+                    context.l10n.assignScenariosToRedo,
                   ),
                   _statusOption(
                     SafetyTrainingReviewModel.statusEscalated,
                     Icons.report_rounded,
                     AppPalette.coral,
-                    'Hand to a senior admin',
+                    context.l10n.handToSeniorAdmin,
                   ),
                 ],
               ),
               if (_status == SafetyTrainingReviewModel.statusCleared) ...[
                 const SizedBox(height: 12),
                 Text(
-                  'Clearance will be valid until '
-                  '${safetyDate.format(DateTime.now().add(SafetyTrainingReviewModel.clearanceValidity))}.',
+                  context.l10n.clearanceValidUntil(
+                    safetyDate.format(DateTime.now().add(SafetyTrainingReviewModel.clearanceValidity)),
+                  ),
                   style: appText(12.5, color: AppPalette.inkMuted),
                 ),
                 if (!s.hasTrained)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      'This worker hasn\'t completed any scenario — clearing them isn\'t backed by any training results.',
+                      context.l10n.clearingWithoutTraining,
                       style: appText(12.5, color: AppPalette.orange),
                     ),
                   ),
@@ -729,7 +737,7 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
                 maxLength: 2000,
                 style: appText(13.5),
                 decoration: InputDecoration(
-                  labelText: 'Notes (optional — shown to the worker)',
+                  labelText: context.l10n.notesOptionalShown,
                   labelStyle: appText(13, color: AppPalette.inkMuted),
                   filled: true,
                   fillColor: AppPalette.canvas,
@@ -738,7 +746,7 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
               ),
               const SizedBox(height: 6),
               PrimaryButton(
-                label: _status == null ? 'Choose a next step' : 'Save determination',
+                label: _status == null ? context.l10n.chooseNextStep : context.l10n.saveDetermination,
                 icon: Icons.check_rounded,
                 expand: true,
                 onPressed: _canSave ? _save : null,
@@ -794,14 +802,14 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
       Row(
         children: [
           Expanded(
-            child: Text('Scenarios to retrain on', style: appText(13.5, weight: FontWeight.w700)),
+            child: Text(context.l10n.scenariosToRetrain, style: appText(13.5, weight: FontWeight.w700)),
           ),
           OutlinedButton.icon(
             onPressed: _pickDueDate,
             icon: const Icon(Icons.event_rounded, size: 18),
             label: Text(
-              'Due ${safetyDate.format(_dueDate)}',
-              style: appText(12.5, weight: FontWeight.w600, color: AppPalette.deepBlue),
+              context.l10n.dueDate(safetyDate.format(_dueDate)),
+              style: appText(12.5, weight: FontWeight.w600, color: AppColors.brandInk),
             ),
             style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
           ),
@@ -809,20 +817,20 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
       ),
       const SizedBox(height: 8),
       if (widget.activeScenarios.isEmpty)
-        Text('There are no active scenarios to assign.', style: appText(12.5, color: AppPalette.orange)),
+        Text(context.l10n.noActiveScenarios, style: appText(12.5, color: AppPalette.orange)),
       for (final scenario in widget.activeScenarios)
         CheckboxListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
-          activeColor: AppPalette.deepBlue,
+          activeColor: AppColors.brand,
           value: _assigned.contains(scenario.id),
           onChanged: (v) => setState(() => v == true ? _assigned.add(scenario.id) : _assigned.remove(scenario.id)),
           title: Text(scenario.title, style: appText(13.5)),
           secondary: switch (results[scenario.id]) {
-            null => const StatusPill(label: 'Never attempted', color: AppPalette.inkMuted),
-            (correct: true, points: _) => const StatusPill(label: 'Passed', color: AppPalette.green),
-            _ => const StatusPill(label: 'Missed', color: AppPalette.coral),
+            null => StatusPill(label: context.l10n.neverAttempted, color: AppPalette.inkMuted),
+            (correct: true, points: _) => StatusPill(label: context.l10n.passed, color: AppPalette.green),
+            _ => StatusPill(label: context.l10n.missed, color: AppPalette.coral),
           },
         ),
     ];
@@ -838,14 +846,14 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
     return [
       const SizedBox(height: 16),
       if (async.hasError)
-        Text('Couldn\'t load reviewers', style: appText(12.5, color: AppPalette.coral))
+        Text(context.l10n.couldNotLoadReviewers, style: appText(12.5, color: AppPalette.coral))
       else if (async.hasValue && candidates.isEmpty)
-        Text('There\'s no other MainAdmin/SystemAdmin to escalate to.', style: appText(12.5, color: AppPalette.orange))
+        Text(context.l10n.noOtherReviewer, style: appText(12.5, color: AppPalette.orange))
       else
         DropdownButtonFormField<String>(
           initialValue: _escalateTo?.uid,
           decoration: InputDecoration(
-            labelText: 'Escalate to',
+            labelText: context.l10n.escalateTo,
             labelStyle: appText(13, color: AppPalette.inkMuted),
             filled: true,
             fillColor: AppPalette.canvas,
@@ -855,7 +863,7 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
             for (final r in candidates)
               DropdownMenuItem(
                 value: r.uid,
-                child: Text('${r.name} (${r.role})', style: appText(13.5)),
+                child: Text('${r.name} (${roleLabel(r.role)})', style: appText(13.5)),
               ),
           ],
           onChanged: (uid) => setState(() => _escalateTo = candidates.where((r) => r.uid == uid).firstOrNull),

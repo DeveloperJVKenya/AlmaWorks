@@ -1,0 +1,2670 @@
+{
+  "@@locale": "en",
+  "cancel": "Cancel",
+  "save": "Save",
+  "saveChanges": "Save changes",
+  "delete": "Delete",
+  "edit": "Edit",
+  "close": "Close",
+  "ok": "OK",
+  "retry": "Try again",
+  "confirm": "Confirm",
+  "yes": "Yes",
+  "no": "No",
+  "back": "Back",
+  "next": "Next",
+  "done": "Done",
+  "add": "Add",
+  "remove": "Remove",
+  "submit": "Submit",
+  "search": "Search",
+  "refresh": "Refresh",
+  "loading": "Loading…",
+  "view": "View",
+  "open": "Open",
+  "download": "Download",
+  "upload": "Upload",
+  "share": "Share",
+  "approve": "Approve",
+  "reject": "Reject",
+  "select": "Select",
+  "clear": "Clear",
+  "apply": "Apply",
+  "continueLabel": "Continue",
+  "logout": "Log out",
+  "settings": "Settings",
+  "account": "Account",
+  "notifications": "Notifications",
+  "required": "Required",
+  "optional": "Optional",
+  "all": "All",
+  "none": "None",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "unknown": "Unknown",
+  "notAvailable": "N/A",
+  "appTagline": "Site Management System",
+  "copyrightFooter": "© 2026 JV Alma C.I.S Site Management System",
+  "errGeneric": "Something went wrong. Please try again — if it keeps happening, contact your administrator.",
+  "errTryAgain": "Please try again.",
+  "errNoPermission": "You don't have permission to do this. If you think that's a mistake, ask an administrator to check your access.",
+  "errNetwork": "No internet connection. Check your connection and try again.",
+  "errTimeout": "This is taking too long. Please try again.",
+  "errNotFound": "We couldn't find this. It may have been moved or deleted.",
+  "errAlreadyExists": "This already exists.",
+  "errSignInAgain": "Your session has ended. Please sign in again.",
+  "errBusy": "The service is busy right now. Please try again in a moment.",
+  "errStorageFull": "Storage is full. Please contact your administrator.",
+  "errCancelled": "The action was cancelled.",
+  "errInvalidData": "Some information is missing or not valid. Please check and try again.",
+  "errWrongCredentials": "The email or password is incorrect.",
+  "errInvalidEmail": "Please enter a valid email address.",
+  "errEmailInUse": "An account with this email already exists.",
+  "errWeakPassword": "Please choose a stronger password (at least 6 characters).",
+  "errTooManyAttempts": "Too many attempts. Please wait a few minutes and try again.",
+  "errAccountDisabled": "This account has been disabled. Please contact your administrator.",
+  "settingsSubtitle": "Appearance, accessibility and language",
+  "appearance": "Appearance",
+  "appearanceHint": "Choose how AlmaWorks looks on this device.",
+  "theme": "Theme",
+  "themeSystem": "System",
+  "themeSystemHint": "Matches your device",
+  "themeLight": "Light",
+  "themeLightHint": "Bright and clear",
+  "themeDark": "Dark",
+  "themeDarkHint": "Easier on the eyes at night",
+  "font": "Font",
+  "fontHint": "Pick the typeface that's easiest for you to read.",
+  "fontPoppinsDesc": "Default · modern and rounded",
+  "fontInterDesc": "Crisp and neutral",
+  "fontRobotoDesc": "Familiar and compact",
+  "fontOpenSansDesc": "Open and friendly",
+  "fontNunitoDesc": "Soft and rounded",
+  "fontAtkinsonDesc": "Made for low-vision readers",
+  "fontMerriweatherDesc": "Classic serif for long reading",
+  "accessibility": "Accessibility",
+  "accessibilityHint": "Make text and screens easier to read and use.",
+  "textSize": "Text size",
+  "textSizeHint": "Applies to every screen, on top of your device setting.",
+  "textSizeSmall": "Small",
+  "textSizeDefault": "Default",
+  "textSizeLarge": "Large",
+  "textSizeExtraLarge": "Extra large",
+  "boldText": "Bold text",
+  "boldTextHint": "Makes all text thicker and easier to see.",
+  "highContrast": "High contrast",
+  "highContrastHint": "Stronger colors for text and borders.",
+  "reduceMotion": "Reduce motion",
+  "reduceMotionHint": "Turns off page transitions and moving effects.",
+  "resetDisplaySettings": "Reset to defaults",
+  "resetDisplaySettingsDone": "Appearance and accessibility settings are back to their defaults.",
+  "language": "Language",
+  "languageHint": "Used on every screen, message and notification.",
+  "languageChanged": "Language changed to {language}",
+  "@languageChanged": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "languageNotificationNote": "Notifications sent to you will also arrive in this language.",
+  "deviceNotifications": "Alerts on this device",
+  "deviceNotificationsHint": "Pop-up alerts for tasks, requests and messages. Your notification inbox keeps everything either way.",
+  "preview": "Preview",
+  "previewTitle": "Site inspection — Block A",
+  "previewBody": "Foundation works are 80% complete. The next inspection is on Friday.",
+  "previewStatus": "On track",
+  "previewAction": "View details",
+  "about": "About",
+  "aboutApp": "JV Alma C.I.S Site Management System",
+  "aboutAppHint": "Projects, schedules, documents, safety and inventory in one place.",
+  "selected": "Selected",
+  "settingsSavedAutomatically": "Changes are saved automatically on this device.",
+  "channelOverdueTasks": "Overdue tasks",
+  "channelOverdueTasksDesc": "Alerts for tasks that are past their end date",
+  "channelStartingSoon": "Tasks starting soon",
+  "channelStartingSoonDesc": "Alerts for tasks about to start",
+  "channelTaskSummary": "Task summary",
+  "channelTaskSummaryDesc": "Grouped task alerts",
+  "channelRequests": "Requests and approvals",
+  "channelRequestsDesc": "Access requests, inventory, safety training and project updates",
+  "channelMessages": "Messages",
+  "channelMessagesDesc": "New messages and replies",
+  "startupFailedTitle": "AlmaWorks couldn't start",
+  "startupFailedMessage": "Please check your internet connection and open the app again. If this keeps happening, contact your administrator.",
+  "roleMainAdmin": "Main Admin",
+  "roleSystemAdmin": "System Admin",
+  "roleAdmin": "Admin",
+  "roleClient": "Client",
+  "roleTechnician": "Technician",
+  "roleSubContractor": "Subcontractor",
+  "roleManager": "Manager",
+  "roleMember": "Member",
+  "myProjectDashboard": "My Project Dashboard",
+  "projectDashboard": "Project Dashboard",
+  "navSwitchProject": "Switch Project",
+  "navMyProjects": "My Projects",
+  "navOverview": "Overview",
+  "navDocuments": "Documents",
+  "navDrawings": "Drawings",
+  "navSchedule": "Schedule",
+  "navQualitySafety": "Quality & Safety",
+  "navReports": "Reports",
+  "navPhotoGallery": "Photo Gallery",
+  "navPhotos": "Photos",
+  "navFinancials": "Financials",
+  "navAccount": "Account",
+  "myAccount": "My Account",
+  "editProfile": "Edit profile",
+  "refreshProfile": "Refresh profile",
+  "loadingProfile": "Loading your profile…",
+  "couldNotLoadProfile": "Couldn't load your profile",
+  "profileNotFound": "We couldn't find your profile. Please contact your administrator.",
+  "nameCannotBeEmpty": "Please enter your name.",
+  "profileUpdated": "Your profile has been updated.",
+  "couldNotSaveProfile": "Couldn't save your profile.",
+  "fullName": "Full name",
+  "emailAddress": "Email address",
+  "email": "Email",
+  "emailChangeNote": "Changing your email here updates your profile only — not the email you sign in with.",
+  "unknownUser": "Unknown user",
+  "noEmailOnRecord": "No email on record",
+  "openSettings": "Open settings",
+  "textSizePercent": "Text {percent}%",
+  "@textSizePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "on": "On",
+  "off": "Off",
+  "logoutConfirm": "Are you sure you want to log out?",
+  "notificationsHint": "Choose how AlmaWorks alerts you.",
+  "loadingDashboard": "Loading dashboard…",
+  "welcomeToAlmaWorks": "Welcome to AlmaWorks",
+  "getStarted": "Get started",
+  "requestAccessIntro": "To see construction projects and work with your team, you'll need to ask an administrator for access.",
+  "requestAccessStep1": "Tap the button below to send your request",
+  "requestAccessStep2": "An administrator will review it",
+  "requestAccessStep3": "You'll be notified once access is granted",
+  "previousRequestDenied": "Your previous request was not approved",
+  "accessRequestSent": "Your access request has been sent.",
+  "couldNotSendAccessRequest": "Couldn't send your access request.",
+  "sending": "Sending…",
+  "requestAccess": "Request access",
+  "requestPending": "Request pending",
+  "requestPendingMessage": "An administrator is reviewing your access request. You'll get access as soon as it's approved.",
+  "navDashboard": "Dashboard",
+  "navProjects": "Projects",
+  "navClientAccessRequests": "Access Requests",
+  "couldNotLoadScreen": "This screen couldn't be opened",
+  "goToDashboard": "Go to dashboard",
+  "myProjectsOverview": "My Projects Overview",
+  "generalOverview": "General Overview",
+  "totalProjects": "Total Projects",
+  "activeProjects": "Active Projects",
+  "completedProjects": "Completed Projects",
+  "previous": "Previous",
+  "openingSafetyTraining": "Opening Safety Training…",
+  "couldNotOpenSafetyTraining": "Safety Training couldn't be opened right now. Please try again.",
+  "openingProject": "Opening project…",
+  "projectNoLongerExists": "This project no longer exists.",
+  "couldNotOpenProject": "The project couldn't be opened. Please try again.",
+  "openingMessage": "Opening message…",
+  "messageNotFound": "This message was not found or has been deleted.",
+  "projectNotFound": "Project not found.",
+  "couldNotOpenMessage": "The message couldn't be opened. Please try again.",
+  "openingAsset": "Opening item…",
+  "assetNotFound": "This item was not found or has been removed.",
+  "couldNotOpenInventory": "Inventory couldn't be opened right now. Please try again.",
+  "couldNotOpenAsset": "The item couldn't be opened. Please try again.",
+  "openingRequest": "Opening request…",
+  "requestAlreadyHandled": "This request has already been handled.",
+  "couldNotOpenRequest": "The request couldn't be opened. Please try again.",
+  "notificationsUnread": "Notifications ({count} unread)",
+  "@notificationsUnread": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catSafety": "Safety",
+  "catProjects": "Projects",
+  "catInventory": "Inventory",
+  "catMessages": "Messages",
+  "catAccess": "Access",
+  "catOther": "Other",
+  "notificationFallbackTitle": "Notification",
+  "taskUpdate": "Task update",
+  "justNow": "just now",
+  "minutesAgo": "{n}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{n}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{n}d ago",
+  "@daysAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "monthsAgo": "{n}mo ago",
+  "@monthsAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "allCaughtUp": "You're all caught up",
+  "unreadCount": "{count} unread",
+  "@unreadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "markAllRead": "Mark all read",
+  "couldNotLoadNotifications": "Couldn't load notifications",
+  "someNotificationsMissing": "Some notifications couldn't be loaded — the list may be incomplete.",
+  "noUnreadNotifications": "No unread notifications",
+  "nothingHereYet": "Nothing here yet",
+  "notificationsEmptyHint": "Updates about your projects, inventory, safety training and messages will appear here.",
+  "tryAnotherFilter": "Try another filter to see more.",
+  "allMarkedRead": "All notifications marked as read",
+  "couldNotMarkRead": "Couldn't mark the notifications as read.",
+  "unread": "Unread",
+  "safetyUnread": "Safety (unread)",
+  "total": "Total",
+  "markUnread": "Mark unread",
+  "markRead": "Mark read",
+  "more": "More",
+  "viewDetails": "View details",
+  "markAsUnread": "Mark as unread",
+  "markAsRead": "Mark as read",
+  "couldNotUpdateNotification": "Couldn't update the notification.",
+  "notificationRemoved": "Notification removed",
+  "couldNotRemoveNotification": "Couldn't remove the notification.",
+  "noFurtherDetails": "No further details.",
+  "requestNoLongerExists": "Request no longer exists",
+  "thisUser": "This user",
+  "anAdmin": "an admin",
+  "accessApprovedTitle": "✅ Access approved — {name}",
+  "@accessApprovedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accessApprovedBody": "{name} was approved as {role} with access to {count, plural, =1{1 project} other{{count} projects}}.",
+  "@accessApprovedBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "approvedByWhen": "Approved by {name}{when}",
+  "@approvedByWhen": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "accessDeniedTitle": "❌ Access denied — {name}",
+  "@accessDeniedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accessDeniedBody": "{name}'s access request was denied.",
+  "@accessDeniedBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonLabel": "Reason: {reason}",
+  "@reasonLabel": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "deniedByWhen": "Denied by {name}{when}",
+  "@deniedByWhen": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "awaitingDecision": "Awaiting a decision",
+  "newNotification": "🔔 New notification",
+  "viewRequest": "View request",
+  "notifNewAccessRequestTitle": "🔔 New access request",
+  "notifNewAccessRequestBody": "{name} is asking for access to projects",
+  "@notifNewAccessRequestBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notifAccessGrantedTitle": "✅ Access granted",
+  "notifAccessGrantedBody": "Your request has been approved! You now have access to: {projects}",
+  "@notifAccessGrantedBody": {
+    "placeholders": {
+      "projects": {
+        "type": "String"
+      }
+    }
+  },
+  "notifRequestDeniedTitle": "❌ Request denied",
+  "notifRequestDeniedBody": "Your access request was not approved by an administrator.",
+  "notifProjectAccessUpdatedTitle": "🔄 Project access updated",
+  "notifProjectAccessAddedRemoved": "Your project access has changed. Added: {added}. Removed: {removed}.",
+  "@notifProjectAccessAddedRemoved": {
+    "placeholders": {
+      "added": {
+        "type": "String"
+      },
+      "removed": {
+        "type": "String"
+      }
+    }
+  },
+  "notifProjectAccessAdded": "You now have access to: {projects}.",
+  "@notifProjectAccessAdded": {
+    "placeholders": {
+      "projects": {
+        "type": "String"
+      }
+    }
+  },
+  "notifProjectAccessRemoved": "Your access to these projects has been removed: {projects}.",
+  "@notifProjectAccessRemoved": {
+    "placeholders": {
+      "projects": {
+        "type": "String"
+      }
+    }
+  },
+  "taskOverdueTitle": "⚠️ Overdue: {task}",
+  "@taskOverdueTitle": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "taskStartingSoonTitle": "📅 Starting soon: {task}",
+  "@taskStartingSoonTitle": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "taskOverdueBody": "This task is overdue and needs attention.",
+  "taskStartsInDays": "{days, plural, =0{Starts today} =1{Starts in 1 day} other{Starts in {days} days}}",
+  "@taskStartsInDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "markReadAction": "Mark read",
+  "taskAlertsSummaryBoth": "{overdue} overdue, {soon} starting soon",
+  "@taskAlertsSummaryBoth": {
+    "placeholders": {
+      "overdue": {
+        "type": "int"
+      },
+      "soon": {
+        "type": "int"
+      }
+    }
+  },
+  "taskAlertsSummaryOverdue": "{count, plural, =1{1 overdue task} other{{count} overdue tasks}}",
+  "@taskAlertsSummaryOverdue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskAlertsSummarySoon": "{count} starting soon",
+  "@taskAlertsSummarySoon": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskAlertsTitle": "{count, plural, =1{🔔 1 task alert} other{🔔 {count} task alerts}}",
+  "@taskAlertsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "viewAll": "View all",
+  "taskIsOverdue": "Task is overdue",
+  "taskStartsSoon": "Task starts soon",
+  "chooseLanguage": "Choose language",
+  "accountNotFound": "No account was found with this email address. Please check it and try again.",
+  "incorrectPassword": "Incorrect password. Please try again or reset your password.",
+  "tooManyLoginAttempts": "Too many failed sign-in attempts. Please wait a few minutes or reset your password.",
+  "signInFailed": "We couldn't sign you in.",
+  "enterEmailFirst": "Please enter your email address first.",
+  "passwordResetSent": "A password reset email has been sent to {email}. Please check your inbox.",
+  "@passwordResetSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotSendResetEmail": "Couldn't send the password reset email.",
+  "welcomeBackHeadline": "Welcome back to\nAlmaWorks",
+  "welcomeBackSubtext": "Sign in to manage your projects, inventory and team communication — all in one place.",
+  "signIn": "Sign in",
+  "signInSubtitle": "Enter your details to access your account",
+  "emailHint": "you@company.com",
+  "emailRequired": "Please enter your email",
+  "password": "Password",
+  "passwordHint": "Enter your password",
+  "passwordRequired": "Please enter your password",
+  "forgotPassword": "Forgot password?",
+  "login": "Sign in",
+  "noAccountYet": "Don't have an account? ",
+  "signUp": "Sign up",
+  "usernameRequired": "Please choose a username",
+  "usernameTaken": "This username is already taken. Please choose a different one.",
+  "registrationSuccess": "Your account has been created. Welcome to AlmaWorks!",
+  "emailAlreadyRegistered": "This email address is already registered. Please sign in instead.",
+  "couldNotCreateAccount": "We couldn't create your account.",
+  "joinHeadline": "Join the\nAlmaWorks team",
+  "joinSubtext": "Create an account to start tracking projects, assets and communication in one workspace.",
+  "createAccount": "Create account",
+  "createAccountSubtitle": "Fill in your details to get started",
+  "username": "Username",
+  "usernameHint": "Choose a unique username",
+  "usernameTooShort": "Your username needs at least 3 characters",
+  "usernameInvalidChars": "Use only letters, numbers and underscores (_)",
+  "newPasswordHint": "Create a strong password",
+  "passwordTooShort": "Your password needs at least 6 characters",
+  "alreadyHaveAccount": "Already have an account? ",
+  "roleUpdatedTo": "Your role has been updated to {role}",
+  "@roleUpdatedTo": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotCheckRole": "We couldn't check your role.",
+  "welcomeUser": "Welcome, {name}!",
+  "@welcomeUser": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "roleLabel": "Role: {role}",
+  "@roleLabel": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "almaWorksSiteManagement": "AlmaWorks Site Management",
+  "featureProjectManagement": "Project management",
+  "featureProjectManagementDesc": "Organise and track construction projects from start to finish",
+  "featureTeamCollaboration": "Team collaboration",
+  "featureTeamCollaborationDesc": "Coordinate with your team and manage tasks efficiently",
+  "featureRealtimeInsights": "Real-time insights",
+  "featureRealtimeInsightsDesc": "Follow progress with live updates and clear reports",
+  "featureSiteTracking": "Site tracking",
+  "featureSiteTrackingDesc": "Manage several construction sites with location-based tools",
+  "continueToDashboard": "Continue to dashboard",
+  "noAccessToProject": "You don't have access to this project.",
+  "noProjectSelected": "Please choose a project first.",
+  "navSafetyTraining": "Safety Training",
+  "navTaskProgress": "Task Progress",
+  "navInventory": "Inventory",
+  "navCommunication": "Communication",
+  "stNotReviewed": "Not reviewed",
+  "stClearanceExpired": "Clearance expired",
+  "stClearanceLapsedOn": "Lapsed on {date} — a new review is needed.",
+  "@stClearanceLapsedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "stClearedToWork": "Cleared to work",
+  "stValidUntil": "Valid until {date}",
+  "@stValidUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "stAllAssignedDone": "All {count} assigned scenarios done — awaiting a new review.",
+  "@stAllAssignedDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stAssignedProgress": "{done} of {total} assigned scenarios done",
+  "@stAssignedProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "stOverdueSince": " · overdue since {date}",
+  "@stOverdueSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "stDue": " · due {date}",
+  "@stDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "stRetrainingOverdue": "Retraining overdue",
+  "stRetrainingDone": "Retraining done",
+  "stNeedsRetraining": "Needs retraining",
+  "stEscalated": "Escalated",
+  "stSupervisorFollowUp": "A supervisor will follow up.",
+  "stEscalatedTo": "Escalated to {name} for follow-up.",
+  "@stEscalatedTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stStatusUnknown": "Status unknown",
+  "difficultyBasic": "Basic",
+  "difficultyIntermediate": "Intermediate",
+  "difficultyAdvanced": "Advanced",
+  "categoryGeneral": "General",
+  "filterNotStarted": "Not started",
+  "filterPassed": "Passed",
+  "filterMissed": "Missed",
+  "filterAssignedToMe": "Assigned to me",
+  "couldNotLoadAccount": "Couldn't load your account",
+  "safetyTrainingUnavailable": "Safety Training isn't available yet",
+  "roleNotSetUp": "Your account's access role hasn't been set up yet. Please contact an administrator.",
+  "safetyScenariosCount": "Safety scenarios ({count})",
+  "@safetyScenariosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "safetyScenarios": "Safety scenarios",
+  "closeSearch": "Close search",
+  "searchScenarios": "Search scenarios",
+  "searchScenariosHint": "Search by title, category or scene",
+  "couldNotLoadScenarios": "Couldn't load the scenarios",
+  "pullToRetry": "Pull down to try again.",
+  "noScenariosYet": "No scenarios yet",
+  "noScenariosMatch": "No scenarios match",
+  "noScenariosAdminHint": "Tap \"New scenario\" in the toolbar to create the first one.",
+  "noScenariosWorkerHint": "Safety scenarios will appear here once an admin publishes them.",
+  "tryDifferentSearch": "Try a different search or filter.",
+  "clearedUntil": "Cleared · until {date}",
+  "@clearedUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "myStanding": "My standing",
+  "myAttempts": "My attempts",
+  "myHistory": "My history",
+  "reviewStanding": "Review standing",
+  "allAttempts": "All attempts",
+  "manage": "Manage",
+  "newScenario": "New scenario",
+  "firstAttemptCountsHint": "Only your first attempt at each scenario counts toward your score — replays are practice.",
+  "points": "Points",
+  "firstTryAccuracy": "First-try accuracy",
+  "completed": "Completed",
+  "mySafetyStanding": "My safety standing",
+  "notAssessedYet": "A reviewer hasn't assessed your training yet. Keep working through the scenarios — your first attempts are what they'll look at.",
+  "clearanceValidity": "Clearance validity",
+  "expired": "Expired",
+  "daysLeft": "{count, plural, =1{1 day left} other{{count} days left}}",
+  "@daysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "retrainingProgress": "Retraining progress",
+  "assignedListedFirst": "Assigned scenarios are listed first on the Safety Training screen.",
+  "aReviewer": "a reviewer",
+  "reviewedByOn": "Reviewed by {name} on {date}",
+  "@reviewedByOn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "incompleteFixInManage": "Incomplete — fix in Manage",
+  "retrainingDue": "Retraining · due {date}",
+  "@retrainingDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "retraining": "Retraining",
+  "passedPoints": "Passed · +{points} pts",
+  "@passedPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "missedPractise": "Missed · practise again",
+  "pointsShort": "{points} pts",
+  "@pointsShort": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "start": "Start",
+  "practice": "Practice",
+  "scenarioNoLongerExists": "This scenario no longer exists.",
+  "scenarioUnavailableTellAdmin": "This scenario can't be answered right now. Please let an admin know.",
+  "roleCannotTakeTraining": "Your role can't take safety training.",
+  "answerNotAccepted": "Your answer wasn't accepted. Please check it and try again.",
+  "answerSubmitFailed": "Your answer couldn't be submitted. Check your connection and tap Retry.",
+  "answerNotConfirmed": "We couldn't confirm your answer was saved. Check your connection and tap Retry — it won't be counted twice.",
+  "scenarioSubtitle": "{category} · {difficulty} · {points} pts",
+  "@scenarioSubtitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "difficulty": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "scenarioIncomplete": "This scenario is incomplete and can't be answered yet. Please let an admin know.",
+  "questionLabel": "QUESTION",
+  "yourAnswer": "Your answer",
+  "change": "Change",
+  "explainYourThinking": "EXPLAIN YOUR THINKING",
+  "explainInOwnWords": "In your own words — this helps your trainer see how well you understand the risk.",
+  "moreCharactersNeeded": "{count, plural, =1{1 more character needed} other{{count} more characters needed}}",
+  "@moreCharactersNeeded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "explainHint": "Explain the cause and how to prevent it…",
+  "submittingAnswer": "Submitting your answer…",
+  "submitAnswer": "Submit answer",
+  "correctWellSpotted": "Correct — well spotted!",
+  "notQuiteRight": "Not quite right",
+  "plusPoints": "+{points} points",
+  "@plusPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "noPointsThisTime": "No points this time",
+  "practiceAttemptOnly": "Practice attempt — only your first attempt scores",
+  "correctAnswer": "Correct answer",
+  "whyItMatters": "Why it matters",
+  "noExplanation": "No explanation was provided for this scenario.",
+  "practiceAgain": "Practice again",
+  "backToScenarios": "Back to scenarios",
+  "whatYouSee": "WHAT YOU SEE",
+  "stepObserve": "Observe",
+  "stepAnswer": "Answer",
+  "stepExplain": "Explain",
+  "stepResult": "Result",
+  "filterCorrect": "Correct",
+  "filterIncorrect": "Incorrect",
+  "filterFirstAttempts": "First attempts",
+  "filterPractice": "Practice",
+  "filterWithFeedback": "With feedback",
+  "safetyHistory": "Safety history",
+  "mySafetyHistory": "My safety history",
+  "workersHistory": "{name}'s history",
+  "@workersHistory": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "worker": "Worker",
+  "everyWorkersAnswers": "Every worker's answers, reasoning and feedback",
+  "answersReasoningFeedback": "Answers, reasoning and trainer feedback",
+  "couldNotLoadHistory": "Couldn't load the history",
+  "searchScenarioOrWorker": "Search by scenario or worker",
+  "searchByScenario": "Search by scenario",
+  "noAttemptsYet": "No attempts yet",
+  "noAttemptsHint": "Completed scenarios will appear here with the answer and reasoning given.",
+  "nothingMatches": "Nothing matches",
+  "loadOlderAttempts": "Load older attempts",
+  "feedbackSentTo": "Feedback sent to {name}",
+  "@feedbackSentTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotSendFeedback": "Couldn't send the feedback.",
+  "pointsCount": "{count} points",
+  "@pointsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "passedFirstTry": "Passed first try",
+  "attempts": "Attempts",
+  "tookDuration": "took {duration}",
+  "@tookDuration": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "answered": "Answered",
+  "reasoningLabel": "REASONING",
+  "giveFeedback": "Give feedback",
+  "trainer": "Trainer",
+  "feedbackFor": "Feedback for {name}",
+  "@feedbackFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "feedbackHint": "What did they get right, and what should they reconsider?",
+  "sendFeedback": "Send feedback",
+  "filterNeedsAttention": "Needs attention",
+  "filterNeverTrained": "Never trained",
+  "filterCleared": "Cleared",
+  "workerSafetyStanding": "Worker safety standing",
+  "workerSafetyStandingSubtitle": "Review training results and decide next steps",
+  "reviewersOnly": "Reviewers only",
+  "reviewersOnlyHint": "Only Main Admin and System Admin accounts can review worker standing.",
+  "couldNotLoadWorkers": "Couldn't load workers",
+  "buildingStats": "Building training statistics from past attempts…",
+  "couldNotBuildStats": "Couldn't build training statistics from past attempts — some workers may show no results.",
+  "couldNotLoadDeterminations": "Couldn't load past decisions — the statuses below may be incomplete.",
+  "workers": "Workers",
+  "needAttention": "Need attention",
+  "searchWorkers": "Search workers",
+  "noWorkersYet": "No workers yet",
+  "noWorkersHint": "Technicians and anyone who has trained will appear here.",
+  "noWorkersMatch": "No workers match",
+  "determinationRecorded": "Decision recorded — {name} has been notified",
+  "@determinationRecorded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotRecordDetermination": "Couldn't record the decision.",
+  "unknownWorker": "Unknown worker",
+  "workerScoreLine": "{points} pts · {correct}/{attempted} first try",
+  "@workerScoreLine": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      },
+      "correct": {
+        "type": "int"
+      },
+      "attempted": {
+        "type": "int"
+      }
+    }
+  },
+  "scenariosCompleted": "Scenarios completed",
+  "neverCompletedScenario": "Has never completed a scenario",
+  "newAttemptsSinceReview": "{count, plural, =1{1 new attempt since last review} other{{count} new attempts since last review}}",
+  "@newAttemptsSinceReview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewedByAnother": "Reviewed by another reviewer",
+  "review": "Review",
+  "reviewName": "Review {name}",
+  "@reviewName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewSummaryLine": "{correct}/{attempted} correct first try · {percent}% · {points} pts",
+  "@reviewSummaryLine": {
+    "placeholders": {
+      "correct": {
+        "type": "int"
+      },
+      "attempted": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "noScenarioCompletedYet": "Has not completed any scenario yet",
+  "nextStep": "NEXT STEP",
+  "fitToWork90": "Fit to work for 90 days",
+  "assignScenariosToRedo": "Assign scenarios to redo",
+  "handToSeniorAdmin": "Hand to a senior admin",
+  "clearanceValidUntil": "Clearance will be valid until {date}.",
+  "@clearanceValidUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "clearingWithoutTraining": "This worker hasn't completed any scenario — clearing them isn't backed by any training results.",
+  "notesOptionalShown": "Notes (optional — shown to the worker)",
+  "chooseNextStep": "Choose a next step",
+  "saveDetermination": "Save decision",
+  "scenariosToRetrain": "Scenarios to retrain on",
+  "dueDate": "Due {date}",
+  "@dueDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noActiveScenarios": "There are no active scenarios to assign.",
+  "neverAttempted": "Never attempted",
+  "passed": "Passed",
+  "missed": "Missed",
+  "couldNotLoadReviewers": "Couldn't load reviewers",
+  "noOtherReviewer": "There's no other Main Admin or System Admin to escalate to.",
+  "escalateTo": "Escalate to",
+  "visibleToWorkers": "Visible to workers",
+  "hidden": "Hidden",
+  "needsFixing": "Needs fixing",
+  "scenarioNowVisible": "\"{title}\" is now visible to workers",
+  "@scenarioNowVisible": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "scenarioNowHidden": "\"{title}\" is hidden from workers",
+  "@scenarioNowHidden": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotUpdateScenario": "\"{title}\" couldn't be updated. Open it with Edit and save it to repair it.",
+  "@couldNotUpdateScenario": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "manageScenarios": "Manage scenarios",
+  "manageScenariosSubtitle": "Edit, publish or hide safety scenarios",
+  "authorScenario": "Author scenario",
+  "scenarios": "Scenarios",
+  "visible": "Visible",
+  "hiddenSingular": "Hidden",
+  "noScenariosAuthorHint": "Tap \"Author scenario\" to create the first one.",
+  "incomplete": "Incomplete",
+  "updatedOn": "Updated {date}",
+  "@updatedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "editScenario": "Edit scenario",
+  "defaultReasoningPrompt": "Explain why this could lead to injury and how to prevent it.",
+  "visualFallingObject": "Falling object",
+  "visualMissingPpe": "Missing PPE",
+  "visualExposedWiring": "Exposed wiring",
+  "visualUnguardedEdge": "Unguarded edge",
+  "visualWetFloor": "Wet floor / slip",
+  "visualUnsecuredLadder": "Unsecured ladder",
+  "visualGeneric": "Generic hazard",
+  "couldNotLoadAnswerKey": "This scenario's answer key couldn't be loaded.",
+  "unsupportedPhotoType": "This photo type isn't supported — please use a JPEG, PNG, WebP or GIF image.",
+  "photoTooLarge": "This photo is too large — the limit is {limit}.",
+  "@photoTooLarge": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "lottieWebUnsafeTitle": "This animation won't play in web browsers",
+  "lottieWebUnsafeBody": "This file uses a shape effect that web browsers can't display. It plays fine on Android and iOS, but anyone opening this scenario in a browser will see the standard illustration instead.",
+  "pickAnotherFile": "Pick another file",
+  "useItAnyway": "Use it anyway",
+  "animationTooLarge": "This animation is too large — the limit is {limit}.",
+  "@animationTooLarge": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "selectAnimationImages": "Select this animation's images",
+  "selectAnimationImagesBody": "{count, plural, =1{This animation uses a separate image file ({names}) that isn't inside the .json. Select it — usually in the \"images\" folder exported next to it — to add it to the animation.} other{This animation uses {count} separate image files ({names}) that aren't inside the .json. Select them — usually in the \"images\" folder exported next to it — to add them to the animation.}}",
+  "@selectAnimationImagesBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectImages": "Select images",
+  "missingImagesNotAdded": "Missing image(s): {names} — the animation was not added.",
+  "@missingImagesNotAdded": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotEmbedImages": "The images couldn't be added to this animation.",
+  "addTwoOptions": "Please add at least two answer options.",
+  "correctOptionEmpty": "The option marked correct is empty — fill it in or mark a different option.",
+  "onlyAdminsSaveScenarios": "Only admins can save scenarios.",
+  "couldNotSaveScenario": "Couldn't save the scenario.",
+  "sceneMedia": "Scene media",
+  "sceneMediaHint": "Optional — a built-in animated illustration is used otherwise",
+  "riveFile": "Rive (.riv)",
+  "lottieFile": "Lottie (.json)",
+  "realPhoto": "Real photo",
+  "photoSelected": "Photo selected",
+  "fallbackIllustration": "Fallback illustration",
+  "scenarioDetails": "Scenario details",
+  "scenarioTitleField": "Scenario title *",
+  "categoryField": "Category (e.g. Falling objects, PPE, Electrical)",
+  "sceneDescriptionField": "Scene description — what the worker sees *",
+  "questionAndAnswers": "Question & answers",
+  "markCorrectHint": "Mark the correct answer with the round button",
+  "questionField": "Question (e.g. \"What is the hazard here?\") *",
+  "optionRequired": "Option {n} *",
+  "@optionRequired": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "optionOptional": "Option {n} (optional)",
+  "@optionOptional": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "correct": "Correct",
+  "feedbackAndScoring": "Feedback & scoring",
+  "explanationField": "Explanation shown after answering *",
+  "reasoningPromptField": "Free-text reasoning prompt *",
+  "difficulty": "Difficulty",
+  "pointsRange": "Points (1–{max})",
+  "@pointsRange": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "loadingAnswerKey": "Loading this scenario's answer key…",
+  "savingDisabledAnswerKey": "{error} Saving is turned off so the current answer isn't overwritten.",
+  "@savingDisabledAnswerKey": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noAnswerKeyYet": "This scenario has no answer key yet. Mark the correct option and add an explanation, then save.",
+  "requiredFieldsNote": "Fields marked * are required",
+  "saving": "Saving…",
+  "publishScenario": "Publish scenario",
+  "lottiePreviewUnavailableWeb": "Preview unavailable in the browser for this animation — it will play on Android and iOS.",
+  "lottiePreviewFailed": "This file can't be previewed — is it a valid Lottie animation?",
+  "riveSelected": "{name} selected",
+  "@riveSelected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "riveFileDefault": "Rive file",
+  "previewAfterSaving": "Preview available after saving",
+  "invItemNoLongerExists": "This item no longer exists — it may have been removed.",
+  "invItemNotAvailable": "This item isn't available right now — someone may have just checked it out or booked it.",
+  "invItemHasPendingRequest": "This item already has a request waiting for a decision.",
+  "invItemNotCheckedOut": "This item isn't checked out at the moment.",
+  "invRequestNoLongerExists": "This request no longer exists.",
+  "invRequestAlreadyHandled": "This request was already handled by someone else.",
+  "invItemChangedRefresh": "This item's record changed while you were working. Please refresh and try again.",
+  "invBookingNoLongerExists": "This booking no longer exists.",
+  "invOnlyBookedPersonCanAcknowledge": "Only the person this item is booked for can confirm it arrived.",
+  "invNotDriverDelivery": "This item isn't being delivered by a driver, so there's nothing to confirm.",
+  "invBookingNotScheduled": "This booking is no longer waiting to be collected.",
+  "invBookingNotActive": "This booking is no longer active.",
+  "invCannotRecordOwnReturn": "You can't record your own return — please ask another Main Admin or System Admin to do it.",
+  "invOnlyScheduledCanBeCancelled": "Only a booking that hasn't been collected yet can be cancelled.",
+  "invOverlapsMaintenance": "These dates overlap planned maintenance ({start} – {end}). Please choose different dates.",
+  "@invOverlapsMaintenance": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "invOverlapsBooking": "These dates overlap an existing booking of \"{asset}\" ({who}, {start} – {end}). Please choose different dates.",
+  "@invOverlapsBooking": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "invCannotProcessForSelf": "You can't do this for yourself — please ask another Main Admin or System Admin to handle it.",
+  "invCancelledForMaintenance": "Cancelled for planned maintenance ({reason}).",
+  "@invCancelledForMaintenance": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "invMaterialNoLongerExists": "This material no longer exists — it may have been removed.",
+  "invNotEnoughStock": "There isn't enough in storage: you asked for {requested}, but only {available} is left.",
+  "@invNotEnoughStock": {
+    "placeholders": {
+      "requested": {
+        "type": "String"
+      },
+      "available": {
+        "type": "String"
+      }
+    }
+  },
+  "invNoPermissionIssueFabrication": "You don't have permission to issue material for fabrication.",
+  "invNoPermissionSubmitScan": "You don't have permission to upload a fabrication form.",
+  "invNoPermissionReviewFabrication": "You don't have permission to review this fabrication order.",
+  "invNoPermissionVerifyFabrication": "You don't have permission to verify this fabrication order.",
+  "invFabricationOrderNoLongerExists": "This fabrication order no longer exists.",
+  "invOrderNotAwaitingReview": "This order isn't waiting for an admin review.",
+  "invOrderNotReadyForVerification": "This order isn't ready to be verified yet.",
+  "invIssuedForFabricationNote": "Issued for fabrication — Form ID {id}",
+  "@invIssuedForFabricationNote": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "invFabricatorNote": " — Fabricator: {name}",
+  "@invFabricatorNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "invReceivedFromFabricationNote": "Received back from fabrication — Form ID {id}",
+  "@invReceivedFromFabricationNote": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "invQuantitiesFlaggedNote": " — quantities flagged for review",
+  "nInvCheckoutRequestTitle": "📦 Checkout request",
+  "nInvCheckoutRequestBody": "{who} asked for \"{asset}\" from {start} to {end}.",
+  "@nInvCheckoutRequestBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvCheckoutRequestBodyProject": "{who} asked for \"{asset}\" from {start} to {end} for {project}.",
+  "@nInvCheckoutRequestBodyProject": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      },
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvRequestRejectedTitle": "❌ Checkout request rejected",
+  "nInvRequestRejectedAdminBody": "{admin} rejected {who}'s request for \"{asset}\".",
+  "@nInvRequestRejectedAdminBody": {
+    "placeholders": {
+      "admin": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvRequestRejectedAdminBodyReason": "{admin} rejected {who}'s request for \"{asset}\": {reason}",
+  "@nInvRequestRejectedAdminBodyReason": {
+    "placeholders": {
+      "admin": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvRequestRejectedUserBody": "Your request for \"{asset}\" was rejected.",
+  "@nInvRequestRejectedUserBody": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvRequestRejectedUserBodyReason": "Your request for \"{asset}\" was rejected: {reason}",
+  "@nInvRequestRejectedUserBodyReason": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvCheckoutApprovedTitle": "✅ Checkout approved",
+  "nInvCheckoutApprovedAdminBody": "{admin} approved {who}'s request for \"{asset}\".",
+  "@nInvCheckoutApprovedAdminBody": {
+    "placeholders": {
+      "admin": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvCheckoutApprovedNowBody": "Your request for \"{asset}\" was approved by {admin} — it's checked out to you now.",
+  "@nInvCheckoutApprovedNowBody": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "admin": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvCheckoutApprovedLaterBody": "Your request for \"{asset}\" was approved by {admin} — booked for {date}.",
+  "@nInvCheckoutApprovedLaterBody": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "admin": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvOnTheWayTitle": "🚚 \"{asset}\" is on the way",
+  "@nInvOnTheWayTitle": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvOnTheWayBodyDriver": "{driver} is bringing \"{asset}\" to you — tap Acknowledge Receipt once it arrives.",
+  "@nInvOnTheWayBodyDriver": {
+    "placeholders": {
+      "driver": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvOnTheWayBody": "A driver is bringing \"{asset}\" to you — tap Acknowledge Receipt once it arrives.",
+  "@nInvOnTheWayBody": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvBookedTitle": "📅 \"{asset}\" has been booked",
+  "@nInvBookedTitle": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvBookedBody": "{who} has booked \"{asset}\" starting {date}. Please plan to return it in time.",
+  "@nInvBookedBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvDeliveryAckTitle": "📬 Delivery confirmed",
+  "nInvDeliveryAckBody": "{who} confirmed receiving \"{asset}\".",
+  "@nInvDeliveryAckBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvBookingCancelledMaintTitle": "🛠️ Booking cancelled — maintenance",
+  "nInvBookingCancelledMaintBody": "Your booked \"{asset}\" won't be available {start} – {end} because of planned maintenance ({reason}).",
+  "@nInvBookingCancelledMaintBody": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvReturnForMaintTitle": "🛠️ Return needed for maintenance",
+  "nInvReturnForMaintBody": "Please return \"{asset}\" by {date} — it's scheduled for maintenance ({reason}).",
+  "@nInvReturnForMaintBody": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvReturnIncomingTitle": "📥 Return on the way",
+  "nInvReturnIncomingBody": "{who} is returning \"{asset}\" — please record when it arrives.",
+  "@nInvReturnIncomingBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvFabDiscrepancyTitle": "⚠️ Fabrication form: quantities don't match",
+  "nInvFabReadyTitle": "📄 Fabrication form ready to verify",
+  "nInvFabUploadedDiscrepancyBody": "{who} uploaded the completed form for \"{material}\" — the quantities don't match, please review.",
+  "@nInvFabUploadedDiscrepancyBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvFabUploadedReadyBody": "{who} uploaded the completed form for \"{material}\" — ready to verify.",
+  "@nInvFabUploadedReadyBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvFabAwaitingReviewTitle": "📄 Fabrication form waiting for review",
+  "nInvFabAwaitingReviewBody": "{who} uploaded the completed form for \"{material}\" — it needs an admin review.",
+  "@nInvFabAwaitingReviewBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "nInvFabReviewedBody": "{who} reviewed the form for \"{material}\" — ready to verify.",
+  "@nInvFabReviewedBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "invStatusAvailable": "Available",
+  "invStatusCheckedOut": "Checked out",
+  "invStatusUnderMaintenance": "Under maintenance",
+  "invStatusRetired": "Retired",
+  "invConditionNew": "New",
+  "invConditionGood": "Good",
+  "invConditionFair": "Fair",
+  "invConditionDamaged": "Damaged",
+  "invConditionPartiallyDamaged": "Partially damaged",
+  "invTypeAsset": "Asset",
+  "invTypeTool": "Tool",
+  "invSourceLocal": "Local",
+  "invSourceInternational": "International",
+  "invCatHeavyEquipment": "Heavy equipment",
+  "invCatVehicle": "Vehicle",
+  "invCatItEquipment": "IT equipment / electronics",
+  "invCatOfficeEquipment": "Office equipment",
+  "invCatFurniture": "Furniture",
+  "invCatSafetyEquipment": "Safety equipment",
+  "invCatPowerTool": "Power tool",
+  "invCatHandTool": "Hand tool",
+  "invCatMeasuringTool": "Measuring tool",
+  "invCatSafetyTool": "Safety tool",
+  "invCatCement": "Cement & aggregates",
+  "invCatSteel": "Steel & metal",
+  "invCatElectrical": "Electrical",
+  "invCatPlumbing": "Plumbing",
+  "invCatTimber": "Timber",
+  "invCatFinishes": "Finishes",
+  "invCatOther": "Other",
+  "invBookingScheduled": "Scheduled",
+  "invBookingActive": "Active",
+  "invBookingCompleted": "Completed",
+  "invBookingCancelled": "Cancelled",
+  "invRequestPending": "Pending",
+  "invRequestApproved": "Approved",
+  "invRequestRejected": "Rejected",
+  "invFabIssued": "Issued",
+  "invFabPendingAdminReview": "Waiting for admin review",
+  "invFabScanUploaded": "Ready to verify",
+  "invFabVerified": "Verified",
+  "invFabDiscrepancy": "Quantities don't match",
+  "invMovementReceived": "Received",
+  "invDeliveryDirect": "Collected in person",
+  "invDeliveryDriver": "Delivered by driver",
+  "tomorrow": "Tomorrow",
+  "inDays": "In {count} days",
+  "@inDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgoLong": "{count} days ago",
+  "@daysAgoLong": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noUpcomingBookings": "No upcoming bookings or maintenance — free for the foreseeable future.",
+  "maintenanceReason": "Maintenance: {reason}",
+  "@maintenanceReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "checkedOutTo": "Checked out to {name}",
+  "@checkedOutTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bookedFor": "Booked for {name}",
+  "@bookedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelMaintenance": "Cancel maintenance",
+  "cancelBooking": "Cancel booking",
+  "noInventoryAccess": "You don't have access to Inventory.",
+  "tabAssets": "Assets",
+  "tabTools": "Tools",
+  "tabMaterials": "Materials",
+  "noAssetsYet": "No assets yet",
+  "noAssetsHint": "Assets you register will show up here.",
+  "noToolsYet": "No tools yet",
+  "noToolsHint": "Tools you register will show up here.",
+  "addAsset": "Add asset",
+  "addTool": "Add tool",
+  "addMaterial": "Add material",
+  "fabricationOrders": "Fabrication orders",
+  "pendingRequests": "Pending requests",
+  "accessStillSyncing": "Your access is still being set up",
+  "couldNotLoadItems": "Couldn't load this list",
+  "accessStillSyncingHint": "This usually sorts itself out in a moment. Tap Try again.",
+  "searchAssets": "Search assets…",
+  "searchTools": "Search tools…",
+  "status": "Status",
+  "category": "Category",
+  "requestPendingStatus": "Request pending",
+  "booked": "Booked",
+  "heldBy": "{category} • Held by {name}",
+  "@heldBy": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "availableOfTotal": "{available} of {total} available",
+  "@availableOfTotal": {
+    "placeholders": {
+      "available": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "inStock": "In stock",
+  "lowStock": "Low stock",
+  "outOfStock": "Out of stock",
+  "noMaterialsYet": "No materials yet",
+  "noMaterialsHint": "Materials you register will show up here.",
+  "searchMaterials": "Search materials…",
+  "source": "Source",
+  "stock": "Stock",
+  "assetDetails": "Item details",
+  "scheduleMaintenance": "Schedule maintenance",
+  "couldNotLoadAsset": "This item couldn't be loaded.",
+  "couldNotLoadBookings": "The bookings couldn't be loaded.",
+  "availability": "Availability",
+  "custodyHistory": "Custody history",
+  "couldNotLoadHistoryShort": "The history couldn't be loaded.",
+  "noCustodyEvents": "No handovers recorded yet",
+  "serialNumber": "S/N: {serial}",
+  "@serialNumber": {
+    "placeholders": {
+      "serial": {
+        "type": "String"
+      }
+    }
+  },
+  "conditionAtIntake": "Condition when registered: {condition}",
+  "@conditionAtIntake": {
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "inMyPossession": "With me",
+  "heldByName": "Held by {name}",
+  "@heldByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "requestAwaitingReview": "A checkout request for this item is waiting for review.",
+  "couldNotLoadRequest": "The request couldn't be loaded.",
+  "ownRequestAwaitingReview": "Your request is waiting for review by another Main Admin or System Admin.",
+  "reviewRequestFrom": "Review request from {name}",
+  "@reviewRequestFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recordCollectionFor": "Record collection — {name}",
+  "@recordCollectionFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "requestCheckout": "Request checkout",
+  "driverBringingToYou": "{driver} is bringing this to you.",
+  "@driverBringingToYou": {
+    "placeholders": {
+      "driver": {
+        "type": "String"
+      }
+    }
+  },
+  "aDriver": "A driver",
+  "acknowledgeReceipt": "Confirm receipt",
+  "requestFutureDate": "Request a future date",
+  "returnNotified": "Return notified — waiting for a Main Admin or System Admin to confirm it arrived.",
+  "toolReturn": "Return tool",
+  "assetReturn": "Return asset",
+  "recordReturn": "Record return",
+  "overrideRecordReturn": "Override & record return",
+  "acknowledgeReceiptBody": "Confirm that \"{asset}\" has physically arrived with you. If you have the signed handover form, you can attach a photo of it too.",
+  "@acknowledgeReceiptBody": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "attachFormPhoto": "Attach form photo",
+  "confirmReceipt": "Confirm receipt",
+  "receiptAcknowledged": "Receipt confirmed.",
+  "couldNotConfirmReceipt": "Couldn't confirm the receipt.",
+  "returnAssetTitle": "Return item",
+  "returnAssetMessage": "Let a Main Admin or System Admin know you're returning \"{asset}\"? They'll confirm it arrived and record its condition.",
+  "@returnAssetMessage": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "notify": "Notify",
+  "returnNotifiedSnack": "An admin has been notified — they'll confirm the item arrived.",
+  "couldNotNotifyReturn": "Couldn't send the return notice.",
+  "overrideReturnTitle": "Override return",
+  "overrideReturnMessage": "{holder} hasn't said they're returning \"{asset}\" yet. Only continue if they can't be reached and you've confirmed the item is physically back.",
+  "@overrideReturnMessage": {
+    "placeholders": {
+      "holder": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "theCurrentHolder": "The current holder",
+  "overrideContinue": "Override & continue",
+  "cancelBookingMessage": "Cancel the booking for {name}?",
+  "@cancelBookingMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "keep": "Keep",
+  "couldNotCancelBooking": "Couldn't cancel the booking.",
+  "cancelMaintenanceMessage": "Cancel this maintenance window ({reason})?",
+  "@cancelMaintenanceMessage": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelWindow": "Cancel maintenance",
+  "couldNotCancelMaintenance": "Couldn't cancel the maintenance.",
+  "checkedOutEvent": "Checked out",
+  "returnedEvent": "Returned",
+  "conditionLabel": "Condition: {condition}",
+  "@conditionLabel": {
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "recordedBy": "Recorded by {name} ({role})",
+  "@recordedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "camera": "Camera",
+  "gallery": "Gallery",
+  "editTool": "Edit tool",
+  "editAsset": "Edit asset",
+  "confirmSaveAndAddUnits": "Save changes and register {count, plural, =1{1 more unit} other{{count} more units}} of \"{name}\"? Each new unit gets its own handover history.",
+  "@confirmSaveAndAddUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmSaveChangesTo": "Save changes to \"{name}\"?",
+  "@confirmSaveChangesTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmRegisterToolUnits": "Register {count} units of \"{name}\" ({category}) as new company tools? Each unit is tracked separately, with its own handover history.",
+  "@confirmRegisterToolUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmRegisterAssetUnits": "Register {count} units of \"{name}\" ({category}) as new company assets? Each unit is tracked separately, with its own handover history.",
+  "@confirmRegisterAssetUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmRegisterTool": "Register \"{name}\" ({category}) as a new company tool?",
+  "@confirmRegisterTool": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmRegisterAsset": "Register \"{name}\" ({category}) as a new company asset?",
+  "@confirmRegisterAsset": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "changesSavedUnitsAdded": "Changes saved, {count, plural, =1{1 more unit} other{{count} more units}} added.",
+  "@changesSavedUnitsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "changesSaved": "Changes saved.",
+  "unitsAdded": "{count} units added.",
+  "@unitsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "toolAdded": "Tool added.",
+  "assetAdded": "Asset added.",
+  "couldNotSaveItem": "Couldn't save this item.",
+  "photo": "Photo",
+  "tapToAddPhoto": "Tap to add a photo (optional)",
+  "details": "Details",
+  "toolName": "Tool name",
+  "assetName": "Asset name",
+  "nameRequired": "Please enter a name",
+  "quantity": "Quantity",
+  "quantityUnitsHint": "Number of identical units to register",
+  "wholeNumberOneOrMore": "Enter a whole number of 1 or more",
+  "addMoreUnitsOptional": "Add more units (optional)",
+  "addMoreUnitsHint": "e.g. 2 more of this tool just arrived",
+  "zeroOrMore": "Enter 0 or more",
+  "serialNumberOptional": "Serial number (optional)",
+  "descriptionOptional": "Description (optional)",
+  "conditionAtIntakeNewUnits": "Condition when registered (for new units)",
+  "conditionAtIntakeLabel": "Condition when registered",
+  "classification": "Classification",
+  "toolCategoryHint": "e.g. Power tool, IT equipment / electronics",
+  "assetCategoryHint": "e.g. Heavy equipment, Vehicle",
+  "categoryRequired": "Please enter a category",
+  "unitBags": "bags",
+  "unitPieces": "pieces",
+  "unitTonnes": "tonnes",
+  "unitLitres": "litres",
+  "unitRolls": "rolls",
+  "editMaterial": "Edit material",
+  "confirmRegisterMaterial": "Register \"{name}\" ({category}) as a new material in the stock register?",
+  "@confirmRegisterMaterial": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "materialAdded": "Material added.",
+  "couldNotSaveMaterial": "Couldn't save this material.",
+  "materialName": "Material name",
+  "materialCategoryHint": "e.g. Cement & aggregates, Steel & metal",
+  "unit": "Unit",
+  "initialQuantity": "Starting quantity",
+  "reorderLevel": "Reorder level",
+  "reorderLevelHint": "Low-stock warning level",
+  "quantityEditNote": "The quantity in storage ({quantity} {unit}) can only change by recording a receipt or issue — not by editing.",
+  "@quantityEditNote": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotLoadUsers": "The list of people couldn't be loaded.",
+  "couldNotLoadProjects": "The list of projects couldn't be loaded.",
+  "selectWhoBookingFor": "Please choose who this booking is for.",
+  "checkOutNow": "Check out now",
+  "bookTool": "Book tool",
+  "bookAsset": "Book asset",
+  "confirmCheckOutNow": "Check out \"{asset}\" to {who} now?",
+  "@confirmCheckOutNow": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmCheckOutNowProject": "Check out \"{asset}\" to {who} now for project {project}?",
+  "@confirmCheckOutNowProject": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      },
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmBookFor": "Book \"{asset}\" for {who} from {start} to {end}?",
+  "@confirmBookFor": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "toolCheckedOut": "Tool checked out.",
+  "assetCheckedOut": "Asset checked out.",
+  "bookingCreated": "Booking created.",
+  "couldNotCreateBooking": "Couldn't create the booking.",
+  "handoverForm": "Handover form",
+  "handoverFormBody": "Download the printable handover form for the driver to sign at pickup, and for {who} to sign on receipt.",
+  "@handoverFormBody": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "skip": "Skip",
+  "downloadForm": "Download form",
+  "bookingWindow": "Booking dates",
+  "startsTodayHint": "Starts today — the item is handed over right away",
+  "futureWindowHint": "Future dates — the item stays available until it is collected on the day",
+  "fromDate": "From {date}",
+  "@fromDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "toDate": "To {date}",
+  "@toDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "handover": "Handover",
+  "deliveryMethod": "Delivery method",
+  "directHandoff": "Direct handoff",
+  "viaDriver": "Via driver/transporter",
+  "driverName": "Driver / transporter name",
+  "driverNameHint": "e.g. James, company driver",
+  "recipientMustAcknowledge": "The recipient will need to tap \"Confirm receipt\" once it arrives on site.",
+  "conditionAndPhotos": "Condition & photos",
+  "capturedAtCollection": "Recorded when the item is actually collected",
+  "conditionNotes": "Condition notes",
+  "conditionAtHandover": "Condition at handover",
+  "addPhotos": "Add photos",
+  "checkOut": "Check out",
+  "bookFor": "Book for",
+  "bookForMyself": "Book for myself",
+  "projectOptionalStorage": "Project (optional — leave blank for company storage)",
+  "overlapsBookingFor": "These dates overlap a booking for {who} ({start} – {end}).",
+  "@overlapsBookingFor": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "overlapsMaintenanceShort": "These dates overlap planned maintenance ({start} – {end}).",
+  "@overlapsMaintenanceShort": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmSendCheckoutRequest": "Send a checkout request for \"{asset}\" ({start} – {end}) to a Main Admin or System Admin for approval?",
+  "@confirmSendCheckoutRequest": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "sendRequest": "Send request",
+  "requestSentWaiting": "Request sent — waiting for a Main Admin or System Admin to approve it.",
+  "couldNotSendRequest": "Couldn't send the request.",
+  "noPermissionRequestCheckout": "You don't have permission to request a checkout.",
+  "bookingWindowHint": "When you need it and when you'll return it",
+  "alreadyOnCalendar": "Already on the calendar",
+  "requestDetails": "Request details",
+  "reasonForCheckout": "Reason for checkout",
+  "reasonForCheckoutHint": "e.g. Needed for site work at …",
+  "reasonRequired": "Please enter a reason",
+  "projectOptional": "Project (optional)",
+  "approveAndCheckOut": "Approve & check out",
+  "confirmApproveRequest": "Approve {who}'s request for \"{asset}\"? This checks the item out to them straight away.",
+  "@confirmApproveRequest": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "asset": {
+        "type": "String"
+      }
+    }
+  },
+  "approvedCheckedOut": "Approved — the item is checked out.",
+  "couldNotApprove": "Couldn't approve the request.",
+  "rejectRequest": "Reject request",
+  "reasonOptional": "Reason (optional)",
+  "requestRejected": "Request rejected.",
+  "couldNotReject": "Couldn't reject the request.",
+  "reviewRequest": "Review request",
+  "requestedBy": "Requested by",
+  "project": "Project",
+  "reason": "Reason",
+  "approveConditionAtHandover": "Approve — condition at handover",
+  "approveChecksOutNote": "Filling this in and tapping Approve checks the item out to {who} straight away.",
+  "@approveChecksOutNote": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "delivery": "Delivery",
+  "driverNameShort": "Driver name",
+  "recordCollection": "Record collection",
+  "storage": "storage",
+  "confirmHandoverNow": "Confirm that \"{asset}\" is being handed over to {who} now?",
+  "@confirmHandoverNow": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmRecordReturnFrom": "Record the return of \"{asset}\" from {who}?",
+  "@confirmRecordReturnFrom": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "collectionRecorded": "Collection recorded.",
+  "returnRecorded": "Return recorded.",
+  "couldNotRecord": "Couldn't save this record.",
+  "noPermissionRecord": "You don't have permission to record this.",
+  "returnTitle": "Return",
+  "handingOverTo": "Handing over to",
+  "returningFrom": "Returning from",
+  "conditionRating": "Condition",
+  "conditionAtReturn": "Condition at return",
+  "confirmCollection": "Confirm collection",
+  "enterValidQuantity": "Please enter a valid quantity.",
+  "onlyRemainingInStorage": "Only {quantity} {unit} left in storage.",
+  "@onlyRemainingInStorage": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "recordReceipt": "Record receipt",
+  "recordIssue": "Record issue",
+  "confirmRecordReceipt": "Record receipt of {quantity} {unit} of \"{material}\" into storage?",
+  "@confirmRecordReceipt": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmIssue": "Issue {quantity} {unit} of \"{material}\"?",
+  "@confirmIssue": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmIssueToProject": "Issue {quantity} {unit} of \"{material}\" to project {project}?",
+  "@confirmIssueToProject": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "material": {
+        "type": "String"
+      },
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptRecorded": "Receipt recorded.",
+  "issueRecorded": "Issue recorded.",
+  "noPermissionMaterialMovement": "You don't have permission to record material movements.",
+  "currentlyInStorage": "{quantity} {unit} currently in storage",
+  "@currentlyInStorage": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "receipt": "Receipt",
+  "issue": "Issue",
+  "quantityWithUnit": "Quantity ({unit})",
+  "@quantityWithUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "quantityRequired": "Please enter a quantity",
+  "conditionOnReceipt": "Condition on receipt",
+  "verifiedAtPortBy": "Checked at the port of arrival by",
+  "verifiedAtPortHint": "Name of the person who checked this shipment",
+  "receivedIntoStorageBy": "Received into storage by",
+  "receivedIntoStorageHint": "Name of the person who signed for it",
+  "notesAndPhotos": "Notes & photos",
+  "notes": "Notes",
+  "receiptNotesHint": "Condition / state on receipt",
+  "issueNotesHint": "Reason / extra notes",
+  "destinationProject": "Destination project",
+  "materialDetails": "Material details",
+  "couldNotLoadMaterial": "This material couldn't be loaded.",
+  "materialNotFound": "Material not found.",
+  "movementHistory": "Movement history",
+  "noMovementsYet": "No movements yet",
+  "inStorageQuantity": "{quantity} {unit} in storage",
+  "@inStorageQuantity": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "receivedQuantity": "Received: {quantity} {unit}",
+  "@receivedQuantity": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "issuedQuantity": "Issued: {quantity} {unit}",
+  "@issuedQuantity": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "toProject": "To project: {project}",
+  "@toProject": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "verifiedAtPortByName": "Checked at port by: {name}",
+  "@verifiedAtPortByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "receivedIntoStorageByName": "Received into storage by: {name}",
+  "@receivedIntoStorageByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newOrder": "New order",
+  "couldNotLoadOrders": "The orders couldn't be loaded.",
+  "noFabricationOrdersFor": "No fabrication orders yet for \"{material}\"",
+  "@noFabricationOrdersFor": {
+    "placeholders": {
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "fabStatusWithDriver": "With driver — on the way to fabrication",
+  "quantityIssued": "{quantity} {unit} issued",
+  "@quantityIssued": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "formId": "Form ID: {id}",
+  "@formId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "issuedByOn": "Issued by {name} on {date}",
+  "@issuedByOn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "destination": "Destination: {project}",
+  "@destination": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "fabricatorWithCondition": "Fabricator: {name} ({condition})",
+  "@fabricatorWithCondition": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "receivedByQuantity": "Received by {name}: {quantity} {unit}",
+  "@receivedByQuantity": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewedBy": "Reviewed by {name}",
+  "@reviewedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "quantitiesDontReconcile": "⚠ The quantities don't fully match — check before verifying",
+  "tapToUploadScan": "Tap to upload the completed scanned form",
+  "markReviewed": "Mark reviewed",
+  "verify": "Verify",
+  "flagDiscrepancy": "Flag mismatch",
+  "confirmMarkReviewed": "Confirm you've checked the scanned form for \"{material}\"? It will then be ready for a System Admin to verify.",
+  "@confirmMarkReviewed": {
+    "placeholders": {
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotMarkReviewed": "Couldn't mark it as reviewed.",
+  "verifyOrder": "Verify order",
+  "confirmFlagDiscrepancy": "Flag \"{material}\" as a quantity mismatch for follow-up?",
+  "@confirmFlagDiscrepancy": {
+    "placeholders": {
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmVerifyOrder": "Confirm \"{material}\" is verified and the quantities match?",
+  "@confirmVerifyOrder": {
+    "placeholders": {
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotVerify": "Couldn't verify the order.",
+  "traceHandedToDriver": "Handed to the driver (movement recorded)",
+  "traceReceivedBack": "Received back — form uploaded (movement recorded)",
+  "traceReceivedBackBy": "Received back — form uploaded by {name} (movement recorded)",
+  "@traceReceivedBackBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "traceDiscrepancyFlagged": "Mismatch flagged",
+  "pendingFabricationSubtitle": "Waiting for a scanned form, or flagged with a mismatch",
+  "nothingNeedsAttention": "Nothing needs attention",
+  "newFabricationOrdersHint": "New fabrication orders will show up here.",
+  "issuedByName": "Issued by {name}",
+  "@issuedByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "materialNoLongerExists": "That material no longer exists.",
+  "pendingRequestsSubtitle": "Waiting for your approval before checkout",
+  "couldNotLoadRequests": "The requests couldn't be loaded.",
+  "noPendingRequests": "No pending requests",
+  "newCheckoutRequestsHint": "New checkout requests will show up here.",
+  "requestedByName": "Requested by {name}",
+  "@requestedByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmBlockForMaintenance": "Block \"{asset}\" from being booked between {start} and {end}?",
+  "@confirmBlockForMaintenance": {
+    "placeholders": {
+      "asset": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "schedule": "Schedule",
+  "maintenanceScheduled": "Maintenance scheduled.",
+  "couldNotScheduleMaintenance": "Couldn't schedule the maintenance.",
+  "noPermissionScheduleMaintenance": "You don't have permission to schedule maintenance.",
+  "maintenanceDates": "Maintenance dates",
+  "maintenanceReasonHint": "e.g. Scheduled servicing",
+  "issueForFabrication": "Issue for fabrication",
+  "confirmIssueForFabrication": "Issue {quantity} {unit} of \"{material}\" for fabrication?",
+  "@confirmIssueForFabrication": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "issueAction": "Issue",
+  "couldNotIssue": "Couldn't issue the material.",
+  "quantityToIssue": "Quantity to issue ({unit})",
+  "@quantityToIssue": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "onlyAvailable": "Only {quantity} available",
+  "@onlyAvailable": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "destinationSite": "Destination site",
+  "expectedFabricatorOptional": "Expected fabricator (optional)",
+  "expectedFabricatorHint": "Best guess — corrected from the scanned form later",
+  "orderCreated": "Order created",
+  "orderCreatedBody": "Download and print the handover form, then give it to the driver/transporter together with \"{material}\". The completed form is scanned back into the app once it reaches the technician.",
+  "@orderCreatedBody": {
+    "placeholders": {
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenScanner": "The document scanner couldn't be opened.",
+  "couldNotOpenFile": "This file couldn't be opened. Please try another one.",
+  "fillEveryFieldAndScan": "Please fill in every field and attach the scan before submitting.",
+  "submitVerifiedForm": "Submit checked form",
+  "confirmSubmitVerifiedForm": "Confirm these values match the completed paper form for \"{material}\"? This becomes the permanent digital record.",
+  "@confirmSubmitVerifiedForm": {
+    "placeholders": {
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "attachScanFirst": "Please scan the form or upload a file before submitting.",
+  "formSubmitted": "Form submitted.",
+  "couldNotSubmitForm": "Couldn't submit the form.",
+  "uploadCompletedForm": "Upload completed form",
+  "formIdIssued": "Form ID: {id} • Issued {quantity} {unit}",
+  "@formIdIssued": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "scan": "Scan",
+  "scanSubtitle": "Scan the completed form (several pages are fine) or upload an existing document",
+  "scanDocument": "Scan document",
+  "uploadFile": "Upload file",
+  "readingForm": "Reading the form (a starting point only — check everything below)…",
+  "pagesCaptured": "{count, plural, =1{1 page captured} other{{count} pages captured}}",
+  "@pagesCaptured": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "verifyValues": "Check the values",
+  "verifyValuesSubtitle": "Every value below must match the paper form — correct anything that was read wrong",
+  "driverPickupQuantity": "Driver pickup quantity (from office)",
+  "fabricatorName": "Fabricator name",
+  "fabricatorQuantityReceived": "Fabricator: quantity received",
+  "fabricatorCondition": "Condition at fabricator",
+  "damageDescription": "Damage description",
+  "fabricatorOutputQuantity": "Fabricator: finished quantity",
+  "driverCollectedQuantity": "Driver: quantity collected from fabricator",
+  "technicianReceivedQuantity": "Quantity you received (technician)",
+  "pdfUnit": "Unit: {unit}",
+  "@pdfUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfPrintedName": "Printed name: ",
+  "pdfSignature": "Signature: ",
+  "pdfDate": "Date: ",
+  "pdfFormIdPage": "Form ID: {id}  •  Page {page} of {pages}",
+  "@pdfFormIdPage": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "page": {
+        "type": "int"
+      },
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "pdfFabricationTitle": "AlmaWorks — Material Fabrication Chain of Custody",
+  "pdfScanAndUploadNote": "Scan and upload this completed form in the AlmaWorks app after the technician section is signed.",
+  "pdfIssueDetails": "1. Issue details (filled in by the office)",
+  "pdfMaterial": "Material",
+  "pdfQuantityIssued": "Quantity issued",
+  "pdfDateIssued": "Date issued",
+  "pdfIssuedBy": "Issued by",
+  "pdfExpectedFabricator": "Expected fabricator",
+  "pdfDriverPickup": "2. Driver/transporter — pickup confirmation",
+  "pdfQuantityTaken": "Quantity taken",
+  "pdfFabricatorReceipt": "3. Fabricator — receipt confirmation",
+  "pdfQuantityReceived": "Quantity received",
+  "pdfConditionGoodDamaged": "Condition:  [ ] Good   [ ] Damaged",
+  "pdfIfDamagedDescribe": "If damaged, describe:",
+  "pdfFabricatorName": "Fabricator name: ",
+  "pdfFabricatorOutput": "4. Finished material — driver/transporter confirmation",
+  "pdfFabricatedCollected": "Fabricated quantity collected",
+  "pdfTechnicianReceipt": "5. Technician — final receipt confirmation (on site)",
+  "formSavedToDownloads": "Form saved to Downloads: {file}",
+  "@formSavedToDownloads": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfHandoverTitle": "AlmaWorks — {type} handover via driver/transporter",
+  "@pdfHandoverTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfHandoverScanNote": "Scan and upload this completed form in the AlmaWorks app after the recipient section is signed.",
+  "pdfDispatchDetails": "1. Dispatch details (filled in by the office)",
+  "pdfDateDispatched": "Date dispatched",
+  "pdfDispatchedBy": "Dispatched by",
+  "pdfDriverTransporter": "Driver / transporter",
+  "pdfRecipient": "Recipient",
+  "pdfRecipientReceipt": "3. Recipient — receipt confirmation (on site)"
+}

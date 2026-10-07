@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/safety_training/safety_scenario_model.dart';
 import 'package:almaworks/screens/safety_training/safety_training_providers.dart';
+import 'package:almaworks/screens/safety_training/widgets/safety_widgets.dart';
 import 'package:almaworks/services/safety_training_service.dart';
 import 'package:almaworks/widgets/modern/modern_ui.dart';
 import 'package:almaworks/widgets/safety_training/hazard_scene_visual.dart';
@@ -10,6 +11,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 enum _Stage { question, reasoning, result }
 
@@ -82,21 +85,21 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
       });
     } on FirebaseFunctionsException catch (e) {
       widget.logger.e('❌ ScenarioPlayScreen: Grading failed: ${e.code} ${e.message}');
-      const userFacing = {'invalid-argument', 'failed-precondition', 'not-found', 'permission-denied'};
-      _fail(
-        userFacing.contains(e.code) && e.message != null
-            ? e.message!
-            : 'Your answer couldn\'t be submitted. Check your connection and tap Retry.',
-      );
+      final l = l10nNow;
+      _fail(switch (e.code) {
+        'not-found' => l.scenarioNoLongerExists,
+        'failed-precondition' => l.scenarioUnavailableTellAdmin,
+        'permission-denied' => l.roleCannotTakeTraining,
+        'invalid-argument' => l.answerNotAccepted,
+        'unauthenticated' => l.errSignInAgain,
+        _ => l.answerSubmitFailed,
+      });
     } on TimeoutException {
       widget.logger.w('⚠️ ScenarioPlayScreen: Attempt $_attemptId not confirmed in time');
-      _fail(
-        'We couldn\'t confirm your answer was saved. Check your connection and tap Retry — '
-        'it won\'t be counted twice.',
-      );
+      _fail(l10nNow.answerNotConfirmed);
     } catch (e) {
       widget.logger.e('❌ ScenarioPlayScreen: Failed to submit attempt: $e');
-      _fail('Your answer couldn\'t be submitted. Tap Retry to try again.');
+      _fail(l10nNow.answerSubmitFailed);
     }
   }
 
@@ -127,7 +130,11 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
     final s = _scenario;
     return Scaffold(
       backgroundColor: AppPalette.canvas,
-      appBar: modernAppBar(context, title: s.title, subtitle: '${s.category} · ${s.difficulty} · ${s.points} pts'),
+      appBar: modernAppBar(
+        context,
+        title: s.title,
+        subtitle: context.l10n.scenarioSubtitle(safetyCategoryLabel(s.category), difficultyLabel(s.difficulty), s.points),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= Breakpoints.medium;
@@ -141,7 +148,7 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'This scenario is incomplete and can\'t be answered yet. Please let an admin know.',
+                          context.l10n.scenarioIncomplete,
                           style: appText(14, color: AppPalette.coral),
                         ),
                       ),
@@ -207,8 +214,8 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'QUESTION',
-            style: appText(11, weight: FontWeight.w700, color: AppPalette.brightBlue),
+            context.l10n.questionLabel,
+            style: appText(11, weight: FontWeight.w700, color: AppColors.info),
           ),
           const SizedBox(height: 6),
           Text(_scenario.question, style: appText(17, weight: FontWeight.w700, height: 1.35)),
@@ -225,7 +232,7 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
             ),
           const SizedBox(height: 8),
           PrimaryButton(
-            label: 'Continue',
+            label: context.l10n.continueLabel,
             icon: Icons.arrow_forward_rounded,
             expand: true,
             onPressed: _selectedOption == null ? null : () => setState(() => _stage = _Stage.reasoning),
@@ -258,7 +265,7 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Your answer', style: appText(11, color: AppPalette.inkMuted)),
+                      Text(context.l10n.yourAnswer, style: appText(11, color: AppPalette.inkMuted)),
                       Text(_scenario.options[i], style: appText(13.5, weight: FontWeight.w600)),
                     ],
                   ),
@@ -266,8 +273,8 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
                 TextButton(
                   onPressed: _isSaving ? null : () => setState(() => _stage = _Stage.question),
                   child: Text(
-                    'Change',
-                    style: appText(12.5, weight: FontWeight.w600, color: AppPalette.brightBlue),
+                    context.l10n.change,
+                    style: appText(12.5, weight: FontWeight.w600, color: AppColors.info),
                   ),
                 ),
               ],
@@ -275,14 +282,14 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
           ),
           const SizedBox(height: 18),
           Text(
-            'EXPLAIN YOUR THINKING',
-            style: appText(11, weight: FontWeight.w700, color: AppPalette.brightBlue),
+            context.l10n.explainYourThinking,
+            style: appText(11, weight: FontWeight.w700, color: AppColors.info),
           ),
           const SizedBox(height: 6),
           Text(_scenario.reasoningPrompt, style: appText(16, weight: FontWeight.w700, height: 1.35)),
           const SizedBox(height: 4),
           Text(
-            'In your own words — this helps your trainer see how well you understand the risk.',
+            context.l10n.explainInOwnWords,
             style: appText(12.5, color: AppPalette.inkMuted),
           ),
           const SizedBox(height: 14),
@@ -293,19 +300,19 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
             maxLines: 8,
             maxLength: _maxReasoningLength,
             buildCounter: (context, {required currentLength, required isFocused, maxLength}) => Text(
-              short ? '${_minReasoningLength - trimmed} more characters needed' : '$currentLength / $maxLength',
+              short ? context.l10n.moreCharactersNeeded(_minReasoningLength - trimmed) : '$currentLength / $maxLength',
               style: appText(11.5, color: short ? AppPalette.orange : AppPalette.inkFaint),
             ),
             style: appText(14, height: 1.45),
             decoration: InputDecoration(
-              hintText: 'Explain the cause and how to prevent it…',
+              hintText: context.l10n.explainHint,
               hintStyle: appText(13.5, color: AppPalette.inkFaint),
               filled: true,
               fillColor: AppPalette.canvas,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppPalette.brightBlue, width: 1.5),
+                borderSide: BorderSide(color: AppColors.info, width: 1.5),
               ),
               contentPadding: const EdgeInsets.all(16),
             ),
@@ -333,7 +340,9 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
           ],
           const SizedBox(height: 14),
           PrimaryButton(
-            label: _isSaving ? 'Submitting your answer…' : (_submitError != null ? 'Retry' : 'Submit answer'),
+            label: _isSaving
+                ? context.l10n.submittingAnswer
+                : (_submitError != null ? context.l10n.retry : context.l10n.submitAnswer),
             icon: _submitError != null ? Icons.refresh_rounded : Icons.send_rounded,
             loading: _isSaving,
             expand: true,
@@ -377,7 +386,7 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            correct ? 'Correct — well spotted!' : 'Not quite right',
+            correct ? context.l10n.correctWellSpotted : context.l10n.notQuiteRight,
             textAlign: TextAlign.center,
             style: appText(21, weight: FontWeight.w800, color: accent),
           ),
@@ -385,24 +394,24 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
           Center(
             child: result.isFirstAttempt
                 ? StatusPill(
-                    label: correct ? '+${result.pointsEarned} points' : 'No points this time',
+                    label: correct ? context.l10n.plusPoints(result.pointsEarned) : context.l10n.noPointsThisTime,
                     color: correct ? AppPalette.green : AppPalette.inkMuted,
                     icon: Icons.star_rounded,
                   )
-                : const StatusPill(
-                    label: 'Practice attempt — only your first attempt scores',
+                : StatusPill(
+                    label: context.l10n.practiceAttemptOnly,
                     color: AppPalette.brightBlue,
                     icon: Icons.replay_rounded,
                   ),
           ),
           if (!correct && hasCorrect) ...[
             const SizedBox(height: 18),
-            _AnswerLine(label: 'Correct answer', index: ci, text: _scenario.options[ci], color: AppPalette.green),
+            _AnswerLine(label: context.l10n.correctAnswer, index: ci, text: _scenario.options[ci], color: AppPalette.green),
           ],
           if (_selectedOption != null) ...[
             const SizedBox(height: 8),
             _AnswerLine(
-              label: 'Your answer',
+              label: context.l10n.yourAnswer,
               index: _selectedOption!,
               text: _scenario.options[_selectedOption!],
               color: correct ? AppPalette.green : AppPalette.coral,
@@ -419,12 +428,12 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
                   children: [
                     const Icon(Icons.lightbulb_rounded, size: 19, color: AppPalette.amber),
                     const SizedBox(width: 8),
-                    Text('Why it matters', style: appText(13.5, weight: FontWeight.w700)),
+                    Text(context.l10n.whyItMatters, style: appText(13.5, weight: FontWeight.w700)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  result.explanation.isEmpty ? 'No explanation was provided for this scenario.' : result.explanation,
+                  result.explanation.isEmpty ? context.l10n.noExplanation : result.explanation,
                   style: appText(13.5, height: 1.55),
                 ),
               ],
@@ -440,17 +449,17 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
                 onPressed: _practiceAgain,
                 icon: const Icon(Icons.replay_rounded, size: 18),
                 label: Text(
-                  'Practice again',
-                  style: appText(13.5, weight: FontWeight.w600, color: AppPalette.deepBlue),
+                  context.l10n.practiceAgain,
+                  style: appText(13.5, weight: FontWeight.w600, color: AppColors.brandInk),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  side: const BorderSide(color: AppPalette.border),
+                  side: BorderSide(color: AppPalette.border),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
               PrimaryButton(
-                label: 'Back to scenarios',
+                label: context.l10n.backToScenarios,
                 icon: Icons.grid_view_rounded,
                 onPressed: () => Navigator.pop(context),
               ),
@@ -495,8 +504,8 @@ class _SceneColumn extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'WHAT YOU SEE',
-                      style: appText(11, weight: FontWeight.w700, color: AppPalette.brightBlue),
+                      context.l10n.whatYouSee,
+                      style: appText(11, weight: FontWeight.w700, color: AppColors.info),
                     ),
                     const SizedBox(height: 4),
                     Text(scenario.sceneDescription, style: appText(14, height: 1.55)),
@@ -518,14 +527,14 @@ class _StepIndicator extends StatelessWidget {
   /// 1 = answering, 2 = explaining, 3 = result (observing is always done).
   final int current;
 
-  static const _steps = ['Observe', 'Answer', 'Explain', 'Result'];
-
   @override
   Widget build(BuildContext context) {
     final compact = Breakpoints.isCompact(context);
+    final l = context.l10n;
+    final steps = [l.stepObserve, l.stepAnswer, l.stepExplain, l.stepResult];
     return Row(
       children: [
-        for (var i = 0; i < _steps.length; i++) ...[
+        for (var i = 0; i < steps.length; i++) ...[
           if (i > 0)
             Expanded(
               child: Container(
@@ -537,13 +546,13 @@ class _StepIndicator extends StatelessWidget {
                 ),
               ),
             ),
-          _step(i, compact),
+          _step(i, steps[i], compact),
         ],
       ],
     );
   }
 
-  Widget _step(int i, bool compact) {
+  Widget _step(int i, String label, bool compact) {
     final done = i < current;
     final active = i == current;
     final color = done || active ? AppPalette.brightBlue : AppPalette.inkFaint;
@@ -570,7 +579,7 @@ class _StepIndicator extends StatelessWidget {
         if (!compact) ...[
           const SizedBox(width: 6),
           Text(
-            _steps[i],
+            label,
             style: appText(12.5, weight: active ? FontWeight.w700 : FontWeight.w500, color: color),
           ),
         ],
@@ -593,7 +602,7 @@ class _LetterBadge extends StatelessWidget {
       height: 32,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: selected ? AppPalette.deepBlue : AppPalette.canvas,
+        color: selected ? AppColors.brand : AppPalette.canvas,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(

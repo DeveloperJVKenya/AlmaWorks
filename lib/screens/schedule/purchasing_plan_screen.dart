@@ -1,7 +1,6 @@
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/purchase_resource_model.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
 
@@ -59,7 +58,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           widget.logger.e('❌ PurchasingPlan: Error in stream', error: snapshot.error);
-          return Center(child: Text('Error loading resources', style: GoogleFonts.poppins(color: Colors.red)));
+          return Center(child: Text('Error loading resources', style: TextStyle(color: Colors.red)));
         }
 
         if (!snapshot.hasData) {
@@ -105,7 +104,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           const SizedBox(height: 16),
           Text(
             'No Resources Added',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.grey.shade700,
@@ -114,7 +113,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           const SizedBox(height: 8),
           Text(
             'Add resources to manage your purchasing plan',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 16,
               color: Colors.grey.shade500,
             ),
@@ -124,7 +123,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           ElevatedButton.icon(
             onPressed: _addResource,
             icon: const Icon(Icons.add),
-            label: Text('Add First Resource', style: GoogleFonts.poppins()),
+            label: Text('Add First Resource', style: TextStyle()),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0A2E5A),
               foregroundColor: Colors.white,
@@ -248,7 +247,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   '$count',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: countSize,
                     fontWeight: FontWeight.bold,
                   ),
@@ -259,7 +258,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
             Flexible(
               child: Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: titleSize,
                   color: Colors.grey.shade600,
                 ),
@@ -283,7 +282,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           icon: const Icon(Icons.add),
           label: Text(
             'Add Resource',
-            style: GoogleFonts.poppins(fontSize: isWide ? 16 : 14),
+            style: TextStyle(fontSize: isWide ? 16 : 14),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF0A2E5A),
@@ -353,7 +352,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
             ),
             title: Text(
               resource.name,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: isWide ? 16 : 14,
               ),
@@ -369,7 +368,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
                     Expanded(
                       child: Text(
                         resource.quantity,
-                        style: GoogleFonts.poppins(fontSize: isWide ? 14 : 12),
+                        style: TextStyle(fontSize: isWide ? 14 : 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -382,7 +381,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
                     const SizedBox(width: 4),
                     Text(
                       resource.status,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: isWide ? 14 : 12,
                         color: statusColor,
                         fontWeight: FontWeight.w500,
@@ -436,7 +435,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Add Resource', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          title: Text('Add Resource', style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -529,7 +528,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
         context: context,
         builder: (context) => StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: Text('Edit Resource', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            title: Text('Edit Resource', style: TextStyle(fontWeight: FontWeight.bold)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -610,7 +609,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Delete Resource', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          title: Text('Delete Resource', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Text('Are you sure you want to delete "${resource.name}"?'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),

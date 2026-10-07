@@ -3,7 +3,6 @@ import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/purchase_resource_model.dart';
 import 'package:almaworks/screens/projects/edit_project_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -330,7 +329,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                           child: TextField(
                             decoration: InputDecoration(
                               hintText: 'Search resources...',
-                              hintStyle: GoogleFonts.poppins(
+                              hintStyle: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade400,
                               ),
@@ -350,7 +349,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               isDense: true,
                             ),
-                            style: GoogleFonts.poppins(fontSize: 12),
+                            style: TextStyle(fontSize: 12),
                             onChanged: (value) {
                               setState(() {});
                             },
@@ -407,7 +406,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                                 Expanded(
                                   child: Text(
                                     'None',
-                                    style: GoogleFonts.poppins(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: row.resourceId == null
                                           ? FontWeight.w600
@@ -747,7 +746,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   message,
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
               ),
             ],
@@ -779,7 +778,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         SnackBar(
           content: Text(
             'Failed to load project dates, using default timeline',
-            style: GoogleFonts.poppins(),
+            style: TextStyle(),
           ),
           backgroundColor: Colors.orange,
         ),
@@ -859,7 +858,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 SnackBar(
                   content: Text(
                     'Working offline - changes will sync when connection is restored',
-                    style: GoogleFonts.poppins(),
+                    style: TextStyle(),
                   ),
                   backgroundColor: Colors.orange,
                 ),
@@ -1027,7 +1026,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           SnackBar(
             content: Text(
               'Cannot delete saved rows within default range',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.orange,
           ),
@@ -1128,7 +1127,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           SnackBar(
             content: Text(
               'Failed to save task: $e',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
           ),
@@ -1587,7 +1586,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   'Date Outside Parent Task Timeline',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade800,
@@ -1604,7 +1603,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               children: [
                 Text(
                   fullMessage,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
                     color: Colors.grey.shade700,
@@ -1623,7 +1622,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               },
               child: Text(
                 'Cancel',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey.shade600,
@@ -1652,7 +1651,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               ),
               child: Text(
                 'Continue',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -1798,7 +1797,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         SnackBar(
           content: Text(
             'Parent task "${parentRow.taskName ?? 'Unnamed'}" dates adjusted to accommodate the change',
-            style: GoogleFonts.poppins(),
+            style: TextStyle(),
           ),
           backgroundColor: Colors.blue.shade600,
           duration: Duration(seconds: 3),
@@ -2043,7 +2042,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message, style: GoogleFonts.poppins()),
+          content: Text(message, style: TextStyle()),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 4),
         ),
@@ -2077,7 +2076,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           SnackBar(
             content: Text(
               'Changes saved locally - will sync when online',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.orange,
           ),
@@ -2121,7 +2120,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           SnackBar(
             content: Text(
               'All changes saved successfully (${saveFutures.length} rows)',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.green,
           ),
@@ -2137,7 +2136,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           SnackBar(
             content: Text(
               'Error saving some changes: $e',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
           ),
@@ -2183,7 +2182,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // Duration column
       final durationText = row.duration?.toString() ?? 'days';
       final durationPainter = TextPainter(
-        text: TextSpan(text: durationText, style: GoogleFonts.poppins(fontSize: 11)),
+        text: TextSpan(text: durationText, style: TextStyle(fontSize: 11)),
         maxLines: 1,
         textDirection: ui.TextDirection.ltr,
       )..layout();
@@ -2192,7 +2191,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // Start column
       final startText = row.startDate != null ? DateFormat('MM/dd/yyyy').format(row.startDate!) : '';
       final startPainter = TextPainter(
-        text: TextSpan(text: startText, style: GoogleFonts.poppins(fontSize: 11)),
+        text: TextSpan(text: startText, style: TextStyle(fontSize: 11)),
         maxLines: 1,
         textDirection: ui.TextDirection.ltr,
       )..layout();
@@ -2201,7 +2200,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // Finish column
       final finishText = row.endDate != null ? DateFormat('MM/dd/yyyy').format(row.endDate!) : '';
       final finishPainter = TextPainter(
-        text: TextSpan(text: finishText, style: GoogleFonts.poppins(fontSize: 11)),
+        text: TextSpan(text: finishText, style: TextStyle(fontSize: 11)),
         maxLines: 1,
         textDirection: ui.TextDirection.ltr,
       )..layout();
@@ -2209,7 +2208,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
       // Resources column - Updated to include all fixed elements
       final resText = _getResourceDisplayText(row);
-      final resStyle = GoogleFonts.poppins(
+      final resStyle = TextStyle(
         fontSize: 10.5,
         fontWeight: row.resourceId != null ? FontWeight.w600 : FontWeight.w400,
       );
@@ -2235,7 +2234,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
       // Actual Dates column
       final actualText = row.actualDatesDisplayText.isNotEmpty ? row.actualDatesDisplayText : 'Add dates';
-      final actualStyle = GoogleFonts.poppins(fontSize: 11);
+      final actualStyle = TextStyle(fontSize: 11);
       final actualPainter = TextPainter(
         text: TextSpan(text: actualText, style: actualStyle),
         maxLines: 1,
@@ -2447,7 +2446,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   'Date Outside Project Timeline',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade800,
@@ -2464,7 +2463,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               children: [
                 Text(
                   fullMessage,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
                     color: Colors.grey.shade700,
@@ -2483,7 +2482,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               },
               child: Text(
                 'Cancel',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey.shade600,
@@ -2505,7 +2504,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               ),
               child: Text(
                 'Edit Project Dates',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -2626,7 +2625,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                     children: [
                       Text(
                         resource.name,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                           color: isSelected ? Colors.blue.shade600 : Colors.grey.shade800,
@@ -2636,7 +2635,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                       if (resource.type != ResourceType.other)
                         Text(
                           _getResourceTypeLabel(resource.type),
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             fontSize: 10,
                             color: Colors.grey.shade500,
                           ),
@@ -2671,7 +2670,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               children: [
                 Text(
                   'Quantity (optional)',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: Colors.grey.shade700,
@@ -2685,7 +2684,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                         controller: _quantityControllers[index],
                         decoration: InputDecoration(
                           hintText: 'e.g., 5, 10kg, 2 hours',
-                          hintStyle: GoogleFonts.poppins(
+                          hintStyle: TextStyle(
                             fontSize: 11,
                             color: Colors.grey.shade400,
                           ),
@@ -2715,7 +2714,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                                 )
                               : null,
                         ),
-                        style: GoogleFonts.poppins(fontSize: 12),
+                        style: TextStyle(fontSize: 12),
                         onChanged: (value) {
                           setDropdownState(() {});
                         },
@@ -2752,7 +2751,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                       ),
                       child: Text(
                         'Apply',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -2781,7 +2780,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           SizedBox(height: 12),
           Text(
             'No resources available',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: Colors.grey.shade600,
@@ -2790,7 +2789,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           SizedBox(height: 4),
           Text(
             'Add resources to your project first',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 11,
               color: Colors.grey.shade500,
             ),
@@ -2882,7 +2881,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         padding: EdgeInsets.symmetric(horizontal: 8),
         child: Text(
           title,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: Colors.grey.shade700,
@@ -2937,7 +2936,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                       children: [
                         Text(
                           '${index + 1}',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
                           ),
@@ -2956,7 +2955,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   : Center(
                       child: Text(
                         '${index + 1}',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -2997,7 +2996,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: _getTaskNameStyle(currentTaskType),
                   decoration: InputDecoration(
                     hintText: 'Enter task name',
-                    hintStyle: GoogleFonts.poppins(
+                    hintStyle: TextStyle(
                       fontSize: 11,
                       color: Colors.grey.shade400,
                     ),
@@ -3036,10 +3035,10 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   }
                 },
                 keyboardType: TextInputType.number,
-                style: GoogleFonts.poppins(fontSize: 11),
+                style: TextStyle(fontSize: 11),
                 decoration: InputDecoration(
                   hintText: 'days',
-                  hintStyle: GoogleFonts.poppins(
+                  hintStyle: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade400,
                   ),
@@ -3122,7 +3121,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                     Expanded(
                       child: Text(
                         _getResourceDisplayText(row),
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 10.5,  // Slightly smaller for fit
                           fontWeight: row.resourceId != null ? FontWeight.w600 : FontWeight.w400,
                           color: (_getResourceAvailabilityInfo(row)['textColor'] as Color),
@@ -3147,7 +3146,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                           ),
                           child: Text(
                             (_getResourceAvailabilityInfo(row)['badgeText'] as String),
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 8.5,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -3204,7 +3203,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                                 ? row.actualDatesDisplayText
                                 : 'Add dates')
                             : '',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: (row.actualStartDate != null || row.actualEndDate != null)
                               ? FontWeight.w500
@@ -3311,7 +3310,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   dialogTitle,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade800,
@@ -3328,7 +3327,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               children: [
                 Text(
                   'Task: ${row.taskName ?? "Unnamed Task"}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: Colors.grey.shade700,
@@ -3337,7 +3336,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 SizedBox(height: 4),
                 Text(
                   'Scheduled: ${row.startDate != null ? DateFormat('MM/dd/yyyy').format(row.startDate!) : "N/A"} - ${row.endDate != null ? DateFormat('MM/dd/yyyy').format(row.endDate!) : "N/A"}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade500,
                   ),
@@ -3346,7 +3345,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   SizedBox(height: 4),
                   Text(
                     'Current Actual: ${row.actualDatesDisplayText}',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: Colors.blue.shade600,
@@ -3356,7 +3355,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 SizedBox(height: 20),
                 Text(
                   'Select action:',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Colors.grey.shade600,
@@ -3391,7 +3390,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey.shade600,
@@ -3450,7 +3449,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             Expanded(
               child: Text(
                 option,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: isDestructive ? Colors.red.shade700 : Colors.grey.shade800,
@@ -3791,7 +3790,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   'Failed to save changes. Please try again.',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
               ),
             ],
@@ -3885,7 +3884,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   'Failed to save changes. Please try again.',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
               ),
             ],
@@ -3964,7 +3963,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   'Actual dates cleared - Status: ${_editedRows[index]?.status?.name ?? "updated"}',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
               ),
             ],
@@ -3994,7 +3993,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   'Failed to clear dates. Please try again.',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
               ),
             ],
@@ -4054,7 +4053,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               Expanded(
                 child: Text(
                   'Actual Date Constraint',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade800,
@@ -4071,7 +4070,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               children: [
                 Text(
                   fullMessage,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
                     color: Colors.grey.shade700,
@@ -4090,7 +4089,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               },
               child: Text(
                 'Cancel',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey.shade600,
@@ -4113,7 +4112,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 ),
                 child: Text(
                   'Continue Anyway',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -4183,7 +4182,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         alignment: Alignment.centerLeft,
         child: Text(
           date != null ? DateFormat('MM/dd/yyyy').format(date) : '',
-          style: GoogleFonts.poppins(fontSize: 11),
+          style: TextStyle(fontSize: 11),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
         ),
@@ -4212,7 +4211,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   Flexible(
                     child: Text(
                       widget.project.name,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
@@ -4225,7 +4224,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                       _projectStartDate != null && _projectEndDate != null
                           ? '${DateFormat('MMM d, yyyy').format(_projectStartDate!)} - ${DateFormat('MMM d, yyyy').format(_projectEndDate!)}'
                           : 'Failed to load project dates',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade700,
                         fontWeight: FontWeight.w400,
@@ -4237,7 +4236,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                     Flexible(
                       child: Text(
                         'Offline Mode',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 10,
                           color: Colors.orange.shade700,
                           fontWeight: FontWeight.w500,
@@ -4329,7 +4328,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           child: Center(
             child: Text(
               DateFormat('MMM yyyy').format(currentMonth),
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 10,
               ),
@@ -4359,7 +4358,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     List<Widget> dayHeaders = [];
     final totalDays =
         _projectEndDate!.difference(_projectStartDate!).inDays + 1;
-    final dayHeaderStyle = GoogleFonts.poppins(
+    final dayHeaderStyle = TextStyle(
       fontSize: 8,
       fontWeight: FontWeight.w400,
     );
@@ -4565,19 +4564,19 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
   TextStyle _getTaskNameStyle(TaskType taskType) {
     switch (taskType) {
       case TaskType.mainTask:
-        return GoogleFonts.poppins(
+        return TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.bold,
           color: Colors.blue.shade800,
         );
       case TaskType.subTask:
-        return GoogleFonts.poppins(
+        return TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: Colors.green.shade700,
         );
       case TaskType.task:
-        return GoogleFonts.poppins(fontSize: 11);
+        return TextStyle(fontSize: 11);
     }
   }
 }
@@ -4888,7 +4887,7 @@ class TaskContextMenu extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               text,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 13,
                 color: textColor ?? Colors.grey.shade800,
                 fontWeight: FontWeight.w500,

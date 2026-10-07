@@ -3,12 +3,13 @@ import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/review_checkout_request_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
-import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// MainAdmin/Admin overview of every checkout request currently awaiting
 /// review, across all assets/tools — the discoverable entry point into the
@@ -35,7 +36,7 @@ class PendingRequestsScreen extends ConsumerWidget {
     final requestsAsync = ref.watch(pendingRequestsProvider);
 
     return BaseLayout(
-      title: 'Pending Requests',
+      title: context.l10n.pendingRequests,
       project: project,
       logger: logger,
       selectedMenuItem: 'Inventory',
@@ -50,20 +51,20 @@ class PendingRequestsScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: inventoryNavy.withValues(alpha: 0.08),
+                    color: AppColors.brandTint,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.pending_actions, color: inventoryNavy),
+                  child: Icon(Icons.pending_actions, color: AppColors.brandInk),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Pending Requests', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text(context.l10n.pendingRequests, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink)),
                       Text(
-                        'Awaiting your approval before checkout',
-                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                        context.l10n.pendingRequestsSubtitle,
+                        style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                       ),
                     ],
                   ),
@@ -77,7 +78,7 @@ class PendingRequestsScreen extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) {
                 logger.e('❌ PendingRequestsScreen: stream error $err');
-                return Center(child: Text('Error loading requests', style: GoogleFonts.poppins()));
+                return Center(child: Text(friendlyError(err, action: context.l10n.couldNotLoadRequests), textAlign: TextAlign.center));
               },
               data: (requests) {
                 if (requests.isEmpty) {
@@ -87,13 +88,13 @@ class PendingRequestsScreen extends ConsumerWidget {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(color: inventoryNavy.withValues(alpha: 0.06), shape: BoxShape.circle),
-                          child: Icon(Icons.inbox_outlined, size: 40, color: inventoryNavy.withValues(alpha: 0.35)),
+                          decoration: BoxDecoration(color: AppColors.brandTint, shape: BoxShape.circle),
+                          child: Icon(Icons.inbox_outlined, size: 40, color: AppColors.brandInk.withValues(alpha: 0.5)),
                         ),
                         const SizedBox(height: 14),
-                        Text('No pending requests', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[800])),
+                        Text(context.l10n.noPendingRequests, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.ink)),
                         const SizedBox(height: 4),
-                        Text('New checkout requests will show up here.', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500])),
+                        Text(context.l10n.newCheckoutRequestsHint, style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                       ],
                     ),
                   );
@@ -151,10 +152,10 @@ class PendingRequestsScreen extends ConsumerWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+            border: Border.all(color: AppColors.border),
+            boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 3))],
           ),
           child: Row(
             children: [
@@ -175,17 +176,17 @@ class PendingRequestsScreen extends ConsumerWidget {
                     Text(r.assetName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14)),
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.ink)),
                     const SizedBox(height: 4),
                     Text(
-                      'Requested by ${r.requestedByName}${r.projectName != null ? ' • ${r.projectName}' : ''}',
+                      '${context.l10n.requestedByName(r.requestedByName)}${r.projectName != null ? ' • ${r.projectName}' : ''}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                     const SizedBox(height: 2),
                     Text(DateFormat('d MMM yyyy, HH:mm').format(r.requestedAt),
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[500])),
+                        style: TextStyle(fontSize: 11, color: AppColors.inkFaint)),
                   ],
                 ),
               ),
@@ -193,13 +194,13 @@ class PendingRequestsScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: inventoryNavy,
+                  color: AppColors.brand,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Review', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                    Text(context.l10n.review, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
                     const SizedBox(width: 2),
                     const Icon(Icons.chevron_right, size: 16, color: Colors.white),
                   ],

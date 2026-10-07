@@ -4,7 +4,6 @@ import 'package:almaworks/rbacsystem/client_request_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class ClientAccessRequestsScreen extends StatefulWidget {
@@ -100,7 +99,7 @@ class _ClientAccessRequestsScreenState
       appBar: AppBar(
         title: Text(
           'Client Access Requests',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -152,11 +151,11 @@ class _ClientAccessRequestsScreenState
                 const Icon(Icons.error, size: 64, color: Colors.red),
                 const SizedBox(height: 16),
                 Text('Error loading requests',
-                    style: GoogleFonts.poppins(fontSize: 18)),
+                    style: TextStyle(fontSize: 18)),
                 const SizedBox(height: 8),
                 Text(
                   snapshot.error.toString(),
-                  style: GoogleFonts.poppins(color: Colors.grey),
+                  style: TextStyle(color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -175,7 +174,7 @@ class _ClientAccessRequestsScreenState
                 const SizedBox(height: 16),
                 Text(
                   'No Pending Requests',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey[600],
@@ -184,7 +183,7 @@ class _ClientAccessRequestsScreenState
                 const SizedBox(height: 8),
                 Text(
                   'Client access requests will appear here',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
                   ),
@@ -230,14 +229,14 @@ class _ClientAccessRequestsScreenState
                     children: [
                       Text(
                         request.clientUsername,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         request.clientEmail,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
                         ),
@@ -256,7 +255,7 @@ class _ClientAccessRequestsScreenState
                   ),
                   child: Text(
                     'Pending',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Colors.orange[900],
@@ -272,7 +271,7 @@ class _ClientAccessRequestsScreenState
                 const SizedBox(width: 4),
                 Text(
                   'Requested: ${DateFormat('MMM dd, yyyy HH:mm').format(request.requestDate)}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
                   ),
@@ -341,7 +340,7 @@ class _ClientAccessRequestsScreenState
           return Center(
             child: Text(
               'Error loading history',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
           );
         }
@@ -359,7 +358,7 @@ class _ClientAccessRequestsScreenState
                 const SizedBox(height: 16),
                 Text(
                   'No Request History',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey[600],
@@ -412,14 +411,14 @@ class _ClientAccessRequestsScreenState
                     children: [
                       Text(
                         request.clientUsername,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         request.clientEmail,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
                         ),
@@ -439,7 +438,7 @@ class _ClientAccessRequestsScreenState
                   ),
                   child: Text(
                     isApproved ? 'Approved' : 'Denied',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: statusColor,
@@ -496,7 +495,7 @@ class _ClientAccessRequestsScreenState
                       Expanded(
                         child: Text(
                           'Reason: ${request.denialReason}',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                             fontSize: 12,
                             color: Colors.red[900],
                           ),
@@ -596,7 +595,7 @@ class _ClientAccessRequestsScreenState
       children: [
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 10),
-        Text(label, style: GoogleFonts.poppins(fontSize: 13)),
+        Text(label, style: TextStyle(fontSize: 13)),
       ],
     );
   }
@@ -610,7 +609,7 @@ class _ClientAccessRequestsScreenState
             onPressed: () => _showAddProjectsDialog(request),
             icon: const Icon(Icons.add, size: 16),
             label: Text('Add Projects',
-                style: GoogleFonts.poppins(fontSize: 12)),
+                style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.green[700],
               side: BorderSide(color: Colors.green[300]!),
@@ -626,7 +625,7 @@ class _ClientAccessRequestsScreenState
             onPressed: () => _showRevokeProjectsDialog(request),
             icon: const Icon(Icons.remove, size: 16),
             label: Text('Revoke Access',
-                style: GoogleFonts.poppins(fontSize: 12)),
+                style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.orange[700],
               side: BorderSide(color: Colors.orange[300]!),
@@ -649,7 +648,7 @@ class _ClientAccessRequestsScreenState
             onPressed: () => _showReApproveDialog(request),
             icon: const Icon(Icons.check_circle_outline, size: 16),
             label: Text('Approve Now',
-                style: GoogleFonts.poppins(fontSize: 12)),
+                style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.green[700],
               side: BorderSide(color: Colors.green[300]!),
@@ -665,7 +664,7 @@ class _ClientAccessRequestsScreenState
             onPressed: () => _showReDenyDialog(request),
             icon: const Icon(Icons.edit_note, size: 16),
             label: Text('Update Reason',
-                style: GoogleFonts.poppins(fontSize: 12)),
+                style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red[700],
               side: BorderSide(color: Colors.red[300]!),
@@ -688,7 +687,7 @@ class _ClientAccessRequestsScreenState
           const SizedBox(width: 4),
           Text(
             text,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 12,
               color: Colors.grey[600],
             ),
@@ -722,7 +721,7 @@ class _ClientAccessRequestsScreenState
         builder: (context, setDialogState) => AlertDialog(
           title: Text(
             'Approve Access Request',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: SizedBox(
             width: double.maxFinite,
@@ -732,7 +731,7 @@ class _ClientAccessRequestsScreenState
               children: [
                 Text(
                   'Grant access to ${request.clientUsername} as:',
-                  style: GoogleFonts.poppins(fontSize: 14),
+                  style: TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 RadioGroup<String>(
@@ -743,9 +742,9 @@ class _ClientAccessRequestsScreenState
                         .map((r) => RadioListTile<String>(
                               contentPadding: EdgeInsets.zero,
                               dense: true,
-                              title: Text(r.label, style: GoogleFonts.poppins(fontSize: 14)),
+                              title: Text(r.label, style: TextStyle(fontSize: 14)),
                               subtitle: Text(r.subtitle,
-                                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                               value: r.value,
                               activeColor: const Color(0xFF0A2E5A),
                             ))
@@ -755,12 +754,12 @@ class _ClientAccessRequestsScreenState
                 const SizedBox(height: 12),
                 Text(
                   'Select projects to grant access to:',
-                  style: GoogleFonts.poppins(fontSize: 14),
+                  style: TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 16),
                 if (projects.isEmpty)
                   Text('No projects available',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.grey[600], fontSize: 14))
                 else
                   Container(
@@ -774,7 +773,7 @@ class _ClientAccessRequestsScreenState
                         final projectName = project['name'] as String;
                         return CheckboxListTile(
                           title: Text(projectName,
-                              style: GoogleFonts.poppins(fontSize: 14)),
+                              style: TextStyle(fontSize: 14)),
                           value: selectedProjects.contains(projectId),
                           activeColor: const Color(0xFF0A2E5A),
                           onChanged: (bool? value) {
@@ -797,7 +796,7 @@ class _ClientAccessRequestsScreenState
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text('Cancel',
-                  style: GoogleFonts.poppins(color: Colors.grey)),
+                  style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: selectedProjects.isEmpty
@@ -806,7 +805,7 @@ class _ClientAccessRequestsScreenState
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0A2E5A)),
               child: Text('Approve',
-                  style: GoogleFonts.poppins(color: Colors.white)),
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -821,20 +820,20 @@ class _ClientAccessRequestsScreenState
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Deny Access Request',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Are you sure you want to deny access for ${request.clientUsername}?',
-              style: GoogleFonts.poppins(fontSize: 14),
+              style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
               decoration: InputDecoration(
                 labelText: 'Reason (optional)',
-                labelStyle: GoogleFonts.poppins(),
+                labelStyle: TextStyle(),
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -845,7 +844,7 @@ class _ClientAccessRequestsScreenState
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Cancel',
-                style: GoogleFonts.poppins(color: Colors.grey)),
+                style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () =>
@@ -853,7 +852,7 @@ class _ClientAccessRequestsScreenState
             style:
                 ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('Deny',
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -894,7 +893,7 @@ class _ClientAccessRequestsScreenState
               Expanded(
                 child: Text(
                   'Add Projects — ${request.clientUsername}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
@@ -908,7 +907,7 @@ class _ClientAccessRequestsScreenState
               children: [
                 Text(
                   'Select additional projects to grant:',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -921,7 +920,7 @@ class _ClientAccessRequestsScreenState
                       return CheckboxListTile(
                         dense: true,
                         title: Text(p['name'] as String,
-                            style: GoogleFonts.poppins(fontSize: 13)),
+                            style: TextStyle(fontSize: 13)),
                         value: selectedProjects.contains(p['id']),
                         activeColor: Colors.green,
                         onChanged: (v) => setDialogState(() {
@@ -942,7 +941,7 @@ class _ClientAccessRequestsScreenState
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text('Cancel',
-                  style: GoogleFonts.poppins(color: Colors.grey)),
+                  style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton.icon(
               onPressed: selectedProjects.isEmpty
@@ -950,7 +949,7 @@ class _ClientAccessRequestsScreenState
                   : () => _addProjects(request, selectedProjects),
               icon: const Icon(Icons.add, size: 16),
               label: Text('Add',
-                  style: GoogleFonts.poppins(color: Colors.white)),
+                  style: TextStyle(color: Colors.white)),
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.green),
             ),
@@ -987,7 +986,7 @@ class _ClientAccessRequestsScreenState
               Expanded(
                 child: Text(
                   'Revoke Access — ${request.clientUsername}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
@@ -1001,7 +1000,7 @@ class _ClientAccessRequestsScreenState
               children: [
                 Text(
                   'Select projects to revoke access from:',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -1018,7 +1017,7 @@ class _ClientAccessRequestsScreenState
                       Expanded(
                         child: Text(
                           'Revoking all projects will mark this request as denied.',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontSize: 11, color: Colors.orange[800]),
                         ),
                       ),
@@ -1036,7 +1035,7 @@ class _ClientAccessRequestsScreenState
                       return CheckboxListTile(
                         dense: true,
                         title: Text(p['name'] as String,
-                            style: GoogleFonts.poppins(fontSize: 13)),
+                            style: TextStyle(fontSize: 13)),
                         value:
                             selectedToRevoke.contains(p['id']),
                         activeColor: Colors.orange[700],
@@ -1058,7 +1057,7 @@ class _ClientAccessRequestsScreenState
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text('Cancel',
-                  style: GoogleFonts.poppins(color: Colors.grey)),
+                  style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton.icon(
               onPressed: selectedToRevoke.isEmpty
@@ -1066,7 +1065,7 @@ class _ClientAccessRequestsScreenState
                   : () => _revokeProjects(request, selectedToRevoke),
               icon: const Icon(Icons.remove, size: 16),
               label: Text('Revoke',
-                  style: GoogleFonts.poppins(color: Colors.white)),
+                  style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange[700]),
             ),
@@ -1090,14 +1089,14 @@ class _ClientAccessRequestsScreenState
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('MainAdmin is protected', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          title: Text('MainAdmin is protected', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Text(
             '${request.clientUsername} is a MainAdmin — their role, project access, and permissions can\'t be '
             'changed or revoked from this screen, by design.',
-            style: GoogleFonts.poppins(fontSize: 13),
+            style: TextStyle(fontSize: 13),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: GoogleFonts.poppins())),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: TextStyle())),
           ],
         ),
       );
@@ -1143,7 +1142,7 @@ class _ClientAccessRequestsScreenState
               Expanded(
                 child: Text(
                   'Change Role — ${request.clientUsername}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
@@ -1157,7 +1156,7 @@ class _ClientAccessRequestsScreenState
               children: [
                 Text(
                   'Current role: ${request.grantedRole}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: 12, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
@@ -1170,9 +1169,9 @@ class _ClientAccessRequestsScreenState
                         .map((r) => RadioListTile<String>(
                               contentPadding: EdgeInsets.zero,
                               dense: true,
-                              title: Text(r.label, style: GoogleFonts.poppins(fontSize: 14)),
+                              title: Text(r.label, style: TextStyle(fontSize: 14)),
                               subtitle: Text(r.subtitle,
-                                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                               value: r.value,
                               activeColor: const Color(0xFF0A2E5A),
                             ))
@@ -1186,11 +1185,11 @@ class _ClientAccessRequestsScreenState
                     dense: true,
                     controlAffinity: ListTileControlAffinity.leading,
                     title: Text('Project Manager eligible',
-                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     subtitle: Text(
                         'Makes them pickable as a project\'s Linked PM Account (Edit Project), independent '
                         'of the role above — doesn\'t change their base permissions.',
-                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                     value: isProjectManager,
                     activeColor: const Color(0xFF0A2E5A),
                     onChanged: (v) => setDialogState(() => isProjectManager = v ?? false),
@@ -1203,7 +1202,7 @@ class _ClientAccessRequestsScreenState
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text('Cancel',
-                  style: GoogleFonts.poppins(color: Colors.grey)),
+                  style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: (selectedRole == request.grantedRole && isProjectManager == initialIsProjectManager)
@@ -1216,7 +1215,7 @@ class _ClientAccessRequestsScreenState
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0A2E5A)),
               child: Text('Save',
-                  style: GoogleFonts.poppins(color: Colors.white)),
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1249,7 +1248,7 @@ class _ClientAccessRequestsScreenState
               Expanded(
                 child: Text(
                   'Approve Request — ${request.clientUsername}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
@@ -1278,7 +1277,7 @@ class _ClientAccessRequestsScreenState
                         Expanded(
                           child: Text(
                             'Previously denied: ${request.denialReason}',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.red[800]),
                           ),
@@ -1288,7 +1287,7 @@ class _ClientAccessRequestsScreenState
                   ),
                 Text(
                   'Grant access as:',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
                 RadioGroup<String>(
                   groupValue: grantedRole,
@@ -1298,7 +1297,7 @@ class _ClientAccessRequestsScreenState
                         .map((r) => RadioListTile<String>(
                               contentPadding: EdgeInsets.zero,
                               dense: true,
-                              title: Text(r.label, style: GoogleFonts.poppins(fontSize: 13)),
+                              title: Text(r.label, style: TextStyle(fontSize: 13)),
                               value: r.value,
                               activeColor: Colors.green,
                             ))
@@ -1308,12 +1307,12 @@ class _ClientAccessRequestsScreenState
                 const SizedBox(height: 8),
                 Text(
                   'Select projects to grant:',
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 if (projects.isEmpty)
                   Text('No projects available',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.grey[600], fontSize: 13))
                 else
                   Container(
@@ -1327,7 +1326,7 @@ class _ClientAccessRequestsScreenState
                           dense: true,
                           title: Text(p['name'] as String,
                               style:
-                                  GoogleFonts.poppins(fontSize: 13)),
+                                  TextStyle(fontSize: 13)),
                           value: selectedProjects.contains(p['id']),
                           activeColor: Colors.green,
                           onChanged: (v) => setDialogState(() {
@@ -1348,7 +1347,7 @@ class _ClientAccessRequestsScreenState
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text('Cancel',
-                  style: GoogleFonts.poppins(color: Colors.grey)),
+                  style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton.icon(
               onPressed: selectedProjects.isEmpty
@@ -1356,7 +1355,7 @@ class _ClientAccessRequestsScreenState
                   : () => _reApproveRequest(request, selectedProjects, grantedRole),
               icon: const Icon(Icons.check, size: 16),
               label: Text('Approve',
-                  style: GoogleFonts.poppins(color: Colors.white)),
+                  style: TextStyle(color: Colors.white)),
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.green),
             ),
@@ -1381,7 +1380,7 @@ class _ClientAccessRequestsScreenState
             Expanded(
               child: Text(
                 'Update Denial — ${request.clientUsername}',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.bold, fontSize: 15),
               ),
             ),
@@ -1393,18 +1392,18 @@ class _ClientAccessRequestsScreenState
           children: [
             Text(
               'Update the denial reason or confirm denial with a new message:',
-              style: GoogleFonts.poppins(fontSize: 13),
+              style: TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
               decoration: InputDecoration(
                 labelText: 'Denial reason (optional)',
-                labelStyle: GoogleFonts.poppins(fontSize: 13),
+                labelStyle: TextStyle(fontSize: 13),
                 border: const OutlineInputBorder(),
                 hintText: 'Enter a reason for the denial...',
                 hintStyle:
-                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                    TextStyle(fontSize: 12, color: Colors.grey),
               ),
               maxLines: 4,
             ),
@@ -1414,14 +1413,14 @@ class _ClientAccessRequestsScreenState
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Cancel',
-                style: GoogleFonts.poppins(color: Colors.grey)),
+                style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton.icon(
             onPressed: () =>
                 _reDenyRequest(request, reasonController.text),
             icon: const Icon(Icons.save, size: 16),
             label: Text('Save & Re-deny',
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
           ),
         ],
@@ -1610,7 +1609,7 @@ class _ClientAccessRequestsScreenState
   void _showSnack(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: GoogleFonts.poppins()),
+        content: Text(message, style: TextStyle()),
         backgroundColor: color,
       ),
     );

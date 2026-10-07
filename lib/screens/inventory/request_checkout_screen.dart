@@ -5,7 +5,7 @@ import 'package:almaworks/models/inventory/asset_maintenance_window_model.dart';
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/asset_availability_calendar.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/screens/inventory/inventory_providers.dart';
 import 'package:almaworks/screens/inventory/relative_date_label.dart';
@@ -16,9 +16,11 @@ import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// Everyone — Technician, Admin, MainAdmin, or SystemAdmin alike — requests
 /// a booking window for an asset/tool here; nobody books directly for
@@ -113,7 +115,7 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
         if (!mounted) return;
         setState(() {
           _projectsLoaded = true;
-          _projectsError = 'Could not load projects: $e';
+          _projectsError = friendlyError(e, action: l10nNow.couldNotLoadProjects);
         });
       },
     );
@@ -159,14 +161,19 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
     for (final b in bookings) {
       if (!b.blocksCalendar) continue;
       if (_rangesOverlap(_startDate, _endDate, b.scheduledStart, b.scheduledEnd)) {
-        return 'This overlaps an existing booking for ${b.bookedForName} '
-            '(${DateFormat('d MMM').format(b.scheduledStart)} - ${DateFormat('d MMM yyyy').format(b.scheduledEnd)}).';
+        return l10nNow.overlapsBookingFor(
+          b.bookedForName,
+          DateFormat('d MMM').format(b.scheduledStart),
+          DateFormat('d MMM yyyy').format(b.scheduledEnd),
+        );
       }
     }
     for (final m in maintenance) {
       if (_rangesOverlap(_startDate, _endDate, m.startDate, m.endDate)) {
-        return 'This overlaps scheduled maintenance '
-            '(${DateFormat('d MMM').format(m.startDate)} - ${DateFormat('d MMM yyyy').format(m.endDate)}).';
+        return l10nNow.overlapsMaintenanceShort(
+          DateFormat('d MMM').format(m.startDate),
+          DateFormat('d MMM yyyy').format(m.endDate),
+        );
       }
     }
     return null;
@@ -177,11 +184,13 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
 
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Request Checkout',
-      message: 'Send a checkout request for "${widget.asset.name}" '
-          '(${DateFormat('d MMM').format(_startDate)} - ${DateFormat('d MMM yyyy').format(_endDate)}) '
-          'to a MainAdmin/System Admin for approval?',
-      confirmLabel: 'Send Request',
+      title: context.l10n.requestCheckout,
+      message: context.l10n.confirmSendCheckoutRequest(
+        widget.asset.name,
+        DateFormat('d MMM').format(_startDate),
+        DateFormat('d MMM yyyy').format(_endDate),
+      ),
+      confirmLabel: context.l10n.sendRequest,
     );
     if (!confirmed || !mounted) return;
 
@@ -201,19 +210,12 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Request sent — waiting for MainAdmin/System Admin approval', style: GoogleFonts.poppins()),
-          backgroundColor: Colors.green,
-        ),
-      );
+      showSuccessSnack(context, context.l10n.requestSentWaiting);
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ RequestCheckoutScreen: Failed to submit request', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: context.l10n.couldNotSendRequest);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -223,21 +225,21 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
   Widget build(BuildContext context) {
     if (!InventoryPermissions.canRequestOrReturn(widget.requestedByRole)) {
       return BaseLayout(
-        title: 'Request Checkout',
+        title: context.l10n.requestCheckout,
         project: widget.project,
         logger: widget.logger,
         selectedMenuItem: 'Inventory',
         onMenuItemSelected: (_) {},
         child: Center(
           child: Text(
-            'You do not have permission to request a checkout.',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+            context.l10n.noPermissionRequestCheckout,
+            style: TextStyle(fontSize: 14, color: AppColors.inkMuted),
           ),
         ),
       );
     }
     return BaseLayout(
-      title: 'Request Checkout',
+      title: context.l10n.requestCheckout,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -260,15 +262,15 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                         : Icons.precision_manufacturing_outlined,
                     children: [
                       Text(
-                        '${widget.asset.category} • ${widget.asset.itemType}',
-                        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600]),
+                        '${invLabel(widget.asset.category)} • ${invLabel(widget.asset.itemType)}',
+                        style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
                       ),
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Booking Window',
+                    title: context.l10n.bookingWindow,
                     icon: Icons.date_range_outlined,
-                    subtitle: 'When you need it and when you\'ll return it',
+                    subtitle: context.l10n.bookingWindowHint,
                     children: [
                       Row(
                         children: [
@@ -276,8 +278,8 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => _pickDate(isStart: true),
                               icon: const Icon(Icons.event_outlined, size: 18),
-                              label: Text('From ${relativeDayLabelWithDate(_startDate)}',
-                                  style: GoogleFonts.poppins(fontSize: 12.5)),
+                              label: Text(context.l10n.fromDate(relativeDayLabelWithDate(_startDate)),
+                                  style: const TextStyle(fontSize: 12.5)),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -285,8 +287,8 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => _pickDate(isStart: false),
                               icon: const Icon(Icons.event_outlined, size: 18),
-                              label: Text('To ${relativeDayLabelWithDate(_endDate)}',
-                                  style: GoogleFonts.poppins(fontSize: 12.5)),
+                              label: Text(context.l10n.toDate(relativeDayLabelWithDate(_endDate)),
+                                  style: const TextStyle(fontSize: 12.5)),
                             ),
                           ),
                         ],
@@ -308,17 +310,17 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                                   decoration: BoxDecoration(
-                                    color: Colors.red.withValues(alpha: 0.06),
+                                    color: AppColors.dangerTint,
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                                    border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                                      Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 18),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(conflict,
-                                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.red[800])),
+                                            style: TextStyle(fontSize: 12, color: AppColors.danger)),
                                       ),
                                     ],
                                   ),
@@ -326,8 +328,8 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                               ],
                               if (bookings.isNotEmpty || maintenance.isNotEmpty) ...[
                                 const SizedBox(height: 12),
-                                Text('Already on the calendar',
-                                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                                Text(context.l10n.alreadyOnCalendar,
+                                    style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                                 const SizedBox(height: 8),
                                 AssetAvailabilityCalendar(
                                   bookings: bookings,
@@ -341,18 +343,18 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Request Details',
+                    title: context.l10n.requestDetails,
                     icon: Icons.fact_check_outlined,
                     children: [
                       TextFormField(
                         controller: _reasonController,
                         maxLines: 3,
                         decoration: inventoryInputDecoration(
-                          label: 'Reason for checkout',
-                          hint: 'e.g. Needed for site work at ...',
+                          label: context.l10n.reasonForCheckout,
+                          hint: context.l10n.reasonForCheckoutHint,
                           icon: Icons.edit_note_outlined,
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Reason is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? context.l10n.reasonRequired : null,
                       ),
                       const SizedBox(height: 14),
                       if (!_projectsLoaded)
@@ -364,19 +366,19 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.06),
+                            color: AppColors.dangerTint,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                            border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                              Icon(Icons.error_outline, color: AppColors.danger, size: 18),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(_projectsError!,
-                                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.red[800])),
+                                    style: TextStyle(fontSize: 12, color: AppColors.danger)),
                               ),
-                              TextButton(onPressed: _subscribeProjects, child: const Text('Retry')),
+                              TextButton(onPressed: _subscribeProjects, child: Text(context.l10n.retry)),
                             ],
                           ),
                         )
@@ -384,11 +386,11 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                         DropdownButtonFormField<ProjectModel>(
                           initialValue: _selectedProject,
                           isExpanded: true,
-                          decoration: inventoryInputDecoration(label: 'Project (optional)', icon: Icons.folder_outlined),
+                          decoration: inventoryInputDecoration(label: context.l10n.projectOptional, icon: Icons.folder_outlined),
                           items: _projects
                               .map((p) => DropdownMenuItem(
                                     value: p,
-                                    child: Text(p.name, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins()),
+                                    child: Text(p.name, overflow: TextOverflow.ellipsis, style: TextStyle()),
                                   ))
                               .toList(),
                           onChanged: (value) => setState(() => _selectedProject = value),
@@ -397,7 +399,7 @@ class _RequestCheckoutScreenState extends ConsumerState<RequestCheckoutScreen> {
                   ),
                   const SizedBox(height: 4),
                   inventoryPrimaryButton(
-                    label: 'Send Request',
+                    label: context.l10n.sendRequest,
                     isLoading: _isSaving,
                     onPressed: _submit,
                     icon: Icons.send,

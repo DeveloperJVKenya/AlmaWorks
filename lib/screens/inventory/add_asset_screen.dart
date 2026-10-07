@@ -4,16 +4,18 @@ import 'dart:typed_data';
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/inventory/inventory_categories.dart';
 import 'package:almaworks/models/project_model.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// MainAdmin-only screen to register a new company asset or tool, or (when
 /// [existingAsset] is supplied) edit one's descriptive fields. The two item
@@ -82,7 +84,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
     final existing = widget.existingAsset;
     if (existing != null) {
       _nameController.text = existing.name;
-      _categoryController.text = existing.category;
+      _categoryController.text = invLabel(existing.category);
       _descriptionController.text = existing.description ?? '';
       _serialNumberController.text = existing.serialNumber ?? '';
       _condition = existing.initialCondition;
@@ -112,12 +114,12 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: Text('Camera', style: GoogleFonts.poppins()),
+              title: Text(context.l10n.camera),
               onTap: () => Navigator.pop(context, 'camera'),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: Text('Gallery', style: GoogleFonts.poppins()),
+              title: Text(context.l10n.gallery),
               onTap: () => Navigator.pop(context, 'gallery'),
             ),
           ],
@@ -139,24 +141,22 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final itemLabel = _isTool ? 'tool' : 'asset';
-    final actionLabel = _isEditing ? 'Save Changes' : (_isTool ? 'Add Tool' : 'Add Asset');
+    final l = context.l10n;
+    final actionLabel = _isEditing ? l.saveChanges : (_isTool ? l.addTool : l.addAsset);
     final quantity = _isTool && !_isEditing ? _quantity.clamp(1, 500) : 1;
     final addMoreUnits = _isTool && _isEditing ? _addMoreUnits.clamp(0, 500) : 0;
+    final name = _nameController.text.trim();
+    final categoryText = _categoryController.text.trim();
     final confirmed = await showConfirmDialog(
       context,
       title: actionLabel,
       message: _isEditing
-          ? (addMoreUnits > 0
-              ? 'Save changes, and register $addMoreUnits more unit${addMoreUnits == 1 ? '' : 's'} '
-                  'of "${_nameController.text.trim()}"? Each new unit gets its own custody history.'
-              : 'Save changes to "${_nameController.text.trim()}"?')
+          ? (addMoreUnits > 0 ? l.confirmSaveAndAddUnits(addMoreUnits, name) : l.confirmSaveChangesTo(name))
           : quantity > 1
-              ? 'Register $quantity units of "${_nameController.text.trim()}" '
-                  '(${_categoryController.text.trim()}) as new company ${itemLabel}s? '
-                  'Each unit is tracked separately, with its own custody history.'
-              : 'Register "${_nameController.text.trim()}" (${_categoryController.text.trim()}) '
-                  'as a new company $itemLabel?',
+              ? (_isTool
+                  ? l.confirmRegisterToolUnits(quantity, name, categoryText)
+                  : l.confirmRegisterAssetUnits(quantity, name, categoryText))
+              : (_isTool ? l.confirmRegisterTool(name, categoryText) : l.confirmRegisterAsset(name, categoryText)),
       confirmLabel: actionLabel,
     );
     if (!confirmed || !mounted) return;
@@ -188,7 +188,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
         await _inventoryService.updateAsset(
           assetId: widget.existingAsset!.id,
           name: _nameController.text.trim(),
-          category: _categoryController.text.trim(),
+          category: _canonicalCategory,
           description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
           serialNumber: _serialNumberController.text.trim().isEmpty ? null : _serialNumberController.text.trim(),
           photoUrl: photoUrl,
@@ -198,7 +198,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
           await _inventoryService.createAsset(
             itemType: widget.itemType,
             name: _nameController.text.trim(),
-            category: _categoryController.text.trim(),
+            category: _canonicalCategory,
             description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
             initialCondition: _condition,
             createdByUid: widget.createdByUid,
@@ -216,7 +216,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
           await _inventoryService.createAsset(
             itemType: widget.itemType,
             name: _nameController.text.trim(),
-            category: _categoryController.text.trim(),
+            category: _canonicalCategory,
             description: _descriptionController.text.trim().isEmpty
                 ? null
                 : _descriptionController.text.trim(),
@@ -231,37 +231,38 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _isEditing
-                ? (addMoreUnits > 0 ? 'Changes saved, $addMoreUnits more unit${addMoreUnits == 1 ? '' : 's'} added' : 'Changes saved')
-                : quantity > 1
-                    ? '$quantity units added successfully'
-                    : '${_isTool ? 'Tool' : 'Asset'} added successfully',
-            style: GoogleFonts.poppins(),
-          ),
-          backgroundColor: Colors.green,
-        ),
+      showSuccessSnack(
+        context,
+        _isEditing
+            ? (addMoreUnits > 0 ? l.changesSavedUnitsAdded(addMoreUnits) : l.changesSaved)
+            : quantity > 1
+                ? l.unitsAdded(quantity)
+                : (_isTool ? l.toolAdded : l.assetAdded),
       );
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ AddAssetScreen: Failed to save ${widget.itemType}', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showErrorSnack(context, e, action: l.couldNotSaveItem);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
+  /// The stored (English) category when the text is one of the preset
+  /// categories shown in the app language; anything typed by hand is kept.
+  String get _canonicalCategory {
+    final text = _categoryController.text.trim();
+    for (final option in _categoryOptions) {
+      if (invLabel(option) == text || option == text) return option;
+    }
+    return text;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final title = _isEditing ? 'Edit ${_isTool ? 'Tool' : 'Asset'}' : (_isTool ? 'Add Tool' : 'Add Asset');
+    final l = context.l10n;
+    final title = _isEditing ? (_isTool ? l.editTool : l.editAsset) : (_isTool ? l.addTool : l.addAsset);
     return BaseLayout(
       title: title,
       project: widget.project,
@@ -280,11 +281,11 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   inventoryFormSection(
-                    title: 'Photo',
+                    title: l.photo,
                     icon: Icons.photo_camera_outlined,
                     children: [
                       Material(
-                        color: const Color(0xFFFAFBFC),
+                        color: AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(14),
                         child: InkWell(
                           onTap: _isSaving ? null : _pickPhoto,
@@ -293,7 +294,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                             height: 160,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.grey.withValues(alpha: 0.22)),
+                              border: Border.all(color: AppColors.border),
                             ),
                             child: _selectedPhoto == null
                                 ? Center(
@@ -302,12 +303,12 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                                       children: [
                                         CircleAvatar(
                                           radius: 22,
-                                          backgroundColor: inventoryNavy.withValues(alpha: 0.08),
-                                          child: Icon(Icons.add_a_photo_outlined, color: inventoryNavy, size: 22),
+                                          backgroundColor: AppColors.brandTint,
+                                          child: Icon(Icons.add_a_photo_outlined, color: AppColors.brandInk, size: 22),
                                         ),
                                         const SizedBox(height: 8),
-                                        Text('Tap to add a photo (optional)',
-                                            style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+                                        Text(l.tapToAddPhoto,
+                                            style: TextStyle(color: AppColors.inkMuted, fontSize: 12)),
                                       ],
                                     ),
                                   )
@@ -323,16 +324,16 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Details',
+                    title: l.details,
                     icon: Icons.info_outline,
                     children: [
                       TextFormField(
                         controller: _nameController,
                         decoration: inventoryInputDecoration(
-                          label: _isTool ? 'Tool Name' : 'Asset Name',
+                          label: _isTool ? l.toolName : l.assetName,
                           icon: _isTool ? Icons.handyman_outlined : Icons.precision_manufacturing_outlined,
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? l.nameRequired : null,
                       ),
                       if (_isTool && !_isEditing) ...[
                         const SizedBox(height: 14),
@@ -341,13 +342,13 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                           keyboardType: TextInputType.number,
                           onChanged: (_) => setState(() {}),
                           decoration: inventoryInputDecoration(
-                            label: 'Quantity',
-                            hint: 'Number of identical units to register',
+                            label: l.quantity,
+                            hint: l.quantityUnitsHint,
                             icon: Icons.numbers_outlined,
                           ),
                           validator: (v) {
                             final n = int.tryParse((v ?? '').trim());
-                            if (n == null || n < 1) return 'Enter a whole number of 1 or more';
+                            if (n == null || n < 1) return l.wholeNumberOneOrMore;
                             return null;
                           },
                         ),
@@ -359,13 +360,13 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                           keyboardType: TextInputType.number,
                           onChanged: (_) => setState(() {}),
                           decoration: inventoryInputDecoration(
-                            label: 'Add More Units (optional)',
-                            hint: 'e.g. 2 more of this tool just arrived',
+                            label: l.addMoreUnitsOptional,
+                            hint: l.addMoreUnitsHint,
                             icon: Icons.add_box_outlined,
                           ),
                           validator: (v) {
                             final n = int.tryParse((v ?? '0').trim());
-                            if (n == null || n < 0) return 'Enter 0 or more';
+                            if (n == null || n < 0) return l.zeroOrMore;
                             return null;
                           },
                         ),
@@ -375,7 +376,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                         TextFormField(
                           controller: _serialNumberController,
                           decoration: inventoryInputDecoration(
-                            label: 'Serial Number (optional)',
+                            label: l.serialNumberOptional,
                             icon: Icons.qr_code_2_outlined,
                           ),
                         ),
@@ -385,7 +386,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                         controller: _descriptionController,
                         maxLines: 3,
                         decoration: inventoryInputDecoration(
-                          label: 'Description (optional)',
+                          label: l.descriptionOptional,
                           icon: Icons.notes_outlined,
                         ),
                       ),
@@ -395,7 +396,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                           initialValue: _condition,
                           isExpanded: true,
                           decoration: inventoryInputDecoration(
-                            label: _isEditing ? 'Condition at Intake (for new units)' : 'Condition at Intake',
+                            label: _isEditing ? l.conditionAtIntakeNewUnits : l.conditionAtIntakeLabel,
                             icon: Icons.fact_check_outlined,
                           ),
                           items: [
@@ -404,7 +405,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                             AssetModel.conditionFair,
                             AssetModel.conditionDamaged,
                           ]
-                              .map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.poppins())))
+                              .map((c) => DropdownMenuItem(value: c, child: Text(invLabel(c))))
                               .toList(),
                           onChanged: (v) => setState(() => _condition = v ?? _condition),
                         ),
@@ -412,35 +413,35 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Classification',
+                    title: l.classification,
                     icon: Icons.category_outlined,
                     children: [
                       TextFormField(
                         controller: _categoryController,
                         decoration: inventoryInputDecoration(
-                          label: 'Category',
-                          hint: _isTool ? 'e.g. Power Tool, IT Equipment / Electronics' : 'e.g. Heavy Equipment, Vehicle',
+                          label: l.category,
+                          hint: _isTool ? l.toolCategoryHint : l.assetCategoryHint,
                           icon: Icons.category_outlined,
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Category is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? l.categoryRequired : null,
                       ),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: _categoryOptions.where((c) => c != 'Other').map((c) {
-                          final selected = _categoryController.text == c;
+                          final selected = _categoryController.text == invLabel(c);
                           return ChoiceChip(
-                            label: Text(c, style: GoogleFonts.poppins(fontSize: 12)),
+                            label: Text(invLabel(c), style: const TextStyle(fontSize: 12)),
                             selected: selected,
-                            selectedColor: inventoryNavy.withValues(alpha: 0.12),
-                            labelStyle: GoogleFonts.poppins(
+                            selectedColor: AppColors.brandTint,
+                            labelStyle: TextStyle(
                               fontSize: 12,
-                              color: selected ? inventoryNavy : Colors.grey[700],
+                              color: selected ? AppColors.brandInk : AppColors.inkMuted,
                               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                             ),
-                            side: BorderSide(color: selected ? inventoryNavy : Colors.grey.withValues(alpha: 0.3)),
-                            onSelected: (_) => setState(() => _categoryController.text = c),
+                            side: BorderSide(color: selected ? AppColors.brandInk : AppColors.border),
+                            onSelected: (_) => setState(() => _categoryController.text = invLabel(c)),
                           );
                         }).toList(),
                       ),
@@ -448,7 +449,7 @@ class _AddAssetScreenState extends State<AddAssetScreen> {
                   ),
                   const SizedBox(height: 4),
                   inventoryPrimaryButton(
-                    label: _isEditing ? 'Save Changes' : (_isTool ? 'Add Tool' : 'Add Asset'),
+                    label: _isEditing ? l.saveChanges : (_isTool ? l.addTool : l.addAsset),
                     isLoading: _isSaving,
                     onPressed: _submit,
                     icon: _isEditing ? Icons.check : Icons.add,

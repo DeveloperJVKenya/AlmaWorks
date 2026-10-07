@@ -7,6 +7,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logger/logger.dart';
 import 'dart:async';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final String username;
@@ -76,12 +79,7 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
               _currentRole = newRole;
             });
             // ignore: use_build_context_synchronously
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Your role has been updated to $newRole'),
-                backgroundColor: const Color(0xFF0A2E5A),
-              ),
-            );
+            showInfoSnack(context, context.l10n.roleUpdatedTo(roleLabel(newRole)));
           }
         } else {
           setState(() {
@@ -91,9 +89,7 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
       },
       onError: (error) {
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $error')),
-        );
+        showErrorSnack(context, error, action: context.l10n.couldNotCheckRole);
       },
     );
   }
@@ -120,7 +116,7 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
     final isMobile = screenWidth < 600;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -183,7 +179,7 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
           ),
           const SizedBox(height: 16),
           Text(
-            'Welcome, ${widget.username}!',
+            context.l10n.welcomeUser(widget.username),
             style: TextStyle(
               fontSize: isMobile ? 24 : 32,
               fontWeight: FontWeight.bold,
@@ -199,7 +195,7 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'Role: $_currentRole',
+              context.l10n.roleLabel(roleLabel(_currentRole)),
               style: TextStyle(
                 fontSize: isMobile ? 16 : 18,
                 fontWeight: FontWeight.w600,
@@ -219,39 +215,39 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
         Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: Text(
-            'AlmaWorks Site Management',
+            context.l10n.almaWorksSiteManagement,
             style: TextStyle(
               fontSize: isMobile ? 20 : 24,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF0A2E5A),
+              color: AppColors.brandInk,
             ),
           ),
         ),
         _buildFeatureCard(
           icon: Icons.engineering,
-          title: 'Project Management',
-          description: 'Organize and track construction projects from start to finish',
+          title: context.l10n.featureProjectManagement,
+          description: context.l10n.featureProjectManagementDesc,
           isMobile: isMobile,
         ),
         const SizedBox(height: 12),
         _buildFeatureCard(
           icon: Icons.groups,
-          title: 'Team Collaboration',
-          description: 'Coordinate with team members and manage tasks efficiently',
+          title: context.l10n.featureTeamCollaboration,
+          description: context.l10n.featureTeamCollaborationDesc,
           isMobile: isMobile,
         ),
         const SizedBox(height: 12),
         _buildFeatureCard(
           icon: Icons.analytics,
-          title: 'Real-time Insights',
-          description: 'Monitor progress with live updates and comprehensive analytics',
+          title: context.l10n.featureRealtimeInsights,
+          description: context.l10n.featureRealtimeInsightsDesc,
           isMobile: isMobile,
         ),
         const SizedBox(height: 12),
         _buildFeatureCard(
           icon: Icons.location_on,
-          title: 'Site Tracking',
-          description: 'Manage multiple construction sites with location-based tools',
+          title: context.l10n.featureSiteTracking,
+          description: context.l10n.featureSiteTrackingDesc,
           isMobile: isMobile,
         ),
       ],
@@ -279,12 +275,12 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
       child: Container(
         padding: EdgeInsets.all(isMobile ? 16 : 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF0A2E5A).withValues(alpha: 0.1)),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: AppColors.shadow,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -295,12 +291,12 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF0A2E5A).withValues(alpha: 0.1),
+                color: AppColors.brandTint,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 icon,
-                color: const Color(0xFF0A2E5A),
+                color: AppColors.brandInk,
                 size: isMobile ? 28 : 32,
               ),
             ),
@@ -314,7 +310,7 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
                     style: TextStyle(
                       fontSize: isMobile ? 16 : 18,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0A2E5A),
+                      color: AppColors.brandInk,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -322,7 +318,7 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
                     description,
                     style: TextStyle(
                       fontSize: isMobile ? 13 : 14,
-                      color: Colors.grey[600],
+                      color: AppColors.inkMuted,
                     ),
                   ),
                 ],
@@ -337,13 +333,13 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
   Widget _buildContinueButton(bool isMobile) {
     return FloatingActionButton.extended(
       onPressed: _navigateToDashboard,
-      backgroundColor: const Color(0xFF0A2E5A),
+      backgroundColor: AppColors.brand,
       foregroundColor: Colors.white,
       elevation: 4,
       extendedPadding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 28),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       label: Text(
-        'Continue to Dashboard',
+        context.l10n.continueToDashboard,
         style: TextStyle(
           fontSize: isMobile ? 15 : 17,
           fontWeight: FontWeight.bold,
@@ -365,11 +361,11 @@ class WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderS
           );
         }
       },
-      icon: const Icon(Icons.logout, color: Color(0xFF0A2E5A)),
-      label: const Text(
-        'Logout',
+      icon: Icon(Icons.logout, color: AppColors.brandInk),
+      label: Text(
+        context.l10n.logout,
         style: TextStyle(
-          color: Color(0xFF0A2E5A),
+          color: AppColors.brandInk,
           fontWeight: FontWeight.w600,
         ),
       ),

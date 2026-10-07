@@ -1,3 +1,4 @@
+import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// A MainAdmin/SystemAdmin's determination of a worker's overall safety-
@@ -100,13 +101,13 @@ class SafetyTrainingReviewModel {
   static String statusLabel(String status) {
     switch (status) {
       case statusCleared:
-        return 'Cleared to Work';
+        return l10nNow.stClearedToWork;
       case statusNeedsRetraining:
-        return 'Needs Retraining';
+        return l10nNow.stNeedsRetraining;
       case statusEscalated:
-        return 'Escalated';
+        return l10nNow.stEscalated;
       case statusUnknown:
-        return 'Status Unknown';
+        return l10nNow.stStatusUnknown;
       default:
         return status;
     }

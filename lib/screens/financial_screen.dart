@@ -4,7 +4,6 @@ import 'package:almaworks/screens/projects/edit_project_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -140,7 +139,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
                           tabs: _mainTabs.map((tab) => Tab(text: tab)).toList(),
                           labelColor: const Color(0xFF0A2E5A),
                           unselectedLabelColor: Colors.grey,
-                          labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                          labelStyle: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       SizedBox(
                         height: constraints.maxHeight - (isClient ? 0 : 48) - 48,
@@ -235,10 +234,10 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          title: Text(member.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          title: Text(member.name, style: TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(
             '${member.role.capitalize()}${member.category != null ? ' - ${member.category}' : ''}',
-            style: GoogleFonts.poppins(color: Colors.grey[600]),
+            style: TextStyle(color: Colors.grey[600]),
           ),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () => onSelected(member.name),
@@ -262,7 +261,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
               Expanded(
                 child: Text(
                   'Financial Documents for $memberName',
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -285,13 +284,13 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
           const SizedBox(height: 16),
           Text(
             'No $title added to this project yet',
-            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             'Add team members via the Edit Project section.',
-            style: GoogleFonts.poppins(color: Colors.grey[600]),
+            style: TextStyle(color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -338,7 +337,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                     const SizedBox(height: 16),
                     Text(
                       'Database index is being created',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
@@ -347,7 +346,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                     const SizedBox(height: 8),
                     Text(
                       'This usually takes a few minutes. Please try again shortly.',
-                      style: GoogleFonts.poppins(color: Colors.grey[600]),
+                      style: TextStyle(color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -359,7 +358,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           return Center(
             child: Text(
               'Error loading financial documents',
-              style: GoogleFonts.poppins(color: Colors.red[600]),
+              style: TextStyle(color: Colors.red[600]),
             ),
           );
         }
@@ -375,7 +374,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 child: Center(
                   child: Text(
                     'No financial documents in this section',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
               )
@@ -390,10 +389,10 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 
                 return ListTile(
                   leading: Icon(_getDocumentIcon(type), color: _getFileIconColor(type)),
-                  title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                  title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(
                     '$fileName - Uploaded: ${_formatDate(docData['uploadedAt'] as Timestamp)}',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) {
@@ -412,7 +411,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                           children: [
                             Icon(Icons.visibility, color: Colors.blue[600]),
                             const SizedBox(width: 8),
-                            Text('View', style: GoogleFonts.poppins()),
+                            Text('View', style: TextStyle()),
                           ],
                         ),
                       ),
@@ -422,7 +421,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                           children: [
                             Icon(Icons.download, color: Colors.green[600]),
                             const SizedBox(width: 8),
-                            Text('Download', style: GoogleFonts.poppins()),
+                            Text('Download', style: TextStyle()),
                           ],
                         ),
                       ),
@@ -432,7 +431,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                           children: [
                             Icon(Icons.delete, color: Colors.red[600]),
                             const SizedBox(width: 8),
-                            Text('Delete', style: GoogleFonts.poppins()),
+                            Text('Delete', style: TextStyle()),
                           ],
                         ),
                       ),
@@ -579,7 +578,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
     final bool? confirmUpload = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Confirm Upload', style: GoogleFonts.poppins()),
+        title: Text('Confirm Upload', style: TextStyle()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -591,23 +590,23 @@ Widget _buildFinancialList(String role, {String? memberName}) {
             const SizedBox(height: 16),
             Text(
               'Upload: $fileName?',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
               textAlign: TextAlign.center,
             ),
             Text(
               'Size: ${(fileBytes!.length / 1024 / 1024).toStringAsFixed(2)} MB',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Upload', style: GoogleFonts.poppins()),
+            child: Text('Upload', style: TextStyle()),
           ),
         ],
       ),
@@ -631,7 +630,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         key: dialogKey,
-        title: Text('Uploading $fileName', style: GoogleFonts.poppins()),
+        title: Text('Uploading $fileName', style: TextStyle()),
         content: StatefulBuilder(
           builder: (context, setDialogState) {
             return Column(
@@ -647,7 +646,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                   _uploadProgress != null
                       ? '${(_uploadProgress! * 100).toStringAsFixed(0)}%'
                       : 'Starting upload...',
-                  style: GoogleFonts.poppins(),
+                  style: TextStyle(),
                 ),
               ],
             );
@@ -664,7 +663,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 Navigator.pop(context);
               }
             },
-            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.red)),
+            child: Text('Cancel', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -701,7 +700,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Upload failed: ${e.toString()}', style: GoogleFonts.poppins()),
+              content: Text('Upload failed: ${e.toString()}', style: TextStyle()),
             ),
           );
         }
@@ -728,7 +727,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Financial document "$title" added successfully!', style: GoogleFonts.poppins()),
+            content: Text('Financial document "$title" added successfully!', style: TextStyle()),
           ),
         );
         widget.logger.i('✅ FinancialScreen: Document uploaded successfully: $fileName with title $title');
@@ -739,7 +738,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Upload cancelled', style: GoogleFonts.poppins()),
+              content: Text('Upload cancelled', style: TextStyle()),
             ),
           );
         }
@@ -749,7 +748,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error adding document: ${e.message}', style: GoogleFonts.poppins()),
+              content: Text('Error adding document: ${e.message}', style: TextStyle()),
             ),
           );
         }
@@ -760,7 +759,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error adding document: ${e.toString()}', style: GoogleFonts.poppins()),
+            content: Text('Error adding document: ${e.toString()}', style: TextStyle()),
           ),
         );
       }
@@ -821,22 +820,22 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('Enter Document Title', style: GoogleFonts.poppins()),
+          title: Text('Enter Document Title', style: TextStyle()),
           content: TextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
               labelText: 'Title (e.g., Invoice, Receipt, Payment)',
               border: const OutlineInputBorder(),
-              labelStyle: GoogleFonts.poppins(),
+              labelStyle: TextStyle(),
             ),
-            style: GoogleFonts.poppins(),
+            style: TextStyle(),
             onChanged: (val) => title = val.trim(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: GoogleFonts.poppins()),
+              child: Text('Cancel', style: TextStyle()),
             ),
             TextButton(
               onPressed: () {
@@ -845,11 +844,11 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 } else {
                   if (!mounted) return;
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('Please enter a title', style: GoogleFonts.poppins())),
+                    SnackBar(content: Text('Please enter a title', style: TextStyle())),
                   );
                 }
               },
-              child: Text('OK', style: GoogleFonts.poppins()),
+              child: Text('OK', style: TextStyle()),
             ),
           ],
         );
@@ -912,14 +911,14 @@ Widget _buildFinancialList(String role, {String? memberName}) {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text(name, style: GoogleFonts.poppins()),
+                title: Text(name, style: TextStyle()),
                 content: SingleChildScrollView(
-                  child: SelectableText(content, style: GoogleFonts.poppins()),
+                  child: SelectableText(content, style: TextStyle()),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Close', style: GoogleFonts.poppins()),
+                    child: Text('Close', style: TextStyle()),
                   ),
                 ],
               ),
@@ -935,7 +934,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
               widget.logger.e('Could not launch $viewerUrl');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Could not open document viewer', style: GoogleFonts.poppins()),
+                  content: Text('Could not open document viewer', style: TextStyle()),
                 ),
               );
             }
@@ -945,7 +944,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: ${result.message}', style: GoogleFonts.poppins()),
+                content: Text('Could not open file: ${result.message}', style: TextStyle()),
                 action: SnackBarAction(
                   label: 'Download instead',
                   onPressed: () => _downloadDocument(url, name),
@@ -958,7 +957,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('No internet and no cache available', style: GoogleFonts.poppins()),
+              content: Text('No internet and no cache available', style: TextStyle()),
             ),
           );
         }
@@ -968,7 +967,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error viewing document: $e', style: GoogleFonts.poppins()),
+            content: Text('Error viewing document: $e', style: TextStyle()),
           ),
         );
       }
@@ -995,7 +994,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
               kIsWeb 
                 ? result
                 : 'Downloaded successfully!\nLocation: $result',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
@@ -1022,7 +1021,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
               e.toString().contains('permission')
                 ? 'Storage permission denied. Please enable it in Settings.'
                 : 'Error downloading: $e',
-              style: GoogleFonts.poppins(),
+              style: TextStyle(),
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
@@ -1045,15 +1044,15 @@ Widget _buildFinancialList(String role, {String? memberName}) {
     final bool? confirmDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Document', style: GoogleFonts.poppins()),
+        title: Text('Delete Document', style: TextStyle()),
         content: Text(
           'Are you sure you want to delete this financial document? This action cannot be undone.',
-          style: GoogleFonts.poppins(),
+          style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -1061,7 +1060,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text('Delete', style: GoogleFonts.poppins()),
+            child: Text('Delete', style: TextStyle()),
           ),
         ],
       ),
@@ -1082,7 +1081,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         widget.logger.i('✅ FinancialScreen: Document deleted successfully');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Financial document deleted successfully', style: GoogleFonts.poppins()),
+            content: Text('Financial document deleted successfully', style: TextStyle()),
             backgroundColor: Colors.green,
           ),
         );
@@ -1092,7 +1091,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting: $e', style: GoogleFonts.poppins()),
+            content: Text('Error deleting: $e', style: TextStyle()),
             backgroundColor: Colors.red,
           ),
         );

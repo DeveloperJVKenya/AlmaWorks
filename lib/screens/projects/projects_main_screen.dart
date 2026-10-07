@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:logger/logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ProjectsMainScreen extends StatefulWidget {
   final Logger logger;
@@ -82,7 +81,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
       appBar: AppBar(
         title: Text(
           _isClientView ? 'My Projects' : 'Projects',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),

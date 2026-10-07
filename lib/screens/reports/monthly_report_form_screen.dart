@@ -10,7 +10,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 // image_cropper is used on Android / iOS only.
 // On web it depends on Cropper.js which may not be loaded, causing
@@ -719,7 +718,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
                 child: Text('Select Signature Photo',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                         color: _navy)),
@@ -729,13 +728,13 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 leading:
                     const Icon(Icons.photo_library_rounded, color: _navy),
                 title: Text('Choose from Gallery',
-                    style: GoogleFonts.poppins(fontSize: 13)),
+                    style: TextStyle(fontSize: 13)),
                 onTap: () => Navigator.pop(ctx, ImageSource.gallery),
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt_rounded, color: _navy),
                 title: Text('Take a Photo',
-                    style: GoogleFonts.poppins(fontSize: 13)),
+                    style: TextStyle(fontSize: 13)),
                 onTap: () => Navigator.pop(ctx, ImageSource.camera),
               ),
               const SizedBox(height: 8),
@@ -773,7 +772,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Could not process photo: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -806,7 +805,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Could not read the selected PDF file.',
-            style: GoogleFonts.poppins()),
+            style: TextStyle()),
         backgroundColor: Colors.red[700],
       ));
       return;
@@ -828,7 +827,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         setState(() => _isGeneratingPdf = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Could not render PDF: $e',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -870,7 +869,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         color: Colors.white, size: 18),
                     const SizedBox(width: 10),
                     Text('Select a Page',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: 14)),
@@ -886,7 +885,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                   child: Text(
                     'Tap the page that contains the signature',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         fontSize: 12, color: Colors.grey[600]),
                   ),
                 ),
@@ -923,7 +922,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text('Page ${i + 1}',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: _navy)),
@@ -1148,7 +1147,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Monthly report saved!',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.green[700],
         ));
       }
@@ -1204,18 +1203,18 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('New Monthly Report',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Current form saved. Start a fresh monthly report?',
-            style: GoogleFonts.poppins()),
+            style: TextStyle()),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: GoogleFonts.poppins())),
+              child: Text('Cancel', style: TextStyle())),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: _navy, foregroundColor: Colors.white),
-            child: Text('New Form', style: GoogleFonts.poppins()),
+            child: Text('New Form', style: TextStyle()),
           ),
         ],
       ),
@@ -1891,7 +1890,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       final ctx = context;
       if (!ctx.mounted) return;
       ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-        content: Text('PDF saved: $fileName', style: GoogleFonts.poppins()),
+        content: Text('PDF saved: $fileName', style: TextStyle()),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 4),
       ));
@@ -1903,7 +1902,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
   void _showError(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(msg, style: GoogleFonts.poppins()),
+        content: Text(msg, style: TextStyle()),
         backgroundColor: Colors.red[700]));
   }
 
@@ -1920,7 +1919,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               backgroundColor: _navy,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_rounded),
-              label: Text('Edit', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              label: Text('Edit', style: TextStyle(fontWeight: FontWeight.w600)),
             )
           : null,
       appBar: AppBar(
@@ -1929,7 +1928,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         elevation: 0,
         title: Text(
           '${widget.project.name} — Monthly Report${_isReadOnly ? ' (View)' : ''}',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               fontWeight: FontWeight.w600, fontSize: 16),
         ),
         leading: IconButton(
@@ -2067,7 +2066,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             textAlign: TextAlign.center,
             softWrap: true,
             overflow: TextOverflow.visible,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -2080,7 +2079,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Contract No: ',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white70, fontSize: 13)),
               SizedBox(
                 width: 180,
@@ -2088,11 +2087,11 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   controller: _contractCtrl,
                   readOnly: _isReadOnly,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'e.g. CN-2024-001',
-                    hintStyle: GoogleFonts.poppins(
+                    hintStyle: TextStyle(
                         color: Colors.white38, fontSize: 12),
                     isDense: true,
                     border: const UnderlineInputBorder(
@@ -2124,7 +2123,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Text(
           'MONTHLY REPORT',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             color: _navy,
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -2172,7 +2171,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       color: _navy, size: 15),
                   const SizedBox(width: 4),
                   Text(label,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: labelFs,
                         fontWeight: FontWeight.w600,
                         color: _navy.withValues(alpha: 0.7),
@@ -2182,7 +2181,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 const SizedBox(height: 3),
                 Text(
                   DateFormat('EEE, MMM d, yyyy').format(date),
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: valueFs,
                     fontWeight: FontWeight.w500,
                     color: Colors.black87,
@@ -2230,7 +2229,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               ),
             ),
             child: Text('BUILDING',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: _navy,
@@ -2247,11 +2246,11 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   FilteringTextInputFormatter.allow(
                       RegExp(r'[a-zA-Z0-9\s\-_/]'))
                 ],
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 13, color: Colors.black87),
                 decoration: InputDecoration(
                   hintText: 'Building number, ID, or name…',
-                  hintStyle: GoogleFonts.poppins(
+                  hintStyle: TextStyle(
                       color: Colors.grey[400], fontSize: 12),
                   border: InputBorder.none,
                   isDense: true,
@@ -2347,7 +2346,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                                 size: 14, color: _navy),
                             const SizedBox(width: 6),
                             Text('Images (${allImages.length})',
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: _navy)),
@@ -2541,14 +2540,14 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text('D',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
                           fontSize: 14)),
                 ),
                 const SizedBox(width: 10),
                 Text('PLANNED ACTIVITIES FOR',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
@@ -2572,7 +2571,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       dropdownColor: _navy,
                       icon: const Icon(Icons.arrow_drop_down_rounded,
                           color: Colors.white, size: 18),
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 12),
@@ -2581,7 +2580,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                           (i) => DropdownMenuItem(
                               value: i + 1,
                               child: Text(_monthNames[i].toUpperCase(),
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600)))),
@@ -2648,14 +2647,14 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(letter,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
                     fontSize: 14)),
           ),
           const SizedBox(width: 10),
           Text(title,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
@@ -2704,7 +2703,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               ),
             ),
             child: Text(sectionTitle,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
@@ -2788,7 +2787,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   enableInteractiveSelection: true,
                   customStyles: quill.DefaultStyles(
                     placeHolder: quill.DefaultTextBlockStyle(
-                      GoogleFonts.poppins(
+                      TextStyle(
                           color: Colors.grey[400], fontSize: 13),
                       const quill.HorizontalSpacing(0, 0),
                       const quill.VerticalSpacing(0, 0),
@@ -2796,7 +2795,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       null,
                     ),
                     paragraph: quill.DefaultTextBlockStyle(
-                      GoogleFonts.poppins(
+                      TextStyle(
                           color: Colors.black87, fontSize: 13),
                       const quill.HorizontalSpacing(0, 0),
                       const quill.VerticalSpacing(2, 2),
@@ -2858,7 +2857,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                           color: _navy.withValues(alpha: 0.5), size: 16),
                       const SizedBox(width: 6),
                       Text('Tap ⊞ in toolbar to insert a table',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: _navy.withValues(alpha: 0.5),
                               fontSize: 11)),
                     ],
@@ -2891,7 +2890,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             icon: const Icon(Icons.attach_file_rounded, size: 15),
             label: Text(
               imageCount > 0 ? 'Attach ($imageCount)' : 'Attach',
-              style: GoogleFonts.poppins(fontSize: 12),
+              style: TextStyle(fontSize: 12),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: _navy,
@@ -2912,7 +2911,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             onPressed: _addNewForm,
             icon: const Icon(Icons.add_circle_outline_rounded, size: 15),
             label: Text('Add Form',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 12)),
             style: ElevatedButton.styleFrom(
               backgroundColor: _accentPurple,
@@ -2964,7 +2963,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               const Icon(Icons.draw_rounded, color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Text('SIGNATURES',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
@@ -3040,7 +3039,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               decoration: BoxDecoration(
                   color: _navy, borderRadius: BorderRadius.circular(20)),
               child: Text('Signee $index',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 11)),
@@ -3060,7 +3059,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       size: 12, color: Colors.green[700]),
                   const SizedBox(width: 4),
                   Text('Signed',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: Colors.green[700])),
@@ -3087,7 +3086,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
 
           // ── Signature label ─────────────────────────────────────
           Text('Signature',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: _navy.withValues(alpha: 0.8))),
@@ -3179,7 +3178,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
           Icon(icon, size: 13, color: active ? Colors.white : _navy),
           const SizedBox(width: 5),
           Text(label,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: active ? Colors.white : _navy)),
@@ -3207,7 +3206,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               icon: const Icon(Icons.photo_camera_rounded, size: 14),
               label: Text(
                 hasImage ? 'Replace & Crop' : 'Pick Photo & Crop',
-                style: GoogleFonts.poppins(fontSize: 11),
+                style: TextStyle(fontSize: 11),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _navy,
@@ -3253,7 +3252,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             Expanded(
               child: Text(
                 'Pick a PDF → select the page → drag to crop the signature area',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 10,
                     color: _navy.withValues(alpha: 0.75)),
               ),
@@ -3270,7 +3269,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               icon: const Icon(Icons.picture_as_pdf_rounded, size: 14),
               label: Text(
                 hasImage ? 'Replace from PDF' : 'Pick PDF & Crop',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 11),
               ),
               style: ElevatedButton.styleFrom(
@@ -3332,7 +3331,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                                   color: Colors.grey[400], size: 18),
                               const SizedBox(width: 6),
                               Text('Could not load signature',
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       color: Colors.grey[400],
                                       fontSize: 11)),
                             ]),
@@ -3346,7 +3345,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       color: Colors.grey[300], size: 28),
                   const SizedBox(height: 6),
                   Text('No signature yet',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.grey[400], fontSize: 12)),
                 ],
               ),
@@ -3372,7 +3371,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       icon: Icon(Icons.delete_outline_rounded,
           size: 14, color: Colors.red[400]),
       label: Text('Clear',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               fontSize: 11,
               color: Colors.red[400],
               fontWeight: FontWeight.w600)),
@@ -3403,7 +3402,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         ),
         child: Center(
           child: Text('No signature provided',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   color: Colors.grey[400], fontSize: 12)),
         ),
       );
@@ -3437,7 +3436,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                           color: Colors.grey[400], size: 18),
                       const SizedBox(width: 6),
                       Text('Could not load signature',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: Colors.grey[400], fontSize: 11)),
                     ],
                   ),
@@ -3456,14 +3455,14 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
     return TextFormField(
       controller: ctrl,
       readOnly: _isReadOnly,
-      style: GoogleFonts.poppins(fontSize: 13, color: Colors.black87),
+      style: TextStyle(fontSize: 13, color: Colors.black87),
       decoration: InputDecoration(
         labelText: label,
         labelStyle:
-            GoogleFonts.poppins(fontSize: 11, color: _navy.withValues(alpha: 0.7)),
+            TextStyle(fontSize: 11, color: _navy.withValues(alpha: 0.7)),
         hintText: hint,
         hintStyle:
-            GoogleFonts.poppins(color: Colors.grey[400], fontSize: 12),
+            TextStyle(color: Colors.grey[400], fontSize: 12),
         prefixIcon:
             Icon(icon, color: _navy.withValues(alpha: 0.6), size: 18),
         isDense: true,
@@ -3509,7 +3508,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         valueColor: AlwaysStoppedAnimation(Colors.white)))
                 : Icon(icon, size: 16),
             label: Text(label,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 13)),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
@@ -3711,7 +3710,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                       color: Colors.white, size: 18),
                   const SizedBox(width: 10),
                   Text('Edit Column Headers',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 14)),
@@ -3738,7 +3737,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                             borderRadius: BorderRadius.circular(5),
                           ),
                           child: Text('${i + 1}',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: _navy)),
@@ -3747,7 +3746,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                         Expanded(
                           child: TextField(
                             controller: ctrls[i],
-                            style: GoogleFonts.poppins(fontSize: 12),
+                            style: TextStyle(fontSize: 12),
                             autofocus: i == 0,
                             textInputAction: i < ctrls.length - 1
                                 ? TextInputAction.next
@@ -3755,7 +3754,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                             decoration: InputDecoration(
                               isDense: true,
                               hintText: 'Column ${i + 1}',
-                              hintStyle: GoogleFonts.poppins(
+                              hintStyle: TextStyle(
                                   color: Colors.grey[400], fontSize: 11),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6)),
@@ -3787,7 +3786,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                             borderRadius: BorderRadius.circular(8)),
                       ),
                       child: Text('Cancel',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: _navy, fontSize: 13)),
                     ),
                   ),
@@ -3797,7 +3796,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                       onPressed: () => Navigator.pop(ctx, true),
                       icon: const Icon(Icons.check_rounded, size: 16),
                       label: Text('Apply',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 13)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _navy,
@@ -3880,7 +3879,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                       color: Colors.white, size: 18),
                   const SizedBox(width: 10),
                   Text('Add New Column',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 14)),
@@ -3896,16 +3895,16 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                 child: TextField(
                   controller: nameCtrl,
                   autofocus: true,
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: TextStyle(fontSize: 13),
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => Navigator.pop(ctx, true),
                   decoration: InputDecoration(
                     isDense: true,
                     labelText: 'Column Name',
                     labelStyle:
-                        GoogleFonts.poppins(fontSize: 12, color: _navy),
+                        TextStyle(fontSize: 12, color: _navy),
                     hintText: 'e.g. Status',
-                    hintStyle: GoogleFonts.poppins(
+                    hintStyle: TextStyle(
                         color: Colors.grey[400], fontSize: 12),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(7)),
@@ -3931,7 +3930,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                             borderRadius: BorderRadius.circular(8)),
                       ),
                       child: Text('Cancel',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: _navy, fontSize: 13)),
                     ),
                   ),
@@ -3941,7 +3940,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                       onPressed: () => Navigator.pop(ctx, true),
                       icon: const Icon(Icons.add_rounded, size: 16),
                       label: Text('Add Column',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 13)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _navy,
@@ -4024,7 +4023,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
         child: Text(
           text,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
               fontSize: 11),
@@ -4040,7 +4039,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Text(
           _controllers[rowIdx][colIdx].text,
-          style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87),
+          style: TextStyle(fontSize: 12, color: Colors.black87),
           softWrap: true,
         ),
       );
@@ -4051,7 +4050,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
         controller: _controllers[rowIdx][colIdx],
         maxLines: null,   // ← unlimited lines; cell grows with content
         minLines: 1,
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87),
+        style: TextStyle(fontSize: 12, color: Colors.black87),
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding:
@@ -4110,7 +4109,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                   padding: const EdgeInsets.symmetric(
                       vertical: 10, horizontal: 4),
                   child: Text('${idx + 1}',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: _navy.withValues(alpha: 0.55))),
@@ -4158,7 +4157,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(widget.tableData.title,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: _navy,
                         fontWeight: FontWeight.w600,
                         fontSize: 12)),
@@ -4196,7 +4195,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                                   : Colors.grey[500]),
                           const SizedBox(width: 3),
                           Text(' # ',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   color: widget.tableData.showRowNumbers
@@ -4231,7 +4230,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                               color: Colors.grey[600]),
                           const SizedBox(width: 3),
                           Text('Headers',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey[600])),
@@ -4272,7 +4271,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                                   : Colors.grey[400]),
                           const SizedBox(width: 3),
                           Text('+ Col',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                   color: colCount < 10
@@ -4309,18 +4308,18 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         title: Text('Delete Table',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15)),
                         content: Text(
                             'Delete "${widget.tableData.title}"?',
-                            style: GoogleFonts.poppins(fontSize: 13)),
+                            style: TextStyle(fontSize: 13)),
                         actions: [
                           TextButton(
                               onPressed: () =>
                                   Navigator.pop(ctx, false),
                               child: Text('Cancel',
-                                  style: GoogleFonts.poppins())),
+                                  style: TextStyle())),
                           ElevatedButton(
                             onPressed: () =>
                                 Navigator.pop(ctx, true),
@@ -4328,7 +4327,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                                 backgroundColor: Colors.red[600],
                                 foregroundColor: Colors.white),
                             child: Text('Delete',
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                     fontWeight: FontWeight.w600)),
                           ),
                         ],
@@ -4351,7 +4350,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
               Expanded(
                 child: Text(
                     '"Headers" to rename · "+ Col" to add column · content wraps automatically',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         fontSize: 10, color: Colors.grey[500])),
               ),
             ]),
@@ -4454,7 +4453,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
   Widget _sectionLabel(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: Text(text,
-        style: GoogleFonts.poppins(
+        style: TextStyle(
             fontSize: 12, fontWeight: FontWeight.w600, color: _navy)),
   );
 
@@ -4482,7 +4481,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                     color: Colors.white, size: 20),
                 const SizedBox(width: 10),
                 Text('Insert Table',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 15)),
@@ -4505,11 +4504,11 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                     _sectionLabel('Table Title'),
                     TextField(
                       controller: _titleCtrl,
-                      style: GoogleFonts.poppins(fontSize: 13),
+                      style: TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         isDense: true,
                         hintText: 'e.g. Materials Used',
-                        hintStyle: GoogleFonts.poppins(
+                        hintStyle: TextStyle(
                             color: Colors.grey[400], fontSize: 12),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(7)),
@@ -4533,7 +4532,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                         padding:
                             const EdgeInsets.symmetric(horizontal: 12),
                         child: Text('$_colCount',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                                 color: _navy)),
@@ -4557,7 +4556,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: Text('${i + 1}',
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: _navy)),
@@ -4567,14 +4566,14 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                             child: TextField(
                               key: ValueKey('col_$i'),
                               controller: _colCtrls[i],
-                              style: GoogleFonts.poppins(fontSize: 12),
+                              style: TextStyle(fontSize: 12),
                               textInputAction: i < _colCount - 1
                                   ? TextInputAction.next
                                   : TextInputAction.done,
                               decoration: InputDecoration(
                                 isDense: true,
                                 hintText: 'Header ${i + 1}',
-                                hintStyle: GoogleFonts.poppins(
+                                hintStyle: TextStyle(
                                     color: Colors.grey[400], fontSize: 11),
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(6)),
@@ -4604,7 +4603,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                         padding:
                             const EdgeInsets.symmetric(horizontal: 12),
                         child: Text('$_rowCount',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                                 color: _navy)),
@@ -4655,7 +4654,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                                   : Colors.grey[500]),
                           const SizedBox(width: 6),
                           Text('Show row numbers',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: _showRowNumbers
@@ -4684,7 +4683,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                           borderRadius: BorderRadius.circular(8)),
                     ),
                     child: Text('Cancel',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: _navy, fontSize: 13)),
                   ),
                 ),
@@ -4694,7 +4693,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                     onPressed: _submit,
                     icon: const Icon(Icons.table_chart_rounded, size: 16),
                     label: Text('Insert',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             fontWeight: FontWeight.w700, fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _navy,
@@ -4921,13 +4920,13 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                                   color: Colors.grey[300], size: 28),
                               const SizedBox(height: 5),
                               Text('Sign here',
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       color: Colors.grey[350],
                                       fontSize: 12)),
                               const SizedBox(height: 2),
                               Text(
                                   'Finger · Stylus · Mouse — all supported',
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       color: Colors.grey[350],
                                       fontSize: 9.5)),
                             ],
@@ -4952,7 +4951,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                     size: 13, color: Colors.green[700]),
                 const SizedBox(width: 4),
                 Text('Signature captured',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.green[700],
                         fontSize: 10,
                         fontWeight: FontWeight.w600)),
@@ -4966,7 +4965,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(_inputLabel,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             fontSize: 9,
                             color: _navy,
                             fontWeight: FontWeight.w500)),
@@ -4974,7 +4973,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                 ],
               ] else
                 Text('Draw your signature above',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.grey[400], fontSize: 10)),
             ]),
             if (_hasSignature)
@@ -4983,7 +4982,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                 icon: Icon(Icons.refresh_rounded,
                     size: 13, color: Colors.red[400]),
                 label: Text('Clear',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.red[400],
                         fontSize: 11,
                         fontWeight: FontWeight.w600)),
@@ -5344,7 +5343,7 @@ class _CropDialogState extends State<_CropDialog> {
                 const SizedBox(width: 10),
                 Text(
                   'Crop Signature',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 14),
@@ -5366,7 +5365,7 @@ class _CropDialogState extends State<_CropDialog> {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Text(
                 'Drag to reposition · Use handles to resize the crop area',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 11, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
@@ -5413,7 +5412,7 @@ class _CropDialogState extends State<_CropDialog> {
                         : () => Navigator.of(context).pop(null),
                     icon: const Icon(Icons.close_rounded, size: 16),
                     label: Text('Cancel',
-                        style: GoogleFonts.poppins(fontSize: 13)),
+                        style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _navy),
                       foregroundColor: _navy,
@@ -5438,7 +5437,7 @@ class _CropDialogState extends State<_CropDialog> {
                         : const Icon(Icons.check_rounded, size: 16),
                     label: Text(
                       _isCropping ? 'Cropping…' : 'Use Crop',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 13),
                     ),
                     style: ElevatedButton.styleFrom(

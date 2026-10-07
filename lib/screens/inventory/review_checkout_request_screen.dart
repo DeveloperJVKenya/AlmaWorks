@@ -4,16 +4,17 @@ import 'dart:typed_data';
 import 'package:almaworks/models/inventory/asset_booking_model.dart';
 import 'package:almaworks/models/inventory/checkout_request_model.dart';
 import 'package:almaworks/models/project_model.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// MainAdmin/SystemAdmin screen: review a pending checkout request.
 /// Approving captures condition notes + photos as the actual handover
@@ -69,10 +70,9 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
   Future<void> _approve() async {
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Approve & Check Out',
-      message: 'Approve ${widget.request.requestedByName}\'s request for "${widget.request.assetName}"? '
-          'This checks the item out to them immediately.',
-      confirmLabel: 'Approve',
+      title: context.l10n.approveAndCheckOut,
+      message: context.l10n.confirmApproveRequest(widget.request.requestedByName, widget.request.assetName),
+      confirmLabel: context.l10n.approve,
     );
     if (!confirmed || !mounted) return;
 
@@ -101,16 +101,12 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Approved — item checked out', style: GoogleFonts.poppins()), backgroundColor: Colors.green),
-      );
+      showSuccessSnack(context, context.l10n.approvedCheckedOut);
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ ReviewCheckoutRequestScreen: Approve failed', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: context.l10n.couldNotApprove);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -122,21 +118,21 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text('Reject Request', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        title: Text(context.l10n.rejectRequest, style: const TextStyle(fontWeight: FontWeight.w600)),
         content: TextField(
           controller: reasonController,
           maxLines: 2,
           decoration: InputDecoration(
-            labelText: 'Reason (optional)',
+            labelText: context.l10n.reasonOptional,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel', style: GoogleFonts.poppins())),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            child: Text('Reject', style: GoogleFonts.poppins()),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
+            child: Text(context.l10n.reject),
           ),
         ],
       ),
@@ -154,16 +150,12 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Request rejected', style: GoogleFonts.poppins()), backgroundColor: Colors.blueGrey),
-      );
+      showInfoSnack(context, context.l10n.requestRejected);
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ ReviewCheckoutRequestScreen: Reject failed', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: context.l10n.couldNotReject);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -172,8 +164,9 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
   @override
   Widget build(BuildContext context) {
     final r = widget.request;
+    final l = context.l10n;
     return BaseLayout(
-      title: 'Review Request',
+      title: l.reviewRequest,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -191,39 +184,38 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
                   title: r.assetName,
                   icon: Icons.inbox_outlined,
                   children: [
-                    _infoRow('Requested by', r.requestedByName),
-                    if (r.projectName != null) _infoRow('Project', r.projectName!),
-                    _infoRow('Reason', r.reason),
+                    _infoRow(l.requestedBy, r.requestedByName),
+                    if (r.projectName != null) _infoRow(l.project, r.projectName!),
+                    _infoRow(l.reason, r.reason),
                   ],
                 ),
                 inventoryFormSection(
-                  title: 'Approve — Condition at Handover',
+                  title: l.approveConditionAtHandover,
                   icon: Icons.fact_check_outlined,
                   children: [
                     Text(
-                      'Filling this in and tapping Approve checks the item out to '
-                      '${r.requestedByName} immediately.',
-                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+                      l.approveChecksOutNote(r.requestedByName),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _conditionController,
                       maxLines: 3,
-                      decoration: inventoryInputDecoration(label: 'Condition notes', icon: Icons.fact_check_outlined),
+                      decoration: inventoryInputDecoration(label: l.conditionNotes, icon: Icons.fact_check_outlined),
                     ),
                     const SizedBox(height: 16),
-                    Text('Delivery', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[700])),
+                    Text(l.delivery, style: TextStyle(fontSize: 12.5, color: AppColors.inkMuted)),
                     const SizedBox(height: 8),
                     SegmentedButton<String>(
                       segments: [
                         ButtonSegment(
                           value: AssetBookingModel.deliveryDirect,
-                          label: Text('Direct handoff', style: GoogleFonts.poppins(fontSize: 12.5)),
+                          label: Text(l.directHandoff, style: const TextStyle(fontSize: 12.5)),
                           icon: const Icon(Icons.handshake_outlined, size: 16),
                         ),
                         ButtonSegment(
                           value: AssetBookingModel.deliveryDriver,
-                          label: Text('Via Driver/Transporter', style: GoogleFonts.poppins(fontSize: 12.5)),
+                          label: Text(l.viaDriver, style: const TextStyle(fontSize: 12.5)),
                           icon: const Icon(Icons.local_shipping_outlined, size: 16),
                         ),
                       ],
@@ -234,14 +226,14 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
                       const SizedBox(height: 12),
                       TextField(
                         controller: _driverNameController,
-                        decoration: inventoryInputDecoration(label: 'Driver name', icon: Icons.person_outline),
+                        decoration: inventoryInputDecoration(label: l.driverNameShort, icon: Icons.person_outline),
                       ),
                     ],
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: _isSaving ? null : _pickPhotos,
                       icon: const Icon(Icons.add_a_photo_outlined),
-                      label: Text('Add Photos', style: GoogleFonts.poppins()),
+                      label: Text(l.addPhotos),
                     ),
                     if (_selectedPhotos.isNotEmpty) ...[
                       const SizedBox(height: 10),
@@ -288,10 +280,10 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
                   children: [
                     OutlinedButton.icon(
                       onPressed: _isSaving ? null : _reject,
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      label: Text('Reject', style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w600)),
+                      icon: Icon(Icons.close, color: AppColors.danger),
+                      label: Text(l.reject, style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600)),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.red),
+                        side: BorderSide(color: AppColors.danger),
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       ),
                     ),
@@ -301,7 +293,7 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
                           ? const SizedBox(
                               height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.check),
-                      label: Text('Approve', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      label: Text(l.approve, style: const TextStyle(fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
@@ -328,9 +320,9 @@ class _ReviewCheckoutRequestScreenState extends State<ReviewCheckoutRequestScree
         children: [
           SizedBox(
             width: 100,
-            child: Text(label, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+            child: Text(label, style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
           ),
-          Expanded(child: Text(value, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500))),
+          Expanded(child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink))),
         ],
       ),
     );

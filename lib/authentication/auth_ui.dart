@@ -8,7 +8,10 @@
 // primary color.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:almaworks/core/settings/settings_providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 /// Brand palette — matches base_layout.dart / dashboard_screen.dart / the
 /// Communication module, so auth screens feel like the same product rather
@@ -92,9 +95,21 @@ class _AuthResponsiveShellState extends State<AuthResponsiveShell>
     );
 
     return Scaffold(
-      backgroundColor: AuthColors.canvas,
+      backgroundColor: AppColors.isDark ? AppColors.canvas : AuthColors.canvas,
       body: SafeArea(
-        child: isWide
+        child: Stack(
+          children: [
+            Positioned.fill(child: _content(isWide, animatedForm)),
+            // Language can be changed before signing in, too.
+            const Positioned(top: 10, right: 12, child: AuthLanguageSwitcher()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _content(bool isWide, Widget animatedForm) {
+    return isWide
             ? Row(
                 children: [
                   Expanded(
@@ -124,7 +139,59 @@ class _AuthResponsiveShellState extends State<AuthResponsiveShell>
                     child: Center(child: animatedForm),
                   ),
                 ),
-              ),
+              );
+  }
+}
+
+/// Compact language pill (flag + code) with a menu of every language.
+class AuthLanguageSwitcher extends ConsumerWidget {
+  const AuthLanguageSwitcher({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(languageProvider);
+    return PopupMenuButton<AppLanguage>(
+      tooltip: context.l10n.chooseLanguage,
+      initialValue: current,
+      onSelected: ref.read(languageProvider.notifier).set,
+      position: PopupMenuPosition.under,
+      itemBuilder: (_) => [
+        for (final lang in AppLanguage.values)
+          PopupMenuItem(
+            value: lang,
+            child: Row(
+              children: [
+                Text(lang.flag, style: const TextStyle(fontSize: 20)),
+                const SizedBox(width: 10),
+                Text(lang.nativeName),
+                if (lang == current) ...[
+                  const Spacer(),
+                  Icon(Icons.check_rounded, size: 18, color: AppColors.brandInk),
+                ],
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 3))],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(current.flag, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 6),
+            Text(
+              current.code.toUpperCase(),
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.ink),
+            ),
+            Icon(Icons.expand_more_rounded, size: 18, color: AppColors.inkMuted),
+          ],
+        ),
       ),
     );
   }
@@ -179,7 +246,7 @@ class _BrandPanel extends StatelessWidget {
                   const SizedBox(height: 32),
                   Text(
                     headline,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -189,7 +256,7 @@ class _BrandPanel extends StatelessWidget {
                   const SizedBox(height: 14),
                   Text(
                     subtext,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 15,
                       color: Colors.white.withValues(alpha: 0.82),
                       height: 1.5,
@@ -225,7 +292,7 @@ class AuthFormCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -276,6 +343,8 @@ class AuthTextField extends StatefulWidget {
 
 class _AuthTextFieldState extends State<AuthTextField> {
   final _focusNode = FocusNode();
+
+  Color get _accent => AppColors.isDark ? AppColors.brandInk : AuthColors.accent;
   bool _focused = false;
 
   @override
@@ -315,41 +384,41 @@ class _AuthTextFieldState extends State<AuthTextField> {
         validator: widget.validator,
         textInputAction: widget.textInputAction,
         onFieldSubmitted: widget.onFieldSubmitted,
-        style: GoogleFonts.poppins(fontSize: 14.5, color: const Color(0xFF1A1A1A)),
+        style: TextStyle(fontSize: 14.5, color: AppColors.ink),
         cursorColor: AuthColors.accent,
         decoration: InputDecoration(
           labelText: widget.label,
           hintText: widget.hint,
-          labelStyle: GoogleFonts.poppins(
+          labelStyle: TextStyle(
             fontSize: 13.5,
-            color: _focused ? AuthColors.accent : Colors.grey[600],
+            color: _focused ? _accent : AppColors.inkMuted,
             fontWeight: FontWeight.w500,
           ),
-          hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[400]),
+          hintStyle: TextStyle(fontSize: 13, color: AppColors.inkFaint),
           prefixIcon: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: Icon(
               widget.icon,
               key: ValueKey(_focused),
-              color: _focused ? AuthColors.accent : Colors.grey[500],
+              color: _focused ? _accent : AppColors.inkFaint,
               size: 21,
             ),
           ),
           suffixIcon: widget.suffixIcon,
           filled: true,
-          fillColor: _focused ? Colors.white : const Color(0xFFF8F9FB),
+          fillColor: _focused ? AppColors.surface : AppColors.surfaceAlt,
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderSide: BorderSide(color: AppColors.border),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderSide: BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AuthColors.accent, width: 1.6),
+            borderSide: BorderSide(color: _accent, width: 1.6),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -442,7 +511,7 @@ class _AuthPrimaryButtonState extends State<AuthPrimaryButton> {
                   : Text(
                       widget.label,
                       key: const ValueKey('label'),
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -476,19 +545,19 @@ class AuthErrorBanner extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.red[50],
+          color: AppColors.dangerTint,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red[200]!),
+          border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.error_outline_rounded, color: Colors.red[700], size: 19),
+            Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 19),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 message,
-                style: GoogleFonts.poppins(color: Colors.red[700], fontSize: 13),
+                style: TextStyle(color: AppColors.danger, fontSize: 13),
               ),
             ),
           ],
@@ -530,8 +599,8 @@ class _AuthLinkButtonState extends State<AuthLinkButton> {
           duration: const Duration(milliseconds: 100),
           child: Text(
             widget.text,
-            style: GoogleFonts.poppins(
-              color: AuthColors.accent,
+            style: TextStyle(
+              color: AppColors.isDark ? AppColors.brandInk : AuthColors.accent,
               fontWeight: FontWeight.w600,
               fontSize: 13.5,
             ),

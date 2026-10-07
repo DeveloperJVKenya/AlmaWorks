@@ -4,7 +4,6 @@ import 'package:almaworks/services/enhanced_notification_service.dart';
 import 'package:almaworks/services/notification_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
@@ -961,7 +960,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
           return Center(
             child: Text(
               'Error loading data',
-              style: GoogleFonts.poppins(color: Colors.red),
+              style: TextStyle(color: Colors.red),
             ),
           );
         }
@@ -1194,7 +1193,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                           Expanded(
                             child: Text(
                               task.taskName,
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
                                 color: Colors.grey.shade800,
@@ -1226,7 +1225,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                                       const SizedBox(width: 10),
                                       Text(
                                         'Mark Started',
-                                        style: GoogleFonts.poppins(fontSize: 14),
+                                        style: TextStyle(fontSize: 14),
                                       ),
                                     ],
                                   ),
@@ -1241,7 +1240,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                                       const SizedBox(width: 10),
                                       Text(
                                         'Mark Completed',
-                                        style: GoogleFonts.poppins(fontSize: 14),
+                                        style: TextStyle(fontSize: 14),
                                       ),
                                     ],
                                   ),
@@ -1261,7 +1260,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                           const SizedBox(width: 6),
                           Text(
                             task.formattedDateRange,
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade600,
                             ),
@@ -1278,7 +1277,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                           const SizedBox(width: 6),
                           Text(
                             'Duration: ${task.duration} day${task.duration == 1 ? '' : 's'}',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade600,
                             ),
@@ -1297,7 +1296,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                             const SizedBox(width: 6),
                             Text(
                               'Started: ${DateFormat('MMM dd, yyyy').format(task.actualStartDate!)}',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.blue.shade600,
                               ),
@@ -1315,7 +1314,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                             const SizedBox(width: 6),
                             Text(
                               'Completed: ${DateFormat('MMM dd, yyyy').format(task.actualEndDate!)}',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.green.shade600,
                               ),
@@ -1358,7 +1357,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                               const SizedBox(width: 4),
                               Text(
                                 task.taskStatus == 'COMPLETED' ? 'Completed' : 'Started',
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                   color: task.taskStatus == 'COMPLETED' 
@@ -1396,7 +1395,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                               const SizedBox(width: 6),
                               Text(
                                 urgencyText,
-                                style: GoogleFonts.poppins(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                   color: itemColor,
@@ -1450,7 +1449,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                 SizedBox(height: verticalSpacing),
                 Text(
                   isSearch ? 'No tasks match your search' : 'No $title tasks',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: fontSize,
                     color: Colors.grey.shade600,
                   ),
@@ -1482,7 +1481,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         children: [
           Text(
             title,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: color.withValues(alpha: 0.9),
@@ -1497,7 +1496,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
             ),
             child: Text(
               count.toString(),
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: color,
@@ -1520,7 +1519,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
             const SizedBox(height: 24),
             Text(
               'No Schedule Data Available',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey.shade600,
@@ -1530,7 +1529,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
             const SizedBox(height: 12),
             Text(
               'Add tasks in the Gantt Chart to see schedule monitoring',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade500,
               ),

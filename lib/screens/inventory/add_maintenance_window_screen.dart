@@ -1,15 +1,17 @@
 import 'package:almaworks/models/inventory/asset_model.dart';
 import 'package:almaworks/models/project_model.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/services/inventory_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:almaworks/widgets/confirm_dialog.dart';
 import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// MainAdmin/Admin: block out a date range during which this asset/tool
 /// can't be booked (e.g. scheduled servicing) — rejected if it overlaps an
@@ -76,10 +78,13 @@ class _AddMaintenanceWindowScreenState extends State<AddMaintenanceWindowScreen>
 
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Schedule Maintenance',
-      message: 'Block "${widget.asset.name}" from booking between '
-          '${DateFormat('d MMM').format(_startDate)} and ${DateFormat('d MMM yyyy').format(_endDate)}?',
-      confirmLabel: 'Schedule',
+      title: context.l10n.scheduleMaintenance,
+      message: context.l10n.confirmBlockForMaintenance(
+        widget.asset.name,
+        DateFormat('d MMM').format(_startDate),
+        DateFormat('d MMM yyyy').format(_endDate),
+      ),
+      confirmLabel: context.l10n.schedule,
     );
     if (!confirmed || !mounted) return;
 
@@ -96,16 +101,12 @@ class _AddMaintenanceWindowScreenState extends State<AddMaintenanceWindowScreen>
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Maintenance window scheduled', style: GoogleFonts.poppins()), backgroundColor: Colors.green),
-      );
+      showSuccessSnack(context, context.l10n.maintenanceScheduled);
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ AddMaintenanceWindowScreen: Failed to submit', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: context.l10n.couldNotScheduleMaintenance);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -115,21 +116,21 @@ class _AddMaintenanceWindowScreenState extends State<AddMaintenanceWindowScreen>
   Widget build(BuildContext context) {
     if (!InventoryPermissions.canManageCatalog(widget.userRole)) {
       return BaseLayout(
-        title: 'Schedule Maintenance',
+        title: context.l10n.scheduleMaintenance,
         project: widget.project,
         logger: widget.logger,
         selectedMenuItem: 'Inventory',
         onMenuItemSelected: (_) {},
         child: Center(
           child: Text(
-            'You do not have permission to schedule maintenance.',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+            context.l10n.noPermissionScheduleMaintenance,
+            style: TextStyle(fontSize: 14, color: AppColors.inkMuted),
           ),
         ),
       );
     }
     return BaseLayout(
-      title: 'Schedule Maintenance',
+      title: context.l10n.scheduleMaintenance,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -149,12 +150,12 @@ class _AddMaintenanceWindowScreenState extends State<AddMaintenanceWindowScreen>
                       title: widget.asset.name,
                       icon: Icons.build_outlined,
                       children: [
-                        Text('${widget.asset.category} • ${widget.asset.itemType}',
-                            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
+                        Text('${invLabel(widget.asset.category)} • ${invLabel(widget.asset.itemType)}',
+                            style: TextStyle(fontSize: 13, color: AppColors.inkMuted)),
                       ],
                     ),
                     inventoryFormSection(
-                      title: 'Blackout Window',
+                      title: context.l10n.maintenanceDates,
                       icon: Icons.date_range_outlined,
                       children: [
                         Row(
@@ -163,8 +164,8 @@ class _AddMaintenanceWindowScreenState extends State<AddMaintenanceWindowScreen>
                               child: OutlinedButton.icon(
                                 onPressed: () => _pickDate(isStart: true),
                                 icon: const Icon(Icons.event_outlined, size: 18),
-                                label: Text('From ${DateFormat('d MMM yyyy').format(_startDate)}',
-                                    style: GoogleFonts.poppins(fontSize: 12.5)),
+                                label: Text(context.l10n.fromDate(DateFormat('d MMM yyyy').format(_startDate)),
+                                    style: const TextStyle(fontSize: 12.5)),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -172,8 +173,8 @@ class _AddMaintenanceWindowScreenState extends State<AddMaintenanceWindowScreen>
                               child: OutlinedButton.icon(
                                 onPressed: () => _pickDate(isStart: false),
                                 icon: const Icon(Icons.event_outlined, size: 18),
-                                label: Text('To ${DateFormat('d MMM yyyy').format(_endDate)}',
-                                    style: GoogleFonts.poppins(fontSize: 12.5)),
+                                label: Text(context.l10n.toDate(DateFormat('d MMM yyyy').format(_endDate)),
+                                    style: const TextStyle(fontSize: 12.5)),
                               ),
                             ),
                           ],
@@ -183,17 +184,17 @@ class _AddMaintenanceWindowScreenState extends State<AddMaintenanceWindowScreen>
                           controller: _reasonController,
                           maxLines: 2,
                           decoration: inventoryInputDecoration(
-                            label: 'Reason',
-                            hint: 'e.g. Scheduled servicing',
+                            label: context.l10n.reason,
+                            hint: context.l10n.maintenanceReasonHint,
                             icon: Icons.edit_note_outlined,
                           ),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Reason is required' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty) ? context.l10n.reasonRequired : null,
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     inventoryPrimaryButton(
-                      label: 'Schedule',
+                      label: context.l10n.schedule,
                       isLoading: _isSaving,
                       onPressed: _submit,
                       icon: Icons.build_outlined,

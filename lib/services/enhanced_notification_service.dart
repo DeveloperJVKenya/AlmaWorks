@@ -5,6 +5,7 @@ import 'package:logger/logger.dart';
 import 'package:almaworks/models/schedule_monitor_model.dart';
 import 'package:almaworks/services/notification_preferences.dart';
 import 'package:almaworks/services/notification_service.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 class EnhancedNotificationService {
   final Logger logger;
@@ -32,8 +33,8 @@ class EnhancedNotificationService {
           // Overdue notification channel - RED theme
           NotificationChannel(
             channelKey: 'schedule_overdue',
-            channelName: 'Overdue Tasks',
-            channelDescription: 'Notifications for overdue tasks',
+            channelName: l10nNow.channelOverdueTasks,
+            channelDescription: l10nNow.channelOverdueTasksDesc,
             defaultColor: Colors.red,
             ledColor: Colors.red,
             importance: NotificationImportance.High,
@@ -45,8 +46,8 @@ class EnhancedNotificationService {
           // Starting Soon notification channel - ORANGE theme
           NotificationChannel(
             channelKey: 'schedule_starting_soon',
-            channelName: 'Starting Soon Tasks',
-            channelDescription: 'Notifications for tasks starting soon',
+            channelName: l10nNow.channelStartingSoon,
+            channelDescription: l10nNow.channelStartingSoonDesc,
             defaultColor: Colors.orange,
             ledColor: Colors.orange,
             importance: NotificationImportance.High,
@@ -57,8 +58,8 @@ class EnhancedNotificationService {
           // Group summary channel
           NotificationChannel(
             channelKey: 'schedule_summary',
-            channelName: 'Task Summary',
-            channelDescription: 'Grouped task notifications',
+            channelName: l10nNow.channelTaskSummary,
+            channelDescription: l10nNow.channelTaskSummaryDesc,
             defaultColor: Colors.blue,
             ledColor: Colors.blue,
             importance: NotificationImportance.Max,
@@ -170,12 +171,12 @@ class EnhancedNotificationService {
       final color = type == 'overdue' ? Colors.red : Colors.orange;
       
       final title = type == 'overdue' 
-          ? '⚠️ Overdue: ${task.taskName}'
-          : '📅 Starting Soon: ${task.taskName}';
+          ? l10nNow.taskOverdueTitle(task.taskName)
+          : l10nNow.taskStartingSoonTitle(task.taskName);
       
       final body = type == 'overdue'
-          ? 'This task is overdue and needs attention!'
-          : 'Starts in ${task.daysUntilStart} day${task.daysUntilStart == 1 ? '' : 's'}';
+          ? l10nNow.taskOverdueBody
+          : l10nNow.taskStartsInDays(task.daysUntilStart);
 
       await AwesomeNotifications().createNotification(
         content: NotificationContent(
@@ -204,7 +205,7 @@ class EnhancedNotificationService {
         actionButtons: [
           NotificationActionButton(
             key: 'MARK_READ',
-            label: 'Mark Read',
+            label: l10nNow.markReadAction,
             autoDismissible: true,
           ),
         ],
@@ -230,13 +231,14 @@ class EnhancedNotificationService {
       final overdueCount = taskGroups.where((t) => t['type'] == 'overdue').length;
       final startingSoonCount = taskGroups.where((t) => t['type'] == 'starting_soon').length;
       
-      String summaryText = '';
+      final l = l10nNow;
+      final String summaryText;
       if (overdueCount > 0 && startingSoonCount > 0) {
-        summaryText = '$overdueCount overdue, $startingSoonCount starting soon';
+        summaryText = l.taskAlertsSummaryBoth(overdueCount, startingSoonCount);
       } else if (overdueCount > 0) {
-        summaryText = '$overdueCount overdue task${overdueCount == 1 ? '' : 's'}';
+        summaryText = l.taskAlertsSummaryOverdue(overdueCount);
       } else {
-        summaryText = '$startingSoonCount starting soon';
+        summaryText = l.taskAlertsSummarySoon(startingSoonCount);
       }
 
       // Build task list for big text
@@ -250,7 +252,7 @@ class EnhancedNotificationService {
         content: NotificationContent(
           id: groupId,
           channelKey: 'schedule_summary',
-          title: '🔔 $totalCount Task Alert${totalCount > 1 ? 's' : ''}',
+          title: l.taskAlertsTitle(totalCount),
           body: summaryText,
           summary: taskList,
           notificationLayout: NotificationLayout.BigText,
@@ -271,7 +273,7 @@ class EnhancedNotificationService {
         actionButtons: [
           NotificationActionButton(
             key: 'VIEW_ALL',
-            label: 'View All',
+            label: l.viewAll,
             autoDismissible: false,
           ),
         ],

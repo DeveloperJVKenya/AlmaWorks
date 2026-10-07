@@ -2,8 +2,9 @@ import 'package:almaworks/models/inventory/asset_booking_model.dart';
 import 'package:almaworks/models/inventory/asset_maintenance_window_model.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 /// Shows an asset's upcoming schedule — booked windows (who/when) and
 /// maintenance blackout windows — so a second user can see when it will
@@ -53,8 +54,8 @@ class AssetAvailabilityCalendar extends StatelessWidget {
             const Icon(Icons.event_available, color: InventoryColors.available, size: 18),
             const SizedBox(width: 8),
             Expanded(
-              child: Text('No upcoming bookings or maintenance — open availability ahead.',
-                  style: GoogleFonts.poppins(fontSize: 12, color: InventoryColors.available)),
+              child: Text(context.l10n.noUpcomingBookings,
+                  style: TextStyle(fontSize: 12, color: InventoryColors.available)),
             ),
           ],
         ),
@@ -62,6 +63,7 @@ class AssetAvailabilityCalendar extends StatelessWidget {
     }
 
     final fmt = DateFormat('d MMM yyyy');
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: entries.map((e) {
@@ -69,8 +71,8 @@ class AssetAvailabilityCalendar extends StatelessWidget {
             ? InventoryColors.maintenanceScheduled
             : (e.booking!.isActive ? InventoryColors.checkedOut : InventoryColors.booked);
         final title = e.isMaintenance
-            ? 'Maintenance: ${e.maintenance!.reason}'
-            : '${e.booking!.isActive ? 'Checked out to' : 'Booked for'} ${e.booking!.bookedForName}';
+            ? l.maintenanceReason(e.maintenance!.reason)
+            : (e.booking!.isActive ? l.checkedOutTo(e.booking!.bookedForName) : l.bookedFor(e.booking!.bookedForName));
         final canCancel = e.isMaintenance
             ? onCancelMaintenance != null
             : (onCancelBooking != null && !e.booking!.isActive);
@@ -88,18 +90,18 @@ class AssetAvailabilityCalendar extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
+                    Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
                     const SizedBox(height: 2),
                     Text('${fmt.format(e.start)} — ${fmt.format(e.end)}',
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[700])),
+                        style: TextStyle(fontSize: 11, color: AppColors.inkMuted)),
                   ],
                 ),
               ),
               if (canCancel)
                 IconButton(
                   icon: const Icon(Icons.close, size: 18),
-                  tooltip: e.isMaintenance ? 'Cancel maintenance' : 'Cancel booking',
-                  color: Colors.grey[600],
+                  tooltip: e.isMaintenance ? l.cancelMaintenance : l.cancelBooking,
+                  color: AppColors.inkMuted,
                   onPressed: () => e.isMaintenance
                       ? onCancelMaintenance!(e.maintenance!)
                       : onCancelBooking!(e.booking!),

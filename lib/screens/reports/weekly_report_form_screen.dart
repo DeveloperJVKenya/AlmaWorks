@@ -6,7 +6,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
@@ -359,7 +358,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
   void _showError(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.poppins()),
+      content: Text(msg, style: TextStyle()),
       backgroundColor: Colors.red[700],
     ));
   }
@@ -449,7 +448,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Weekly report saved successfully.',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.green,
         ));
       }
@@ -608,7 +607,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       if (!currentContext.mounted) return;
       ScaffoldMessenger.of(currentContext).showSnackBar(SnackBar(
         content: Text('PDF saved to Downloads: $fileName',
-            style: GoogleFonts.poppins()),
+            style: TextStyle()),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 4),
       ));
@@ -1017,19 +1016,19 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16)),
         title: Text('New Weekly Report',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
             'Current form saved. Start a fresh weekly report?',
-            style: GoogleFonts.poppins()),
+            style: TextStyle()),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: GoogleFonts.poppins())),
+              child: Text('Cancel', style: TextStyle())),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: _navy, foregroundColor: Colors.white),
-            child: Text('New Form', style: GoogleFonts.poppins()),
+            child: Text('New Form', style: TextStyle()),
           ),
         ],
       ),
@@ -1058,7 +1057,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               backgroundColor: _navy,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_rounded),
-              label: Text('Edit', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              label: Text('Edit', style: TextStyle(fontWeight: FontWeight.w600)),
             )
           : null,
       appBar: AppBar(
@@ -1068,7 +1067,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
         title: Text(
           '${widget.project.name} — Weekly Report${_isReadOnly ? ' (View)' : ''}',
           style:
-              GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+              TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -1159,7 +1158,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             textAlign: TextAlign.center,
             softWrap: true,
             overflow: TextOverflow.visible,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -1172,7 +1171,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Contract No: ',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white70, fontSize: 13)),
               SizedBox(
                 width: 180,
@@ -1180,11 +1179,11 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   controller: _contractCtrl,
                   readOnly: _isReadOnly,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'e.g. CN-2024-001',
-                    hintStyle: GoogleFonts.poppins(
+                    hintStyle: TextStyle(
                         color: Colors.white38, fontSize: 12),
                     isDense: true,
                     border: const UnderlineInputBorder(
@@ -1215,7 +1214,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Text(
           'WEEKLY REPORT',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             color: _navy,
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -1264,7 +1263,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       color: _navy, size: iconSz),
                   const SizedBox(width: 4),
                   Text(label,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         fontSize: labelFs,
                         fontWeight: FontWeight.w600,
                         color: _navy.withValues(alpha: 0.7),
@@ -1274,7 +1273,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 const SizedBox(height: 3),
                 Text(
                   DateFormat('EEE, MMM d, yyyy').format(date),
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: valueFs,
                     fontWeight: FontWeight.w500,
                     color: Colors.black87,
@@ -1322,7 +1321,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               ),
             ),
             child: Text('BUILDING',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: _navy,
@@ -1339,11 +1338,11 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   FilteringTextInputFormatter.allow(
                       RegExp(r'[a-zA-Z0-9\s\-_/]'))
                 ],
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 13, color: Colors.black87),
                 decoration: InputDecoration(
                   hintText: 'Building number, ID, or name…',
-                  hintStyle: GoogleFonts.poppins(
+                  hintStyle: TextStyle(
                       color: Colors.grey[400], fontSize: 12),
                   border: InputBorder.none,
                   isDense: true,
@@ -1400,7 +1399,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 ),
                 child: Text(
                   '${idx + 1}',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: labelFs,
                       fontWeight: FontWeight.w700,
                       color: _navy),
@@ -1410,7 +1409,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               Expanded(
                 child: Text(
                   name,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: valueFs,
                       fontWeight: FontWeight.w500,
                       color: Colors.black87),
@@ -1469,7 +1468,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             child: Row(
               children: [
                 Text('SUB-CONTRACTOR',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
@@ -1485,7 +1484,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                     ),
                     child: Text(
                       '${_selectedSubContractors.length} selected',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.w500),
@@ -1504,7 +1503,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 if (_subcontractorNames.isEmpty)
                   Text(
                     'No sub-contractors added to this project.',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.grey[500], fontSize: valueFs),
                   )
                 else ...[
@@ -1513,7 +1512,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   if (canAddMore) ...[
                     Text(
                       'ADD SUB-CONTRACTOR',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: labelFs,
                           fontWeight: FontWeight.w600,
                           color: _navy.withValues(alpha: 0.7),
@@ -1525,7 +1524,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       key: ValueKey(_selectedSubContractors.length),
                       initialValue: null,
                       hint: Text('Select sub-contractor…',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: Colors.grey[400],
                               fontSize: valueFs)),
                       isExpanded: true,
@@ -1549,13 +1548,13 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                               color: _navy, width: 1.5),
                         ),
                       ),
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: valueFs, color: Colors.black87),
                       items: available
                           .map((n) => DropdownMenuItem(
                               value: n,
                               child: Text(n,
-                                  style: GoogleFonts.poppins(
+                                  style: TextStyle(
                                       fontSize: valueFs))))
                           .toList(),
                       onChanged: (v) {
@@ -1584,7 +1583,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
                           'All sub-contractors have been selected.',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: Colors.green[700],
                               fontSize: labelFs,
                               fontWeight: FontWeight.w500),
@@ -1596,7 +1595,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                         _isReadOnly
                             ? 'SUB-CONTRACTORS'
                             : 'SELECTED SUB-CONTRACTORS',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             fontSize: labelFs,
                             fontWeight: FontWeight.w600,
                             color: _navy.withValues(alpha: 0.7),
@@ -1613,7 +1612,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         'No sub-contractor selected yet.',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: valueFs),
                       ),
@@ -1623,7 +1622,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   if (_selectedSubContractors.isEmpty && _isReadOnly)
                     Text(
                       '—',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.grey[400], fontSize: valueFs),
                     ),
                 ],
@@ -1679,7 +1678,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Text(
         label,
-        style: GoogleFonts.poppins(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: _navy,
@@ -1710,10 +1709,10 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               minLines: 3,
               maxLength: 800,
               style:
-                  GoogleFonts.poppins(fontSize: 13, color: Colors.black87),
+                  TextStyle(fontSize: 13, color: Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Enter any additional notes…',
-                hintStyle: GoogleFonts.poppins(
+                hintStyle: TextStyle(
                     color: Colors.grey[400], fontSize: 12),
                 isDense: true,
                 border: OutlineInputBorder(
@@ -1729,7 +1728,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   borderSide: const BorderSide(color: _navy, width: 1.5),
                 ),
                 counterStyle:
-                    GoogleFonts.poppins(fontSize: 10, color: Colors.grey),
+                    TextStyle(fontSize: 10, color: Colors.grey),
               ),
               onChanged: _isReadOnly ? null : (_) => _saveDraftToCache(),
             ),
@@ -1763,7 +1762,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Text(
               'PERCENTAGE OF WORK DONE',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: _navy,
@@ -1786,17 +1785,17 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   FilteringTextInputFormatter.allow(
                       RegExp(r'^\d{0,3}\.?\d{0,2}')),
                 ],
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: _navy,
                 ),
                 decoration: InputDecoration(
                   hintText: '0',
-                  hintStyle: GoogleFonts.poppins(
+                  hintStyle: TextStyle(
                       color: Colors.grey[400], fontSize: 20),
                   suffixText: '%',
-                  suffixStyle: GoogleFonts.poppins(
+                  suffixStyle: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: _navy,
@@ -1855,7 +1854,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   color: Colors.white70, size: 16),
               const SizedBox(width: 8),
               Text('ATTACHED IMAGES',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
@@ -1863,7 +1862,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               const Spacer(),
               if (allImages.isNotEmpty)
                 Text('${allImages.length} image(s)',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white70, fontSize: 11)),
             ]),
           ),
@@ -1995,7 +1994,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                         Icons.add_photo_alternate_rounded, size: 18),
                     label: Text(
                       allImages.isEmpty ? 'Attach Image(s)' : 'Add More Images',
-                      style: GoogleFonts.poppins(fontSize: 13),
+                      style: TextStyle(fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _navy,
@@ -2037,7 +2036,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                             Colors.white)))
                 : Icon(icon, size: 16),
             label: Text(label,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 13)),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
@@ -2098,7 +2097,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       ),
       child: Text(
         title,
-        style: GoogleFonts.poppins(
+        style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w700,
           fontSize: 12,
@@ -2251,7 +2250,7 @@ class _WeeklyActivityTableWidgetState
                       color: Colors.white, size: 18),
                   const SizedBox(width: 10),
                   Text('Edit Column Headers',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 14)),
@@ -2277,14 +2276,14 @@ class _WeeklyActivityTableWidgetState
                             borderRadius: BorderRadius.circular(5),
                           ),
                           child: Text('${i + 1}',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontSize: 11, fontWeight: FontWeight.w700, color: _navy)),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: ctrls[i],
-                            style: GoogleFonts.poppins(fontSize: 12),
+                            style: TextStyle(fontSize: 12),
                             autofocus: i == 0,
                             textInputAction: i < ctrls.length - 1
                                 ? TextInputAction.next
@@ -2292,7 +2291,7 @@ class _WeeklyActivityTableWidgetState
                             decoration: InputDecoration(
                               isDense: true,
                               hintText: 'Column ${i + 1}',
-                              hintStyle: GoogleFonts.poppins(
+                              hintStyle: TextStyle(
                                   color: Colors.grey[400], fontSize: 11),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6)),
@@ -2323,7 +2322,7 @@ class _WeeklyActivityTableWidgetState
                             borderRadius: BorderRadius.circular(8)),
                       ),
                       child: Text('Cancel',
-                          style: GoogleFonts.poppins(color: _navy, fontSize: 13)),
+                          style: TextStyle(color: _navy, fontSize: 13)),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -2332,7 +2331,7 @@ class _WeeklyActivityTableWidgetState
                       onPressed: () => Navigator.pop(ctx, true),
                       icon: const Icon(Icons.check_rounded, size: 16),
                       label: Text('Apply',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 13)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _navy,
@@ -2426,7 +2425,7 @@ class _WeeklyActivityTableWidgetState
               const SizedBox(width: 6),
               Expanded(
                 child: Text('Activity Table',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: _navy, fontWeight: FontWeight.w600, fontSize: 12)),
               ),
               // Row-number toggle
@@ -2456,7 +2455,7 @@ class _WeeklyActivityTableWidgetState
                             color: _showRowNumbers ? _navy : Colors.grey[500]),
                         const SizedBox(width: 3),
                         Text(' # ',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 color: _showRowNumbers ? _navy : Colors.grey[500])),
@@ -2484,7 +2483,7 @@ class _WeeklyActivityTableWidgetState
                             size: 13, color: Colors.grey[600]),
                         const SizedBox(width: 3),
                         Text('Headers',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.grey[600])),
@@ -2516,7 +2515,7 @@ class _WeeklyActivityTableWidgetState
               Icon(Icons.info_outline_rounded, size: 12, color: Colors.grey[450]),
               const SizedBox(width: 4),
               Text('Tap "Headers" to rename columns • Content wraps automatically',
-                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[500])),
+                  style: TextStyle(fontSize: 10, color: Colors.grey[500])),
             ]),
           ),
 
@@ -2573,7 +2572,7 @@ class _WeeklyActivityTableWidgetState
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text('${idx + 1}',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: _navy.withValues(alpha: 0.55))),
@@ -2589,7 +2588,7 @@ class _WeeklyActivityTableWidgetState
   Widget _headerCell(String text) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
         child: Text(text,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
                 fontSize: 11)),
@@ -2602,7 +2601,7 @@ class _WeeklyActivityTableWidgetState
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Text(
           _controllers[rowIdx][colIdx].text,
-          style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87),
+          style: TextStyle(fontSize: 12, color: Colors.black87),
           softWrap: true,
         ),
       );
@@ -2613,7 +2612,7 @@ class _WeeklyActivityTableWidgetState
         controller: _controllers[rowIdx][colIdx],
         maxLines: null,
         minLines: 1,
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87),
+        style: TextStyle(fontSize: 12, color: Colors.black87),
         decoration: InputDecoration(
           border: InputBorder.none,
           contentPadding:

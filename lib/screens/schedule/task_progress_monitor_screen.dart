@@ -11,7 +11,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, compute;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
@@ -935,7 +934,7 @@ class _TaskProgressMonitorScreenState
       }, SetOptions(merge: true));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Progress monitor saved!', style: GoogleFonts.poppins()),
+          content: Text('Progress monitor saved!', style: TextStyle()),
           backgroundColor: Colors.green[700],
         ));
       }
@@ -943,7 +942,7 @@ class _TaskProgressMonitorScreenState
       widget.logger.e('TaskProgressMonitor: save failed', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Save failed: $e', style: GoogleFonts.poppins()),
+          content: Text('Save failed: $e', style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -1027,7 +1026,7 @@ class _TaskProgressMonitorScreenState
           setState(() { _isImporting = false; _importProgress = 0; });
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('No rows found in the Excel file.',
-                style: GoogleFonts.poppins()),
+                style: TextStyle()),
             backgroundColor: Colors.orange[700],
           ));
         }
@@ -1054,23 +1053,23 @@ class _TaskProgressMonitorScreenState
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           title: Text('Import from Excel',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+              style: TextStyle(fontWeight: FontWeight.w700)),
           content: Text(
             'Found ${newRows.length} rows.\nThis will replace the current table.\n\n'
             '$matchedCount row${matchedCount == 1 ? '' : 's'} matched an existing task by name and will '
             'keep ${matchedCount == 1 ? 'its' : 'their'} recorded progress marks; any other row starts with no marks. Continue?',
-            style: GoogleFonts.poppins(fontSize: 13, height: 1.4),
+            style: TextStyle(fontSize: 13, height: 1.4),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: GoogleFonts.poppins()),
+              child: Text('Cancel', style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
                   backgroundColor: _navy, foregroundColor: Colors.white),
-              child: Text('Import', style: GoogleFonts.poppins()),
+              child: Text('Import', style: TextStyle()),
             ),
           ],
         ),
@@ -1107,7 +1106,7 @@ class _TaskProgressMonitorScreenState
             const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 10),
             Text('Imported ${newRows.length} rows successfully!',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                style: TextStyle(fontWeight: FontWeight.w600)),
           ]),
           backgroundColor: Colors.green[700],
           duration: const Duration(seconds: 4),
@@ -1122,7 +1121,7 @@ class _TaskProgressMonitorScreenState
             const SizedBox(width: 10),
             Expanded(
               child: Text('Import failed: $e',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                  style: TextStyle(fontWeight: FontWeight.w500)),
             ),
           ]),
           backgroundColor: Colors.red[700],
@@ -1309,7 +1308,7 @@ class _TaskProgressMonitorScreenState
         _flushErrorNoticeShown = true;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Some progress marks couldn\'t sync — retrying automatically…',
-              style: GoogleFonts.poppins()),
+              style: TextStyle()),
           backgroundColor: Colors.orange[800],
           duration: const Duration(seconds: 4),
         ));
@@ -1516,7 +1515,7 @@ class _TaskProgressMonitorScreenState
     final painter = TextPainter(
       text: TextSpan(
         text: name,
-        style: GoogleFonts.poppins(fontSize: fontSize, fontWeight: fontWeight, height: 1.45),
+        style: TextStyle(fontSize: fontSize, fontWeight: fontWeight, height: 1.45),
       ),
       textDirection: TextDirection.ltr,
       maxLines: 10,
@@ -1590,7 +1589,7 @@ class _TaskProgressMonitorScreenState
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
                 '${row.taskName.trim()}  ·  ${DateFormat('EEE d MMM yyyy').format(day)}',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w700, color: _navy),
                 textAlign: TextAlign.center,
               ),
@@ -1669,7 +1668,7 @@ class _TaskProgressMonitorScreenState
               const SizedBox(width: 14),
               Expanded(
                 child: Text(label,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         fontSize: 13, color: labelColor)),
               ),
               if (status == current)
@@ -1702,7 +1701,7 @@ class _TaskProgressMonitorScreenState
         child: (s == DayStatus.done || s == DayStatus.completed)
             ? Icon(Icons.check_rounded, size: 14, color: s.color)
             : Text(s.code,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w800, color: s.color)),
       ),
     );
@@ -1802,12 +1801,12 @@ class _TaskProgressMonitorScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Importing Excel',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                                 color: _navy)),
                         Text('Please wait…',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey[500])),
                       ],
@@ -1836,7 +1835,7 @@ class _TaskProgressMonitorScreenState
                       const SizedBox(width: 10),
                       Text(
                         '${(_importProgress * 100).toStringAsFixed(0)}%',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: _navy),
@@ -1845,7 +1844,7 @@ class _TaskProgressMonitorScreenState
                     const SizedBox(height: 10),
                     Text(
                       _importStep,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600]),
                     ),
@@ -1889,7 +1888,7 @@ class _TaskProgressMonitorScreenState
                       const SizedBox(width: 10),
                       Text(
                         label.replaceAll('…', ''),
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: isActive
                               ? FontWeight.w700
@@ -1919,7 +1918,7 @@ class _TaskProgressMonitorScreenState
         elevation: 0,
         title: Text(
           '${widget.project.name} — Task Progress Monitor',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
@@ -1946,7 +1945,7 @@ class _TaskProgressMonitorScreenState
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(color: Colors.orange[800], borderRadius: BorderRadius.circular(8)),
                       child: Text('${_pendingProjectExtensions.length}',
-                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
                     ),
                   ),
               ],
@@ -1985,7 +1984,7 @@ class _TaskProgressMonitorScreenState
               Expanded(
                 child: Text(
                   widget.project.name,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 15),
@@ -2000,7 +1999,7 @@ class _TaskProgressMonitorScreenState
                 ),
                 child: Text(
                   'Project: ${(progress * 100).toStringAsFixed(0)}%',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 11),
@@ -2041,7 +2040,7 @@ class _TaskProgressMonitorScreenState
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Text(
                         pc.phase.taskName.trim(),
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: Colors.white70,
                             fontSize: 9,
                             fontWeight: FontWeight.w600),
@@ -2050,7 +2049,7 @@ class _TaskProgressMonitorScreenState
                       const SizedBox(width: 5),
                       Text(
                         '${(pp * 100).toStringAsFixed(0)}%',
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.w800),
@@ -2127,7 +2126,7 @@ class _TaskProgressMonitorScreenState
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text('${(_zoomFactor * 100).round()}%',
-                style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey[700])),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey[700])),
           ),
         ),
         InkWell(
@@ -2158,7 +2157,7 @@ class _TaskProgressMonitorScreenState
                         valueColor: AlwaysStoppedAnimation(Colors.white)))
                 : const Icon(Icons.upload_file_rounded, size: 14),
             label: Text('Import Excel',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w600)),
             style: ElevatedButton.styleFrom(
               backgroundColor: _navy,
@@ -2201,7 +2200,7 @@ class _TaskProgressMonitorScreenState
           Icon(icon, size: 14, color: active ? c : Colors.grey[600]),
           const SizedBox(width: 4),
           Text(label,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: active ? c : Colors.grey[600])),
@@ -2221,12 +2220,12 @@ class _TaskProgressMonitorScreenState
             Icon(Icons.check_rounded, size: 10, color: s.color)
           else
             Text(s.code,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 9, fontWeight: FontWeight.w800, color: s.color)),
           const SizedBox(width: 3),
           Text(
             s == DayStatus.done ? 'Done' : s == DayStatus.holiday ? 'Holiday' : 'Bad Weather',
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 fontSize: 8, fontWeight: FontWeight.w600, color: s.color),
           ),
         ]),
@@ -2403,7 +2402,7 @@ class _TaskProgressMonitorScreenState
           softWrap: true,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
               fontSize: 11,
@@ -2424,7 +2423,7 @@ class _TaskProgressMonitorScreenState
         alignment: Alignment.center,
         child: Text(
           'No phases with start/end dates defined',
-          style: GoogleFonts.poppins(color: Colors.white54, fontSize: 11),
+          style: TextStyle(color: Colors.white54, fontSize: 11),
         ),
       );
     }
@@ -2454,7 +2453,7 @@ class _TaskProgressMonitorScreenState
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text('PHASE',
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               color: Colors.white70,
                               fontSize: 7,
                               fontWeight: FontWeight.w800,
@@ -2464,7 +2463,7 @@ class _TaskProgressMonitorScreenState
                     Expanded(
                       child: Text(
                         pc.phase.taskName.trim(),
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                             color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.w700),
@@ -2473,7 +2472,7 @@ class _TaskProgressMonitorScreenState
                     ),
                     Text(
                       '${(_phaseProgress(pc.phase) * 100).toStringAsFixed(0)}%',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           color: Colors.cyanAccent,
                           fontSize: 10,
                           fontWeight: FontWeight.w800),
@@ -2530,7 +2529,7 @@ class _TaskProgressMonitorScreenState
                                     Text(
                                       '${DateFormat('MMM d').format(week.first)} – '
                                       '${DateFormat('MMM d').format(week.last)}',
-                                      style: GoogleFonts.poppins(
+                                      style: TextStyle(
                                           color: weekIsOverrun
                                               ? const Color(0xFFFFB74D)
                                               : Colors.white70,
@@ -2570,7 +2569,7 @@ class _TaskProgressMonitorScreenState
                                       children: [
                                         Text(
                                           DateFormat('EEE').format(day).substring(0, 2),
-                                          style: GoogleFonts.poppins(
+                                          style: TextStyle(
                                               color: dayIsOverrun
                                                   ? const Color(0xFFFFB74D)
                                                   : Colors.white60,
@@ -2579,7 +2578,7 @@ class _TaskProgressMonitorScreenState
                                         ),
                                         Text(
                                           DateFormat('d').format(day),
-                                          style: GoogleFonts.poppins(
+                                          style: TextStyle(
                                               color: dayIsOverrun
                                                   ? const Color(0xFFFF9800)
                                                   : Colors.white,
@@ -2644,7 +2643,7 @@ class _TaskProgressMonitorScreenState
                 ),
                 child: Text(
                   '$rowNumber',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: accent.withValues(alpha: 0.6)),
@@ -2707,7 +2706,7 @@ class _TaskProgressMonitorScreenState
                 decoration: BoxDecoration(
                     color: _navy, borderRadius: BorderRadius.circular(3)),
                 child: Text('PH',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white,
                         fontSize: 7,
                         fontWeight: FontWeight.w800,
@@ -2723,7 +2722,7 @@ class _TaskProgressMonitorScreenState
                     color: const Color(0xFF1565C0),
                     borderRadius: BorderRadius.circular(3)),
                 child: Text('PRJ',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white,
                         fontSize: 7,
                         fontWeight: FontWeight.w800)),
@@ -2738,7 +2737,7 @@ class _TaskProgressMonitorScreenState
                     color: const Color(0xFF37474F),
                     borderRadius: BorderRadius.circular(3)),
                 child: Text('GRP',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.white,
                         fontSize: 7,
                         fontWeight: FontWeight.w800)),
@@ -2763,7 +2762,7 @@ class _TaskProgressMonitorScreenState
                   maxLines: null,
                   minLines: 1,
                   keyboardType: TextInputType.multiline,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontSize: row.type == TaskRowType.task ? 11 : 11.5,
                       fontWeight: row.type == TaskRowType.task
                           ? FontWeight.w400
@@ -2844,7 +2843,7 @@ class _TaskProgressMonitorScreenState
             '$checked/$expected d · ${(pct * 100).toStringAsFixed(0)}%',
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.w600,
                 color: barColor),
@@ -2880,7 +2879,7 @@ class _TaskProgressMonitorScreenState
         child: date != null
             ? Text(
                 _dfDisplay.format(date),
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                     color: fg),
@@ -2976,19 +2975,19 @@ class _TaskProgressMonitorScreenState
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          title: Text('Outside project bounds', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+          title: Text('Outside project bounds', style: TextStyle(fontWeight: FontWeight.w700)),
           content: Text(
             'That date is ${isStart ? 'before the project\'s start date' : 'after the project\'s end date'} '
             '(${_dfDisplay.format(isStart ? _liveProjectStartDate : _liveProjectEndDate!)}). '
             'Request a project-level date extension first — once approved, this and other tasks can use the new range.',
-            style: GoogleFonts.poppins(fontSize: 13, height: 1.4),
+            style: TextStyle(fontSize: 13, height: 1.4),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: GoogleFonts.poppins())),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle())),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(backgroundColor: _navy, foregroundColor: Colors.white),
-              child: Text('Request Project Extension', style: GoogleFonts.poppins()),
+              child: Text('Request Project Extension', style: TextStyle()),
             ),
           ],
         ),
@@ -3043,16 +3042,16 @@ class _TaskProgressMonitorScreenState
           final changed = newStart != _liveProjectStartDate || newEnd != _liveProjectEndDate;
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            title: Text('Request Project Date Extension', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+            title: Text('Request Project Date Extension', style: TextStyle(fontWeight: FontWeight.w700)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.project.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                  Text(widget.project.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 4),
                   Text('This mainly affects the completion date, but the start date can be changed too if ever needed.',
-                      style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey[600])),
+                      style: TextStyle(fontSize: 11.5, color: Colors.grey[600])),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -3066,7 +3065,7 @@ class _TaskProgressMonitorScreenState
                     controller: reasonCtrl,
                     maxLines: 3,
                     onChanged: (_) => setDialogState(() {}),
-                    style: GoogleFonts.poppins(fontSize: 13),
+                    style: TextStyle(fontSize: 13),
                     decoration: InputDecoration(
                       labelText: 'Reason for extension *',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -3078,17 +3077,17 @@ class _TaskProgressMonitorScreenState
                     'Once approved by the Project Manager or a MainAdmin: the project\'s own dates update, any phase '
                     'whose end matched the old project end date shifts with it, and task dates become freely editable '
                     'within the new range.',
-                    style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey[600], height: 1.4),
+                    style: TextStyle(fontSize: 11.5, color: Colors.grey[600], height: 1.4),
                   ),
                 ],
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: GoogleFonts.poppins())),
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle())),
               ElevatedButton(
                 onPressed: (changed && reasonCtrl.text.trim().isNotEmpty) ? () => Navigator.pop(ctx, true) : null,
                 style: ElevatedButton.styleFrom(backgroundColor: _navy, foregroundColor: Colors.white),
-                child: Text('Submit Request', style: GoogleFonts.poppins()),
+                child: Text('Submit Request', style: TextStyle()),
               ),
             ],
           );
@@ -3112,7 +3111,7 @@ class _TaskProgressMonitorScreenState
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         ),
-        child: Text(_dfDisplay.format(date), style: GoogleFonts.poppins(fontSize: 13)),
+        child: Text(_dfDisplay.format(date), style: TextStyle(fontSize: 13)),
       ),
     );
   }
@@ -3167,7 +3166,7 @@ class _TaskProgressMonitorScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Project extension requested — pending approval.', style: GoogleFonts.poppins()),
+          content: Text('Project extension requested — pending approval.', style: TextStyle()),
           backgroundColor: Colors.green[700],
         ));
       }
@@ -3175,7 +3174,7 @@ class _TaskProgressMonitorScreenState
       widget.logger.e('TaskProgressMonitor: failed to submit project extension request', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to submit request: $e', style: GoogleFonts.poppins()),
+          content: Text('Failed to submit request: $e', style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -3220,7 +3219,7 @@ class _TaskProgressMonitorScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(approve ? 'Extension approved.' : 'Extension rejected.', style: GoogleFonts.poppins()),
+          content: Text(approve ? 'Extension approved.' : 'Extension rejected.', style: TextStyle()),
           backgroundColor: approve ? Colors.green[700] : Colors.grey[700],
         ));
       }
@@ -3228,7 +3227,7 @@ class _TaskProgressMonitorScreenState
       widget.logger.e('TaskProgressMonitor: failed to respond to project extension request', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to record response: $e', style: GoogleFonts.poppins()),
+          content: Text('Failed to record response: $e', style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -3356,29 +3355,29 @@ class _TaskProgressMonitorScreenState
                       ),
                       const SizedBox(width: 6),
                       Text(r.status.toUpperCase(),
-                          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor)),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor)),
                       const Spacer(),
                       Text(_dfDisplay.format(r.requestedAt),
-                          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600])),
+                          style: TextStyle(fontSize: 10, color: Colors.grey[600])),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${_dfDisplay.format(r.originalStartDate)} – ${r.originalEndDate != null ? _dfDisplay.format(r.originalEndDate!) : '—'}  →  '
                     '${_dfDisplay.format(r.requestedStartDate)} – ${r.requestedEndDate != null ? _dfDisplay.format(r.requestedEndDate!) : '—'}',
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text('Requested by ${r.requestedByName} (${r.requestedByRole})',
-                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[700])),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[700])),
                   const SizedBox(height: 6),
-                  Text(r.reason, style: GoogleFonts.poppins(fontSize: 12.5, height: 1.4)),
+                  Text(r.reason, style: TextStyle(fontSize: 12.5, height: 1.4)),
                   if (r.respondedByName != null) ...[
                     const SizedBox(height: 6),
                     Text('${r.status == ProjectDateExtensionRequestModel.statusApproved ? 'Approved' : 'Rejected'} by ${r.respondedByName}',
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[700])),
+                        style: TextStyle(fontSize: 11, color: Colors.grey[700])),
                     if (r.rejectionReason != null && r.rejectionReason!.isNotEmpty)
-                      Text('Reason: ${r.rejectionReason}', style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey[700])),
+                      Text('Reason: ${r.rejectionReason}', style: TextStyle(fontSize: 11, color: Colors.grey[700])),
                   ],
                   if (r.isPending && _canApproveProjectExtension) ...[
                     const SizedBox(height: 10),
@@ -3389,7 +3388,7 @@ class _TaskProgressMonitorScreenState
                             child: OutlinedButton(
                               onPressed: () => setDialogState(() => showRejectField = true),
                               style: OutlinedButton.styleFrom(foregroundColor: Colors.red[700]),
-                              child: Text('Reject', style: GoogleFonts.poppins(fontSize: 12)),
+                              child: Text('Reject', style: TextStyle(fontSize: 12)),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -3400,7 +3399,7 @@ class _TaskProgressMonitorScreenState
                                 _respondToProjectExtension(r, approve: true);
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700], foregroundColor: Colors.white),
-                              child: Text('Approve', style: GoogleFonts.poppins(fontSize: 12)),
+                              child: Text('Approve', style: TextStyle(fontSize: 12)),
                             ),
                           ),
                         ],
@@ -3409,7 +3408,7 @@ class _TaskProgressMonitorScreenState
                       TextField(
                         controller: rejectCtrl,
                         maxLines: 2,
-                        style: GoogleFonts.poppins(fontSize: 12),
+                        style: TextStyle(fontSize: 12),
                         decoration: InputDecoration(
                           hintText: 'Reason for rejection (optional)',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -3422,7 +3421,7 @@ class _TaskProgressMonitorScreenState
                           Expanded(
                             child: TextButton(
                               onPressed: () => setDialogState(() => showRejectField = false),
-                              child: Text('Back', style: GoogleFonts.poppins(fontSize: 12)),
+                              child: Text('Back', style: TextStyle(fontSize: 12)),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -3433,7 +3432,7 @@ class _TaskProgressMonitorScreenState
                                 _respondToProjectExtension(r, approve: false, rejectionReason: rejectCtrl.text.trim());
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.red[700], foregroundColor: Colors.white),
-                              child: Text('Confirm Reject', style: GoogleFonts.poppins(fontSize: 12)),
+                              child: Text('Confirm Reject', style: TextStyle(fontSize: 12)),
                             ),
                           ),
                         ],
@@ -3447,7 +3446,7 @@ class _TaskProgressMonitorScreenState
 
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            title: Text('Project Date Extensions', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15)),
+            title: Text('Project Date Extensions', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
             content: SizedBox(
               width: 380,
               child: SingleChildScrollView(
@@ -3459,7 +3458,7 @@ class _TaskProgressMonitorScreenState
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Text('Awaiting approval from the Project Manager or a MainAdmin.',
-                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                       ),
                     ...requests.map(buildRequestCard),
                   ],
@@ -3467,7 +3466,7 @@ class _TaskProgressMonitorScreenState
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Close', style: GoogleFonts.poppins())),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Close', style: TextStyle())),
             ],
           );
         },
@@ -3604,7 +3603,7 @@ class _TaskProgressMonitorScreenState
                       ..showSnackBar(SnackBar(
                         content: Text(
                           '${row.taskName.trim()}\'s deadline has passed — request a date extension to continue.',
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                         backgroundColor: Colors.orange[800],
                         behavior: SnackBarBehavior.floating,
@@ -3629,7 +3628,7 @@ class _TaskProgressMonitorScreenState
                           Expanded(
                             child: Text(
                               '${row.taskName.trim()} is already marked as completed.',
-                              style: GoogleFonts.poppins(
+                              style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500),
                             ),
@@ -3737,7 +3736,7 @@ class _TaskProgressMonitorScreenState
                         )
                       : Text(
                           status.code,
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w900,
                               color: status.color),
@@ -3770,13 +3769,13 @@ class _TaskProgressMonitorScreenState
           Row(children: [
             Text(
               '$totalChecked / $totalExpected work days',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 9, color: _navy.withValues(alpha: 0.6)),
             ),
             const Spacer(),
             Text(
               '${(progress * 100).toStringAsFixed(0)}% complete',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: progress >= 1.0 ? Colors.green[700] : _navy),
@@ -3812,7 +3811,7 @@ class _TaskProgressMonitorScreenState
           Icon(Icons.table_chart_outlined, size: 56, color: Colors.grey[300]),
           const SizedBox(height: 14),
           Text('No tasks defined yet',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[500])),
@@ -3820,7 +3819,7 @@ class _TaskProgressMonitorScreenState
           Text(
             'Use "Import Excel" to load from a file,\nor "Add Row" to create tasks manually.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[400]),
+            style: TextStyle(fontSize: 12, color: Colors.grey[400]),
           ),
           const SizedBox(height: 20),
           if (_canEditDatesAndStatus)
@@ -3829,7 +3828,7 @@ class _TaskProgressMonitorScreenState
               onPressed: _addRow,
               icon: const Icon(Icons.add_rounded, size: 15),
               label: Text('Add Row',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 12)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _navy,
@@ -3843,7 +3842,7 @@ class _TaskProgressMonitorScreenState
               onPressed: _isImporting ? null : _importFromExcel,
               icon: const Icon(Icons.upload_file_rounded, size: 15),
               label: Text('Import Excel',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 12)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _navy,

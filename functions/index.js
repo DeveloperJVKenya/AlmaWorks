@@ -5,6 +5,7 @@ const logger = require("firebase-functions/logger");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
+const { t, bilingual, localizedText, normalizeLanguage } = require("./i18n");
 
 // firebase-admin v13+ dropped the old `admin.firestore()` / `admin.messaging()`
 // default-namespace API (it's simply undefined now, not just deprecated) —
@@ -38,6 +39,15 @@ function collectTokensForUser(userData) {
   }
   if (userData.fcmToken) tokens.add(userData.fcmToken);
   return Array.from(tokens);
+}
+
+/** FCM data payload — every value must be a string. */
+function dataPayload(docId, title, body, payload) {
+  const out = { docId, title, body };
+  for (const [key, value] of Object.entries(payload)) {
+    out[key] = String(value);
+  }
+  return out;
 }
 
 /** Clears a single dead token from both the multi-device map and the legacy field. */
@@ -74,8 +84,6 @@ exports.onAdminNotificationQueued = onDocumentCreated(
 
     const data = snap.data();
     const docId = event.params.docId;
-    const title = data.title || "🔔 New Notification";
-    const body = data.body || "";
     const payload = data.payload || {};
     // Defaults to the pre-targetRoles audience for any doc queued before
     // this field existed (see InventoryService._notifyAdmins /
@@ -90,49 +98,51 @@ exports.onAdminNotificationQueued = onDocumentCreated(
       .where("role", "in", targetRoles)
       .get();
 
-    const tokens = [];
+    // Grouped by the recipient's language, so each person gets the push in
+    // the language they use the app in (Users.language, see i18n.js).
+    const tokensByLanguage = new Map();
     const tokenToDocRef = new Map();
+    let tokenCount = 0;
     usersSnap.forEach((doc) => {
+      const lang = normalizeLanguage(doc.data().language);
       for (const token of collectTokensForUser(doc.data())) {
-        tokens.push(token);
+        if (!tokensByLanguage.has(lang)) tokensByLanguage.set(lang, []);
+        tokensByLanguage.get(lang).push(token);
         tokenToDocRef.set(token, doc.ref);
+        tokenCount += 1;
       }
     });
 
-    if (tokens.length === 0) {
+    if (tokenCount === 0) {
       logger.info(`No Admin/MainAdmin FCM tokens found — skipping push for ${docId}`);
       return;
     }
 
-    // Stringify data values — FCM requires all `data` fields to be strings.
-    const dataPayload = { docId, title, body };
-    for (const [key, value] of Object.entries(payload)) {
-      dataPayload[key] = String(value);
-    }
-
-    const message = {
-      notification: { title, body },
-      data: dataPayload,
-      android: { priority: "high" },
-      apns: { payload: { aps: { sound: "default" } } },
-    };
-
     const staleTokens = [];
-    for (let i = 0; i < tokens.length; i += MESSAGING_CHUNK_SIZE) {
-      const chunk = tokens.slice(i, i + MESSAGING_CHUNK_SIZE);
-      const response = await messaging.sendEachForMulticast({
-        ...message,
-        tokens: chunk,
-      });
-      response.responses.forEach((r, idx) => {
-        if (
-          !r.success &&
-          (r.error?.code === "messaging/registration-token-not-registered" ||
-            r.error?.code === "messaging/invalid-registration-token")
-        ) {
-          staleTokens.push(chunk[idx]);
-        }
-      });
+    for (const [lang, tokens] of tokensByLanguage) {
+      const { title, body } = localizedText(data, lang);
+      const message = {
+        notification: { title, body },
+        data: dataPayload(docId, title, body, payload),
+        android: { priority: "high" },
+        apns: { payload: { aps: { sound: "default" } } },
+      };
+      for (let i = 0; i < tokens.length; i += MESSAGING_CHUNK_SIZE) {
+        const chunk = tokens.slice(i, i + MESSAGING_CHUNK_SIZE);
+        const response = await messaging.sendEachForMulticast({
+          ...message,
+          tokens: chunk,
+        });
+        response.responses.forEach((r, idx) => {
+          if (
+            !r.success &&
+            (r.error?.code === "messaging/registration-token-not-registered" ||
+              r.error?.code === "messaging/invalid-registration-token")
+          ) {
+            staleTokens.push(chunk[idx]);
+          }
+        });
+      }
     }
 
     // Clean up tokens FCM reports as dead so future sends don't keep retrying them.
@@ -144,7 +154,7 @@ exports.onAdminNotificationQueued = onDocumentCreated(
       logger.info(`Cleared ${staleTokens.length} stale FCM token(s)`);
     }
 
-    logger.info(`Push sent for AdminNotificationQueue/${docId} to ${tokens.length} device(s)`);
+    logger.info(`Push sent for AdminNotificationQueue/${docId} to ${tokenCount} device(s)`);
   }
 );
 
@@ -170,8 +180,6 @@ exports.onUserNotificationQueued = onDocumentCreated(
       return;
     }
 
-    const title = data.title || "🔔 New Notification";
-    const body = data.body || "";
     const payload = data.payload || {};
 
     const usersSnap = await db
@@ -192,14 +200,10 @@ exports.onUserNotificationQueued = onDocumentCreated(
       return;
     }
 
-    const dataPayload = { docId, title, body };
-    for (const [key, value] of Object.entries(payload)) {
-      dataPayload[key] = String(value);
-    }
-
+    const { title, body } = localizedText(data, userDoc.data().language);
     const response = await messaging.sendEachForMulticast({
       notification: { title, body },
-      data: dataPayload,
+      data: dataPayload(docId, title, body, payload),
       tokens,
       android: { priority: "high" },
       apns: { payload: { aps: { sound: "default" } } },
@@ -256,9 +260,7 @@ exports.onCommunicationMessageCreated = onDocumentCreated(
     const msg = snap.data();
     const messageId = event.params.messageId;
     const projectId = msg.projectId || "";
-    const subject = msg.subject || "(no subject)";
     const fromUid = msg.from && msg.from.uid;
-    const fromName = (msg.from && (msg.from.username || msg.from.email)) || "Someone";
 
     const toUids = (msg.to || []).map((p) => p.uid).filter(Boolean);
     const ccUids = (msg.cc || []).map((p) => p.uid).filter(Boolean);
@@ -284,10 +286,13 @@ exports.onCommunicationMessageCreated = onDocumentCreated(
       const data = doc.data();
       const uid = data.uid;
       const isToRecipient = toUids.includes(uid);
+      const lang = normalizeLanguage(data.language);
+      const subject = msg.subject || t(lang, "noSubject");
+      const fromName = (msg.from && (msg.from.username || msg.from.email)) || t(lang, "someone");
       const title = isToRecipient
-        ? `New message from ${fromName}`
-        : `${fromName} CC'd you on: ${subject}`;
-      const body = isToRecipient ? subject : "Tap to view the conversation.";
+        ? t(lang, "messageFrom", { from: fromName })
+        : t(lang, "ccdYou", { from: fromName, subject });
+      const body = isToRecipient ? subject : t(lang, "tapToView");
 
       const tokens = collectTokensForUser(data);
       for (const token of tokens) {
@@ -385,8 +390,10 @@ exports.sendBookingReminders = onSchedule(
 
       await db.collection("UserNotificationQueue").add({
         targetUid: activeBooking.bookedForUid,
-        title: "⏰ Return Reminder",
-        body: `"${booking.assetName}" is booked for ${booking.bookedForName} starting tomorrow — please return it in time.`,
+        ...bilingual((lang) => ({
+          title: t(lang, "returnReminderTitle"),
+          body: t(lang, "returnReminderBody", { asset: booking.assetName, who: booking.bookedForName }),
+        })),
         payload: {
           type: "inventory_booking_reminder",
           assetId: booking.assetId,
@@ -420,9 +427,10 @@ exports.sendBookingReminders = onSchedule(
       );
       await db.collection("UserNotificationQueue").add({
         targetUid: booking.bookedForUid,
-        title: "⚠️ Overdue Return",
-        body: `"${booking.assetName}" was due back ${daysOverdue} day${daysOverdue === 1 ? "" : "s"} ago — `
-          + "please return it as soon as possible, especially if anyone else has it booked or it's due for maintenance.",
+        ...bilingual((lang) => ({
+          title: t(lang, "overdueReturnTitle"),
+          body: t(lang, "overdueReturnBody", { asset: booking.assetName, days: daysOverdue }),
+        })),
         payload: {
           type: "inventory_overdue_return",
           assetId: booking.assetId,

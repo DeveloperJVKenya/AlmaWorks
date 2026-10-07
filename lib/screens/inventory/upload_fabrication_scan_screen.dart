@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:almaworks/models/inventory/material_fabrication_order_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/inventory/inventory_colors.dart';
-import 'package:almaworks/screens/inventory/inventory_error_messages.dart';
+import 'package:almaworks/screens/inventory/inventory_labels.dart';
 import 'package:almaworks/screens/inventory/inventory_permissions.dart';
 import 'package:almaworks/services/file_pick_helper.dart';
 import 'package:almaworks/services/inventory_service.dart';
@@ -14,11 +14,13 @@ import 'package:almaworks/widgets/inventory_form_section.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:logger/logger.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// The site recipient (Technician or Admin/MainAdmin) scans/uploads the
 /// completed paper chain-of-custody form and confirms its values before
@@ -126,9 +128,7 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
     } catch (e) {
       widget.logger.e('❌ UploadFabricationScanScreen: Document scan failed', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open the document scanner', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: context.l10n.couldNotOpenScanner);
     }
   }
 
@@ -141,9 +141,7 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
     } on FileBytesUnavailableException catch (e) {
       widget.logger.e('❌ UploadFabricationScanScreen: File pick failed', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString(), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorMessage(context, context.l10n.couldNotOpenFile);
       return;
     }
     if (picked == null || !mounted) return;
@@ -229,11 +227,13 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
       return null;
     }
 
-    final driverPickup = numberNear(['quantity taken', 'pickup']);
-    final fabReceived = numberNear(['quantity received']);
-    final fabOutput = numberNear(['fabricated quantity', 'output']);
-    final driverFromFab = numberNear(['collected']);
-    final techReceived = numberNear(['quantity received']);
+    // English and Italian wording, since the printed form follows the
+    // language of whoever generated it.
+    final driverPickup = numberNear(['quantity taken', 'pickup', 'quantità prelevata', 'prelievo']);
+    final fabReceived = numberNear(['quantity received', 'quantità ricevuta']);
+    final fabOutput = numberNear(['fabricated quantity', 'output', 'quantità lavorata']);
+    final driverFromFab = numberNear(['collected', 'ritirata']);
+    final techReceived = numberNear(['quantity received', 'quantità ricevuta']);
 
     setState(() {
       if (driverPickup != null) _driverPickupController.text = driverPickup.toString();
@@ -241,7 +241,7 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
       if (fabOutput != null) _fabricatorOutputController.text = fabOutput.toString();
       if (driverFromFab != null) _driverFromFabricatorController.text = driverFromFab.toString();
       if (techReceived != null) _technicianReceivedController.text = techReceived.toString();
-      if (text.toLowerCase().contains('damaged')) _fabricatorCondition = MaterialFabricationOrderModel.conditionDamaged;
+      if (text.toLowerCase().contains('damaged') || text.toLowerCase().contains('danneggiat')) _fabricatorCondition = MaterialFabricationOrderModel.conditionDamaged;
     });
   }
 
@@ -256,18 +256,15 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
 
   Future<void> _submit() async {
     if (!_formComplete) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fill in every field and attach the scan before submitting', style: GoogleFonts.poppins())),
-      );
+      showWarningSnack(context, context.l10n.fillEveryFieldAndScan);
       return;
     }
 
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Submit Verified Form',
-      message: 'Confirm these values match the completed paper form for "${widget.order.materialName}"? '
-          'This becomes the permanent digital record.',
-      confirmLabel: 'Submit',
+      title: context.l10n.submitVerifiedForm,
+      message: context.l10n.confirmSubmitVerifiedForm(widget.order.materialName),
+      confirmLabel: context.l10n.submit,
     );
     if (!confirmed || !mounted) return;
 
@@ -275,7 +272,7 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
     try {
       final payload = await _buildScanPayload();
       if (payload == null) {
-        throw Exception('Attach a scanned document or upload a file before submitting');
+        throw UserFacingException(l10nNow.attachScanFirst);
       }
       await _inventoryService.submitFabricationFormScan(
         order: widget.order,
@@ -298,16 +295,12 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Form submitted', style: GoogleFonts.poppins()), backgroundColor: Colors.green),
-      );
+      showSuccessSnack(context, context.l10n.formSubmitted);
       Navigator.pop(context);
     } catch (e) {
       widget.logger.e('❌ UploadFabricationScanScreen: Failed to submit', error: e);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyInventoryError(e), style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-      );
+      showErrorSnack(context, e, action: context.l10n.couldNotSubmitForm);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -315,23 +308,24 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (!InventoryPermissions.canUploadFabricationScan(widget.recipientRole)) {
       return BaseLayout(
-        title: 'Upload Completed Form',
+        title: l.uploadCompletedForm,
         project: widget.project,
         logger: widget.logger,
         selectedMenuItem: 'Inventory',
         onMenuItemSelected: (_) {},
         child: Center(
           child: Text(
-            'You do not have permission to submit a fabrication scan.',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
+            l.invNoPermissionSubmitScan,
+            style: TextStyle(fontSize: 14, color: AppColors.inkMuted),
           ),
         ),
       );
     }
     return BaseLayout(
-      title: 'Upload Completed Form',
+      title: l.uploadCompletedForm,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Inventory',
@@ -348,20 +342,20 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
                   inventoryFormSection(
                     title: widget.order.materialName,
                     icon: Icons.description_outlined,
-                    subtitle: 'Form ID: ${widget.order.id} • Issued ${widget.order.quantityIssued} ${widget.order.unit}',
+                    subtitle: l.formIdIssued(widget.order.id, '${widget.order.quantityIssued}', invLabel(widget.order.unit)),
                     children: const [],
                   ),
                   inventoryFormSection(
-                    title: 'Scan',
+                    title: l.scan,
                     icon: Icons.document_scanner_outlined,
-                    subtitle: 'Scan the completed form (multi-page supported) or upload an existing document',
+                    subtitle: l.scanSubtitle,
                     children: [
                       Row(children: [
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: (_isSaving || _isAssembling) ? null : _scanDocument,
                             icon: const Icon(Icons.document_scanner_outlined),
-                            label: Text('Scan Document', style: GoogleFonts.poppins()),
+                            label: Text(l.scanDocument),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -369,7 +363,7 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
                           child: OutlinedButton.icon(
                             onPressed: (_isSaving || _isAssembling) ? null : _pickExistingFile,
                             icon: const Icon(Icons.upload_file_outlined),
-                            label: Text('Upload File', style: GoogleFonts.poppins()),
+                            label: Text(l.uploadFile),
                           ),
                         ),
                       ]),
@@ -378,14 +372,15 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
                         Row(children: [
                           const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                           const SizedBox(width: 10),
-                          Text('Reading form (pre-fill only — verify everything below)...',
-                              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                          Expanded(
+                            child: Text(l.readingForm, style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
+                          ),
                         ]),
                       ],
                       if (_capturedPagePaths.isNotEmpty) ...[
                         const SizedBox(height: 12),
-                        Text('${_capturedPagePaths.length} page(s) captured',
-                            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[700])),
+                        Text(l.pagesCaptured(_capturedPagePaths.length),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.inkMuted)),
                         const SizedBox(height: 8),
                         SizedBox(
                           height: 120,
@@ -407,7 +402,7 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(_uploadedFileName!,
-                                style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600),
+                                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
                                 overflow: TextOverflow.ellipsis),
                           ),
                         ]),
@@ -415,20 +410,20 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
                     ],
                   ),
                   inventoryFormSection(
-                    title: 'Verify Values',
+                    title: l.verifyValues,
                     icon: Icons.fact_check_outlined,
-                    subtitle: 'Every value below must match the physical form — correct anything OCR got wrong',
+                    subtitle: l.verifyValuesSubtitle,
                     children: [
-                      _numField(_driverPickupController, 'Driver pickup quantity (from office)'),
+                      _numField(_driverPickupController, l.driverPickupQuantity),
                       const SizedBox(height: 12),
                       TextField(
                         controller: _fabricatorNameController,
-                        decoration: inventoryInputDecoration(label: 'Fabricator name', icon: Icons.factory_outlined),
+                        decoration: inventoryInputDecoration(label: l.fabricatorName, icon: Icons.factory_outlined),
                       ),
                       const SizedBox(height: 12),
-                      _numField(_fabricatorReceivedController, 'Fabricator: quantity received'),
+                      _numField(_fabricatorReceivedController, l.fabricatorQuantityReceived),
                       const SizedBox(height: 12),
-                      Text('Fabricator condition', style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[700])),
+                      Text(l.fabricatorCondition, style: TextStyle(fontSize: 12.5, color: AppColors.inkMuted)),
                       const SizedBox(height: 6),
                       Wrap(spacing: 8, children: [
                         MaterialFabricationOrderModel.conditionGood,
@@ -439,11 +434,11 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
                             ? InventoryColors.damaged
                             : InventoryColors.available;
                         return ChoiceChip(
-                          label: Text(c, style: GoogleFonts.poppins(fontSize: 12)),
+                          label: Text(invLabel(c), style: const TextStyle(fontSize: 12)),
                           selected: selected,
                           onSelected: (_) => setState(() => _fabricatorCondition = c),
                           selectedColor: color.withValues(alpha: 0.18),
-                          labelStyle: TextStyle(color: selected ? color : Colors.grey[700]),
+                          labelStyle: TextStyle(color: selected ? color : AppColors.inkMuted),
                         );
                       }).toList()),
                       if (_fabricatorCondition == MaterialFabricationOrderModel.conditionDamaged) ...[
@@ -451,20 +446,20 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
                         TextField(
                           controller: _fabricatorDamageNotesController,
                           maxLines: 2,
-                          decoration: inventoryInputDecoration(label: 'Damage description', icon: Icons.report_problem_outlined),
+                          decoration: inventoryInputDecoration(label: l.damageDescription, icon: Icons.report_problem_outlined),
                         ),
                       ],
                       const SizedBox(height: 12),
-                      _numField(_fabricatorOutputController, 'Fabricator: fabricated output quantity'),
+                      _numField(_fabricatorOutputController, l.fabricatorOutputQuantity),
                       const SizedBox(height: 12),
-                      _numField(_driverFromFabricatorController, 'Driver: quantity collected from fabricator'),
+                      _numField(_driverFromFabricatorController, l.driverCollectedQuantity),
                       const SizedBox(height: 12),
-                      _numField(_technicianReceivedController, 'Your (Technician) received quantity'),
+                      _numField(_technicianReceivedController, l.technicianReceivedQuantity),
                     ],
                   ),
                   const SizedBox(height: 4),
                   inventoryPrimaryButton(
-                    label: 'Submit',
+                    label: l.submit,
                     isLoading: _isSaving || _isAssembling,
                     onPressed: _submit,
                     icon: Icons.upload_outlined,
@@ -483,7 +478,7 @@ class _UploadFabricationScanScreenState extends State<UploadFabricationScanScree
     return TextField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      decoration: inventoryInputDecoration(label: '$label (${widget.order.unit})', icon: Icons.numbers_outlined),
+      decoration: inventoryInputDecoration(label: '$label (${invLabel(widget.order.unit)})', icon: Icons.numbers_outlined),
     );
   }
 }

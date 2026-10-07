@@ -25,7 +25,6 @@ dependencies:
   mime: ^2.0.0
   file_picker: ^11.0.2
   syncfusion_flutter_pdfviewer: ^33.2.3
-  google_fonts: ^8.0.2
   intl: ^0.20.2
   url_launcher: ^6.3.2
   txt_docx: ^2.0.0
@@ -79,9 +78,77 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Generates lib/l10n/app_localizations*.dart from the ARB files (see l10n.yaml).
+  generate: true
 
   assets:
     - assets/
+
+  # Bundled (not fetched at runtime) so the Settings font choice works
+  # offline and every weight renders as a real face, not synthesized bold.
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-400.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-500.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-600.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-700.ttf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-400.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-500.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-600.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-700.ttf
+          weight: 700
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-400.ttf
+          weight: 400
+        - asset: assets/fonts/Roboto-500.ttf
+          weight: 500
+        - asset: assets/fonts/Roboto-600.ttf
+          weight: 600
+        - asset: assets/fonts/Roboto-700.ttf
+          weight: 700
+    - family: OpenSans
+      fonts:
+        - asset: assets/fonts/OpenSans-400.ttf
+          weight: 400
+        - asset: assets/fonts/OpenSans-500.ttf
+          weight: 500
+        - asset: assets/fonts/OpenSans-600.ttf
+          weight: 600
+        - asset: assets/fonts/OpenSans-700.ttf
+          weight: 700
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-400.ttf
+          weight: 400
+        - asset: assets/fonts/Nunito-500.ttf
+          weight: 500
+        - asset: assets/fonts/Nunito-600.ttf
+          weight: 600
+        - asset: assets/fonts/Nunito-700.ttf
+          weight: 700
+    - family: AtkinsonHyperlegible
+      fonts:
+        - asset: assets/fonts/AtkinsonHyperlegible-400.ttf
+          weight: 400
+        - asset: assets/fonts/AtkinsonHyperlegible-700.ttf
+          weight: 700
+    - family: Merriweather
+      fonts:
+        - asset: assets/fonts/Merriweather-400.ttf
+          weight: 400
+        - asset: assets/fonts/Merriweather-700.ttf
+          weight: 700
 
 flutter_icons:
   android: true

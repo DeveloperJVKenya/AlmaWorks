@@ -3,7 +3,6 @@ import 'package:almaworks/screens/schedule/general_schedule_screen.dart';
 import 'package:almaworks/screens/schedule/dynamic_schedule_screen.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -162,11 +161,11 @@ class _ScheduleScreenState extends State<ScheduleScreen>
                             unselectedLabelColor: Colors.grey[600],
                             indicatorColor: const Color(0xFF0A2E5A),
                             indicatorWeight: 3,
-                            labelStyle: GoogleFonts.poppins(
+                            labelStyle: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
                             ),
-                            unselectedLabelStyle: GoogleFonts.poppins(
+                            unselectedLabelStyle: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: 16,
                             ),

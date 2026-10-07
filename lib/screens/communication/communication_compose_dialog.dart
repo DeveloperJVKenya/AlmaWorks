@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 
@@ -211,9 +210,9 @@ class _RecipientFieldState extends State<_RecipientField> {
                         ),
                       ),
                       title: Text(p.username,
-                          style: GoogleFonts.poppins(fontSize: 13)),
+                          style: TextStyle(fontSize: 13)),
                       subtitle: Text(p.email,
-                          style: GoogleFonts.poppins(
+                          style: TextStyle(
                               fontSize: 11, color: Colors.grey[600])),
                     ),
                   );
@@ -278,7 +277,7 @@ class _RecipientFieldState extends State<_RecipientField> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   widget.label,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
@@ -294,7 +293,7 @@ class _RecipientFieldState extends State<_RecipientField> {
                 children: [
                   ...widget.selected.map((p) => Chip(
                         label: Text(p.email,
-                            style: GoogleFonts.poppins(fontSize: 12)),
+                            style: TextStyle(fontSize: 12)),
                         backgroundColor: const Color(0xFF0A2E5A)
                             .withValues(alpha: 0.08),
                         deleteIcon: const Icon(Icons.close, size: 14),
@@ -309,13 +308,13 @@ class _RecipientFieldState extends State<_RecipientField> {
                     child: TextField(
                       controller: _ctrl,
                       focusNode: _focusNode,
-                      style: GoogleFonts.poppins(fontSize: 13),
+                      style: TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: widget.selected.isEmpty
                             ? 'Type email or name…'
                             : '',
-                        hintStyle: GoogleFonts.poppins(
+                        hintStyle: TextStyle(
                             fontSize: 13, color: Colors.grey[400]),
                         isDense: true,
                         contentPadding:
@@ -606,7 +605,7 @@ class _CommunicationComposeDialogState
           Navigator.of(context).pop();
           widget.onSent?.call();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Message sent!', style: GoogleFonts.poppins()),
+            content: Text('Message sent!', style: TextStyle()),
             backgroundColor: const Color(0xFF0A2E5A),
           ));
         }
@@ -641,7 +640,7 @@ class _CommunicationComposeDialogState
     if (mounted) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Draft saved.', style: GoogleFonts.poppins()),
+        content: Text('Draft saved.', style: TextStyle()),
         backgroundColor: Colors.grey[700],
       ));
     }
@@ -653,16 +652,16 @@ class _CommunicationComposeDialogState
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Discard message?', style: GoogleFonts.poppins()),
+        title: Text('Discard message?', style: TextStyle()),
         content:
-            Text('This message will not be saved.', style: GoogleFonts.poppins()),
+            Text('This message will not be saved.', style: TextStyle()),
         actions: [
           TextButton(
             onPressed: () {
               _log.i('🗑️ ComposeDialog: discard cancelled');
               Navigator.pop(context);
             },
-            child: Text('Cancel', style: GoogleFonts.poppins()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           TextButton(
             onPressed: () {
@@ -671,7 +670,7 @@ class _CommunicationComposeDialogState
               Navigator.pop(context);
             },
             child:
-                Text('Discard', style: GoogleFonts.poppins(color: Colors.red)),
+                Text('Discard', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -680,7 +679,7 @@ class _CommunicationComposeDialogState
 
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg, style: GoogleFonts.poppins())));
+        SnackBar(content: Text(msg, style: TextStyle())));
   }
 
   @override
@@ -735,7 +734,7 @@ class _CommunicationComposeDialogState
           Expanded(
             child: Text(
               _composeTitle(),
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 15),
@@ -784,7 +783,7 @@ class _CommunicationComposeDialogState
                   setState(() => _showCcField = true);
                 },
                 child: Text('Cc',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                         color: Colors.grey[600], fontSize: 13)),
               ),
             )
@@ -805,7 +804,7 @@ class _CommunicationComposeDialogState
                 SizedBox(
                   width: 60,
                   child: Text('Subject',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey[600],
                           fontWeight: FontWeight.w500)),
@@ -813,11 +812,11 @@ class _CommunicationComposeDialogState
                 Expanded(
                   child: TextField(
                     controller: _subjectCtrl,
-                    style: GoogleFonts.poppins(fontSize: 13),
+                    style: TextStyle(fontSize: 13),
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Subject',
-                      hintStyle: GoogleFonts.poppins(
+                      hintStyle: TextStyle(
                           fontSize: 13, color: Colors.grey[400]),
                       isDense: true,
                       contentPadding:
@@ -861,7 +860,7 @@ class _CommunicationComposeDialogState
                 padding: EdgeInsets.zero,
                 customStyles: quill.DefaultStyles(
                   paragraph: quill.DefaultTextBlockStyle(
-                    GoogleFonts.poppins(
+                    TextStyle(
                         fontSize: 13, color: Colors.grey[800]),
                     const quill.HorizontalSpacing(0, 0),
                     const quill.VerticalSpacing(0, 0),
@@ -893,7 +892,7 @@ class _CommunicationComposeDialogState
             avatar: Icon(_iconForMime(pa.mimeType),
                 size: 16, color: const Color(0xFF0A2E5A)),
             label: Text(pa.name,
-                style: GoogleFonts.poppins(fontSize: 11),
+                style: TextStyle(fontSize: 11),
                 overflow: TextOverflow.ellipsis),
             deleteIcon: const Icon(Icons.close, size: 14),
             onDeleted: () {
@@ -943,7 +942,7 @@ class _CommunicationComposeDialogState
                 : const Icon(Icons.send, size: 16),
             label: Text(
               _isSending ? 'Sending…' : 'Send',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                   fontWeight: FontWeight.w600, fontSize: 13),
             ),
             style: ElevatedButton.styleFrom(

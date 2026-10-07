@@ -1,3 +1,4 @@
+import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/notifications/app_notification.dart';
 import 'package:almaworks/rbacsystem/client_request_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -118,7 +119,7 @@ class AllNotifications extends NotificationFilter {
   @override
   bool matches(AppNotification n) => true;
   @override
-  String get label => 'All';
+  String get label => l10nNow.all;
   @override
   bool operator ==(Object other) => other is AllNotifications;
   @override
@@ -130,7 +131,7 @@ class UnreadNotifications extends NotificationFilter {
   @override
   bool matches(AppNotification n) => !n.isRead;
   @override
-  String get label => 'Unread';
+  String get label => l10nNow.unread;
   @override
   bool operator ==(Object other) => other is UnreadNotifications;
   @override
