@@ -10,6 +10,8 @@ import 'package:logger/logger.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class MSProjectGanttScreen extends StatefulWidget {
   final ProjectModel project;
@@ -56,8 +58,8 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
   static const int defaultRowCount = 6;
   bool _isLoading = true;
 
-  final Map<int, TextEditingController> _quantityControllers = {}; 
-  final Map<int, bool> _showQuantityInput = {}; 
+  final Map<int, TextEditingController> _quantityControllers = {};
+  final Map<int, bool> _showQuantityInput = {};
 
   // Temporary storage for edited row data
   final Map<int, GanttRowData> _editedRows = {};
@@ -119,7 +121,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
   void _reconcileFirestoreUpdates(List<GanttRowData> firestoreRows) {
     // Create a safe copy of current edited row indices to avoid concurrent modification
     final editedIndices = List<int>.from(_editedRows.keys);
-    
+
     for (int i in editedIndices) {
       // Safety check: ensure index is still valid
       if (i >= firestoreRows.length) {
@@ -127,28 +129,28 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         widget.logger.d('📄 Removed edited row at index $i (out of bounds)');
         continue;
       }
-      
+
       final firestoreRow = firestoreRows[i];
-      
+
       // Check if this row has local edits
       if (!_editedRows.containsKey(i)) continue;
-      
+
       final editedRow = _editedRows[i];
       if (editedRow == null) {
         _editedRows.remove(i);
         widget.logger.d('📄 Removed null edited row at index $i');
         continue;
       }
-      
+
       // If the row IDs match, we need to decide which version to keep
       if (editedRow.id == firestoreRow.id) {
         // Priority rules for reconciliation:
         // 1. If edited row is unsaved and has no firestoreId, keep local edits
         // 2. If Firestore has actual dates that local doesn't have, merge them
         // 3. If Firestore has updated status, merge it
-        
+
         bool needsReconciliation = false;
-        
+
         if (firestoreRow.actualStartDate != editedRow.actualStartDate) {
           editedRow.actualStartDate = firestoreRow.actualStartDate;
           needsReconciliation = true;
@@ -156,7 +158,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             '📄 Reconciled actualStartDate for row $i from Firestore: ${firestoreRow.actualStartDate}',
           );
         }
-        
+
         if (firestoreRow.actualEndDate != editedRow.actualEndDate) {
           editedRow.actualEndDate = firestoreRow.actualEndDate;
           needsReconciliation = true;
@@ -164,7 +166,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             '📄 Reconciled actualEndDate for row $i from Firestore: ${firestoreRow.actualEndDate}',
           );
         }
-        
+
         // Check if Firestore has status updates that should override local state
         if (firestoreRow.status != editedRow.status) {
           editedRow.status = firestoreRow.status;
@@ -173,7 +175,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             '📄 Reconciled status for row $i from Firestore: ${firestoreRow.status}',
           );
         }
-        
+
         // If reconciliation occurred, update the edited row
         if (needsReconciliation) {
           _editedRows[i] = editedRow;
@@ -186,11 +188,11 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         );
       }
     }
-    
+
     // Clean up any edited rows that no longer exist in Firestore
     final validIndices = List.generate(firestoreRows.length, (i) => i).toSet();
     final orphanedIndices = _editedRows.keys.where((index) => !validIndices.contains(index)).toList();
-    
+
     for (final index in orphanedIndices) {
       _editedRows.remove(index);
       widget.logger.d('📄 Removed orphaned edited row at index $index');
@@ -206,7 +208,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
   void _toggleResourceDropdown(int index, BuildContext context, GlobalKey cellKey) {
     final row = _editedRows[index] ?? _rows[index];
-    
+
     if (_openDropdownIndex == index) {
       // Close if already open
       setState(() {
@@ -216,23 +218,23 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     } else {
       // Close any existing dropdown first
       _removeResourceDropdown();
-      
+
       // Capture the overlay before async gap
       final overlay = Overlay.of(context);
-      
+
       // Small delay to ensure previous dropdown is fully removed
       Future.delayed(Duration(milliseconds: 50), () {
         if (!mounted) return;
-        
+
         setState(() {
           _openDropdownIndex = index;
         });
-        
+
         // Pass the overlay instead of context
         _showResourceDropdownWithOverlay(overlay, cellKey, row, index);
       });
     }
-    
+
     widget.logger.d('📅 Toggled resource dropdown for row $index');
   }
 
@@ -328,7 +330,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                           ),
                           child: TextField(
                             decoration: InputDecoration(
-                              hintText: 'Search resources...',
+                              hintText: context.l10n.searchResources,
                               hintStyle: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade400,
@@ -368,7 +370,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                               _computeColumnWidths();
                             });
                             _removeResourceDropdown();
-                            _showSuccessSnackbar('Resource cleared');
+                            _showSuccessSnackbar(context.l10n.resourceCleared);
                           },
                           child: Container(
                             width: double.infinity,
@@ -405,7 +407,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                                 SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'None',
+                                    context.l10n.noneLabel,
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: row.resourceId == null
@@ -480,14 +482,14 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     // Calculate available space below and above the cell
     double spaceBelow = overlaySize.height - cellTop - cellHeight - padding;
     double spaceAbove = cellTop - padding;
-    
+
     // Calculate available space on left and right
     double spaceRight = overlaySize.width - cellLeft - padding;
     double spaceLeft = cellLeft - padding;
 
     // Determine dropdown width (prefer cell width but respect min/max)
     double dropdownWidth = math.max(dropdownMinWidth, math.min(cellWidth, dropdownMaxWidth));
-    
+
     // Adjust width if it exceeds available space
     if (cellLeft + dropdownWidth + padding > overlaySize.width) {
       dropdownWidth = spaceRight;
@@ -539,7 +541,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       (res) => res.id == row.resourceId,
       orElse: () => PurchaseResourceModel(
         id: '',
-        name: 'Unknown Resource',
+        name: l10nNow.unknownResource,
         type: ResourceType.other,
         quantity: '',
         status: '',
@@ -548,7 +550,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         updatedAt: DateTime.now(),
       ),
     );
-    
+
     String displayText = resource.name;
     if (row.resourceQuantity != null && row.resourceQuantity!.isNotEmpty) {
       displayText += ' (${row.resourceQuantity})';
@@ -574,7 +576,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       (res) => res.id == row.resourceId,
       orElse: () => PurchaseResourceModel(
         id: '',
-        name: 'Unknown Resource',
+        name: l10nNow.unknownResource,
         type: ResourceType.other,
         quantity: '',
         status: '',
@@ -777,7 +779,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to load project dates, using default timeline',
+            context.l10n.projectDatesFallback,
             style: TextStyle(),
           ),
           backgroundColor: Colors.orange,
@@ -825,7 +827,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
               // Handle orphaned tasks that may exist in loaded data
               _assignParentsToOrphanedTasks();
-              
+
               // NEW: Reconcile Firestore updates with local edited rows
               _reconcileFirestoreUpdates(_rows);
             }
@@ -857,7 +859,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Working offline - changes will sync when connection is restored',
+                    context.l10n.workingOffline,
                     style: TextStyle(),
                   ),
                   backgroundColor: Colors.orange,
@@ -879,7 +881,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
         // Handle orphaned tasks in cached data
         _assignParentsToOrphanedTasks();
-        
+
         // NEW: Reconcile cached data with any pending local edits
         _reconcileFirestoreUpdates(_rows);
 
@@ -1025,7 +1027,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Cannot delete saved rows within default range',
+              context.l10n.cannotDeleteSavedRow,
               style: TextStyle(),
             ),
             backgroundColor: Colors.orange,
@@ -1126,7 +1128,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to save task: $e',
+              friendlyError(e, action: context.l10n.couldNotSaveTask),
               style: TextStyle(),
             ),
             backgroundColor: Colors.red,
@@ -1245,7 +1247,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // Calculate duration from start and end dates
       row.duration = row.endDate!.difference(row.startDate!).inDays + 1;
       widget.logger.d('Calculated duration: ${row.duration}');
-      
+
     } else if (hasStart && hasDuration && !hasEnd) {
       // Calculate end date from start date and duration
       final calculatedEndDate = row.startDate!.add(Duration(days: row.duration! - 1));
@@ -1257,7 +1259,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         row.duration = null;
         widget.logger.w('Cleared duration due to invalid calculated end date');
       }
-      
+
     } else if (hasEnd && hasDuration && !hasStart) {
       // Calculate start date from end date and duration
       final calculatedStartDate = row.endDate!.subtract(Duration(days: row.duration! - 1));
@@ -1269,7 +1271,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         row.duration = null;
         widget.logger.w('Cleared duration due to invalid calculated start date');
       }
-      
+
     } else if (hasStart && hasEnd && hasDuration) {
       // All three fields are populated - verify consistency and adjust if needed
       final calculatedDuration = row.endDate!.difference(row.startDate!).inDays + 1;
@@ -1298,7 +1300,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         // MainTask must be within project timeline but doesn't need to match exact dates
         if (calculatedEndDate.isBefore(_projectStartDate!) || calculatedEndDate.isAfter(_projectEndDate!)) {
           _showDateConstraintError(
-            'Calculated end date would place MainTask outside project timeline. Please adjust duration or start date.',
+            context.l10n.gCalcEndMainOutside,
           );
           return false;
         }
@@ -1307,7 +1309,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         if (calculatedEndDate.isBefore(_projectStartDate!) ||
             calculatedEndDate.isAfter(_projectEndDate!)) {
           _showDateConstraintError(
-            'Calculated end date would be outside project timeline. Please adjust duration or start date.',
+            context.l10n.gCalcEndOutside,
           );
           return false;
         }
@@ -1319,7 +1321,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     if (parentRow != null && parentRow.endDate != null) {
       if (calculatedEndDate.isAfter(parentRow.endDate!)) {
         _showParentTaskDateViolationDialog(
-          'The calculated end date would be after the parent task end date',
+          context.l10n.gCalcEndAfterParent,
           'end',
           calculatedEndDate,
           parentRow,
@@ -1332,7 +1334,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       if (parentRow.startDate != null &&
           calculatedEndDate.isBefore(parentRow.startDate!)) {
         _showParentTaskDateViolationDialog(
-          'The calculated end date would be before the parent task start date',
+          context.l10n.gCalcEndBeforeParent,
           'start',
           calculatedEndDate,
           parentRow,
@@ -1359,7 +1361,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         // MainTask must be within project timeline but doesn't need to match exact dates
         if (calculatedStartDate.isBefore(_projectStartDate!) || calculatedStartDate.isAfter(_projectEndDate!)) {
           _showDateConstraintError(
-            'Calculated start date would place MainTask outside project timeline. Please adjust duration or end date.',
+            context.l10n.gCalcStartMainOutside,
           );
           return false;
         }
@@ -1368,7 +1370,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         if (calculatedStartDate.isBefore(_projectStartDate!) ||
             calculatedStartDate.isAfter(_projectEndDate!)) {
           _showDateConstraintError(
-            'Calculated start date would be outside project timeline. Please adjust duration or end date.',
+            context.l10n.gCalcStartOutside,
           );
           return false;
         }
@@ -1380,7 +1382,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     if (parentRow != null && parentRow.startDate != null) {
       if (calculatedStartDate.isBefore(parentRow.startDate!)) {
         _showParentTaskDateViolationDialog(
-          'The calculated start date would be before the parent task start date',
+          context.l10n.gCalcStartBeforeParent,
           'start',
           calculatedStartDate,
           parentRow,
@@ -1392,7 +1394,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       }
       if (parentRow.endDate != null && calculatedStartDate.isAfter(parentRow.endDate!)) {
         _showParentTaskDateViolationDialog(
-          'The calculated start date would be after the parent task end date',
+          context.l10n.gCalcStartAfterParent,
           'end',
           calculatedStartDate,
           parentRow,
@@ -1423,7 +1425,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         // MainTask must be within project timeline but doesn't need to match exact dates
         if (startDate.isBefore(_projectStartDate!) || startDate.isAfter(_projectEndDate!)) {
           _showProjectDateViolationDialog(
-            'MainTask start date must be within the project timeline',
+            context.l10n.gMainStartInProject,
             'start',
             startDate,
           );
@@ -1434,7 +1436,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         if (startDate.isBefore(_projectStartDate!) ||
             startDate.isAfter(_projectEndDate!)) {
           _showDateConstraintError(
-            'Start date must be within project timeline (${DateFormat('MM/dd/yyyy').format(_projectStartDate!)} - ${DateFormat('MM/dd/yyyy').format(_projectEndDate!)})',
+            context.l10n.gStartInProject(DateFormat.yMd().format(_projectStartDate!), DateFormat.yMd().format(_projectEndDate!)),
           );
           return false;
         }
@@ -1446,7 +1448,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     if (parentRow != null && parentRow.startDate != null) {
       if (startDate.isBefore(parentRow.startDate!)) {
         _showParentTaskDateViolationDialog(
-          'Your selected start date is before the parent task start date',
+          context.l10n.gStartBeforeParent,
           'start',
           startDate,
           parentRow,
@@ -1458,7 +1460,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       }
       if (parentRow.endDate != null && startDate.isAfter(parentRow.endDate!)) {
         _showParentTaskDateViolationDialog(
-          'Your selected start date is after the parent task end date',
+          context.l10n.gStartAfterParent,
           'end',
           startDate,
           parentRow,
@@ -1487,7 +1489,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         // MainTask must be within project timeline but doesn't need to match exact dates
         if (endDate.isBefore(_projectStartDate!) || endDate.isAfter(_projectEndDate!)) {
           _showProjectDateViolationDialog(
-            'MainTask end date must be within the project timeline',
+            context.l10n.gMainEndInProject,
             'end',
             endDate,
           );
@@ -1498,7 +1500,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         if (endDate.isBefore(_projectStartDate!) ||
             endDate.isAfter(_projectEndDate!)) {
           _showDateConstraintError(
-            'End date must be within project timeline (${DateFormat('MM/dd/yyyy').format(_projectStartDate!)} - ${DateFormat('MM/dd/yyyy').format(_projectEndDate!)})',
+            context.l10n.gEndInProject(DateFormat.yMd().format(_projectStartDate!), DateFormat.yMd().format(_projectEndDate!)),
           );
           return false;
         }
@@ -1510,7 +1512,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     if (parentRow != null && parentRow.endDate != null) {
       if (endDate.isAfter(parentRow.endDate!)) {
         _showParentTaskDateViolationDialog(
-          'Your selected end date is after the parent task end date',
+          context.l10n.gEndAfterParent,
           'end',
           endDate,
           parentRow,
@@ -1523,7 +1525,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       if (parentRow.startDate != null &&
           endDate.isBefore(parentRow.startDate!)) {
         _showParentTaskDateViolationDialog(
-          'Your selected end date is before the parent task start date',
+          context.l10n.gEndBeforeParent,
           'start',
           endDate,
           parentRow,
@@ -1556,19 +1558,19 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     String dateType, {
     bool isActual = false,
   }) {
-    final dateStr = DateFormat('MM/dd/yyyy').format(attemptedDate);
-    final parentStartStr = parentRow.startDate != null 
-        ? DateFormat('MM/dd/yyyy').format(parentRow.startDate!) 
-        : 'Not set';
-    final parentEndStr = parentRow.endDate != null 
-        ? DateFormat('MM/dd/yyyy').format(parentRow.endDate!) 
-        : 'Not set';
+    final dateStr = DateFormat.yMd().format(attemptedDate);
+    final l = context.l10n;
+    final parentStartStr = parentRow.startDate != null
+        ? DateFormat.yMd().format(parentRow.startDate!)
+        : l.notSetLabel;
+    final parentEndStr = parentRow.endDate != null
+        ? DateFormat.yMd().format(parentRow.endDate!)
+        : l.notSetLabel;
 
-    String adjustedMessage = isActual ? message.replaceAll('selected', 'selected actual') : message;
-    String fullMessage = '$adjustedMessage.\n\n';
-    fullMessage += 'Attempted date: $dateStr\n';
-    fullMessage += 'Parent task "${parentRow.taskName ?? 'Unnamed'}" timeline: $parentStartStr - $parentEndStr\n\n';
-    fullMessage += 'Would you like to adjust the parent task dates to accommodate this change?';
+    final fullMessage = '$message.\n\n'
+        '${l.gAttemptedDate(dateStr)}\n'
+        '${l.gParentTimeline(parentRow.taskName ?? l.unnamed, parentStartStr, parentEndStr)}\n\n'
+        '${l.gAdjustParentQuestion}';
 
     showDialog(
       context: context,
@@ -1585,7 +1587,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Date Outside Parent Task Timeline',
+                  context.l10n.gOutsideParentTitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -1621,7 +1623,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 );
               },
               child: Text(
-                'Cancel',
+                context.l10n.cancel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -1650,7 +1652,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 ),
               ),
               child: Text(
-                'Continue',
+                context.l10n.continueLabel2,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -1713,14 +1715,14 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         // For main tasks, check they remain within project bounds (not exact match)
         if ((newParentStart != null && (newParentStart.isBefore(_projectStartDate!) || newParentStart.isAfter(_projectEndDate!))) ||
             (newParentEnd != null && (newParentEnd.isBefore(_projectStartDate!) || newParentEnd.isAfter(_projectEndDate!)))) {
-          
+
           String violationType = 'timeline';
-          DateTime violatingDate = newParentStart != null && newParentStart.isBefore(_projectStartDate!) 
-              ? newParentStart 
+          DateTime violatingDate = newParentStart != null && newParentStart.isBefore(_projectStartDate!)
+              ? newParentStart
               : (newParentEnd != null && newParentEnd.isAfter(_projectEndDate!) ? newParentEnd : attemptedDate);
-          
+
           _showProjectDateViolationDialog(
-            'Adjusting the MainTask would place it outside the project timeline',
+            context.l10n.gAdjustMainOutside,
             violationType,
             violatingDate,
             isActual: isActual,
@@ -1731,9 +1733,9 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         // For subtasks, check against project bounds
         if ((newParentStart != null && (newParentStart.isBefore(_projectStartDate!) || newParentStart.isAfter(_projectEndDate!))) ||
             (newParentEnd != null && (newParentEnd.isBefore(_projectStartDate!) || newParentEnd.isAfter(_projectEndDate!)))) {
-          
+
           _showDateConstraintError(
-            'Adjusting the parent task would place it outside the project timeline',
+            context.l10n.gAdjustParentOutside,
           );
           return;
         }
@@ -1796,7 +1798,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Parent task "${parentRow.taskName ?? 'Unnamed'}" dates adjusted to accommodate the change',
+            context.l10n.gParentAdjusted(parentRow.taskName ?? context.l10n.unnamed),
             style: TextStyle(),
           ),
           backgroundColor: Colors.blue.shade600,
@@ -1820,27 +1822,27 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // Calculate duration from start and end dates
       row.duration = row.endDate!.difference(row.startDate!).inDays + 1;
       widget.logger.d('Immediately calculated duration: ${row.duration}');
-      
+
     } else if (hasStart && hasDuration && !hasEnd) {
       // Calculate end date from start date and duration
       final calculatedEndDate = row.startDate!.add(Duration(days: row.duration! - 1));
-      
+
       // Validate without triggering dialogs (since we're in parent adjustment flow)
       if (_isDateWithinBounds(row, calculatedEndDate, 'end')) {
         row.endDate = calculatedEndDate;
         widget.logger.d('Immediately calculated end date: ${row.endDate}');
       }
-      
+
     } else if (hasEnd && hasDuration && !hasStart) {
       // Calculate start date from end date and duration
       final calculatedStartDate = row.endDate!.subtract(Duration(days: row.duration! - 1));
-      
+
       // Validate without triggering dialogs (since we're in parent adjustment flow)
       if (_isDateWithinBounds(row, calculatedStartDate, 'start')) {
         row.startDate = calculatedStartDate;
         widget.logger.d('Immediately calculated start date: ${row.startDate}');
       }
-      
+
     } else if (hasStart && hasEnd && hasDuration) {
       // All three fields are populated - verify consistency and adjust if needed
       final calculatedDuration = row.endDate!.difference(row.startDate!).inDays + 1;
@@ -1927,7 +1929,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     for (final child in children) {
       if (child.startDate != null && child.startDate!.isBefore(newStartDate)) {
         _showDateConstraintError(
-          'Cannot set start date after child task "${child.taskName}" starts (${DateFormat('MM/dd/yyyy').format(child.startDate!)})',
+          context.l10n.gStartAfterChild(child.taskName ?? context.l10n.unnamed, DateFormat.yMd().format(child.startDate!)),
         );
         return false;
       }
@@ -1942,7 +1944,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     for (final child in children) {
       if (child.endDate != null && child.endDate!.isAfter(newEndDate)) {
         _showDateConstraintError(
-          'Cannot set end date before child task "${child.taskName}" ends (${DateFormat('MM/dd/yyyy').format(child.endDate!)})',
+          context.l10n.gEndBeforeChild(child.taskName ?? context.l10n.unnamed, DateFormat.yMd().format(child.endDate!)),
         );
         return false;
       }
@@ -2075,7 +2077,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Changes saved locally - will sync when online',
+              context.l10n.changesSavedLocally,
               style: TextStyle(),
             ),
             backgroundColor: Colors.orange,
@@ -2119,7 +2121,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'All changes saved successfully (${saveFutures.length} rows)',
+              context.l10n.allChangesSaved(saveFutures.length),
               style: TextStyle(),
             ),
             backgroundColor: Colors.green,
@@ -2135,7 +2137,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Error saving some changes: $e',
+              friendlyError(e, action: context.l10n.couldNotSaveSomeChanges),
               style: TextStyle(),
             ),
             backgroundColor: Colors.red,
@@ -2151,9 +2153,9 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         (row.endDate != null) ||
         (row.duration != null && row.duration! > 0) ||
         (row.taskType !=
-            TaskType.task) || 
-        (row.parentId != null) || 
-        (row.childIds.isNotEmpty); 
+            TaskType.task) ||
+        (row.parentId != null) ||
+        (row.childIds.isNotEmpty);
   }
 
   void _computeColumnWidths() {
@@ -2189,7 +2191,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       _durationColumnWidth = math.max(_durationColumnWidth, durationPainter.width + 16.0);
 
       // Start column
-      final startText = row.startDate != null ? DateFormat('MM/dd/yyyy').format(row.startDate!) : '';
+      final startText = row.startDate != null ? DateFormat.yMd().format(row.startDate!) : '';
       final startPainter = TextPainter(
         text: TextSpan(text: startText, style: TextStyle(fontSize: 11)),
         maxLines: 1,
@@ -2198,7 +2200,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       _startColumnWidth = math.max(_startColumnWidth, startPainter.width + 16.0);
 
       // Finish column
-      final finishText = row.endDate != null ? DateFormat('MM/dd/yyyy').format(row.endDate!) : '';
+      final finishText = row.endDate != null ? DateFormat.yMd().format(row.endDate!) : '';
       final finishPainter = TextPainter(
         text: TextSpan(text: finishText, style: TextStyle(fontSize: 11)),
         maxLines: 1,
@@ -2233,7 +2235,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       _resourcesColumnWidth = math.max(_resourcesColumnWidth, requiredWidthForRow);
 
       // Actual Dates column
-      final actualText = row.actualDatesDisplayText.isNotEmpty ? row.actualDatesDisplayText : 'Add dates';
+      final actualText = row.actualDatesDisplayText.isNotEmpty ? row.actualDatesDisplayText : l10nNow.addDates;
       final actualStyle = TextStyle(fontSize: 11);
       final actualPainter = TextPainter(
         text: TextSpan(text: actualText, style: actualStyle),
@@ -2418,17 +2420,15 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     DateTime attemptedDate, {
     bool isActual = false,
   }) {
-    final dateStr = DateFormat('MM/dd/yyyy').format(attemptedDate);
-    final projectStartStr = DateFormat('MM/dd/yyyy').format(_projectStartDate!);
-    final projectEndStr = DateFormat('MM/dd/yyyy').format(_projectEndDate!);
+    final dateStr = DateFormat.yMd().format(attemptedDate);
+    final projectStartStr = DateFormat.yMd().format(_projectStartDate!);
+    final projectEndStr = DateFormat.yMd().format(_projectEndDate!);
 
-    String adjustedMessage = isActual ? message.replaceAll('date', 'actual date') : message;
-
-    String fullMessage = '$adjustedMessage.\n\n';
-    fullMessage += 'Attempted date: $dateStr\n';
-    fullMessage += 'Project timeline: $projectStartStr - $projectEndStr\n\n';
-    fullMessage +=
-        'Would you like to edit the project dates to accommodate this task?';
+    final l = context.l10n;
+    final fullMessage = '$message.\n\n'
+        '${l.gAttemptedDate(dateStr)}\n'
+        '${l.gProjectTimeline(projectStartStr, projectEndStr)}\n\n'
+        '${l.gEditProjectQuestion}';
 
     showDialog(
       context: context,
@@ -2445,7 +2445,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Date Outside Project Timeline',
+                  context.l10n.gOutsideProjectTitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -2481,7 +2481,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 );
               },
               child: Text(
-                'Cancel',
+                context.l10n.cancel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -2503,7 +2503,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 ),
               ),
               child: Text(
-                'Edit Project Dates',
+                context.l10n.editProjectDates,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -2669,7 +2669,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Quantity (optional)',
+                  context.l10n.quantityOptional,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -2683,7 +2683,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                       child: TextField(
                         controller: _quantityControllers[index],
                         decoration: InputDecoration(
-                          hintText: 'e.g., 5, 10kg, 2 hours',
+                          hintText: context.l10n.quantityExamples,
                           hintStyle: TextStyle(
                             fontSize: 11,
                             color: Colors.grey.shade400,
@@ -2736,8 +2736,8 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                         _removeResourceDropdown();
                         _showSuccessSnackbar(
                           row.resourceQuantity != null
-                              ? 'Resource assigned: ${resource.name} (${row.resourceQuantity})'
-                              : 'Resource assigned: ${resource.name}',
+                              ? context.l10n.resourceAssignedQty(resource.name, row.resourceQuantity!)
+                              : context.l10n.resourceAssigned(resource.name),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -2750,7 +2750,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                         ),
                       ),
                       child: Text(
-                        'Apply',
+                        context.l10n.apply,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -2779,7 +2779,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           ),
           SizedBox(height: 12),
           Text(
-            'No resources available',
+            context.l10n.noResourcesAvailable,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -2788,7 +2788,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           ),
           SizedBox(height: 4),
           Text(
-            'Add resources to your project first',
+            context.l10n.addResourcesFirst,
             style: TextStyle(
               fontSize: 11,
               color: Colors.grey.shade500,
@@ -2803,13 +2803,13 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
   String _getResourceTypeLabel(ResourceType type) {
     switch (type) {
       case ResourceType.material:
-        return 'Material';
+        return l10nNow.resTypeMaterial;
       case ResourceType.equipment:
-        return 'Equipment';
+        return l10nNow.resTypeEquipment;
       case ResourceType.labor:
-        return 'Labor';
+        return l10nNow.resTypeLabor;
       case ResourceType.other:
-        return 'Other';
+        return l10nNow.resTypeOther;
     }
   }
 
@@ -2834,13 +2834,13 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               height: headerHeight,
               child: Row(
                 children: [
-                  _buildHeaderCell('No.', _numberColumnWidth),
-                  _buildHeaderCell('Task Name', _taskColumnWidth),
-                  _buildHeaderCell('Duration', _durationColumnWidth),
-                  _buildHeaderCell('Start', _startColumnWidth),
-                  _buildHeaderCell('Finish', _finishColumnWidth),
-                  _buildHeaderCell('Resources', _resourcesColumnWidth),
-                  _buildHeaderCell('Actual Dates', _actualDatesColumnWidth),
+                  _buildHeaderCell(context.l10n.colNumber, _numberColumnWidth),
+                  _buildHeaderCell(context.l10n.colTaskName, _taskColumnWidth),
+                  _buildHeaderCell(context.l10n.colDuration, _durationColumnWidth),
+                  _buildHeaderCell(context.l10n.colStart, _startColumnWidth),
+                  _buildHeaderCell(context.l10n.colFinish, _finishColumnWidth),
+                  _buildHeaderCell(context.l10n.colResources, _resourcesColumnWidth),
+                  _buildHeaderCell(context.l10n.colActualDates, _actualDatesColumnWidth),
                   Container(
                     width: ganttWidth,
                     decoration: BoxDecoration(
@@ -2904,7 +2904,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     final canDelete = row.isUnsaved;
     final TaskType currentTaskType = row.taskType;
     final isDropdownOpen = _openDropdownIndex == index;
-    
+
     // Create a GlobalKey for the Resources cell
     final resourceCellKey = GlobalKey();
 
@@ -2995,7 +2995,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   onChanged: (value) => _updateRowData(index, taskName: value),
                   style: _getTaskNameStyle(currentTaskType),
                   decoration: InputDecoration(
-                    hintText: 'Enter task name',
+                    hintText: context.l10n.enterTaskName,
                     hintStyle: TextStyle(
                       fontSize: 11,
                       color: Colors.grey.shade400,
@@ -3098,7 +3098,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 border: Border(
                   right: BorderSide(color: Colors.grey.shade300, width: 0.5),
                 ),
-                color: row.taskType == TaskType.task 
+                color: row.taskType == TaskType.task
                     ? (isDropdownOpen ? Colors.blue.shade50 : Colors.transparent)
                     : Colors.grey.shade100,
               ),
@@ -3201,7 +3201,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                         row.taskType == TaskType.task
                             ? (row.actualDatesDisplayText.isNotEmpty
                                 ? row.actualDatesDisplayText
-                                : 'Add dates')
+                                : context.l10n.addDates)
                             : '',
                         style: TextStyle(
                           fontSize: 11,
@@ -3269,29 +3269,29 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
   void _showActualDatesDialog(int index) {
     final row = _editedRows[index] ?? _rows[index];
-    
+
     // Determine dialog state based on existing data
     bool hasActualStart = row.actualStartDate != null;
     bool hasActualEnd = row.actualEndDate != null;
-    
+
     String dialogTitle;
     List<String> options;
-    
+
     if (!hasActualStart && !hasActualEnd) {
       // No dates saved
-      dialogTitle = 'Add Actual Dates';
+      dialogTitle = context.l10n.addActualDates;
       options = ['Actual Start Date', 'Actual Finish Date'];
     } else if (hasActualStart && !hasActualEnd) {
       // Only start date saved
-      dialogTitle = 'Manage Actual Dates';
+      dialogTitle = context.l10n.manageActualDates;
       options = ['Edit Actual Start Date', 'Add Actual Finish Date'];
     } else if (!hasActualStart && hasActualEnd) {
       // Only finish date saved
-      dialogTitle = 'Manage Actual Dates';
+      dialogTitle = context.l10n.manageActualDates;
       options = ['Add Actual Start Date', 'Edit Actual Finish Date'];
     } else {
       // Both dates saved
-      dialogTitle = 'Edit Actual Dates';
+      dialogTitle = context.l10n.editActualDates;
       options = ['Edit Actual Start Date', 'Edit Actual Finish Date'];
     }
 
@@ -3326,7 +3326,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Task: ${row.taskName ?? "Unnamed Task"}',
+                  context.l10n.taskLabel(row.taskName ?? context.l10n.unnamedTask),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -3335,7 +3335,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Scheduled: ${row.startDate != null ? DateFormat('MM/dd/yyyy').format(row.startDate!) : "N/A"} - ${row.endDate != null ? DateFormat('MM/dd/yyyy').format(row.endDate!) : "N/A"}',
+                  context.l10n.scheduledRange(row.startDate != null ? DateFormat.yMd().format(row.startDate!) : context.l10n.notAvailable, row.endDate != null ? DateFormat.yMd().format(row.endDate!) : context.l10n.notAvailable),
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade500,
@@ -3344,7 +3344,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 if (hasActualStart || hasActualEnd) ...[
                   SizedBox(height: 4),
                   Text(
-                    'Current Actual: ${row.actualDatesDisplayText}',
+                    context.l10n.currentActual(row.actualDatesDisplayText),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -3354,7 +3354,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 ],
                 SizedBox(height: 20),
                 Text(
-                  'Select action:',
+                  context.l10n.selectAction,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -3389,7 +3389,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
-                'Cancel',
+                context.l10n.cancel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -3448,7 +3448,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             SizedBox(width: 12),
             Expanded(
               child: Text(
-                option,
+                _actualDateOptionLabel(option),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -3467,6 +3467,22 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     );
   }
 
+  // The option strings are internal ids (the handlers below match on their
+  // words); this maps them to what the user reads.
+  String _actualDateOptionLabel(String option) {
+    final l = context.l10n;
+    return switch (option) {
+      'Actual Start Date' => l.optActualStart,
+      'Actual Finish Date' => l.optActualFinish,
+      'Add Actual Start Date' => l.optAddActualStart,
+      'Add Actual Finish Date' => l.optAddActualFinish,
+      'Edit Actual Start Date' => l.optEditActualStart,
+      'Edit Actual Finish Date' => l.optEditActualFinish,
+      'Clear All Actual Dates' => l.optClearActual,
+      _ => option,
+    };
+  }
+
   void _handleActualDateSelection(int index, String option, GanttRowData row) {
     widget.logger.d('📅 User selected: $option for row $index');
 
@@ -3481,7 +3497,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     // Set broad range for picker to allow selections outside current bounds
     DateTime firstDate = DateTime(2020);
     DateTime lastDate = DateTime(2030);
-    
+
     // Do not tighten to scheduled dates (loosened as per requirement)
     // Still apply parent if exists, but only as initial, since post-validation will handle violations
     final parentRow = _getParentRow(row);
@@ -3509,7 +3525,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           : (row.startDate ?? DateTime.now()),
       firstDate: firstDate,
       lastDate: lastDate,
-      helpText: isEdit ? 'Edit Actual Start Date' : 'Add Actual Start Date',
+      helpText: isEdit ? context.l10n.optEditActualStart : context.l10n.optAddActualStart,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -3523,11 +3539,11 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       },
     );
 
-    if (selectedDate != null) {
+    if (selectedDate != null && mounted) {
       // 1. Internal consistency validation
       if (row.actualEndDate != null && selectedDate.isAfter(row.actualEndDate!)) {
         _showActualDateViolationDialog(
-          'Actual start date cannot be after actual finish date',
+          context.l10n.gActStartAfterFinish,
           selectedDate,
           row.actualEndDate!,
           'start_after_end',
@@ -3540,7 +3556,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // 2. Project bounds validation
       if (_projectStartDate != null && selectedDate.isBefore(_projectStartDate!)) {
         _showProjectDateViolationDialog(
-          'The selected actual start date is before the project start date',
+          context.l10n.gActStartBeforeProject,
           'start',
           selectedDate,
         );
@@ -3548,7 +3564,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       }
       if (_projectEndDate != null && selectedDate.isAfter(_projectEndDate!)) {
         _showProjectDateViolationDialog(
-          'The selected actual start date is after the project end date',
+          context.l10n.gActStartAfterProject,
           'end',
           selectedDate,
         );
@@ -3559,7 +3575,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       if (parentRow != null) {
         if (parentRow.startDate != null && selectedDate.isBefore(parentRow.startDate!)) {
           _showParentTaskDateViolationDialog(
-            'Your selected actual start date is before the parent task start date',
+            context.l10n.gActStartBeforeParent,
             'start',
             selectedDate,
             parentRow,
@@ -3572,7 +3588,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         }
         if (parentRow.endDate != null && selectedDate.isAfter(parentRow.endDate!)) {
           _showParentTaskDateViolationDialog(
-            'Your selected actual start date is after the parent task end date',
+            context.l10n.gActStartAfterParent,
             'end',
             selectedDate,
             parentRow,
@@ -3588,7 +3604,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // 4. Scheduled variance warning (allow override)
       if (row.startDate != null && selectedDate.isBefore(row.startDate!)) {
         _showActualDateViolationDialog(
-          'Actual start date is before the scheduled start date',
+          context.l10n.gActStartBeforeScheduled,
           selectedDate,
           row.startDate!,
           'before_scheduled_start',
@@ -3608,7 +3624,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     // Set broad range for picker to allow selections outside current bounds
     DateTime firstDate = DateTime(2020);
     DateTime lastDate = DateTime(2030);
-    
+
     // Still apply parent if exists, but only as initial, since post-validation will handle violations
     final parentRow = _getParentRow(row);
     if (parentRow != null) {
@@ -3635,7 +3651,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           : (row.endDate ?? DateTime.now()),
       firstDate: firstDate,
       lastDate: lastDate,
-      helpText: isEdit ? 'Edit Actual Finish Date' : 'Add Actual Finish Date',
+      helpText: isEdit ? context.l10n.optEditActualFinish : context.l10n.optAddActualFinish,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -3649,11 +3665,11 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       },
     );
 
-    if (selectedDate != null) {
+    if (selectedDate != null && mounted) {
       // 1. Internal consistency validation
       if (row.actualStartDate != null && selectedDate.isBefore(row.actualStartDate!)) {
         _showActualDateViolationDialog(
-          'Actual finish date cannot be before actual start date',
+          context.l10n.gActFinishBeforeStart,
           selectedDate,
           row.actualStartDate!,
           'end_before_start',
@@ -3666,7 +3682,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // 2. Project bounds validation
       if (_projectStartDate != null && selectedDate.isBefore(_projectStartDate!)) {
         _showProjectDateViolationDialog(
-          'The selected actual finish date is before the project start date',
+          context.l10n.gActFinishBeforeProject,
           'start',
           selectedDate,
         );
@@ -3674,7 +3690,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       }
       if (_projectEndDate != null && selectedDate.isAfter(_projectEndDate!)) {
         _showProjectDateViolationDialog(
-          'The selected actual finish date is after the project end date',
+          context.l10n.gActFinishAfterProject,
           'end',
           selectedDate,
         );
@@ -3685,7 +3701,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       if (parentRow != null) {
         if (parentRow.startDate != null && selectedDate.isBefore(parentRow.startDate!)) {
           _showParentTaskDateViolationDialog(
-            'Your selected actual finish date is before the parent task start date',
+            context.l10n.gActFinishBeforeParent,
             'start',
             selectedDate,
             parentRow,
@@ -3698,7 +3714,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         }
         if (parentRow.endDate != null && selectedDate.isAfter(parentRow.endDate!)) {
           _showParentTaskDateViolationDialog(
-            'Your selected actual finish date is after the parent task end date',
+            context.l10n.gActFinishAfterParent,
             'end',
             selectedDate,
             parentRow,
@@ -3714,7 +3730,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       // 4. Scheduled variance warning (allow override)
       if (row.endDate != null && selectedDate.isAfter(row.endDate!)) {
         _showActualDateViolationDialog(
-          'Actual finish date is after the scheduled finish date',
+          context.l10n.gActFinishAfterScheduled,
           selectedDate,
           row.endDate!,
           'after_scheduled_end',
@@ -3732,14 +3748,14 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
   void _applyActualStartDate(int index, DateTime date) {
     if (!mounted) return;
-    
+
     // Declare variables that will be assigned in setState
     late final GanttRowData rowToSave;
-    
+
     setState(() {
       final row = _editedRows[index] ?? GanttRowData.from(_rows[index]);
       row.actualStartDate = date;
-      
+
       // EXISTING: Auto-set old status to 'started' (keep for transition)
       if (row.status != TaskStatus.completed) {
         row.status = TaskStatus.started;
@@ -3747,7 +3763,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           '📅 Auto-set OLD status to STARTED for task "${row.taskName}" due to actual start date',
         );
       }
-      
+
       // NEW: Auto-set taskStatus to 'started' (persisted to Firestore)
       if (row.taskStatus != TaskExecutionStatus.completed) {
         row.taskStatus = TaskExecutionStatus.started;
@@ -3755,22 +3771,22 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           '📅 Auto-set NEW taskStatus to STARTED for task "${row.taskName}" due to actual start date',
         );
       }
-      
+
       _editedRows[index] = row;
       rowToSave = GanttRowData.from(row); // Create a copy for saving
       _computeColumnWidths();
     });
 
     widget.logger.i(
-      '✅ Applied actual start date: ${DateFormat('MM/dd/yyyy').format(date)} to row $index with dual status update',
+      '✅ Applied actual start date: ${DateFormat.yMd().format(date)} to row $index with dual status update',
     );
 
     // Use the captured copy instead of accessing _editedRows in callback
     _saveRowToFirebase(rowToSave, index).then((_) {
       if (!mounted) return;
-      
+
       _showSuccessSnackbar(
-        'Actual start date set to ${DateFormat('MM/dd/yyyy').format(date)} - Status: Started',
+        context.l10n.actualStartSet(DateFormat.yMd().format(date)),
       );
     }).catchError((e, stackTrace) {
       widget.logger.e(
@@ -3778,9 +3794,9 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         error: e,
         stackTrace: stackTrace,
       );
-      
+
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -3789,7 +3805,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Failed to save changes. Please try again.',
+                  context.l10n.couldNotSaveChangesRetry,
                   style: TextStyle(fontSize: 13),
                 ),
               ),
@@ -3800,7 +3816,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           duration: Duration(seconds: 3),
           action: SnackBarAction(
-            label: 'Retry',
+            label: context.l10n.retry,
             textColor: Colors.white,
             onPressed: () {
               if (mounted) {
@@ -3815,15 +3831,15 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
   void _applyActualFinishDate(int index, DateTime date) {
     if (!mounted) return;
-    
+
     // Declare variables that will be assigned in setState
     late final GanttRowData rowToSave;
     late final String successMessage;
-    
+
     setState(() {
       final row = _editedRows[index] ?? GanttRowData.from(_rows[index]);
       row.actualEndDate = date;
-      
+
       // Ensure actual start date exists when setting finish date
       if (row.actualStartDate == null) {
         // Set actual start to scheduled start if available, otherwise use current date
@@ -3832,39 +3848,38 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           '📅 Auto-set actual start date to ${row.actualStartDate} for task "${row.taskName}" when completing',
         );
       }
-      
+
       // EXISTING: Auto-set old status to 'completed' (keep for transition)
       row.status = TaskStatus.completed;
       widget.logger.i(
         '📅 Auto-set OLD status to COMPLETED for task "${row.taskName}" due to actual finish date',
       );
-      
+
       // NEW: Auto-set taskStatus to 'completed' (persisted to Firestore)
       row.taskStatus = TaskExecutionStatus.completed;
       widget.logger.i(
         '📅 Auto-set NEW taskStatus to COMPLETED for task "${row.taskName}" due to actual finish date',
       );
-      
+
       _editedRows[index] = row;
       rowToSave = GanttRowData.from(row); // Create a copy for saving
-      
+
       // Prepare success message with captured data
-      final startMsg = row.actualStartDate != null
-          ? ' (Start: ${DateFormat('MM/dd/yyyy').format(row.actualStartDate!)})'
-          : '';
-      successMessage = 'Task completed on ${DateFormat('MM/dd/yyyy').format(date)}$startMsg';
-      
+      successMessage = row.actualStartDate != null
+          ? context.l10n.taskCompletedOnWithStart(DateFormat.yMd().format(date), DateFormat.yMd().format(row.actualStartDate!))
+          : context.l10n.taskCompletedOn(DateFormat.yMd().format(date));
+
       _computeColumnWidths();
     });
 
     widget.logger.i(
-      '✅ Applied actual finish date: ${DateFormat('MM/dd/yyyy').format(date)} to row $index with dual status update',
+      '✅ Applied actual finish date: ${DateFormat.yMd().format(date)} to row $index with dual status update',
     );
 
     // Use the captured copy and message instead of accessing _editedRows in callback
     _saveRowToFirebase(rowToSave, index).then((_) {
       if (!mounted) return;
-      
+
       _showSuccessSnackbar(successMessage);
     }).catchError((e, stackTrace) {
       widget.logger.e(
@@ -3872,9 +3887,9 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         error: e,
         stackTrace: stackTrace,
       );
-      
+
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -3883,7 +3898,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Failed to save changes. Please try again.',
+                  context.l10n.couldNotSaveChangesRetry,
                   style: TextStyle(fontSize: 13),
                 ),
               ),
@@ -3894,7 +3909,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           duration: Duration(seconds: 3),
           action: SnackBarAction(
-            label: 'Retry',
+            label: context.l10n.retry,
             textColor: Colors.white,
             onPressed: () {
               if (mounted) {
@@ -3909,16 +3924,16 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
 
   void _clearActualDates(int index) {
     if (!mounted) return;
-    
+
     setState(() {
       final row = _editedRows[index] ?? GanttRowData.from(_rows[index]);
       row.actualStartDate = null;
       row.actualEndDate = null;
-      
+
       // EXISTING: Revert old status based on scheduled dates vs current time (keep for transition)
       final now = DateTime.now();
       TaskStatus revertedStatus;
-      
+
       if (row.startDate != null && row.startDate!.isBefore(now)) {
         // Task should have started already -> mark as overdue
         revertedStatus = TaskStatus.overdue;
@@ -3932,15 +3947,15 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           '📅 Reverted OLD status to UPCOMING for task "${row.taskName}"',
         );
       }
-      
+
       row.status = revertedStatus;
-      
+
       // NEW: Clear taskStatus when actual dates are cleared (only user-controlled states)
       row.taskStatus = null;
       widget.logger.i(
         '📅 Cleared NEW taskStatus for task "${row.taskName}" (removing user-controlled state)',
       );
-      
+
       _editedRows[index] = row;
       _computeColumnWidths();
     });
@@ -3952,7 +3967,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     // Better error handling and state management for Firebase save
     _saveRowToFirebase(_editedRows[index]!, index).then((_) {
       if (!mounted) return;
-      
+
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -3962,7 +3977,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Actual dates cleared - Status: ${_editedRows[index]?.status?.name ?? "updated"}',
+                  context.l10n.actualDatesCleared,
                   style: TextStyle(fontSize: 13),
                 ),
               ),
@@ -3980,9 +3995,9 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         error: e,
         stackTrace: stackTrace,
       );
-      
+
       if (!mounted) return;
-      
+
       // Show error message with more context
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -3992,7 +4007,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Failed to clear dates. Please try again.',
+                  context.l10n.couldNotClearDates,
                   style: TextStyle(fontSize: 13),
                 ),
               ),
@@ -4003,7 +4018,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           duration: Duration(seconds: 3),
           action: SnackBarAction(
-            label: 'Retry',
+            label: context.l10n.retry,
             textColor: Colors.white,
             onPressed: () {
               // Retry the save operation
@@ -4026,15 +4041,16 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
     bool allowOverride = false,
     VoidCallback? onOverride,
   }) {
-    final attemptedStr = DateFormat('MM/dd/yyyy').format(attemptedDate);
-    final boundaryStr = DateFormat('MM/dd/yyyy').format(boundaryDate);
+    final attemptedStr = DateFormat.yMd().format(attemptedDate);
+    final boundaryStr = DateFormat.yMd().format(boundaryDate);
 
+    final l = context.l10n;
     String fullMessage = '$message.\n\n';
-    fullMessage += 'Attempted date: $attemptedStr\n';
-    fullMessage += 'Boundary date: $boundaryStr\n';
+    fullMessage += '${l.gAttemptedDate(attemptedStr)}\n';
+    fullMessage += '${l.gBoundaryDate(boundaryStr)}\n';
 
     if (allowOverride) {
-      fullMessage += '\nThis may indicate a schedule variance. Continue anyway?';
+      fullMessage += '\n${l.gVarianceQuestion}';
     }
 
     showDialog(
@@ -4052,7 +4068,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Actual Date Constraint',
+                  context.l10n.actualDateCheckTitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -4088,7 +4104,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 );
               },
               child: Text(
-                'Cancel',
+                context.l10n.cancel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -4111,7 +4127,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   ),
                 ),
                 child: Text(
-                  'Continue Anyway',
+                  context.l10n.continueAnyway,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -4170,7 +4186,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           },
         );
 
-        if (selectedDate != null) {
+        if (selectedDate != null && mounted) {
           onDateSelected(selectedDate);
           widget.logger.d(
             'Selected date: $selectedDate for task type: ${rowData?.taskType}',
@@ -4181,7 +4197,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         alignment: Alignment.centerLeft,
         child: Text(
-          date != null ? DateFormat('MM/dd/yyyy').format(date) : '',
+          date != null ? DateFormat.yMd().format(date) : '',
           style: TextStyle(fontSize: 11),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
@@ -4222,8 +4238,8 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   Flexible(
                     child: Text(
                       _projectStartDate != null && _projectEndDate != null
-                          ? '${DateFormat('MMM d, yyyy').format(_projectStartDate!)} - ${DateFormat('MMM d, yyyy').format(_projectEndDate!)}'
-                          : 'Failed to load project dates',
+                          ? '${DateFormat.yMMMd().format(_projectStartDate!)} - ${DateFormat.yMMMd().format(_projectEndDate!)}'
+                          : context.l10n.couldNotLoadProjectDates,
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade700,
@@ -4235,7 +4251,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   if (_isOfflineMode)
                     Flexible(
                       child: Text(
-                        'Offline Mode',
+                        context.l10n.offlineMode,
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.orange.shade700,
@@ -4259,12 +4275,12 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           IconButton(
             onPressed: _addNewRow,
             icon: Icon(Icons.add_circle_outline, color: Colors.green.shade700),
-            tooltip: 'Add Row',
+            tooltip: context.l10n.addRow,
           ),
           IconButton(
             onPressed: _saveAllRows,
             icon: Icon(Icons.save, color: Colors.blue.shade700),
-            tooltip: 'Save Changes',
+            tooltip: context.l10n.saveChangesTooltip,
           ),
         ],
       ),
@@ -4634,13 +4650,13 @@ class GanttRowPainter extends CustomPainter {
     switch (row.taskType) {
       case TaskType.mainTask:
       case TaskType.subTask:
-        barHeight = rowHeight * 0.15; 
+        barHeight = rowHeight * 0.15;
         break;
       case TaskType.task:
-        barHeight = rowHeight * 0.6; 
+        barHeight = rowHeight * 0.6;
         break;
     }
-    
+
     final barTop = (rowHeight - barHeight) / 2;
 
     Color barColor;
@@ -4775,7 +4791,7 @@ class GanttRowPainter extends CustomPainter {
   void _drawCurrentDateIndicator(Canvas canvas, Size size) {
     final now = DateTime.now();
     final currentOffset = now.difference(projectStartDate).inDays * dayWidth;
-    
+
     // Only draw if within timeline
     if (currentOffset >= 0 && currentOffset <= size.width) {
       final indicatorPaint = Paint()
@@ -4830,7 +4846,7 @@ class TaskContextMenu extends StatelessWidget {
           children: [
             _buildMenuItem(
               icon: Icons.star_outline,
-              text: 'Make Main Task',
+              text: l10nNow.makeMainTask,
               onTap: () {
                 onDismiss();
                 onMakeMainTask();
@@ -4838,7 +4854,7 @@ class TaskContextMenu extends StatelessWidget {
             ),
             _buildMenuItem(
               icon: Icons.subdirectory_arrow_right,
-              text: 'Make Subtask',
+              text: l10nNow.makeSubtask,
               onTap: () {
                 onDismiss();
                 onMakeSubtask();
@@ -4847,7 +4863,7 @@ class TaskContextMenu extends StatelessWidget {
             const Divider(height: 1),
             _buildMenuItem(
               icon: Icons.add,
-              text: 'Insert Row Below',
+              text: l10nNow.insertRowBelow,
               onTap: () {
                 onDismiss();
                 onAddNewRow();
@@ -4856,7 +4872,7 @@ class TaskContextMenu extends StatelessWidget {
             if (canDelete)
               _buildMenuItem(
                 icon: Icons.delete_outline,
-                text: 'Delete Row',
+                text: l10nNow.deleteRow,
                 onTap: () {
                   onDismiss();
                   onDeleteRow();

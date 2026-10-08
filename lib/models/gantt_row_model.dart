@@ -327,11 +327,11 @@ class GanttRowData {
     if (actualStartDate == null && actualEndDate == null) {
       return '';
     } else if (actualStartDate != null && actualEndDate != null) {
-      return '${DateFormat('MM/dd/yy').format(actualStartDate!)} - ${DateFormat('MM/dd/yy').format(actualEndDate!)}';
+      return '${DateFormat.yMd().format(actualStartDate!)} - ${DateFormat.yMd().format(actualEndDate!)}';
     } else if (actualStartDate != null) {
-      return '${DateFormat('MM/dd/yy').format(actualStartDate!)} - ...';
+      return '${DateFormat.yMd().format(actualStartDate!)} - ...';
     } else {
-      return '... - ${DateFormat('MM/dd/yy').format(actualEndDate!)}';
+      return '... - ${DateFormat.yMd().format(actualEndDate!)}';
     }
   }
 

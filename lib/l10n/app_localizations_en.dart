@@ -5079,4 +5079,925 @@ class AppLocalizationsEn extends AppLocalizations {
   String deleteNamedConfirm(String name) {
     return 'Are you sure you want to delete \"$name\"?';
   }
+
+  @override
+  String get scheduleTitle => 'Schedule';
+
+  @override
+  String get generalSchedule => 'General schedule';
+
+  @override
+  String get dynamicSchedule => 'Dynamic schedule';
+
+  @override
+  String get ganttChart => 'Gantt chart';
+
+  @override
+  String get scheduleMonitor => 'Schedule monitor';
+
+  @override
+  String get purchasingPlanResources => 'Purchasing plan / resources';
+
+  @override
+  String get couldNotLoadScheduleDocs =>
+      'We couldn\'t load the schedule documents';
+
+  @override
+  String get noScheduleYet => 'No schedule uploaded yet';
+
+  @override
+  String get tapUploadSchedule => 'Tap the upload button to add a schedule';
+
+  @override
+  String get enterScheduleDocTitle => 'Enter schedule document title';
+
+  @override
+  String get enterScheduleDocTitleBody =>
+      'Enter a title for this schedule document:';
+
+  @override
+  String get scheduleDocHint => 'e.g. Project master schedule Q1 2025';
+
+  @override
+  String get uploadingScheduleDoc => 'Uploading schedule document';
+
+  @override
+  String scheduleDocUploaded(String title) {
+    return 'Schedule document \"$title\" uploaded';
+  }
+
+  @override
+  String get deleteScheduleDocTitle => 'Delete schedule document';
+
+  @override
+  String get scheduleDocDeleted => 'Schedule document deleted';
+
+  @override
+  String get taskUpdated => 'Task updated';
+
+  @override
+  String taskMarkedStarted(String task) {
+    return '$task marked as started';
+  }
+
+  @override
+  String taskMarkedCompleted(String task) {
+    return '$task marked as completed';
+  }
+
+  @override
+  String get errorTitle => 'Something went wrong';
+
+  @override
+  String get couldNotUpdateTaskStatus =>
+      'We couldn\'t update the task status. Please try again.';
+
+  @override
+  String get couldNotLoadData => 'We couldn\'t load the data';
+
+  @override
+  String get searchTasks => 'Search tasks';
+
+  @override
+  String tabWithCount(String label, int count) {
+    return '$label ($count)';
+  }
+
+  @override
+  String get startingSoonSection => 'Starting soon (≤3 days)';
+
+  @override
+  String get otherUpcoming => 'Other upcoming';
+
+  @override
+  String get overdueToday => 'Overdue today!';
+
+  @override
+  String overdueByDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Overdue by $days days!',
+      one: 'Overdue by 1 day!',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get startingToday => 'Starting today!';
+
+  @override
+  String dueInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Due in $days days',
+      one: 'Due in 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get markStarted => 'Mark started';
+
+  @override
+  String get markCompleted => 'Mark completed';
+
+  @override
+  String durationDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Duration: $days days',
+      one: 'Duration: 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String startedOn(String date) {
+    return 'Started: $date';
+  }
+
+  @override
+  String completedOn(String date) {
+    return 'Completed: $date';
+  }
+
+  @override
+  String get noTasksMatchSearch => 'No tasks match your search';
+
+  @override
+  String noCategoryTasks(String category) {
+    return 'No tasks here: $category';
+  }
+
+  @override
+  String get noScheduleData => 'No schedule data yet';
+
+  @override
+  String get noScheduleDataHint =>
+      'Add tasks in the Gantt chart to see schedule monitoring';
+
+  @override
+  String get couldNotLoadResources => 'We couldn\'t load the resources';
+
+  @override
+  String get noResourcesAdded => 'No resources added';
+
+  @override
+  String get noResourcesHint => 'Add resources to manage your purchasing plan';
+
+  @override
+  String get addFirstResource => 'Add first resource';
+
+  @override
+  String get totalLabel => 'Total';
+
+  @override
+  String get resOnSite => 'On site';
+
+  @override
+  String get resInStorage => 'In storage';
+
+  @override
+  String get resNotOrdered => 'Not ordered';
+
+  @override
+  String get resOrdered => 'Ordered';
+
+  @override
+  String get resNotAvailable => 'Not available';
+
+  @override
+  String get resTypeMaterial => 'Material';
+
+  @override
+  String get resTypeEquipment => 'Equipment';
+
+  @override
+  String get resTypeLabor => 'Labour';
+
+  @override
+  String get resTypeOther => 'Other';
+
+  @override
+  String get addResource => 'Add resource';
+
+  @override
+  String get editResource => 'Edit resource';
+
+  @override
+  String get deleteResource => 'Delete resource';
+
+  @override
+  String get nameLabel => 'Name';
+
+  @override
+  String get quantityExampleHint => 'Quantity (e.g. 500 kg)';
+
+  @override
+  String get typeLabel => 'Type';
+
+  @override
+  String get searchResources => 'Search resources…';
+
+  @override
+  String get resourceCleared => 'Resource cleared';
+
+  @override
+  String get noneLabel => 'None';
+
+  @override
+  String get unknownResource => 'Unknown resource';
+
+  @override
+  String get projectDatesFallback =>
+      'We couldn\'t load the project dates, so a default timeline is shown';
+
+  @override
+  String get workingOffline =>
+      'You\'re offline — changes will sync when the connection is back';
+
+  @override
+  String get cannotDeleteSavedRow =>
+      'Saved rows in the default range can\'t be deleted';
+
+  @override
+  String get couldNotSaveTask => 'Couldn\'t save the task.';
+
+  @override
+  String get gCalcEndMainOutside =>
+      'The calculated end date would put this main task outside the project timeline. Please adjust the duration or start date.';
+
+  @override
+  String get gCalcEndOutside =>
+      'The calculated end date would be outside the project timeline. Please adjust the duration or start date.';
+
+  @override
+  String get gCalcEndAfterParent =>
+      'The calculated end date would be after the parent task ends';
+
+  @override
+  String get gCalcEndBeforeParent =>
+      'The calculated end date would be before the parent task starts';
+
+  @override
+  String get gCalcStartMainOutside =>
+      'The calculated start date would put this main task outside the project timeline. Please adjust the duration or end date.';
+
+  @override
+  String get gCalcStartOutside =>
+      'The calculated start date would be outside the project timeline. Please adjust the duration or end date.';
+
+  @override
+  String get gCalcStartBeforeParent =>
+      'The calculated start date would be before the parent task starts';
+
+  @override
+  String get gCalcStartAfterParent =>
+      'The calculated start date would be after the parent task ends';
+
+  @override
+  String get gMainStartInProject =>
+      'A main task\'s start date must be within the project timeline';
+
+  @override
+  String gStartInProject(String from, String to) {
+    return 'The start date must be within the project timeline ($from - $to)';
+  }
+
+  @override
+  String get gStartBeforeParent =>
+      'The start date you chose is before the parent task starts';
+
+  @override
+  String get gStartAfterParent =>
+      'The start date you chose is after the parent task ends';
+
+  @override
+  String get gMainEndInProject =>
+      'A main task\'s end date must be within the project timeline';
+
+  @override
+  String gEndInProject(String from, String to) {
+    return 'The end date must be within the project timeline ($from - $to)';
+  }
+
+  @override
+  String get gEndAfterParent =>
+      'The end date you chose is after the parent task ends';
+
+  @override
+  String get gEndBeforeParent =>
+      'The end date you chose is before the parent task starts';
+
+  @override
+  String get notSetLabel => 'Not set';
+
+  @override
+  String get unnamed => 'Unnamed';
+
+  @override
+  String gAttemptedDate(String date) {
+    return 'Date you chose: $date';
+  }
+
+  @override
+  String gParentTimeline(String name, String from, String to) {
+    return 'Parent task \"$name\" runs $from - $to';
+  }
+
+  @override
+  String get gAdjustParentQuestion =>
+      'Would you like to adjust the parent task\'s dates to fit this change?';
+
+  @override
+  String get gOutsideParentTitle => 'Date outside the parent task';
+
+  @override
+  String get continueLabel2 => 'Continue';
+
+  @override
+  String get gAdjustMainOutside =>
+      'Adjusting the main task would put it outside the project timeline';
+
+  @override
+  String get gAdjustParentOutside =>
+      'Adjusting the parent task would put it outside the project timeline';
+
+  @override
+  String gParentAdjusted(String name) {
+    return 'Parent task \"$name\" dates were adjusted to fit the change';
+  }
+
+  @override
+  String gStartAfterChild(String name, String date) {
+    return 'The start date can\'t be after sub-task \"$name\" starts ($date)';
+  }
+
+  @override
+  String gEndBeforeChild(String name, String date) {
+    return 'The end date can\'t be before sub-task \"$name\" ends ($date)';
+  }
+
+  @override
+  String get changesSavedLocally =>
+      'Changes saved on this device — they\'ll sync when you\'re online';
+
+  @override
+  String allChangesSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'All changes saved ($count rows)',
+      one: 'All changes saved (1 row)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get couldNotSaveSomeChanges => 'Some changes couldn\'t be saved.';
+
+  @override
+  String get addDates => 'Add dates';
+
+  @override
+  String gProjectTimeline(String from, String to) {
+    return 'Project timeline: $from - $to';
+  }
+
+  @override
+  String get gEditProjectQuestion =>
+      'Would you like to edit the project dates to fit this task?';
+
+  @override
+  String get gOutsideProjectTitle => 'Date outside the project timeline';
+
+  @override
+  String get editProjectDates => 'Edit project dates';
+
+  @override
+  String get quantityOptional => 'Quantity (optional)';
+
+  @override
+  String get quantityExamples => 'e.g. 5, 10 kg, 2 hours';
+
+  @override
+  String resourceAssignedQty(String name, String qty) {
+    return 'Resource assigned: $name ($qty)';
+  }
+
+  @override
+  String resourceAssigned(String name) {
+    return 'Resource assigned: $name';
+  }
+
+  @override
+  String get noResourcesAvailable => 'No resources available';
+
+  @override
+  String get addResourcesFirst => 'Add resources to your project first';
+
+  @override
+  String get colNumber => 'No.';
+
+  @override
+  String get colTaskName => 'Task name';
+
+  @override
+  String get colDuration => 'Duration';
+
+  @override
+  String get colStart => 'Start';
+
+  @override
+  String get colFinish => 'Finish';
+
+  @override
+  String get colResources => 'Resources';
+
+  @override
+  String get colActualDates => 'Actual dates';
+
+  @override
+  String get enterTaskName => 'Enter task name';
+
+  @override
+  String get addActualDates => 'Add actual dates';
+
+  @override
+  String get manageActualDates => 'Manage actual dates';
+
+  @override
+  String get editActualDates => 'Edit actual dates';
+
+  @override
+  String get optActualStart => 'Actual start date';
+
+  @override
+  String get optActualFinish => 'Actual finish date';
+
+  @override
+  String get optAddActualStart => 'Add actual start date';
+
+  @override
+  String get optAddActualFinish => 'Add actual finish date';
+
+  @override
+  String get optEditActualStart => 'Edit actual start date';
+
+  @override
+  String get optEditActualFinish => 'Edit actual finish date';
+
+  @override
+  String get optClearActual => 'Clear all actual dates';
+
+  @override
+  String taskLabel(String name) {
+    return 'Task: $name';
+  }
+
+  @override
+  String get unnamedTask => 'Unnamed task';
+
+  @override
+  String scheduledRange(String from, String to) {
+    return 'Scheduled: $from - $to';
+  }
+
+  @override
+  String currentActual(String dates) {
+    return 'Current actual: $dates';
+  }
+
+  @override
+  String get selectAction => 'Choose an action:';
+
+  @override
+  String get gActStartAfterFinish =>
+      'The actual start date can\'t be after the actual finish date';
+
+  @override
+  String get gActStartBeforeProject =>
+      'The actual start date you chose is before the project starts';
+
+  @override
+  String get gActStartAfterProject =>
+      'The actual start date you chose is after the project ends';
+
+  @override
+  String get gActStartBeforeParent =>
+      'The actual start date you chose is before the parent task starts';
+
+  @override
+  String get gActStartAfterParent =>
+      'The actual start date you chose is after the parent task ends';
+
+  @override
+  String get gActStartBeforeScheduled =>
+      'The actual start date is before the scheduled start date';
+
+  @override
+  String get gActFinishBeforeStart =>
+      'The actual finish date can\'t be before the actual start date';
+
+  @override
+  String get gActFinishBeforeProject =>
+      'The actual finish date you chose is before the project starts';
+
+  @override
+  String get gActFinishAfterProject =>
+      'The actual finish date you chose is after the project ends';
+
+  @override
+  String get gActFinishBeforeParent =>
+      'The actual finish date you chose is before the parent task starts';
+
+  @override
+  String get gActFinishAfterParent =>
+      'The actual finish date you chose is after the parent task ends';
+
+  @override
+  String get gActFinishAfterScheduled =>
+      'The actual finish date is after the scheduled finish date';
+
+  @override
+  String actualStartSet(String date) {
+    return 'Actual start date set to $date — status: started';
+  }
+
+  @override
+  String get couldNotSaveChangesRetry =>
+      'We couldn\'t save your changes. Please try again.';
+
+  @override
+  String taskCompletedOn(String date) {
+    return 'Task completed on $date';
+  }
+
+  @override
+  String taskCompletedOnWithStart(String date, String start) {
+    return 'Task completed on $date (started $start)';
+  }
+
+  @override
+  String get actualDatesCleared => 'Actual dates cleared';
+
+  @override
+  String get couldNotClearDates =>
+      'We couldn\'t clear the dates. Please try again.';
+
+  @override
+  String gBoundaryDate(String date) {
+    return 'Limit date: $date';
+  }
+
+  @override
+  String get gVarianceQuestion =>
+      'This may mean the schedule has slipped. Continue anyway?';
+
+  @override
+  String get actualDateCheckTitle => 'Check the actual date';
+
+  @override
+  String get continueAnyway => 'Continue anyway';
+
+  @override
+  String get couldNotLoadProjectDates => 'Couldn\'t load project dates';
+
+  @override
+  String get offlineMode => 'Offline';
+
+  @override
+  String get addRow => 'Add row';
+
+  @override
+  String get saveChangesTooltip => 'Save changes';
+
+  @override
+  String get makeMainTask => 'Make main task';
+
+  @override
+  String get makeSubtask => 'Make subtask';
+
+  @override
+  String get insertRowBelow => 'Insert row below';
+
+  @override
+  String get deleteRow => 'Delete row';
+
+  @override
+  String get dayDoneOngoing => 'Work done – ongoing ✓';
+
+  @override
+  String get dayDoneCompleted => 'Work done – completed ✓';
+
+  @override
+  String get dayHoliday => 'Holiday (H)';
+
+  @override
+  String get dayBadWeather => 'Bad weather (W)';
+
+  @override
+  String get dayNotSet => 'Not set';
+
+  @override
+  String get progressSaved => 'Progress monitor saved';
+
+  @override
+  String get couldNotSaveProgress => 'Couldn\'t save the progress monitor.';
+
+  @override
+  String get importStepPick => 'Opening file picker…';
+
+  @override
+  String get importStepRead => 'Reading the file…';
+
+  @override
+  String get importStepParse => 'Reading the Excel sheet…';
+
+  @override
+  String get importStepProcess => 'Processing rows…';
+
+  @override
+  String importStepProcessN(int count) {
+    return 'Processing $count rows…';
+  }
+
+  @override
+  String get importStepConfirm => 'Waiting for your confirmation…';
+
+  @override
+  String importStepConfirmN(int count) {
+    return 'Found $count rows — waiting for your confirmation…';
+  }
+
+  @override
+  String get importStepSave => 'Saving rows…';
+
+  @override
+  String importStepSaveN(int count) {
+    return 'Saving $count rows…';
+  }
+
+  @override
+  String get importStepWrite => 'Uploading to the server…';
+
+  @override
+  String get noRowsInExcel => 'No rows were found in the Excel file.';
+
+  @override
+  String get importFromExcel => 'Import from Excel';
+
+  @override
+  String importConfirmBody(int count, int matched) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Found $count rows.',
+      one: 'Found 1 row.',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      matched,
+      locale: localeName,
+      other:
+          '$matched rows matched an existing task by name and will keep their recorded progress marks; any other row starts with no marks.',
+      one:
+          '1 row matched an existing task by name and will keep its recorded progress marks; any other row starts with no marks.',
+      zero:
+          'No rows matched an existing task, so all rows start with no progress marks.',
+    );
+    return '$_temp0\nThis will replace the current table.\n\n$_temp1 Continue?';
+  }
+
+  @override
+  String get importAction => 'Import';
+
+  @override
+  String importedRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Imported $count rows',
+      one: 'Imported 1 row',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get couldNotImport => 'Couldn\'t import the file.';
+
+  @override
+  String get newTask => 'New task';
+
+  @override
+  String get marksRetrying =>
+      'Some progress marks couldn\'t sync — retrying automatically…';
+
+  @override
+  String get clearNotSet => 'Clear / not set';
+
+  @override
+  String get importingExcel => 'Importing Excel';
+
+  @override
+  String get pleaseWait => 'Please wait…';
+
+  @override
+  String taskProgressMonitorTitle(String project) {
+    return '$project — Task progress monitor';
+  }
+
+  @override
+  String get projectDateExtensions => 'Project date extensions';
+
+  @override
+  String projectProgressPercent(String percent) {
+    return 'Project: $percent%';
+  }
+
+  @override
+  String get rowsToggle => '# Rows';
+
+  @override
+  String get removeLast => 'Remove last';
+
+  @override
+  String get importExcel => 'Import Excel';
+
+  @override
+  String get legendDone => 'Done';
+
+  @override
+  String get legendHoliday => 'Holiday';
+
+  @override
+  String get legendBadWeather => 'Bad weather';
+
+  @override
+  String get startDateCol => 'Start date';
+
+  @override
+  String get finishDateCol => 'Finish date';
+
+  @override
+  String get noPhasesWithDates => 'No phases with start/end dates yet';
+
+  @override
+  String get deleteTaskRowTitle => 'Delete task row?';
+
+  @override
+  String deleteTaskRowBody(String name) {
+    return '\"$name\" and its recorded progress marks will be removed.';
+  }
+
+  @override
+  String get outsideProjectBounds => 'Outside the project dates';
+
+  @override
+  String dateBeforeProjectStart(String date) {
+    return 'That date is before the project\'s start date ($date). Request a project date extension first — once approved, this and other tasks can use the new range.';
+  }
+
+  @override
+  String dateAfterProjectEnd(String date) {
+    return 'That date is after the project\'s end date ($date). Request a project date extension first — once approved, this and other tasks can use the new range.';
+  }
+
+  @override
+  String get requestProjectExtension => 'Request project extension';
+
+  @override
+  String get requestProjectDateExtension => 'Request project date extension';
+
+  @override
+  String get extensionMainlyEnd =>
+      'This mainly affects the completion date, but the start date can be changed too if needed.';
+
+  @override
+  String get reasonForExtension => 'Reason for extension *';
+
+  @override
+  String get reasonForExtensionHint =>
+      'Why does the project timeline need to change?';
+
+  @override
+  String get extensionApprovalNote =>
+      'Once approved by the Project Manager or a MainAdmin: the project\'s dates update, any phase whose end matched the old project end date moves with it, and task dates can be edited freely within the new range.';
+
+  @override
+  String get submitRequest => 'Submit request';
+
+  @override
+  String nExtRequestedTitle(String project) {
+    return 'Project date extension requested — $project';
+  }
+
+  @override
+  String nExtRequestedBody(String name, String from, String to) {
+    return '$name requested new project dates: $from – $to.';
+  }
+
+  @override
+  String get aUser => 'A user';
+
+  @override
+  String get extensionRequestedSnack =>
+      'Project extension requested — waiting for approval.';
+
+  @override
+  String get couldNotSubmitRequest => 'Couldn\'t submit the request.';
+
+  @override
+  String nExtApprovedTitle(String project) {
+    return 'Project date extension approved — $project';
+  }
+
+  @override
+  String nExtRejectedTitle(String project) {
+    return 'Project date extension rejected — $project';
+  }
+
+  @override
+  String nExtApprovedBody(String from, String to) {
+    return 'Project dates are now $from – $to.';
+  }
+
+  @override
+  String get nExtRejectedBody => 'The project keeps its current dates.';
+
+  @override
+  String nExtRejectedBodyReason(String reason) {
+    return 'The project keeps its current dates. Reason: $reason';
+  }
+
+  @override
+  String get extensionApprovedSnack => 'Extension approved.';
+
+  @override
+  String get extensionRejectedSnack => 'Extension rejected.';
+
+  @override
+  String get couldNotRecordResponse => 'Couldn\'t record your response.';
+
+  @override
+  String requestedByNameRole(String name, String role) {
+    return 'Requested by $name ($role)';
+  }
+
+  @override
+  String approvedByName(String name) {
+    return 'Approved by $name';
+  }
+
+  @override
+  String rejectedByName(String name) {
+    return 'Rejected by $name';
+  }
+
+  @override
+  String reasonColon(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String get rejectionReasonOptional => 'Reason for rejection (optional)';
+
+  @override
+  String get confirmReject => 'Confirm rejection';
+
+  @override
+  String get awaitingPmApproval =>
+      'Waiting for approval from the Project Manager or a MainAdmin.';
+
+  @override
+  String deadlinePassedRequest(String name) {
+    return '$name\'s deadline has passed — request a date extension to continue.';
+  }
+
+  @override
+  String get requestAction => 'Request';
+
+  @override
+  String alreadyCompletedTask(String name) {
+    return '$name is already marked as completed.';
+  }
+
+  @override
+  String workDaysCount(int done, int total) {
+    return '$done / $total work days';
+  }
+
+  @override
+  String percentComplete(String percent) {
+    return '$percent% complete';
+  }
+
+  @override
+  String get noTasksDefined => 'No tasks yet';
+
+  @override
+  String get noTasksDefinedHint =>
+      'Use \"Import Excel\" to load from a file,\nor \"Add row\" to create tasks manually.';
 }

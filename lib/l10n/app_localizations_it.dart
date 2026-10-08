@@ -5115,4 +5115,931 @@ class AppLocalizationsIt extends AppLocalizations {
   String deleteNamedConfirm(String name) {
     return 'Vuoi davvero eliminare \"$name\"?';
   }
+
+  @override
+  String get scheduleTitle => 'Programma';
+
+  @override
+  String get generalSchedule => 'Programma generale';
+
+  @override
+  String get dynamicSchedule => 'Programma dinamico';
+
+  @override
+  String get ganttChart => 'Diagramma di Gantt';
+
+  @override
+  String get scheduleMonitor => 'Monitoraggio programma';
+
+  @override
+  String get purchasingPlanResources => 'Piano acquisti / risorse';
+
+  @override
+  String get couldNotLoadScheduleDocs =>
+      'Impossibile caricare i documenti del programma';
+
+  @override
+  String get noScheduleYet => 'Nessun programma caricato';
+
+  @override
+  String get tapUploadSchedule =>
+      'Tocca il pulsante di caricamento per aggiungere un programma';
+
+  @override
+  String get enterScheduleDocTitle =>
+      'Inserisci il titolo del documento di programma';
+
+  @override
+  String get enterScheduleDocTitleBody =>
+      'Inserisci un titolo per questo documento di programma:';
+
+  @override
+  String get scheduleDocHint => 'es. Programma generale di progetto T1 2025';
+
+  @override
+  String get uploadingScheduleDoc => 'Caricamento documento di programma';
+
+  @override
+  String scheduleDocUploaded(String title) {
+    return 'Documento di programma \"$title\" caricato';
+  }
+
+  @override
+  String get deleteScheduleDocTitle => 'Elimina documento di programma';
+
+  @override
+  String get scheduleDocDeleted => 'Documento di programma eliminato';
+
+  @override
+  String get taskUpdated => 'Attività aggiornata';
+
+  @override
+  String taskMarkedStarted(String task) {
+    return '$task segnata come iniziata';
+  }
+
+  @override
+  String taskMarkedCompleted(String task) {
+    return '$task segnata come completata';
+  }
+
+  @override
+  String get errorTitle => 'Si è verificato un problema';
+
+  @override
+  String get couldNotUpdateTaskStatus =>
+      'Impossibile aggiornare lo stato dell\'attività. Riprova.';
+
+  @override
+  String get couldNotLoadData => 'Impossibile caricare i dati';
+
+  @override
+  String get searchTasks => 'Cerca attività';
+
+  @override
+  String tabWithCount(String label, int count) {
+    return '$label ($count)';
+  }
+
+  @override
+  String get startingSoonSection => 'In partenza a breve (≤3 giorni)';
+
+  @override
+  String get otherUpcoming => 'Altre in arrivo';
+
+  @override
+  String get overdueToday => 'In ritardo da oggi!';
+
+  @override
+  String overdueByDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'In ritardo di $days giorni!',
+      one: 'In ritardo di 1 giorno!',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get startingToday => 'Inizia oggi!';
+
+  @override
+  String dueInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Scade tra $days giorni',
+      one: 'Scade tra 1 giorno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get markStarted => 'Segna come iniziata';
+
+  @override
+  String get markCompleted => 'Segna come completata';
+
+  @override
+  String durationDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Durata: $days giorni',
+      one: 'Durata: 1 giorno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String startedOn(String date) {
+    return 'Iniziata: $date';
+  }
+
+  @override
+  String completedOn(String date) {
+    return 'Completata: $date';
+  }
+
+  @override
+  String get noTasksMatchSearch => 'Nessuna attività corrisponde alla ricerca';
+
+  @override
+  String noCategoryTasks(String category) {
+    return 'Nessuna attività: $category';
+  }
+
+  @override
+  String get noScheduleData => 'Nessun dato di programma';
+
+  @override
+  String get noScheduleDataHint =>
+      'Aggiungi attività nel diagramma di Gantt per vedere il monitoraggio';
+
+  @override
+  String get couldNotLoadResources => 'Impossibile caricare le risorse';
+
+  @override
+  String get noResourcesAdded => 'Nessuna risorsa aggiunta';
+
+  @override
+  String get noResourcesHint =>
+      'Aggiungi risorse per gestire il piano acquisti';
+
+  @override
+  String get addFirstResource => 'Aggiungi la prima risorsa';
+
+  @override
+  String get totalLabel => 'Totale';
+
+  @override
+  String get resOnSite => 'In cantiere';
+
+  @override
+  String get resInStorage => 'In magazzino';
+
+  @override
+  String get resNotOrdered => 'Non ordinato';
+
+  @override
+  String get resOrdered => 'Ordinato';
+
+  @override
+  String get resNotAvailable => 'Non disponibile';
+
+  @override
+  String get resTypeMaterial => 'Materiale';
+
+  @override
+  String get resTypeEquipment => 'Attrezzatura';
+
+  @override
+  String get resTypeLabor => 'Manodopera';
+
+  @override
+  String get resTypeOther => 'Altro';
+
+  @override
+  String get addResource => 'Aggiungi risorsa';
+
+  @override
+  String get editResource => 'Modifica risorsa';
+
+  @override
+  String get deleteResource => 'Elimina risorsa';
+
+  @override
+  String get nameLabel => 'Nome';
+
+  @override
+  String get quantityExampleHint => 'Quantità (es. 500 kg)';
+
+  @override
+  String get typeLabel => 'Tipo';
+
+  @override
+  String get searchResources => 'Cerca risorse…';
+
+  @override
+  String get resourceCleared => 'Risorsa rimossa';
+
+  @override
+  String get noneLabel => 'Nessuna';
+
+  @override
+  String get unknownResource => 'Risorsa sconosciuta';
+
+  @override
+  String get projectDatesFallback =>
+      'Impossibile caricare le date del progetto: viene mostrato un calendario predefinito';
+
+  @override
+  String get workingOffline =>
+      'Sei offline: le modifiche verranno sincronizzate al ritorno della connessione';
+
+  @override
+  String get cannotDeleteSavedRow =>
+      'Le righe salvate nell\'intervallo predefinito non possono essere eliminate';
+
+  @override
+  String get couldNotSaveTask => 'Impossibile salvare l\'attività.';
+
+  @override
+  String get gCalcEndMainOutside =>
+      'La data di fine calcolata porterebbe questa attività principale fuori dal calendario del progetto. Modifica la durata o la data di inizio.';
+
+  @override
+  String get gCalcEndOutside =>
+      'La data di fine calcolata sarebbe fuori dal calendario del progetto. Modifica la durata o la data di inizio.';
+
+  @override
+  String get gCalcEndAfterParent =>
+      'La data di fine calcolata sarebbe successiva alla fine dell\'attività principale';
+
+  @override
+  String get gCalcEndBeforeParent =>
+      'La data di fine calcolata sarebbe precedente all\'inizio dell\'attività principale';
+
+  @override
+  String get gCalcStartMainOutside =>
+      'La data di inizio calcolata porterebbe questa attività principale fuori dal calendario del progetto. Modifica la durata o la data di fine.';
+
+  @override
+  String get gCalcStartOutside =>
+      'La data di inizio calcolata sarebbe fuori dal calendario del progetto. Modifica la durata o la data di fine.';
+
+  @override
+  String get gCalcStartBeforeParent =>
+      'La data di inizio calcolata sarebbe precedente all\'inizio dell\'attività principale';
+
+  @override
+  String get gCalcStartAfterParent =>
+      'La data di inizio calcolata sarebbe successiva alla fine dell\'attività principale';
+
+  @override
+  String get gMainStartInProject =>
+      'La data di inizio di un\'attività principale deve rientrare nel calendario del progetto';
+
+  @override
+  String gStartInProject(String from, String to) {
+    return 'La data di inizio deve rientrare nel calendario del progetto ($from - $to)';
+  }
+
+  @override
+  String get gStartBeforeParent =>
+      'La data di inizio scelta è precedente all\'inizio dell\'attività principale';
+
+  @override
+  String get gStartAfterParent =>
+      'La data di inizio scelta è successiva alla fine dell\'attività principale';
+
+  @override
+  String get gMainEndInProject =>
+      'La data di fine di un\'attività principale deve rientrare nel calendario del progetto';
+
+  @override
+  String gEndInProject(String from, String to) {
+    return 'La data di fine deve rientrare nel calendario del progetto ($from - $to)';
+  }
+
+  @override
+  String get gEndAfterParent =>
+      'La data di fine scelta è successiva alla fine dell\'attività principale';
+
+  @override
+  String get gEndBeforeParent =>
+      'La data di fine scelta è precedente all\'inizio dell\'attività principale';
+
+  @override
+  String get notSetLabel => 'Non impostata';
+
+  @override
+  String get unnamed => 'Senza nome';
+
+  @override
+  String gAttemptedDate(String date) {
+    return 'Data scelta: $date';
+  }
+
+  @override
+  String gParentTimeline(String name, String from, String to) {
+    return 'L\'attività principale \"$name\" va dal $from al $to';
+  }
+
+  @override
+  String get gAdjustParentQuestion =>
+      'Vuoi modificare le date dell\'attività principale per includere questa modifica?';
+
+  @override
+  String get gOutsideParentTitle => 'Data fuori dall\'attività principale';
+
+  @override
+  String get continueLabel2 => 'Continua';
+
+  @override
+  String get gAdjustMainOutside =>
+      'Modificare l\'attività principale la porterebbe fuori dal calendario del progetto';
+
+  @override
+  String get gAdjustParentOutside =>
+      'Modificare l\'attività principale la porterebbe fuori dal calendario del progetto';
+
+  @override
+  String gParentAdjusted(String name) {
+    return 'Le date dell\'attività principale \"$name\" sono state adattate alla modifica';
+  }
+
+  @override
+  String gStartAfterChild(String name, String date) {
+    return 'La data di inizio non può essere successiva all\'inizio della sottoattività \"$name\" ($date)';
+  }
+
+  @override
+  String gEndBeforeChild(String name, String date) {
+    return 'La data di fine non può essere precedente alla fine della sottoattività \"$name\" ($date)';
+  }
+
+  @override
+  String get changesSavedLocally =>
+      'Modifiche salvate sul dispositivo: verranno sincronizzate quando sarai online';
+
+  @override
+  String allChangesSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Tutte le modifiche salvate ($count righe)',
+      one: 'Tutte le modifiche salvate (1 riga)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get couldNotSaveSomeChanges =>
+      'Alcune modifiche non sono state salvate.';
+
+  @override
+  String get addDates => 'Aggiungi date';
+
+  @override
+  String gProjectTimeline(String from, String to) {
+    return 'Calendario del progetto: $from - $to';
+  }
+
+  @override
+  String get gEditProjectQuestion =>
+      'Vuoi modificare le date del progetto per includere questa attività?';
+
+  @override
+  String get gOutsideProjectTitle => 'Data fuori dal calendario del progetto';
+
+  @override
+  String get editProjectDates => 'Modifica date del progetto';
+
+  @override
+  String get quantityOptional => 'Quantità (facoltativa)';
+
+  @override
+  String get quantityExamples => 'es. 5, 10 kg, 2 ore';
+
+  @override
+  String resourceAssignedQty(String name, String qty) {
+    return 'Risorsa assegnata: $name ($qty)';
+  }
+
+  @override
+  String resourceAssigned(String name) {
+    return 'Risorsa assegnata: $name';
+  }
+
+  @override
+  String get noResourcesAvailable => 'Nessuna risorsa disponibile';
+
+  @override
+  String get addResourcesFirst => 'Aggiungi prima delle risorse al progetto';
+
+  @override
+  String get colNumber => 'N.';
+
+  @override
+  String get colTaskName => 'Nome attività';
+
+  @override
+  String get colDuration => 'Durata';
+
+  @override
+  String get colStart => 'Inizio';
+
+  @override
+  String get colFinish => 'Fine';
+
+  @override
+  String get colResources => 'Risorse';
+
+  @override
+  String get colActualDates => 'Date effettive';
+
+  @override
+  String get enterTaskName => 'Inserisci il nome dell\'attività';
+
+  @override
+  String get addActualDates => 'Aggiungi date effettive';
+
+  @override
+  String get manageActualDates => 'Gestisci date effettive';
+
+  @override
+  String get editActualDates => 'Modifica date effettive';
+
+  @override
+  String get optActualStart => 'Data di inizio effettiva';
+
+  @override
+  String get optActualFinish => 'Data di fine effettiva';
+
+  @override
+  String get optAddActualStart => 'Aggiungi data di inizio effettiva';
+
+  @override
+  String get optAddActualFinish => 'Aggiungi data di fine effettiva';
+
+  @override
+  String get optEditActualStart => 'Modifica data di inizio effettiva';
+
+  @override
+  String get optEditActualFinish => 'Modifica data di fine effettiva';
+
+  @override
+  String get optClearActual => 'Cancella tutte le date effettive';
+
+  @override
+  String taskLabel(String name) {
+    return 'Attività: $name';
+  }
+
+  @override
+  String get unnamedTask => 'Attività senza nome';
+
+  @override
+  String scheduledRange(String from, String to) {
+    return 'Programmata: $from - $to';
+  }
+
+  @override
+  String currentActual(String dates) {
+    return 'Date effettive attuali: $dates';
+  }
+
+  @override
+  String get selectAction => 'Scegli un\'azione:';
+
+  @override
+  String get gActStartAfterFinish =>
+      'La data di inizio effettiva non può essere successiva alla data di fine effettiva';
+
+  @override
+  String get gActStartBeforeProject =>
+      'La data di inizio effettiva scelta è precedente all\'inizio del progetto';
+
+  @override
+  String get gActStartAfterProject =>
+      'La data di inizio effettiva scelta è successiva alla fine del progetto';
+
+  @override
+  String get gActStartBeforeParent =>
+      'La data di inizio effettiva scelta è precedente all\'inizio dell\'attività principale';
+
+  @override
+  String get gActStartAfterParent =>
+      'La data di inizio effettiva scelta è successiva alla fine dell\'attività principale';
+
+  @override
+  String get gActStartBeforeScheduled =>
+      'La data di inizio effettiva è precedente a quella programmata';
+
+  @override
+  String get gActFinishBeforeStart =>
+      'La data di fine effettiva non può essere precedente alla data di inizio effettiva';
+
+  @override
+  String get gActFinishBeforeProject =>
+      'La data di fine effettiva scelta è precedente all\'inizio del progetto';
+
+  @override
+  String get gActFinishAfterProject =>
+      'La data di fine effettiva scelta è successiva alla fine del progetto';
+
+  @override
+  String get gActFinishBeforeParent =>
+      'La data di fine effettiva scelta è precedente all\'inizio dell\'attività principale';
+
+  @override
+  String get gActFinishAfterParent =>
+      'La data di fine effettiva scelta è successiva alla fine dell\'attività principale';
+
+  @override
+  String get gActFinishAfterScheduled =>
+      'La data di fine effettiva è successiva a quella programmata';
+
+  @override
+  String actualStartSet(String date) {
+    return 'Data di inizio effettiva impostata al $date: stato iniziata';
+  }
+
+  @override
+  String get couldNotSaveChangesRetry =>
+      'Impossibile salvare le modifiche. Riprova.';
+
+  @override
+  String taskCompletedOn(String date) {
+    return 'Attività completata il $date';
+  }
+
+  @override
+  String taskCompletedOnWithStart(String date, String start) {
+    return 'Attività completata il $date (iniziata il $start)';
+  }
+
+  @override
+  String get actualDatesCleared => 'Date effettive cancellate';
+
+  @override
+  String get couldNotClearDates => 'Impossibile cancellare le date. Riprova.';
+
+  @override
+  String gBoundaryDate(String date) {
+    return 'Data limite: $date';
+  }
+
+  @override
+  String get gVarianceQuestion =>
+      'Potrebbe indicare uno scostamento dal programma. Continuare comunque?';
+
+  @override
+  String get actualDateCheckTitle => 'Controlla la data effettiva';
+
+  @override
+  String get continueAnyway => 'Continua comunque';
+
+  @override
+  String get couldNotLoadProjectDates =>
+      'Impossibile caricare le date del progetto';
+
+  @override
+  String get offlineMode => 'Offline';
+
+  @override
+  String get addRow => 'Aggiungi riga';
+
+  @override
+  String get saveChangesTooltip => 'Salva modifiche';
+
+  @override
+  String get makeMainTask => 'Rendi attività principale';
+
+  @override
+  String get makeSubtask => 'Rendi sottoattività';
+
+  @override
+  String get insertRowBelow => 'Inserisci riga sotto';
+
+  @override
+  String get deleteRow => 'Elimina riga';
+
+  @override
+  String get dayDoneOngoing => 'Lavoro svolto – in corso ✓';
+
+  @override
+  String get dayDoneCompleted => 'Lavoro svolto – completato ✓';
+
+  @override
+  String get dayHoliday => 'Festivo (H)';
+
+  @override
+  String get dayBadWeather => 'Maltempo (W)';
+
+  @override
+  String get dayNotSet => 'Non impostato';
+
+  @override
+  String get progressSaved => 'Monitoraggio avanzamento salvato';
+
+  @override
+  String get couldNotSaveProgress =>
+      'Impossibile salvare il monitoraggio dell\'avanzamento.';
+
+  @override
+  String get importStepPick => 'Apertura selezione file…';
+
+  @override
+  String get importStepRead => 'Lettura del file…';
+
+  @override
+  String get importStepParse => 'Lettura del foglio Excel…';
+
+  @override
+  String get importStepProcess => 'Elaborazione righe…';
+
+  @override
+  String importStepProcessN(int count) {
+    return 'Elaborazione di $count righe…';
+  }
+
+  @override
+  String get importStepConfirm => 'In attesa di conferma…';
+
+  @override
+  String importStepConfirmN(int count) {
+    return 'Trovate $count righe — in attesa di conferma…';
+  }
+
+  @override
+  String get importStepSave => 'Salvataggio righe…';
+
+  @override
+  String importStepSaveN(int count) {
+    return 'Salvataggio di $count righe…';
+  }
+
+  @override
+  String get importStepWrite => 'Caricamento sul server…';
+
+  @override
+  String get noRowsInExcel => 'Nessuna riga trovata nel file Excel.';
+
+  @override
+  String get importFromExcel => 'Importa da Excel';
+
+  @override
+  String importConfirmBody(int count, int matched) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Trovate $count righe.',
+      one: 'Trovata 1 riga.',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      matched,
+      locale: localeName,
+      other:
+          '$matched righe corrispondono per nome ad attività esistenti e manterranno i loro segni di avanzamento; le altre partono senza segni.',
+      one:
+          '1 riga corrisponde per nome a un\'attività esistente e manterrà i suoi segni di avanzamento; le altre partono senza segni.',
+      zero:
+          'Nessuna riga corrisponde a un\'attività esistente, quindi tutte partono senza segni di avanzamento.',
+    );
+    return '$_temp0\nLa tabella attuale verrà sostituita.\n\n$_temp1 Continuare?';
+  }
+
+  @override
+  String get importAction => 'Importa';
+
+  @override
+  String importedRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Importate $count righe',
+      one: 'Importata 1 riga',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get couldNotImport => 'Impossibile importare il file.';
+
+  @override
+  String get newTask => 'Nuova attività';
+
+  @override
+  String get marksRetrying =>
+      'Alcuni segni di avanzamento non sono stati sincronizzati — nuovo tentativo automatico…';
+
+  @override
+  String get clearNotSet => 'Cancella / non impostato';
+
+  @override
+  String get importingExcel => 'Importazione Excel';
+
+  @override
+  String get pleaseWait => 'Attendere…';
+
+  @override
+  String taskProgressMonitorTitle(String project) {
+    return '$project — Monitoraggio avanzamento attività';
+  }
+
+  @override
+  String get projectDateExtensions => 'Proroghe delle date di progetto';
+
+  @override
+  String projectProgressPercent(String percent) {
+    return 'Progetto: $percent%';
+  }
+
+  @override
+  String get rowsToggle => '# Righe';
+
+  @override
+  String get removeLast => 'Rimuovi ultima';
+
+  @override
+  String get importExcel => 'Importa Excel';
+
+  @override
+  String get legendDone => 'Fatto';
+
+  @override
+  String get legendHoliday => 'Festivo';
+
+  @override
+  String get legendBadWeather => 'Maltempo';
+
+  @override
+  String get startDateCol => 'Data inizio';
+
+  @override
+  String get finishDateCol => 'Data fine';
+
+  @override
+  String get noPhasesWithDates => 'Nessuna fase con date di inizio/fine';
+
+  @override
+  String get deleteTaskRowTitle => 'Eliminare la riga attività?';
+
+  @override
+  String deleteTaskRowBody(String name) {
+    return '\"$name\" e i suoi segni di avanzamento verranno rimossi.';
+  }
+
+  @override
+  String get outsideProjectBounds => 'Fuori dalle date del progetto';
+
+  @override
+  String dateBeforeProjectStart(String date) {
+    return 'La data è precedente all\'inizio del progetto ($date). Richiedi prima una proroga delle date di progetto: una volta approvata, questa e altre attività potranno usare il nuovo intervallo.';
+  }
+
+  @override
+  String dateAfterProjectEnd(String date) {
+    return 'La data è successiva alla fine del progetto ($date). Richiedi prima una proroga delle date di progetto: una volta approvata, questa e altre attività potranno usare il nuovo intervallo.';
+  }
+
+  @override
+  String get requestProjectExtension => 'Richiedi proroga del progetto';
+
+  @override
+  String get requestProjectDateExtension =>
+      'Richiedi proroga delle date di progetto';
+
+  @override
+  String get extensionMainlyEnd =>
+      'Riguarda soprattutto la data di completamento, ma se serve si può cambiare anche la data di inizio.';
+
+  @override
+  String get reasonForExtension => 'Motivo della proroga *';
+
+  @override
+  String get reasonForExtensionHint =>
+      'Perché il calendario del progetto deve cambiare?';
+
+  @override
+  String get extensionApprovalNote =>
+      'Dopo l\'approvazione del Project Manager o di un MainAdmin: le date del progetto si aggiornano, ogni fase che terminava alla vecchia data di fine si sposta con essa e le date delle attività diventano liberamente modificabili nel nuovo intervallo.';
+
+  @override
+  String get submitRequest => 'Invia richiesta';
+
+  @override
+  String nExtRequestedTitle(String project) {
+    return 'Richiesta proroga date di progetto — $project';
+  }
+
+  @override
+  String nExtRequestedBody(String name, String from, String to) {
+    return '$name ha richiesto nuove date di progetto: $from – $to.';
+  }
+
+  @override
+  String get aUser => 'Un utente';
+
+  @override
+  String get extensionRequestedSnack =>
+      'Proroga del progetto richiesta — in attesa di approvazione.';
+
+  @override
+  String get couldNotSubmitRequest => 'Impossibile inviare la richiesta.';
+
+  @override
+  String nExtApprovedTitle(String project) {
+    return 'Proroga date di progetto approvata — $project';
+  }
+
+  @override
+  String nExtRejectedTitle(String project) {
+    return 'Proroga date di progetto respinta — $project';
+  }
+
+  @override
+  String nExtApprovedBody(String from, String to) {
+    return 'Le date del progetto ora sono $from – $to.';
+  }
+
+  @override
+  String get nExtRejectedBody => 'Il progetto mantiene le date attuali.';
+
+  @override
+  String nExtRejectedBodyReason(String reason) {
+    return 'Il progetto mantiene le date attuali. Motivo: $reason';
+  }
+
+  @override
+  String get extensionApprovedSnack => 'Proroga approvata.';
+
+  @override
+  String get extensionRejectedSnack => 'Proroga respinta.';
+
+  @override
+  String get couldNotRecordResponse => 'Impossibile registrare la risposta.';
+
+  @override
+  String requestedByNameRole(String name, String role) {
+    return 'Richiesta da $name ($role)';
+  }
+
+  @override
+  String approvedByName(String name) {
+    return 'Approvata da $name';
+  }
+
+  @override
+  String rejectedByName(String name) {
+    return 'Respinta da $name';
+  }
+
+  @override
+  String reasonColon(String reason) {
+    return 'Motivo: $reason';
+  }
+
+  @override
+  String get rejectionReasonOptional => 'Motivo del rifiuto (facoltativo)';
+
+  @override
+  String get confirmReject => 'Conferma rifiuto';
+
+  @override
+  String get awaitingPmApproval =>
+      'In attesa di approvazione del Project Manager o di un MainAdmin.';
+
+  @override
+  String deadlinePassedRequest(String name) {
+    return 'La scadenza di $name è passata — richiedi una proroga per continuare.';
+  }
+
+  @override
+  String get requestAction => 'Richiedi';
+
+  @override
+  String alreadyCompletedTask(String name) {
+    return '$name è già segnata come completata.';
+  }
+
+  @override
+  String workDaysCount(int done, int total) {
+    return '$done / $total giorni lavorativi';
+  }
+
+  @override
+  String percentComplete(String percent) {
+    return '$percent% completato';
+  }
+
+  @override
+  String get noTasksDefined => 'Ancora nessuna attività';
+
+  @override
+  String get noTasksDefinedHint =>
+      'Usa \"Importa Excel\" per caricare da un file,\noppure \"Aggiungi riga\" per creare attività a mano.';
 }

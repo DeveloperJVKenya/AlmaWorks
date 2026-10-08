@@ -4,6 +4,7 @@ import 'package:almaworks/screens/schedule/purchasing_plan_screen.dart';
 import 'package:almaworks/screens/schedule/schedule_monitor_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 class DynamicScheduleScreen extends StatefulWidget {
   final ProjectModel project;
@@ -48,7 +49,7 @@ class _DynamicScheduleScreenState extends State<DynamicScheduleScreen>
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
     widget.logger.d('📅 DynamicScheduleScreen: Building UI, isMobile: $isMobile');
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
@@ -72,10 +73,10 @@ class _DynamicScheduleScreenState extends State<DynamicScheduleScreen>
               labelStyle: TextStyle(
                 fontWeight: FontWeight.w600,
               ),
-              tabs: const [
-                Tab(text: 'Gantt Chart'),
-                Tab(text: 'Schedule Monitor'),
-                Tab(text: 'Purchasing Plan/Resources'),
+              tabs: [
+                Tab(text: context.l10n.ganttChart),
+                Tab(text: context.l10n.scheduleMonitor),
+                Tab(text: context.l10n.purchasingPlanResources),
               ],
             ),
           ),

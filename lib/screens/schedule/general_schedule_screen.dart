@@ -11,9 +11,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:logger/logger.dart';
 import 'package:open_file/open_file.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:almaworks/helpers/download_helper.dart';
+import 'package:almaworks/helpers/download_feedback.dart';
+import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class GeneralScheduleScreen extends StatefulWidget {
   final ProjectModel project;
@@ -68,7 +71,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                   Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
                   const SizedBox(height: 16),
                   Text(
-                    'Error loading schedule documents',
+                    context.l10n.couldNotLoadScheduleDocs,
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.red[600],
@@ -95,7 +98,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                   Icon(Icons.calendar_today, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
-                    'No schedule uploaded yet',
+                    context.l10n.noScheduleYet,
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey[600],
@@ -105,7 +108,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                   const SizedBox(height: 8),
                   if (_canManage)
                     Text(
-                      'Tap the upload button to add into schedule',
+                      context.l10n.tapUploadSchedule,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[500],
@@ -172,7 +175,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           ),
         ),
         subtitle: Text(
-          '${document.fileName} • Uploaded ${_formatDate(document.uploadedAt)}',
+          context.l10n.fileUploadedDot(document.fileName, _formatDate(document.uploadedAt)),
           style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
@@ -187,7 +190,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                 children: [
                   Icon(Icons.visibility, size: 16, color: Colors.blue[600]),
                   const SizedBox(width: 8),
-                  const Text('View'),
+                  Text(context.l10n.view),
                 ],
               ),
             ),
@@ -198,7 +201,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                   children: [
                     Icon(Icons.download, size: 16, color: Colors.green[600]),
                     const SizedBox(width: 8),
-                    const Text('Download'),
+                    Text(context.l10n.download),
                   ],
                 ),
               ),
@@ -209,7 +212,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                   children: [
                     Icon(Icons.delete, size: 16, color: Colors.red[600]),
                     const SizedBox(width: 8),
-                    const Text('Delete', style: TextStyle(color: Colors.red)),
+                    Text(context.l10n.delete, style: const TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
@@ -243,10 +246,11 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
       widget.logger.i('📤 GeneralScheduleScreen: File selected: $originalFileName');
 
       // Step 2: Input document title
+      if (!mounted) return;
       final documentTitle = await _showTextInputDialog(
-        dialogTitle: 'Enter Schedule Document Title',
-        contentText: 'Enter a title for this schedule document:',
-        hintText: 'e.g., Project Master Schedule Q1 2025',
+        dialogTitle: context.l10n.enterScheduleDocTitle,
+        contentText: context.l10n.enterScheduleDocTitleBody,
+        hintText: context.l10n.scheduleDocHint,
         prefill: originalFileName.split('.').first,
         fileName: originalFileName,
         showFileName: true,
@@ -267,7 +271,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           widget.logger.e('❌ GeneralScheduleScreen: File bytes are null on web — withData may not have worked');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not read file data. Please try again.', style: TextStyle())),
+              SnackBar(content: Text(context.l10n.couldNotReadFile, style: TextStyle())),
             );
           }
           return;
@@ -278,7 +282,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           widget.logger.e('❌ GeneralScheduleScreen: File path is null on native');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not access file path. Please try again.', style: TextStyle())),
+              SnackBar(content: Text(context.l10n.couldNotReadFile, style: TextStyle())),
             );
           }
           return;
@@ -299,7 +303,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           barrierDismissible: false,
           builder: (context) => AlertDialog(
             title: Text(
-              'Uploading Schedule Document',
+              context.l10n.uploadingScheduleDoc,
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
@@ -308,7 +312,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text(
-                  'Uploading $finalFileName...',
+                  context.l10n.uploadingFile(finalFileName),
                   style: TextStyle(),
                 ),
               ],
@@ -332,7 +336,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Schedule document "$documentTitle" uploaded successfully!',
+                context.l10n.scheduleDocUploaded(documentTitle),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.green,
@@ -351,7 +355,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Upload failed: ${e.toString()}',
+                friendlyError(e, action: context.l10n.couldNotUpload),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.red,
@@ -369,7 +373,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Upload failed: ${e.toString()}',
+              friendlyError(e, action: context.l10n.couldNotUpload),
               style: TextStyle(),
             ),
             backgroundColor: Colors.red,
@@ -432,7 +436,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             if (showFileName && fileName != null) ...[
               const SizedBox(height: 8),
               Text(
-                'File: $fileName',
+                context.l10n.fileLabel(fileName),
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
@@ -445,7 +449,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              context.l10n.cancel,
               style: TextStyle(color: const Color(0xFF800000)),
             ),
           ),
@@ -457,7 +461,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: Text(
-              'Confirm',
+              context.l10n.confirm,
               style: TextStyle(),
             ),
           ),
@@ -508,7 +512,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Could not open document viewer',
+                    context.l10n.couldNotOpenViewer,
                     style: TextStyle(),
                   ),
                 ),
@@ -522,11 +526,11 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Could not open file: ${result.message}',
+                  context.l10n.couldNotOpenThisFile,
                   style: TextStyle(),
                 ),
                 action: SnackBarAction(
-                  label: 'Download instead',
+                  label: context.l10n.downloadInstead,
                   onPressed: () => _downloadDocument(url, name),
                 ),
               ),
@@ -538,7 +542,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'No internet and no cache available',
+                context.l10n.offlineNoCopy,
                 style: TextStyle(),
               ),
             ),
@@ -551,7 +555,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Error viewing document: $e',
+              friendlyError(e, action: context.l10n.couldNotOpenDocument),
               style: TextStyle(),
             ),
           ),
@@ -574,52 +578,14 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
       if (!mounted) return;
 
       if (result != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              kIsWeb
-                  ? result
-                  : 'Downloaded successfully!\nLocation: $result',
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () async {
-                if (!kIsWeb) {
-                  await OpenFile.open(result);
-                }
-              },
-            ),
-          ),
-        );
+        showDownloadSuccess(context, result);
       } else {
         widget.logger.d('Download cancelled by user');
       }
     } catch (e) {
       widget.logger.e('❌ Error downloading', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString().contains('permission')
-                  ? 'Storage permission denied. Please enable it in Settings.'
-                  : 'Error downloading: $e',
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-            action: e.toString().contains('permission')
-                ? SnackBarAction(
-                    label: 'Settings',
-                    textColor: Colors.white,
-                    onPressed: () => openAppSettings(),
-                  )
-                : null,
-          ),
-        );
+        showDownloadError(context, e);
       }
     }
   }
@@ -629,17 +595,17 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Delete Schedule Document',
+          context.l10n.deleteScheduleDocTitle,
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: Text(
-          'Are you sure you want to delete "${document.title}"? This action cannot be undone.',
+          context.l10n.deleteItemConfirm(document.title),
           style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -647,7 +613,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text('Delete', style: TextStyle()),
+            child: Text(context.l10n.delete, style: TextStyle()),
           ),
         ],
       ),
@@ -661,7 +627,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Schedule document deleted successfully',
+                context.l10n.scheduleDocDeleted,
                 style: TextStyle(),
               ),
               backgroundColor: Colors.green,
@@ -673,7 +639,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Failed to delete: ${e.toString()}',
+                friendlyError(e, action: context.l10n.couldNotDelete),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.red,
@@ -734,11 +700,11 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
       } else if (date is DateTime) {
         dateTime = date;
       } else {
-        return 'Just now';
+        return l10nNow.justNow;
       }
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      return DateFormat.yMd().format(dateTime);
     } catch (e) {
-      return 'Just now';
+      return l10nNow.justNow;
     }
   }
 

@@ -14,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 // ══════════════════════════════════════════════════════════════════
 // ENUMS
@@ -47,11 +49,11 @@ extension DayStatusX on DayStatus {
 
   String get label {
     switch (this) {
-      case DayStatus.done:       return 'Work Done – Ongoing ✓';
-      case DayStatus.completed:  return 'Work Done – Completed ✓';
-      case DayStatus.holiday:    return 'Holiday (H)';
-      case DayStatus.badWeather: return 'Bad Weather (W)';
-      default:                   return 'Not Set';
+      case DayStatus.done:       return l10nNow.dayDoneOngoing;
+      case DayStatus.completed:  return l10nNow.dayDoneCompleted;
+      case DayStatus.holiday:    return l10nNow.dayHoliday;
+      case DayStatus.badWeather: return l10nNow.dayBadWeather;
+      default:                   return l10nNow.dayNotSet;
     }
   }
 
@@ -170,7 +172,7 @@ _ExcelParseResult _parseExcelInIsolate(Uint8List bytes) {
 
     final rawName = _cellStrIsolate(row.elementAtOrNull(0));
     if (rawName.isEmpty) continue;
-    if (r == 0 && rawName.trim().toLowerCase() == 'task name') continue;
+    if (r == 0 && const {'task name', 'nome attività'}.contains(rawName.trim().toLowerCase())) continue;
 
     final startStr = _cellStrIsolate(row.elementAtOrNull(2));
     final endStr   = _cellStrIsolate(row.elementAtOrNull(3));
@@ -354,6 +356,7 @@ class _TaskProgressMonitorScreenState
   bool _isLoading   = true;
   bool _isImporting = false;
   String _importStep    = '';
+  int _importStepIndex  = -1;
   double _importProgress = 0.0; // 0.0 – 1.0
 
   // ── Phase-columns cache (avoid recomputing every build frame) ───
@@ -392,7 +395,7 @@ class _TaskProgressMonitorScreenState
   bool _periodAutoScroll = true;
 
   // ── Formatters ──────────────────────────────────────────────────
-  final _dfDisplay = DateFormat('d MMM yy');
+  DateFormat get _dfDisplay => DateFormat('d MMM yy');
   final _dfKey     = DateFormat('yyyyMMdd');
 
   // ── Current user + project-level date-extension requests ─────────
@@ -934,7 +937,7 @@ class _TaskProgressMonitorScreenState
       }, SetOptions(merge: true));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Progress monitor saved!', style: TextStyle()),
+          content: Text(context.l10n.progressSaved, style: TextStyle()),
           backgroundColor: Colors.green[700],
         ));
       }
@@ -942,7 +945,7 @@ class _TaskProgressMonitorScreenState
       widget.logger.e('TaskProgressMonitor: save failed', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Save failed: $e', style: TextStyle()),
+          content: Text(friendlyError(e, action: context.l10n.couldNotSaveProgress), style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -956,17 +959,18 @@ class _TaskProgressMonitorScreenState
   // ─────────────────────────────────────────────────────────────────
   Future<void> _importFromExcel() async {
     /// Updates both the overlay text and deterministic progress bar.
-    void step(String msg, double progress) {
+    void step(int index, String msg, double progress) {
       if (mounted) {
         setState(() {
           _isImporting    = true;
+          _importStepIndex = index;
           _importStep     = msg;
           _importProgress = progress;
         });
       }
     }
 
-    step('Opening file picker…', 0.05);
+    step(0, context.l10n.importStepPick, 0.05);
 
     try {
       // ── 1. Pick file ────────────────────────────────────────────
@@ -980,7 +984,8 @@ class _TaskProgressMonitorScreenState
         return;
       }
 
-      step('Reading file bytes…', 0.15);
+      if (!mounted) return;
+      step(1, context.l10n.importStepRead, 0.15);
       Uint8List? bytes = result.files.first.bytes;
       if (bytes == null && result.files.first.path != null && !kIsWeb) {
         bytes = await File(result.files.first.path!).readAsBytes();
@@ -991,13 +996,15 @@ class _TaskProgressMonitorScreenState
       }
 
       // ── 2. Parse in background isolate (non-blocking) ───────────
-      step('Parsing Excel file…', 0.30);
+      if (!mounted) return;
+      step(2, context.l10n.importStepParse, 0.30);
       // compute() runs _parseExcelInIsolate in a separate isolate so the
       // UI thread stays responsive and the progress overlay animates freely.
       final parseResult = await compute(_parseExcelInIsolate, bytes);
       final rawParsed   = parseResult.rows;
 
-      step('Processing ${rawParsed.length} rows…', 0.60);
+      if (!mounted) return;
+      step(3, context.l10n.importStepProcessN(rawParsed.length), 0.60);
       // Allow a frame to render the updated step text.
       await Future.delayed(const Duration(milliseconds: 30));
 
@@ -1025,7 +1032,7 @@ class _TaskProgressMonitorScreenState
         if (mounted) {
           setState(() { _isImporting = false; _importProgress = 0; });
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('No rows found in the Excel file.',
+            content: Text(context.l10n.noRowsInExcel,
                 style: TextStyle()),
             backgroundColor: Colors.orange[700],
           ));
@@ -1045,31 +1052,29 @@ class _TaskProgressMonitorScreenState
       final matchedCount = _reconcileRowIdsWithPrevious(newRows);
 
       // ── 3. Confirm replace ──────────────────────────────────────
-      step('Found ${newRows.length} rows — awaiting confirmation…', 0.70);
       if (!mounted) return;
+      step(4, context.l10n.importStepConfirmN(newRows.length), 0.70);
 
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          title: Text('Import from Excel',
+          title: Text(context.l10n.importFromExcel,
               style: TextStyle(fontWeight: FontWeight.w700)),
           content: Text(
-            'Found ${newRows.length} rows.\nThis will replace the current table.\n\n'
-            '$matchedCount row${matchedCount == 1 ? '' : 's'} matched an existing task by name and will '
-            'keep ${matchedCount == 1 ? 'its' : 'their'} recorded progress marks; any other row starts with no marks. Continue?',
+            context.l10n.importConfirmBody(newRows.length, matchedCount),
             style: TextStyle(fontSize: 13, height: 1.4),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle()),
+              child: Text(context.l10n.cancel, style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
                   backgroundColor: _navy, foregroundColor: Colors.white),
-              child: Text('Import', style: TextStyle()),
+              child: Text(context.l10n.importAction, style: TextStyle()),
             ),
           ],
         ),
@@ -1081,7 +1086,7 @@ class _TaskProgressMonitorScreenState
       }
 
       // ── 4. Apply to state ────────────────────────────────────────
-      step('Saving ${newRows.length} rows to database…', 0.85);
+      step(5, context.l10n.importStepSaveN(newRows.length), 0.85);
       await Future.delayed(const Duration(milliseconds: 30));
 
       for (final c in _nameCtrlMap.values) {
@@ -1097,7 +1102,8 @@ class _TaskProgressMonitorScreenState
       _syncNameControllers();
 
       // ── 5. Persist ───────────────────────────────────────────────
-      step('Writing to Firestore…', 0.95);
+      if (!mounted) return;
+      step(6, context.l10n.importStepWrite, 0.95);
       await _saveToFirestore();
 
       if (mounted) {
@@ -1105,7 +1111,7 @@ class _TaskProgressMonitorScreenState
           content: Row(children: [
             const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 10),
-            Text('Imported ${newRows.length} rows successfully!',
+            Text(context.l10n.importedRows(newRows.length),
                 style: TextStyle(fontWeight: FontWeight.w600)),
           ]),
           backgroundColor: Colors.green[700],
@@ -1120,7 +1126,7 @@ class _TaskProgressMonitorScreenState
             const Icon(Icons.error_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 10),
             Expanded(
-              child: Text('Import failed: $e',
+              child: Text(friendlyError(e, action: context.l10n.couldNotImport),
                   style: TextStyle(fontWeight: FontWeight.w500)),
             ),
           ]),
@@ -1129,7 +1135,7 @@ class _TaskProgressMonitorScreenState
         ));
       }
     } finally {
-      if (mounted) setState(() { _isImporting = false; _importProgress = 0; _importStep = ''; });
+      if (mounted) setState(() { _isImporting = false; _importProgress = 0; _importStep = ''; _importStepIndex = -1; });
     }
   }
 
@@ -1194,14 +1200,14 @@ class _TaskProgressMonitorScreenState
       _rows.add(TaskProgressRowData(
         id           : id,
         rowIndex     : _rows.length,
-        taskName     : '         New Task',
+        taskName     : '         ${l10nNow.newTask}',
         type         : TaskRowType.task,
         parentPhaseId: phaseId,
         indentLevel  : 3,
       ));
       _invalidatePhaseCache();
     });
-    _nameCtrl(id).text = '         New Task';
+    _nameCtrl(id).text = '         ${l10nNow.newTask}';
   }
 
   void _removeLastRow() {
@@ -1307,7 +1313,7 @@ class _TaskProgressMonitorScreenState
       if (!_flushErrorNoticeShown) {
         _flushErrorNoticeShown = true;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Some progress marks couldn\'t sync — retrying automatically…',
+          content: Text(context.l10n.marksRetrying,
               style: TextStyle()),
           backgroundColor: Colors.orange[800],
           duration: const Duration(seconds: 4),
@@ -1588,7 +1594,7 @@ class _TaskProgressMonitorScreenState
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                '${row.taskName.trim()}  ·  ${DateFormat('EEE d MMM yyyy').format(day)}',
+                '${row.taskName.trim()}  ·  ${DateFormat.yMMMEd().format(day)}',
                 style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w700, color: _navy),
                 textAlign: TextAlign.center,
@@ -1600,7 +1606,7 @@ class _TaskProgressMonitorScreenState
               ctx: ctx,
               status: DayStatus.none,
               current: current,
-              label: 'Clear / Not Set',
+              label: context.l10n.clearNotSet,
               labelColor: Colors.grey[500]!,
               onPick: pick,
             ),
@@ -1739,21 +1745,19 @@ class _TaskProgressMonitorScreenState
   // ── Import overlay with real progress bar ───────────────────────
   Widget _buildImportOverlay() {
     // Named import steps in order with display labels
+    final l = context.l10n;
     final steps = [
-      'Opening file picker…',
-      'Reading file bytes…',
-      'Parsing Excel file…',
-      'Processing rows…',
-      'Awaiting confirmation…',
-      'Saving rows to database…',
-      'Writing to Firestore…',
+      l.importStepPick,
+      l.importStepRead,
+      l.importStepParse,
+      l.importStepProcess,
+      l.importStepConfirm,
+      l.importStepSave,
+      l.importStepWrite,
     ];
 
-    // Determine which step index is active
-    final currentIdx = steps.indexWhere((s) {
-      final stepLower = _importStep.toLowerCase();
-      return stepLower.contains(s.replaceAll('…','').toLowerCase().split(' ').first);
-    });
+    // Which step is active (set by step() during the import)
+    final currentIdx = _importStepIndex;
 
     return Positioned.fill(
       child: Container(
@@ -1800,12 +1804,12 @@ class _TaskProgressMonitorScreenState
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Importing Excel',
+                        Text(context.l10n.importingExcel,
                             style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                                 color: _navy)),
-                        Text('Please wait…',
+                        Text(context.l10n.pleaseWait,
                             style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey[500])),
@@ -1917,7 +1921,7 @@ class _TaskProgressMonitorScreenState
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          '${widget.project.name} — Task Progress Monitor',
+          context.l10n.taskProgressMonitorTitle(widget.project.name),
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           overflow: TextOverflow.ellipsis,
         ),
@@ -1935,7 +1939,7 @@ class _TaskProgressMonitorScreenState
                 IconButton(
                   onPressed: () => _showProjectExtensionDetailDialog(_projectExtensionRequests),
                   icon: const Icon(Icons.event_note_rounded),
-                  tooltip: 'Project date extensions',
+                  tooltip: context.l10n.projectDateExtensions,
                 ),
                 if (_pendingProjectExtensions.isNotEmpty)
                   Positioned(
@@ -1965,7 +1969,7 @@ class _TaskProgressMonitorScreenState
               IconButton(
                 onPressed: _saveToFirestore,
                 icon: const Icon(Icons.save_rounded),
-                tooltip: 'Save',
+                tooltip: context.l10n.save,
               ),
         ],
       );
@@ -1998,7 +2002,7 @@ class _TaskProgressMonitorScreenState
                   border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  'Project: ${(progress * 100).toStringAsFixed(0)}%',
+                  context.l10n.projectProgressPercent((progress * 100).toStringAsFixed(0)),
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -2091,7 +2095,7 @@ class _TaskProgressMonitorScreenState
         child: Row(children: [
         _toolBtn(
           icon: Icons.format_list_numbered_rounded,
-          label: '# Rows',
+          label: context.l10n.rowsToggle,
           active: _showRowNumbers,
           onTap: () => setState(() => _showRowNumbers = !_showRowNumbers),
         ),
@@ -2099,14 +2103,14 @@ class _TaskProgressMonitorScreenState
         if (_canEditDatesAndStatus) ...[
           _toolBtn(
             icon: Icons.add_box_outlined,
-            label: 'Add Row',
+            label: context.l10n.addRow,
             color: Colors.green[700],
             onTap: _addRow,
           ),
           const SizedBox(width: 6),
           _toolBtn(
             icon: Icons.indeterminate_check_box_outlined,
-            label: 'Remove Last',
+            label: context.l10n.removeLast,
             color: Colors.orange[700],
             onTap: _removeLastRow,
           ),
@@ -2156,7 +2160,7 @@ class _TaskProgressMonitorScreenState
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation(Colors.white)))
                 : const Icon(Icons.upload_file_rounded, size: 14),
-            label: Text('Import Excel',
+            label: Text(context.l10n.importExcel,
                 style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w600)),
             style: ElevatedButton.styleFrom(
@@ -2224,7 +2228,7 @@ class _TaskProgressMonitorScreenState
                     fontSize: 9, fontWeight: FontWeight.w800, color: s.color)),
           const SizedBox(width: 3),
           Text(
-            s == DayStatus.done ? 'Done' : s == DayStatus.holiday ? 'Holiday' : 'Bad Weather',
+            s == DayStatus.done ? context.l10n.legendDone : s == DayStatus.holiday ? context.l10n.legendHoliday : context.l10n.legendBadWeather,
             style: TextStyle(
                 fontSize: 8, fontWeight: FontWeight.w600, color: s.color),
           ),
@@ -2379,9 +2383,9 @@ class _TaskProgressMonitorScreenState
       child: Row(
         children: [
           if (_showRowNumbers) _fixedHdrCell('#', _kNoW, center: true),
-          Expanded(child: _fixedHdrCell('Task Name', null)),
-          _fixedHdrCell('Start Date',  _kDateW, center: true),
-          _fixedHdrCell('Finish Date', _kDateW, center: true),
+          Expanded(child: _fixedHdrCell(context.l10n.colTaskName, null)),
+          _fixedHdrCell(context.l10n.startDateCol,  _kDateW, center: true),
+          _fixedHdrCell(context.l10n.finishDateCol, _kDateW, center: true),
         ],
       ),
     );
@@ -2422,7 +2426,7 @@ class _TaskProgressMonitorScreenState
         color: _navyMid,
         alignment: Alignment.center,
         child: Text(
-          'No phases with start/end dates defined',
+          context.l10n.noPhasesWithDates,
           style: TextStyle(color: Colors.white54, fontSize: 11),
         ),
       );
@@ -2796,9 +2800,9 @@ class _TaskProgressMonitorScreenState
                 onTap: () async {
                   final confirmed = await showConfirmDialog(
                     context,
-                    title: 'Delete task row?',
-                    message: '"${row.taskName.trim()}" and its recorded progress marks will be removed.',
-                    confirmLabel: 'Delete',
+                    title: context.l10n.deleteTaskRowTitle,
+                    message: context.l10n.deleteTaskRowBody(row.taskName.trim()),
+                    confirmLabel: context.l10n.delete,
                     isDestructive: true,
                   );
                   if (confirmed) _removeRow(row);
@@ -2975,19 +2979,19 @@ class _TaskProgressMonitorScreenState
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          title: Text('Outside project bounds', style: TextStyle(fontWeight: FontWeight.w700)),
+          title: Text(context.l10n.outsideProjectBounds, style: TextStyle(fontWeight: FontWeight.w700)),
           content: Text(
-            'That date is ${isStart ? 'before the project\'s start date' : 'after the project\'s end date'} '
-            '(${_dfDisplay.format(isStart ? _liveProjectStartDate : _liveProjectEndDate!)}). '
-            'Request a project-level date extension first — once approved, this and other tasks can use the new range.',
+            isStart
+                ? context.l10n.dateBeforeProjectStart(_dfDisplay.format(_liveProjectStartDate))
+                : context.l10n.dateAfterProjectEnd(_dfDisplay.format(_liveProjectEndDate!)),
             style: TextStyle(fontSize: 13, height: 1.4),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle())),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancel, style: TextStyle())),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(backgroundColor: _navy, foregroundColor: Colors.white),
-              child: Text('Request Project Extension', style: TextStyle()),
+              child: Text(context.l10n.requestProjectExtension, style: TextStyle()),
             ),
           ],
         ),
@@ -3042,7 +3046,7 @@ class _TaskProgressMonitorScreenState
           final changed = newStart != _liveProjectStartDate || newEnd != _liveProjectEndDate;
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            title: Text('Request Project Date Extension', style: TextStyle(fontWeight: FontWeight.w700)),
+            title: Text(context.l10n.requestProjectDateExtension, style: TextStyle(fontWeight: FontWeight.w700)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -3050,14 +3054,14 @@ class _TaskProgressMonitorScreenState
                 children: [
                   Text(widget.project.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 4),
-                  Text('This mainly affects the completion date, but the start date can be changed too if ever needed.',
+                  Text(context.l10n.extensionMainlyEnd,
                       style: TextStyle(fontSize: 11.5, color: Colors.grey[600])),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: _extensionDateField('Start', newStart, () => pick(true))),
+                      Expanded(child: _extensionDateField(context.l10n.colStart, newStart, () => pick(true))),
                       const SizedBox(width: 10),
-                      Expanded(child: _extensionDateField('Finish', newEnd, () => pick(false))),
+                      Expanded(child: _extensionDateField(context.l10n.colFinish, newEnd, () => pick(false))),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -3067,27 +3071,25 @@ class _TaskProgressMonitorScreenState
                     onChanged: (_) => setDialogState(() {}),
                     style: TextStyle(fontSize: 13),
                     decoration: InputDecoration(
-                      labelText: 'Reason for extension *',
+                      labelText: context.l10n.reasonForExtension,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      hintText: 'Why does the project timeline need to change?',
+                      hintText: context.l10n.reasonForExtensionHint,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Once approved by the Project Manager or a MainAdmin: the project\'s own dates update, any phase '
-                    'whose end matched the old project end date shifts with it, and task dates become freely editable '
-                    'within the new range.',
+                    context.l10n.extensionApprovalNote,
                     style: TextStyle(fontSize: 11.5, color: Colors.grey[600], height: 1.4),
                   ),
                 ],
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle())),
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancel, style: TextStyle())),
               ElevatedButton(
                 onPressed: (changed && reasonCtrl.text.trim().isNotEmpty) ? () => Navigator.pop(ctx, true) : null,
                 style: ElevatedButton.styleFrom(backgroundColor: _navy, foregroundColor: Colors.white),
-                child: Text('Submit Request', style: TextStyle()),
+                child: Text(context.l10n.submitRequest, style: TextStyle()),
               ),
             ],
           );
@@ -3141,9 +3143,16 @@ class _TaskProgressMonitorScreenState
       );
       await FirebaseFirestore.instance.collection('ProjectDateExtensionRequests').add(req.toFirestore());
 
-      final title = 'Project date extension requested — ${widget.project.name}';
-      final body = '${_currentUserName.isEmpty ? 'A user' : _currentUserName} requested new project dates: '
-          '${_dfDisplay.format(newStart)} – ${_dfDisplay.format(newEnd)}.';
+      final projectName = widget.project.name;
+      final requester = _currentUserName;
+      final text = notificationText(
+        title: (l) => l.nExtRequestedTitle(projectName),
+        body: (l) => l.nExtRequestedBody(
+          requester.isEmpty ? l.aUser : requester,
+          DateFormat('d MMM yy', l.localeName).format(newStart),
+          DateFormat('d MMM yy', l.localeName).format(newEnd),
+        ),
+      );
       final payload = {
         'type': 'project_date_extension_requested',
         'projectId': widget.project.id,
@@ -3159,14 +3168,14 @@ class _TaskProgressMonitorScreenState
       // there's genuinely no more specific person to route this to.
       final pmUid = _liveProjectManagerUid;
       if (pmUid != null) {
-        await _notifyUser(uid: pmUid, title: title, body: body, payload: payload);
+        await _notifyUser(uid: pmUid, text: text, payload: payload);
       } else {
-        await _notifyAdmins(title: title, body: body, payload: payload, targetRoles: const ['MainAdmin']);
+        await _notifyAdmins(text: text, payload: payload, targetRoles: const ['MainAdmin']);
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Project extension requested — pending approval.', style: TextStyle()),
+          content: Text(context.l10n.extensionRequestedSnack, style: TextStyle()),
           backgroundColor: Colors.green[700],
         ));
       }
@@ -3174,7 +3183,7 @@ class _TaskProgressMonitorScreenState
       widget.logger.e('TaskProgressMonitor: failed to submit project extension request', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to submit request: $e', style: TextStyle()),
+          content: Text(friendlyError(e, action: context.l10n.couldNotSubmitRequest), style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -3200,17 +3209,24 @@ class _TaskProgressMonitorScreenState
         await _applyApprovedProjectExtension(req);
       }
 
-      final title = approve
-          ? 'Project date extension approved — ${widget.project.name}'
-          : 'Project date extension rejected — ${widget.project.name}';
-      final body = approve
-          ? 'Project dates are now ${_dfDisplay.format(req.requestedStartDate)} – '
-              '${req.requestedEndDate != null ? _dfDisplay.format(req.requestedEndDate!) : '—'}.'
-          : 'Project keeps its current dates.${rejectionReason != null && rejectionReason.isNotEmpty ? ' Reason: $rejectionReason' : ''}';
+      final projectName = widget.project.name;
+      final hasReason = rejectionReason != null && rejectionReason.isNotEmpty;
+      final text = notificationText(
+        title: (l) => approve ? l.nExtApprovedTitle(projectName) : l.nExtRejectedTitle(projectName),
+        body: (l) {
+          final df = DateFormat('d MMM yy', l.localeName);
+          if (approve) {
+            return l.nExtApprovedBody(
+              df.format(req.requestedStartDate),
+              req.requestedEndDate != null ? df.format(req.requestedEndDate!) : '—',
+            );
+          }
+          return hasReason ? l.nExtRejectedBodyReason(rejectionReason) : l.nExtRejectedBody;
+        },
+      );
       await _notifyUser(
         uid: req.requestedByUid,
-        title: title,
-        body: body,
+        text: text,
         payload: {
           'type': approve ? 'project_date_extension_approved' : 'project_date_extension_rejected',
           'projectId': widget.project.id,
@@ -3219,7 +3235,7 @@ class _TaskProgressMonitorScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(approve ? 'Extension approved.' : 'Extension rejected.', style: TextStyle()),
+          content: Text(approve ? context.l10n.extensionApprovedSnack : context.l10n.extensionRejectedSnack, style: TextStyle()),
           backgroundColor: approve ? Colors.green[700] : Colors.grey[700],
         ));
       }
@@ -3227,7 +3243,7 @@ class _TaskProgressMonitorScreenState
       widget.logger.e('TaskProgressMonitor: failed to respond to project extension request', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to record response: $e', style: TextStyle()),
+          content: Text(friendlyError(e, action: context.l10n.couldNotRecordResponse), style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
       }
@@ -3278,17 +3294,17 @@ class _TaskProgressMonitorScreenState
   /// InventoryService (see _notifyUser/_notifyAdmins there) — a real-time
   /// listener set up at login delivers these in-app; a Cloud Function
   /// handles the FCM push for terminated/backgrounded apps.
+  /// [text] comes from [notificationText] — English title/body plus the
+  /// other languages under `i18n`, so each recipient reads their own.
   Future<void> _notifyUser({
     required String uid,
-    required String title,
-    required String body,
+    required Map<String, dynamic> text,
     required Map<String, dynamic> payload,
   }) async {
     try {
       await FirebaseFirestore.instance.collection('UserNotificationQueue').add({
         'targetUid': uid,
-        'title': title,
-        'body': body,
+        ...text,
         'payload': payload,
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -3298,15 +3314,13 @@ class _TaskProgressMonitorScreenState
   }
 
   Future<void> _notifyAdmins({
-    required String title,
-    required String body,
+    required Map<String, dynamic> text,
     required Map<String, dynamic> payload,
     required List<String> targetRoles,
   }) async {
     try {
       await FirebaseFirestore.instance.collection('AdminNotificationQueue').add({
-        'title': title,
-        'body': body,
+        ...text,
         'payload': payload,
         'targetRoles': targetRoles,
         'createdAt': FieldValue.serverTimestamp(),
@@ -3368,16 +3382,18 @@ class _TaskProgressMonitorScreenState
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
-                  Text('Requested by ${r.requestedByName} (${r.requestedByRole})',
+                  Text(context.l10n.requestedByNameRole(r.requestedByName, roleLabel(r.requestedByRole)),
                       style: TextStyle(fontSize: 11, color: Colors.grey[700])),
                   const SizedBox(height: 6),
                   Text(r.reason, style: TextStyle(fontSize: 12.5, height: 1.4)),
                   if (r.respondedByName != null) ...[
                     const SizedBox(height: 6),
-                    Text('${r.status == ProjectDateExtensionRequestModel.statusApproved ? 'Approved' : 'Rejected'} by ${r.respondedByName}',
+                    Text(r.status == ProjectDateExtensionRequestModel.statusApproved
+                            ? context.l10n.approvedByName(r.respondedByName!)
+                            : context.l10n.rejectedByName(r.respondedByName!),
                         style: TextStyle(fontSize: 11, color: Colors.grey[700])),
                     if (r.rejectionReason != null && r.rejectionReason!.isNotEmpty)
-                      Text('Reason: ${r.rejectionReason}', style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+                      Text(context.l10n.reasonColon(r.rejectionReason!), style: TextStyle(fontSize: 11, color: Colors.grey[700])),
                   ],
                   if (r.isPending && _canApproveProjectExtension) ...[
                     const SizedBox(height: 10),
@@ -3388,7 +3404,7 @@ class _TaskProgressMonitorScreenState
                             child: OutlinedButton(
                               onPressed: () => setDialogState(() => showRejectField = true),
                               style: OutlinedButton.styleFrom(foregroundColor: Colors.red[700]),
-                              child: Text('Reject', style: TextStyle(fontSize: 12)),
+                              child: Text(context.l10n.reject, style: TextStyle(fontSize: 12)),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -3399,7 +3415,7 @@ class _TaskProgressMonitorScreenState
                                 _respondToProjectExtension(r, approve: true);
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700], foregroundColor: Colors.white),
-                              child: Text('Approve', style: TextStyle(fontSize: 12)),
+                              child: Text(context.l10n.approve, style: TextStyle(fontSize: 12)),
                             ),
                           ),
                         ],
@@ -3410,7 +3426,7 @@ class _TaskProgressMonitorScreenState
                         maxLines: 2,
                         style: TextStyle(fontSize: 12),
                         decoration: InputDecoration(
-                          hintText: 'Reason for rejection (optional)',
+                          hintText: context.l10n.rejectionReasonOptional,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                           isDense: true,
                         ),
@@ -3421,7 +3437,7 @@ class _TaskProgressMonitorScreenState
                           Expanded(
                             child: TextButton(
                               onPressed: () => setDialogState(() => showRejectField = false),
-                              child: Text('Back', style: TextStyle(fontSize: 12)),
+                              child: Text(context.l10n.back, style: TextStyle(fontSize: 12)),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -3432,7 +3448,7 @@ class _TaskProgressMonitorScreenState
                                 _respondToProjectExtension(r, approve: false, rejectionReason: rejectCtrl.text.trim());
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.red[700], foregroundColor: Colors.white),
-                              child: Text('Confirm Reject', style: TextStyle(fontSize: 12)),
+                              child: Text(context.l10n.confirmReject, style: TextStyle(fontSize: 12)),
                             ),
                           ),
                         ],
@@ -3446,7 +3462,7 @@ class _TaskProgressMonitorScreenState
 
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            title: Text('Project Date Extensions', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+            title: Text(context.l10n.projectDateExtensions, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
             content: SizedBox(
               width: 380,
               child: SingleChildScrollView(
@@ -3457,7 +3473,7 @@ class _TaskProgressMonitorScreenState
                     if (pending.isPending && !_canApproveProjectExtension)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
-                        child: Text('Awaiting approval from the Project Manager or a MainAdmin.',
+                        child: Text(context.l10n.awaitingPmApproval,
                             style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                       ),
                     ...requests.map(buildRequestCard),
@@ -3466,7 +3482,7 @@ class _TaskProgressMonitorScreenState
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Close', style: TextStyle())),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.l10n.close, style: TextStyle())),
             ],
           );
         },
@@ -3602,7 +3618,7 @@ class _TaskProgressMonitorScreenState
                       ..clearSnackBars()
                       ..showSnackBar(SnackBar(
                         content: Text(
-                          '${row.taskName.trim()}\'s deadline has passed — request a date extension to continue.',
+                          context.l10n.deadlinePassedRequest(row.taskName.trim()),
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                         backgroundColor: Colors.orange[800],
@@ -3610,7 +3626,7 @@ class _TaskProgressMonitorScreenState
                         duration: const Duration(seconds: 4),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         action: SnackBarAction(
-                          label: 'Request',
+                          label: context.l10n.requestAction,
                           textColor: Colors.white,
                           onPressed: () => _onTaskDateTap(row, isStart: false),
                         ),
@@ -3627,7 +3643,7 @@ class _TaskProgressMonitorScreenState
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              '${row.taskName.trim()} is already marked as completed.',
+                              context.l10n.alreadyCompletedTask(row.taskName.trim()),
                               style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500),
@@ -3768,13 +3784,13 @@ class _TaskProgressMonitorScreenState
         children: [
           Row(children: [
             Text(
-              '$totalChecked / $totalExpected work days',
+              context.l10n.workDaysCount(totalChecked, totalExpected),
               style: TextStyle(
                   fontSize: 9, color: _navy.withValues(alpha: 0.6)),
             ),
             const Spacer(),
             Text(
-              '${(progress * 100).toStringAsFixed(0)}% complete',
+              context.l10n.percentComplete((progress * 100).toStringAsFixed(0)),
               style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -3810,14 +3826,14 @@ class _TaskProgressMonitorScreenState
         children: [
           Icon(Icons.table_chart_outlined, size: 56, color: Colors.grey[300]),
           const SizedBox(height: 14),
-          Text('No tasks defined yet',
+          Text(context.l10n.noTasksDefined,
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[500])),
           const SizedBox(height: 6),
           Text(
-            'Use "Import Excel" to load from a file,\nor "Add Row" to create tasks manually.',
+            context.l10n.noTasksDefinedHint,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.grey[400]),
           ),
@@ -3827,7 +3843,7 @@ class _TaskProgressMonitorScreenState
             ElevatedButton.icon(
               onPressed: _addRow,
               icon: const Icon(Icons.add_rounded, size: 15),
-              label: Text('Add Row',
+              label: Text(context.l10n.addRow,
                   style: TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 12)),
               style: ElevatedButton.styleFrom(
@@ -3841,7 +3857,7 @@ class _TaskProgressMonitorScreenState
             OutlinedButton.icon(
               onPressed: _isImporting ? null : _importFromExcel,
               icon: const Icon(Icons.upload_file_rounded, size: 15),
-              label: Text('Import Excel',
+              label: Text(context.l10n.importExcel,
                   style: TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 12)),
               style: OutlinedButton.styleFrom(

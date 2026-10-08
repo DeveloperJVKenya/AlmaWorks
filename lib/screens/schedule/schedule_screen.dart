@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 class ScheduleScreen extends StatefulWidget {
   final ProjectModel project;
@@ -35,10 +36,10 @@ class _ScheduleScreenState extends State<ScheduleScreen>
     widget.logger.i(
       '📅 ScheduleScreen: Initialized for project: ${widget.project.name} (ID: ${widget.project.id})',
     );
-    
+
     // Fetch user role asynchronously
     _fetchUserRole();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final width = MediaQuery.of(context).size.width;
       widget.logger.d(
@@ -74,14 +75,14 @@ class _ScheduleScreenState extends State<ScheduleScreen>
       if (querySnapshot.docs.isNotEmpty) {
         final userData = querySnapshot.docs.first.data();
         final role = userData['role'] as String? ?? 'Client';
-        
+
         if (mounted) {
           setState(() {
             _userRole = role;
             _isLoadingUserData = false;
           });
         }
-        
+
         widget.logger.i('✅ ScheduleScreen: User role fetched: $role');
       } else {
         widget.logger.w('⚠️ ScheduleScreen: User document not found');
@@ -111,7 +112,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
     // Show loading indicator while fetching user data
     if (_isLoadingUserData) {
       return BaseLayout(
-        title: '${widget.project.name} - Schedule',
+        title: context.l10n.projectSectionTitle(widget.project.name, context.l10n.scheduleTitle),
         project: widget.project,
         logger: widget.logger,
         selectedMenuItem: 'Schedule',
@@ -127,7 +128,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
     final bool isTechnician = _userRole == 'Technician';
 
     return BaseLayout(
-      title: '${widget.project.name} - Schedule',
+      title: context.l10n.projectSectionTitle(widget.project.name, context.l10n.scheduleTitle),
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Schedule',
@@ -169,14 +170,14 @@ class _ScheduleScreenState extends State<ScheduleScreen>
                               fontWeight: FontWeight.w500,
                               fontSize: 16,
                             ),
-                            tabs: const [
+                            tabs: [
                               Tab(
-                                icon: Icon(Icons.description),
-                                text: 'General Schedule',
+                                icon: const Icon(Icons.description),
+                                text: context.l10n.generalSchedule,
                               ),
                               Tab(
-                                icon: Icon(Icons.dashboard_customize),
-                                text: 'Dynamic Schedule',
+                                icon: const Icon(Icons.dashboard_customize),
+                                text: context.l10n.dynamicSchedule,
                               ),
                             ],
                           ),
@@ -228,7 +229,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       color: const Color(0xFF0A2E5A),
       child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,

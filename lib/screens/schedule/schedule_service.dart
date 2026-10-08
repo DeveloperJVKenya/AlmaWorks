@@ -117,8 +117,8 @@ class ScheduleService {
         'uploadedAt': FieldValue.serverTimestamp(),
         'storagePath': 'projects/$projectId/generalSchedules/$uniqueFileName',
       });
-    } catch (e) {
-      throw Exception('Failed to upload schedule document: $e');
+    } catch (_) {
+      rethrow;
     }
   }
 
@@ -148,8 +148,8 @@ class ScheduleService {
         // Delete from Firestore
         await docSnapshot.reference.delete();
       }
-    } catch (e) {
-      throw Exception('Failed to delete schedule document: $e');
+    } catch (_) {
+      rethrow;
     }
   }
 

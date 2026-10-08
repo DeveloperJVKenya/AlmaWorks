@@ -3437,5 +3437,661 @@
         "type": "String"
       }
     }
-  }
+  },
+  "scheduleTitle": "Schedule",
+  "generalSchedule": "General schedule",
+  "dynamicSchedule": "Dynamic schedule",
+  "ganttChart": "Gantt chart",
+  "scheduleMonitor": "Schedule monitor",
+  "purchasingPlanResources": "Purchasing plan / resources",
+  "couldNotLoadScheduleDocs": "We couldn't load the schedule documents",
+  "noScheduleYet": "No schedule uploaded yet",
+  "tapUploadSchedule": "Tap the upload button to add a schedule",
+  "enterScheduleDocTitle": "Enter schedule document title",
+  "enterScheduleDocTitleBody": "Enter a title for this schedule document:",
+  "scheduleDocHint": "e.g. Project master schedule Q1 2025",
+  "uploadingScheduleDoc": "Uploading schedule document",
+  "scheduleDocUploaded": "Schedule document \"{title}\" uploaded",
+  "@scheduleDocUploaded": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteScheduleDocTitle": "Delete schedule document",
+  "scheduleDocDeleted": "Schedule document deleted",
+  "taskUpdated": "Task updated",
+  "taskMarkedStarted": "{task} marked as started",
+  "@taskMarkedStarted": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "taskMarkedCompleted": "{task} marked as completed",
+  "@taskMarkedCompleted": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTitle": "Something went wrong",
+  "couldNotUpdateTaskStatus": "We couldn't update the task status. Please try again.",
+  "couldNotLoadData": "We couldn't load the data",
+  "searchTasks": "Search tasks",
+  "tabWithCount": "{label} ({count})",
+  "@tabWithCount": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "startingSoonSection": "Starting soon (≤3 days)",
+  "otherUpcoming": "Other upcoming",
+  "overdueToday": "Overdue today!",
+  "overdueByDays": "{days, plural, =1{Overdue by 1 day!} other{Overdue by {days} days!}}",
+  "@overdueByDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "startingToday": "Starting today!",
+  "dueInDays": "{days, plural, =1{Due in 1 day} other{Due in {days} days}}",
+  "@dueInDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "markStarted": "Mark started",
+  "markCompleted": "Mark completed",
+  "durationDays": "{days, plural, =1{Duration: 1 day} other{Duration: {days} days}}",
+  "@durationDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "startedOn": "Started: {date}",
+  "@startedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "completedOn": "Completed: {date}",
+  "@completedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noTasksMatchSearch": "No tasks match your search",
+  "noCategoryTasks": "No tasks here: {category}",
+  "@noCategoryTasks": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "noScheduleData": "No schedule data yet",
+  "noScheduleDataHint": "Add tasks in the Gantt chart to see schedule monitoring",
+  "couldNotLoadResources": "We couldn't load the resources",
+  "noResourcesAdded": "No resources added",
+  "noResourcesHint": "Add resources to manage your purchasing plan",
+  "addFirstResource": "Add first resource",
+  "totalLabel": "Total",
+  "resOnSite": "On site",
+  "resInStorage": "In storage",
+  "resNotOrdered": "Not ordered",
+  "resOrdered": "Ordered",
+  "resNotAvailable": "Not available",
+  "resTypeMaterial": "Material",
+  "resTypeEquipment": "Equipment",
+  "resTypeLabor": "Labour",
+  "resTypeOther": "Other",
+  "addResource": "Add resource",
+  "editResource": "Edit resource",
+  "deleteResource": "Delete resource",
+  "nameLabel": "Name",
+  "quantityExampleHint": "Quantity (e.g. 500 kg)",
+  "typeLabel": "Type",
+  "searchResources": "Search resources…",
+  "resourceCleared": "Resource cleared",
+  "noneLabel": "None",
+  "unknownResource": "Unknown resource",
+  "projectDatesFallback": "We couldn't load the project dates, so a default timeline is shown",
+  "workingOffline": "You're offline — changes will sync when the connection is back",
+  "cannotDeleteSavedRow": "Saved rows in the default range can't be deleted",
+  "couldNotSaveTask": "Couldn't save the task.",
+  "gCalcEndMainOutside": "The calculated end date would put this main task outside the project timeline. Please adjust the duration or start date.",
+  "gCalcEndOutside": "The calculated end date would be outside the project timeline. Please adjust the duration or start date.",
+  "gCalcEndAfterParent": "The calculated end date would be after the parent task ends",
+  "gCalcEndBeforeParent": "The calculated end date would be before the parent task starts",
+  "gCalcStartMainOutside": "The calculated start date would put this main task outside the project timeline. Please adjust the duration or end date.",
+  "gCalcStartOutside": "The calculated start date would be outside the project timeline. Please adjust the duration or end date.",
+  "gCalcStartBeforeParent": "The calculated start date would be before the parent task starts",
+  "gCalcStartAfterParent": "The calculated start date would be after the parent task ends",
+  "gMainStartInProject": "A main task's start date must be within the project timeline",
+  "gStartInProject": "The start date must be within the project timeline ({from} - {to})",
+  "@gStartInProject": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "gStartBeforeParent": "The start date you chose is before the parent task starts",
+  "gStartAfterParent": "The start date you chose is after the parent task ends",
+  "gMainEndInProject": "A main task's end date must be within the project timeline",
+  "gEndInProject": "The end date must be within the project timeline ({from} - {to})",
+  "@gEndInProject": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "gEndAfterParent": "The end date you chose is after the parent task ends",
+  "gEndBeforeParent": "The end date you chose is before the parent task starts",
+  "notSetLabel": "Not set",
+  "unnamed": "Unnamed",
+  "gAttemptedDate": "Date you chose: {date}",
+  "@gAttemptedDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "gParentTimeline": "Parent task \"{name}\" runs {from} - {to}",
+  "@gParentTimeline": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "gAdjustParentQuestion": "Would you like to adjust the parent task's dates to fit this change?",
+  "gOutsideParentTitle": "Date outside the parent task",
+  "continueLabel2": "Continue",
+  "gAdjustMainOutside": "Adjusting the main task would put it outside the project timeline",
+  "gAdjustParentOutside": "Adjusting the parent task would put it outside the project timeline",
+  "gParentAdjusted": "Parent task \"{name}\" dates were adjusted to fit the change",
+  "@gParentAdjusted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gStartAfterChild": "The start date can't be after sub-task \"{name}\" starts ({date})",
+  "@gStartAfterChild": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "gEndBeforeChild": "The end date can't be before sub-task \"{name}\" ends ({date})",
+  "@gEndBeforeChild": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "changesSavedLocally": "Changes saved on this device — they'll sync when you're online",
+  "allChangesSaved": "{count, plural, =1{All changes saved (1 row)} other{All changes saved ({count} rows)}}",
+  "@allChangesSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotSaveSomeChanges": "Some changes couldn't be saved.",
+  "addDates": "Add dates",
+  "gProjectTimeline": "Project timeline: {from} - {to}",
+  "@gProjectTimeline": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "gEditProjectQuestion": "Would you like to edit the project dates to fit this task?",
+  "gOutsideProjectTitle": "Date outside the project timeline",
+  "editProjectDates": "Edit project dates",
+  "quantityOptional": "Quantity (optional)",
+  "quantityExamples": "e.g. 5, 10 kg, 2 hours",
+  "resourceAssignedQty": "Resource assigned: {name} ({qty})",
+  "@resourceAssignedQty": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceAssigned": "Resource assigned: {name}",
+  "@resourceAssigned": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noResourcesAvailable": "No resources available",
+  "addResourcesFirst": "Add resources to your project first",
+  "colNumber": "No.",
+  "colTaskName": "Task name",
+  "colDuration": "Duration",
+  "colStart": "Start",
+  "colFinish": "Finish",
+  "colResources": "Resources",
+  "colActualDates": "Actual dates",
+  "enterTaskName": "Enter task name",
+  "addActualDates": "Add actual dates",
+  "manageActualDates": "Manage actual dates",
+  "editActualDates": "Edit actual dates",
+  "optActualStart": "Actual start date",
+  "optActualFinish": "Actual finish date",
+  "optAddActualStart": "Add actual start date",
+  "optAddActualFinish": "Add actual finish date",
+  "optEditActualStart": "Edit actual start date",
+  "optEditActualFinish": "Edit actual finish date",
+  "optClearActual": "Clear all actual dates",
+  "taskLabel": "Task: {name}",
+  "@taskLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unnamedTask": "Unnamed task",
+  "scheduledRange": "Scheduled: {from} - {to}",
+  "@scheduledRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "currentActual": "Current actual: {dates}",
+  "@currentActual": {
+    "placeholders": {
+      "dates": {
+        "type": "String"
+      }
+    }
+  },
+  "selectAction": "Choose an action:",
+  "gActStartAfterFinish": "The actual start date can't be after the actual finish date",
+  "gActStartBeforeProject": "The actual start date you chose is before the project starts",
+  "gActStartAfterProject": "The actual start date you chose is after the project ends",
+  "gActStartBeforeParent": "The actual start date you chose is before the parent task starts",
+  "gActStartAfterParent": "The actual start date you chose is after the parent task ends",
+  "gActStartBeforeScheduled": "The actual start date is before the scheduled start date",
+  "gActFinishBeforeStart": "The actual finish date can't be before the actual start date",
+  "gActFinishBeforeProject": "The actual finish date you chose is before the project starts",
+  "gActFinishAfterProject": "The actual finish date you chose is after the project ends",
+  "gActFinishBeforeParent": "The actual finish date you chose is before the parent task starts",
+  "gActFinishAfterParent": "The actual finish date you chose is after the parent task ends",
+  "gActFinishAfterScheduled": "The actual finish date is after the scheduled finish date",
+  "actualStartSet": "Actual start date set to {date} — status: started",
+  "@actualStartSet": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotSaveChangesRetry": "We couldn't save your changes. Please try again.",
+  "taskCompletedOn": "Task completed on {date}",
+  "@taskCompletedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "taskCompletedOnWithStart": "Task completed on {date} (started {start})",
+  "@taskCompletedOnWithStart": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "start": {
+        "type": "String"
+      }
+    }
+  },
+  "actualDatesCleared": "Actual dates cleared",
+  "couldNotClearDates": "We couldn't clear the dates. Please try again.",
+  "gBoundaryDate": "Limit date: {date}",
+  "@gBoundaryDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "gVarianceQuestion": "This may mean the schedule has slipped. Continue anyway?",
+  "actualDateCheckTitle": "Check the actual date",
+  "continueAnyway": "Continue anyway",
+  "couldNotLoadProjectDates": "Couldn't load project dates",
+  "offlineMode": "Offline",
+  "addRow": "Add row",
+  "saveChangesTooltip": "Save changes",
+  "makeMainTask": "Make main task",
+  "makeSubtask": "Make subtask",
+  "insertRowBelow": "Insert row below",
+  "deleteRow": "Delete row",
+  "dayDoneOngoing": "Work done – ongoing ✓",
+  "dayDoneCompleted": "Work done – completed ✓",
+  "dayHoliday": "Holiday (H)",
+  "dayBadWeather": "Bad weather (W)",
+  "dayNotSet": "Not set",
+  "progressSaved": "Progress monitor saved",
+  "couldNotSaveProgress": "Couldn't save the progress monitor.",
+  "importStepPick": "Opening file picker…",
+  "importStepRead": "Reading the file…",
+  "importStepParse": "Reading the Excel sheet…",
+  "importStepProcess": "Processing rows…",
+  "importStepProcessN": "Processing {count} rows…",
+  "@importStepProcessN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importStepConfirm": "Waiting for your confirmation…",
+  "importStepConfirmN": "Found {count} rows — waiting for your confirmation…",
+  "@importStepConfirmN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importStepSave": "Saving rows…",
+  "importStepSaveN": "Saving {count} rows…",
+  "@importStepSaveN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importStepWrite": "Uploading to the server…",
+  "noRowsInExcel": "No rows were found in the Excel file.",
+  "importFromExcel": "Import from Excel",
+  "importConfirmBody": "{count, plural, =1{Found 1 row.} other{Found {count} rows.}}\nThis will replace the current table.\n\n{matched, plural, =0{No rows matched an existing task, so all rows start with no progress marks.} =1{1 row matched an existing task by name and will keep its recorded progress marks; any other row starts with no marks.} other{{matched} rows matched an existing task by name and will keep their recorded progress marks; any other row starts with no marks.}} Continue?",
+  "@importConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "matched": {
+        "type": "int"
+      }
+    }
+  },
+  "importAction": "Import",
+  "importedRows": "{count, plural, =1{Imported 1 row} other{Imported {count} rows}}",
+  "@importedRows": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotImport": "Couldn't import the file.",
+  "newTask": "New task",
+  "marksRetrying": "Some progress marks couldn't sync — retrying automatically…",
+  "clearNotSet": "Clear / not set",
+  "importingExcel": "Importing Excel",
+  "pleaseWait": "Please wait…",
+  "taskProgressMonitorTitle": "{project} — Task progress monitor",
+  "@taskProgressMonitorTitle": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "projectDateExtensions": "Project date extensions",
+  "projectProgressPercent": "Project: {percent}%",
+  "@projectProgressPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "rowsToggle": "# Rows",
+  "removeLast": "Remove last",
+  "importExcel": "Import Excel",
+  "legendDone": "Done",
+  "legendHoliday": "Holiday",
+  "legendBadWeather": "Bad weather",
+  "startDateCol": "Start date",
+  "finishDateCol": "Finish date",
+  "noPhasesWithDates": "No phases with start/end dates yet",
+  "deleteTaskRowTitle": "Delete task row?",
+  "deleteTaskRowBody": "\"{name}\" and its recorded progress marks will be removed.",
+  "@deleteTaskRowBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "outsideProjectBounds": "Outside the project dates",
+  "dateBeforeProjectStart": "That date is before the project's start date ({date}). Request a project date extension first — once approved, this and other tasks can use the new range.",
+  "@dateBeforeProjectStart": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dateAfterProjectEnd": "That date is after the project's end date ({date}). Request a project date extension first — once approved, this and other tasks can use the new range.",
+  "@dateAfterProjectEnd": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "requestProjectExtension": "Request project extension",
+  "requestProjectDateExtension": "Request project date extension",
+  "extensionMainlyEnd": "This mainly affects the completion date, but the start date can be changed too if needed.",
+  "reasonForExtension": "Reason for extension *",
+  "reasonForExtensionHint": "Why does the project timeline need to change?",
+  "extensionApprovalNote": "Once approved by the Project Manager or a MainAdmin: the project's dates update, any phase whose end matched the old project end date moves with it, and task dates can be edited freely within the new range.",
+  "submitRequest": "Submit request",
+  "nExtRequestedTitle": "Project date extension requested — {project}",
+  "@nExtRequestedTitle": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "nExtRequestedBody": "{name} requested new project dates: {from} – {to}.",
+  "@nExtRequestedBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "aUser": "A user",
+  "extensionRequestedSnack": "Project extension requested — waiting for approval.",
+  "couldNotSubmitRequest": "Couldn't submit the request.",
+  "nExtApprovedTitle": "Project date extension approved — {project}",
+  "@nExtApprovedTitle": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "nExtRejectedTitle": "Project date extension rejected — {project}",
+  "@nExtRejectedTitle": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "nExtApprovedBody": "Project dates are now {from} – {to}.",
+  "@nExtApprovedBody": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "nExtRejectedBody": "The project keeps its current dates.",
+  "nExtRejectedBodyReason": "The project keeps its current dates. Reason: {reason}",
+  "@nExtRejectedBodyReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "extensionApprovedSnack": "Extension approved.",
+  "extensionRejectedSnack": "Extension rejected.",
+  "couldNotRecordResponse": "Couldn't record your response.",
+  "requestedByNameRole": "Requested by {name} ({role})",
+  "@requestedByNameRole": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "approvedByName": "Approved by {name}",
+  "@approvedByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rejectedByName": "Rejected by {name}",
+  "@rejectedByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonColon": "Reason: {reason}",
+  "@reasonColon": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "rejectionReasonOptional": "Reason for rejection (optional)",
+  "confirmReject": "Confirm rejection",
+  "awaitingPmApproval": "Waiting for approval from the Project Manager or a MainAdmin.",
+  "deadlinePassedRequest": "{name}'s deadline has passed — request a date extension to continue.",
+  "@deadlinePassedRequest": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "requestAction": "Request",
+  "alreadyCompletedTask": "{name} is already marked as completed.",
+  "@alreadyCompletedTask": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workDaysCount": "{done} / {total} work days",
+  "@workDaysCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "percentComplete": "{percent}% complete",
+  "@percentComplete": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "noTasksDefined": "No tasks yet",
+  "noTasksDefinedHint": "Use \"Import Excel\" to load from a file,\nor \"Add row\" to create tasks manually."
 }

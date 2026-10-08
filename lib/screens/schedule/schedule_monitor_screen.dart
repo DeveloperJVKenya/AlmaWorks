@@ -11,6 +11,7 @@ import 'package:elegant_notification/elegant_notification.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:workmanager/workmanager.dart' hide TaskStatus;
 import 'dart:async';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 // NEW: Helper method for notification colors based on type
 
@@ -18,10 +19,10 @@ import 'dart:async';
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     final logger = Logger();
-    
+
     try {
       logger.i('🔄 Background task started: $taskName');
-      
+
       tzdata.initializeTimeZones();
 
       final String? projectId = inputData?['projectId'] as String?;
@@ -39,7 +40,7 @@ void callbackDispatcher() {
         logger: logger,
         userId: userId,
       );
-      
+
       await notificationService.initialize();
       logger.i('✅ NotificationService initialized in background');
 
@@ -47,7 +48,7 @@ void callbackDispatcher() {
         logger: logger,
         notificationService: notificationService,
       );
-      
+
       await enhancedNotificationService.initialize();
       logger.i('✅ EnhancedNotificationService initialized in background');
 
@@ -66,7 +67,7 @@ void callbackDispatcher() {
       final List<ScheduleMonitorData> tasks = snapshot.docs
           .map((doc) => ScheduleMonitorData.fromFirestore(doc.id, doc.data() as Map<String, dynamic>))
           .toList();
-      
+
       logger.d('📊 Loaded ${tasks.length} tasks from ScheduleMonitor');
 
       final DateTime now = DateTime.now();
@@ -75,7 +76,7 @@ void callbackDispatcher() {
       logger.d('🔄 Updating task statuses...');
       int updatedCount = 0;
       final batch = FirebaseFirestore.instance.batch();
-      
+
       for (var task in tasks) {
         final newStatus = ScheduleMonitorData.computeStatus(
           startDate: task.startDate,
@@ -84,12 +85,12 @@ void callbackDispatcher() {
           actualEndDate: task.actualEndDate,
           taskStatus: task.taskStatus,
         );
-        
+
         UpcomingCategory? newUpcomingCategory;
         if (newStatus == MonitorStatus.upcoming) {
           newUpcomingCategory = ScheduleMonitorData.computeUpcomingCategory(task.startDate);
         }
-        
+
         if (newStatus != task.status || newUpcomingCategory != task.upcomingCategory) {
           batch.update(
             FirebaseFirestore.instance.collection('ScheduleMonitor').doc(task.id),
@@ -103,7 +104,7 @@ void callbackDispatcher() {
           updatedCount++;
         }
       }
-      
+
       if (updatedCount > 0) {
         await batch.commit();
         logger.i('✅ Updated $updatedCount task statuses');
@@ -114,7 +115,7 @@ void callbackDispatcher() {
           .collection('ScheduleMonitor')
           .where('projectId', isEqualTo: projectId)
           .get();
-      
+
       final updatedTasks = updatedSnapshot.docs
           .map((doc) => ScheduleMonitorData.fromFirestore(doc.id, doc.data()))
           .toList();
@@ -148,10 +149,10 @@ void callbackDispatcher() {
       );
 
       final List<Map<String, dynamic>> unsentTasks = [];
-      
+
       for (var task in notifyTasks) {
         final wasTriggered = triggeredMap[task.scheduleTaskId] ?? false;
-        
+
         if (!wasTriggered) {
           final type = task.isOverdue ? 'overdue' : 'starting_soon';
           unsentTasks.add({
@@ -173,11 +174,11 @@ void callbackDispatcher() {
       for (var item in unsentTasks) {
         final task = item['task'] as ScheduleMonitorData;
         final type = item['type'] as String;
-        
+
         try {
           final body = type == 'overdue'
-              ? 'This task is overdue and needs attention!'
-              : 'Starts in ${task.daysUntilStart} day(s)';
+              ? l10nNow.taskOverdueBody
+              : l10nNow.taskStartsInDays(task.daysUntilStart);
 
           // Save to Firestore
           final savedId = await notificationService.saveNotification(
@@ -202,14 +203,14 @@ void callbackDispatcher() {
               type: type,
               firestoreNotificationId: savedId,
             );
-            
+
             logger.i('✅ Notification shown and saved: ${task.taskName}');
-            
+
             // Small delay for floating effect
             await Future.delayed(const Duration(milliseconds: 300));
           }
         } catch (e, stackTrace) {
-          logger.e('❌ Error showing notification for ${task.taskName}', 
+          logger.e('❌ Error showing notification for ${task.taskName}',
                    error: e, stackTrace: stackTrace);
         }
       }
@@ -217,7 +218,7 @@ void callbackDispatcher() {
       // STEP 7: Show group summary if multiple notifications
       if (unsentTasks.length > 1) {
         logger.d('📦 Creating group summary notification');
-        
+
         await enhancedNotificationService.showGroupedNotification(
           projectId: projectId,
           taskGroups: unsentTasks,
@@ -271,35 +272,35 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
   @override
   void initState() {
     super.initState();
-    
+
     widget.logger.i('🚀 Initializing ScheduleMonitorScreen for project: ${widget.projectId}');
-    
+
     // Initialize notification service
     _notificationService = NotificationService(
       logger: widget.logger,
       userId: null,
     );
-    
+
     // UPDATED: Initialize enhanced notification service
     _enhancedNotificationService = EnhancedNotificationService(
       logger: widget.logger,
       notificationService: _notificationService,
     );
-    
+
     // Initialize services
     _notificationService.initialize().then((_) async {
       widget.logger.i('✅ NotificationService initialized successfully');
-      
+
       // Initialize enhanced notifications
       await _enhancedNotificationService.initialize();
       widget.logger.i('✅ EnhancedNotificationService initialized successfully');
-      
+
       // Sync Schedule to ScheduleMonitor collection
       await _syncScheduleToMonitor();
-      
+
       if (mounted && !kIsWeb) {
         widget.logger.i('📱 Platform supports notifications, scheduling initial check');
-        
+
         // Initial check after 5 seconds
         Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
@@ -313,8 +314,8 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
     }).catchError((error) {
       widget.logger.e('❌ NotificationService initialization failed', error: error);
     });
-    
-    
+
+
     // Animation setup
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -323,10 +324,10 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    
+
     // Initialize timezone data
     tzdata.initializeTimeZones();
-    
+
     // Platform-specific initialization
     if (!kIsWeb) {
       _initializeBackgroundTasks();
@@ -346,71 +347,71 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         _scheduleNotificationCheck();
       }
     });
-    
+
     // Start real-time status updater
     _startRealtimeStatusUpdater();
-    
+
     widget.logger.i('✅ ScheduleMonitorScreen initialization complete');
   }
 
   Future<void> _syncScheduleToMonitor() async {
     try {
       widget.logger.i('🔄 Syncing Schedule to ScheduleMonitor collection...');
-      
+
       final firestore = FirebaseFirestore.instance;
       final now = DateTime.now();
-      
+
       // Get all tasks from Schedule collection for this project (only TaskType = "Task")
       final scheduleSnapshot = await firestore
           .collection('Schedule')
           .where('projectId', isEqualTo: widget.projectId)
           .where('taskType', isEqualTo: 'Task')
           .get();
-      
+
       widget.logger.d('📋 Found ${scheduleSnapshot.docs.length} tasks in Schedule collection');
-      
+
       // Get existing ScheduleMonitor documents
       final monitorSnapshot = await firestore
           .collection('ScheduleMonitor')
           .where('projectId', isEqualTo: widget.projectId)
           .get();
-      
+
       // Create a map of existing monitor documents by scheduleTaskId
       final existingMonitorMap = <String, String>{};
       for (var doc in monitorSnapshot.docs) {
         final scheduleTaskId = doc.data()['scheduleTaskId'] as String;
         existingMonitorMap[scheduleTaskId] = doc.id;
       }
-      
+
       widget.logger.d('📊 Found ${existingMonitorMap.length} existing monitor records');
-      
+
       // Batch write for efficiency
       final batch = firestore.batch();
       int createCount = 0;
       int updateCount = 0;
-      
+
       for (var scheduleDoc in scheduleSnapshot.docs) {
         final scheduleData = scheduleDoc.data();
-        
+
         // Validate required fields
-        if (scheduleData['startDate'] == null || 
+        if (scheduleData['startDate'] == null ||
             scheduleData['endDate'] == null ||
             scheduleData['taskName'] == null) {
           widget.logger.w('⚠️ Skipping task ${scheduleDoc.id} - missing required fields');
           continue;
         }
-        
+
         // Extract dates and normalize them
         final startDate = _normalizeToMidnight((scheduleData['startDate'] as Timestamp).toDate());
         final endDate = _normalizeToMidnight((scheduleData['endDate'] as Timestamp).toDate());
-        final actualStartDate = scheduleData['actualStartDate'] != null 
+        final actualStartDate = scheduleData['actualStartDate'] != null
             ? _normalizeToMidnight((scheduleData['actualStartDate'] as Timestamp).toDate())
             : null;
-        final actualEndDate = scheduleData['actualEndDate'] != null 
+        final actualEndDate = scheduleData['actualEndDate'] != null
             ? _normalizeToMidnight((scheduleData['actualEndDate'] as Timestamp).toDate())
             : null;
         final taskStatus = scheduleData['taskStatus'] as String?;
-        
+
         // Compute status using normalized dates
         final status = _computeStatusWithNormalizedDates(
           startDate: startDate,
@@ -420,16 +421,16 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
           taskStatus: taskStatus,
           now: now,
         );
-        
+
         // Compute upcoming category if status is upcoming
         UpcomingCategory? upcomingCategory;
         if (status == MonitorStatus.upcoming) {
           upcomingCategory = _computeUpcomingCategoryWithNormalizedDates(startDate, now);
         }
-        
+
         // Compute duration
         final duration = _calculateDaysBetween(startDate, endDate) + 1;
-        
+
         // Create monitor data map
         final monitorData = {
           'scheduleTaskId': scheduleDoc.id,
@@ -449,7 +450,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
           'updatedAt': Timestamp.fromDate(now),
           'lastStatusUpdate': Timestamp.fromDate(now),
         };
-        
+
         // Check if document exists using the map
         if (existingMonitorMap.containsKey(scheduleDoc.id)) {
           // Update existing document
@@ -467,23 +468,23 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
           createCount++;
         }
       }
-      
+
       // Delete orphaned ScheduleMonitor documents (tasks deleted from Schedule)
       final scheduleTaskIds = scheduleSnapshot.docs.map((doc) => doc.id).toSet();
       int deleteCount = 0;
-      
+
       for (var entry in existingMonitorMap.entries) {
         if (!scheduleTaskIds.contains(entry.key)) {
           batch.delete(firestore.collection('ScheduleMonitor').doc(entry.value));
           deleteCount++;
         }
       }
-      
+
       // Commit batch
       await batch.commit();
-      
+
       widget.logger.i('✅ Sync complete: Created $createCount, Updated $updateCount, Deleted $deleteCount');
-      
+
     } catch (e, stackTrace) {
       widget.logger.e('❌ Error syncing to ScheduleMonitor', error: e, stackTrace: stackTrace);
     }
@@ -500,22 +501,22 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
   }) {
     final normalizedNow = _normalizeToMidnight(now);
     final normalizedStart = _normalizeToMidnight(startDate);
-    
+
     // Priority 1: Check if completed (user marked as completed OR has actualEndDate)
     if (taskStatus == 'COMPLETED' || actualEndDate != null) {
       return MonitorStatus.completed;
     }
-    
+
     // Priority 2: Check if started (user marked as started OR has actualStartDate)
     if (taskStatus == 'STARTED' || actualStartDate != null) {
       return MonitorStatus.ongoing;
     }
-    
+
     // Priority 3: Check if overdue (start date passed but not started)
     if (normalizedStart.isBefore(normalizedNow)) {
       return MonitorStatus.overdue;
     }
-    
+
     // Priority 4: Default to upcoming (future start date, not started)
     return MonitorStatus.upcoming;
   }
@@ -525,13 +526,13 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
     final normalizedNow = _normalizeToMidnight(now);
     final normalizedStart = _normalizeToMidnight(startDate);
     final daysUntilStart = _calculateDaysBetween(normalizedNow, normalizedStart);
-    
+
     if (daysUntilStart <= 3 && daysUntilStart > 0) {
       return UpcomingCategory.startingSoon;
     } else if (daysUntilStart > 3) {
       return UpcomingCategory.otherUpcoming;
     }
-    
+
     return null;
   }
 
@@ -556,24 +557,24 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         timer.cancel();
         return;
       }
-      
+
       try {
         final firestore = FirebaseFirestore.instance;
         final now = DateTime.now();
         final normalizedNow = _normalizeToMidnight(now);
-        
+
         // Get all ScheduleMonitor documents for this project
         final snapshot = await firestore
             .collection('ScheduleMonitor')
             .where('projectId', isEqualTo: widget.projectId)
             .get();
-        
+
         final batch = firestore.batch();
         int updateCount = 0;
-        
+
         for (var doc in snapshot.docs) {
           final data = doc.data();
-          
+
           // Extract and normalize dates
           final startDate = _normalizeToMidnight((data['startDate'] as Timestamp).toDate());
           final endDate = _normalizeToMidnight((data['endDate'] as Timestamp).toDate());
@@ -584,7 +585,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
               ? _normalizeToMidnight((data['actualEndDate'] as Timestamp).toDate())
               : null;
           final taskStatus = data['taskStatus'] as String?;
-          
+
           // Get current status from document
           final currentStatusStr = data['status'] as String?;
           final currentStatus = currentStatusStr != null
@@ -593,7 +594,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                   orElse: () => MonitorStatus.upcoming,
                 )
               : MonitorStatus.upcoming;
-          
+
           // Recompute status with normalized dates
           final newStatus = _computeStatusWithNormalizedDates(
             startDate: startDate,
@@ -603,13 +604,13 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
             taskStatus: taskStatus,
             now: now,
           );
-          
+
           // Recompute upcoming category
           UpcomingCategory? newUpcomingCategory;
           if (newStatus == MonitorStatus.upcoming) {
             newUpcomingCategory = _computeUpcomingCategoryWithNormalizedDates(startDate, now);
           }
-          
+
           // Get current upcoming category
           final currentUpcomingCategoryStr = data['upcomingCategory'] as String?;
           final currentUpcomingCategory = currentUpcomingCategoryStr != null
@@ -618,7 +619,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                   orElse: () => UpcomingCategory.otherUpcoming,
                 )
               : null;
-          
+
           // Update if status or category changed
           if (newStatus != currentStatus || newUpcomingCategory != currentUpcomingCategory) {
             batch.update(doc.reference, {
@@ -628,16 +629,16 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
               'lastStatusUpdate': Timestamp.fromDate(now),
             });
             updateCount++;
-            
+
             widget.logger.d('📊 Status changed for "${data['taskName']}": $currentStatus -> $newStatus (Days until start: ${_calculateDaysBetween(normalizedNow, startDate)})');
           }
         }
-        
+
         if (updateCount > 0) {
           await batch.commit();
           widget.logger.d('🔄 Real-time updater: Updated $updateCount task statuses');
         }
-        
+
       } catch (e) {
         widget.logger.e('❌ Error in real-time status updater', error: e);
       }
@@ -647,20 +648,20 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
   @override
   void dispose() {
     widget.logger.d('🧹 Disposing ScheduleMonitorScreen');
-    
+
     _refreshTimer?.cancel();
     _realtimeStatusTimer?.cancel(); // FIX: cancel the realtime status updater
     _animationController.dispose();
     _searchController.dispose();
     _isCheckingNotifications = false;
-    
+
     widget.logger.d('✅ ScheduleMonitorScreen disposed');
     super.dispose();
   }
 
   void _initializeBackgroundTasks() {
     widget.logger.i('⏰ Initializing background tasks');
-    
+
     Workmanager().initialize(callbackDispatcher); // FIXED: Removed isInDebugMode
 
     // FIXED: Changed to every 6 hours (from 4) to reduce battery drain
@@ -677,7 +678,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         networkType: NetworkType.connected, // FIXED: Require network
       ),
     );
-    
+
     widget.logger.i('✅ Background task registered for project ${widget.projectId}');
   }
 
@@ -686,9 +687,9 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
       widget.logger.w('⚠️ Notification check already in progress, skipping');
       return;
     }
-    
+
     widget.logger.i('🔍 Starting notification check for project: ${widget.projectId}');
-    
+
     setState(() {
       _isCheckingNotifications = true;
     });
@@ -721,7 +722,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
       final List<ScheduleMonitorData> allTasks = snapshot.docs
           .map((doc) => ScheduleMonitorData.fromFirestore(doc.id, doc.data() as Map<String, dynamic>))
           .toList();
-      
+
       widget.logger.d('📊 Loaded ${allTasks.length} tasks from ScheduleMonitor');
 
       // STEP 3: Filter and categorize tasks that need notifications
@@ -758,10 +759,10 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
       );
 
       final List<Map<String, dynamic>> unsentTasks = [];
-      
+
       for (var task in notifyTasks) {
         final wasTriggered = triggeredMap[task.scheduleTaskId] ?? false;
-        
+
         if (!wasTriggered) {
           final type = task.isOverdue ? 'overdue' : 'starting_soon';
           unsentTasks.add({
@@ -787,10 +788,10 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
       for (var item in unsentTasks) {
         final task = item['task'] as ScheduleMonitorData;
         final type = item['type'] as String;
-        
+
         final body = type == 'overdue'
-            ? 'This task is overdue and needs attention!'
-            : 'Starts in ${task.daysUntilStart} day(s)';
+            ? l10nNow.taskOverdueBody
+            : l10nNow.taskStartsInDays(task.daysUntilStart);
 
         // Save to Firestore
         final savedId = await _notificationService.saveNotification(
@@ -818,14 +819,14 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         if (item.containsKey('firestoreNotificationId')) {
           final task = item['task'] as ScheduleMonitorData;
           final type = item['type'] as String;
-          
+
           await _enhancedNotificationService.showTaskNotification(
             projectId: widget.projectId,
             task: task,
             type: type,
             firestoreNotificationId: item['firestoreNotificationId'],
           );
-          
+
           // Add small delay between notifications for floating effect
           await Future.delayed(const Duration(milliseconds: 300));
         }
@@ -834,7 +835,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
       // STEP 7: Show grouped summary if multiple notifications
       if (unsentTasks.length > 1) {
         widget.logger.d('📦 Creating group summary notification');
-        
+
         await _enhancedNotificationService.showGroupedNotification(
           projectId: widget.projectId,
           taskGroups: unsentTasks,
@@ -860,12 +861,12 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
       // REMOVED: final now = DateTime.now(); (was unused)
       final firestore = FirebaseFirestore.instance;
       final updateTime = DateTime.now(); // Use different name to avoid confusion
-      
+
       // Determine new taskStatus and actual dates
       String? newTaskStatus;
       DateTime? newActualStart;
       DateTime? newActualEnd;
-      
+
       if (action == 'started') {
         newTaskStatus = 'STARTED';
         newActualStart = task.actualStartDate ?? updateTime;
@@ -874,7 +875,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         newActualStart = task.actualStartDate ?? updateTime;
         newActualEnd = task.actualEndDate ?? updateTime;
       }
-      
+
       // Update Schedule collection (source of truth for taskStatus)
       final scheduleUpdateData = {
         'taskStatus': ?newTaskStatus,
@@ -882,14 +883,14 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         if (newActualEnd != null) 'actualEndDate': Timestamp.fromDate(newActualEnd),
         'updatedAt': Timestamp.now(),
       };
-      
+
       await firestore
           .collection('Schedule')
           .doc(task.scheduleTaskId)
           .update(scheduleUpdateData);
-      
+
       widget.logger.i('✅ Updated Schedule collection for task: ${task.taskName}');
-      
+
       // Compute new status for ScheduleMonitor
       final newStatus = ScheduleMonitorData.computeStatus(
         startDate: task.startDate,
@@ -898,12 +899,12 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         actualEndDate: newActualEnd,
         taskStatus: newTaskStatus,
       );
-      
+
       UpcomingCategory? newUpcomingCategory;
       if (newStatus == MonitorStatus.upcoming) {
         newUpcomingCategory = ScheduleMonitorData.computeUpcomingCategory(task.startDate);
       }
-      
+
       // Update ScheduleMonitor collection
       final monitorUpdateData = {
         'taskStatus': newTaskStatus,
@@ -914,27 +915,29 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
         'updatedAt': Timestamp.fromDate(updateTime),
         'lastStatusUpdate': Timestamp.fromDate(updateTime),
       };
-      
+
       await firestore
           .collection('ScheduleMonitor')
           .doc(task.id)
           .update(monitorUpdateData);
-      
+
       widget.logger.i('✅ Updated ScheduleMonitor collection for task: ${task.taskName}');
-      
+
       if (!mounted) return;
-      
+
       ElegantNotification.success(
-        title: const Text('Task Updated'),
-        description: Text('${task.taskName} marked as $action'),
+        title: Text(context.l10n.taskUpdated),
+        description: Text(action == 'completed'
+            ? context.l10n.taskMarkedCompleted(task.taskName)
+            : context.l10n.taskMarkedStarted(task.taskName)),
       ).show(context);
-      
+
     } catch (e, stackTrace) {
       widget.logger.e('❌ Error updating task status', error: e, stackTrace: stackTrace);
       if (!mounted) return;
       ElegantNotification.error(
-        title: const Text('Error'),
-        description: const Text('Failed to update task status'),
+        title: Text(context.l10n.errorTitle),
+        description: Text(context.l10n.couldNotUpdateTaskStatus),
       ).show(context);
     }
   }
@@ -959,7 +962,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
           widget.logger.e('❌ ScheduleMonitor: Error in stream', error: snapshot.error);
           return Center(
             child: Text(
-              'Error loading data',
+              context.l10n.couldNotLoadData,
               style: TextStyle(color: Colors.red),
             ),
           );
@@ -1012,7 +1015,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      labelText: 'Search Tasks',
+                      labelText: context.l10n.searchTasks,
                       suffixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1025,20 +1028,20 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                 // Tabs
                 TabBar(
                   tabs: [
-                    Tab(text: 'Overdue (${filteredOverdue.length})'),
-                    Tab(text: 'Ongoing (${filteredOngoing.length})'),
-                    Tab(text: 'Upcoming ($upcomingCount)'),
-                    Tab(text: 'Completed (${filteredCompleted.length})'),
+                    Tab(text: context.l10n.tabWithCount(context.l10n.monitorOverdue, filteredOverdue.length)),
+                    Tab(text: context.l10n.tabWithCount(context.l10n.monitorOngoing, filteredOngoing.length)),
+                    Tab(text: context.l10n.tabWithCount(context.l10n.monitorUpcoming, upcomingCount)),
+                    Tab(text: context.l10n.tabWithCount(context.l10n.taskCompleted, filteredCompleted.length)),
                   ],
                 ),
                 // Tab views
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _buildMonitorCategoryView(filteredOverdue, overdueColor, 'Overdue'),
-                      _buildMonitorCategoryView(filteredOngoing, ongoingColor, 'Ongoing'),
+                      _buildMonitorCategoryView(filteredOverdue, overdueColor, context.l10n.monitorOverdue),
+                      _buildMonitorCategoryView(filteredOngoing, ongoingColor, context.l10n.monitorOngoing),
                       _buildMonitorUpcomingView(filteredStartingSoon, filteredOtherUpcoming, startingSoonColor, upcomingColor),
-                      _buildMonitorCategoryView(filteredCompleted, completedColor, 'Completed'),
+                      _buildMonitorCategoryView(filteredCompleted, completedColor, context.l10n.taskCompleted),
                     ],
                   ),
                 ),
@@ -1079,7 +1082,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
 
   Widget _buildMonitorUpcomingView(List<ScheduleMonitorData> filteredStartingSoon, List<ScheduleMonitorData> filteredOtherUpcoming, Color startingColor, Color upcomingColor) {
     if (filteredStartingSoon.isEmpty && filteredOtherUpcoming.isEmpty) {
-      return _buildNoTasksWidget('Upcoming');
+      return _buildNoTasksWidget(context.l10n.monitorUpcoming);
     }
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1090,11 +1093,11 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (filteredStartingSoon.isNotEmpty) ...[
-                _buildSectionHeader('Starting Soon (≤3 days)', startingColor, filteredStartingSoon.length),
+                _buildSectionHeader(context.l10n.startingSoonSection, startingColor, filteredStartingSoon.length),
                 ...filteredStartingSoon.map((task) => _buildMonitorTaskItem(task, startingColor)),
               ],
               if (filteredOtherUpcoming.isNotEmpty) ...[
-                _buildSectionHeader('Other Upcoming', upcomingColor, filteredOtherUpcoming.length),
+                _buildSectionHeader(context.l10n.otherUpcoming, upcomingColor, filteredOtherUpcoming.length),
                 ...filteredOtherUpcoming.map((task) => _buildMonitorTaskItem(task, upcomingColor)),
               ],
               const SizedBox(height: 24),
@@ -1110,34 +1113,34 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
     final normalizedNow = _normalizeToMidnight(now);
     final normalizedStartDate = _normalizeToMidnight(task.startDate);
     final normalizedEndDate = _normalizeToMidnight(task.endDate);
-    
+
     // Use normalized dates for accurate day calculations
     final int daysUntilStart = _calculateDaysBetween(normalizedNow, normalizedStartDate);
     final int daysUntilEnd = _calculateDaysBetween(normalizedNow, normalizedEndDate);
-    
+
     String urgencyText = '';
     IconData urgencyIcon = Icons.info_outline;
-    
+
     // Set distinguished colors based on status
     Color itemColor = accentColor;
     if (task.isOverdue) {
       itemColor = Colors.red;
       final overdueDays = _calculateDaysBetween(normalizedStartDate, normalizedNow);
-      urgencyText = overdueDays == 0 ? 'Overdue today!' : 'Overdue by $overdueDays day${overdueDays == 1 ? '' : 's'}!';
+      urgencyText = overdueDays == 0 ? context.l10n.overdueToday : context.l10n.overdueByDays(overdueDays);
       urgencyIcon = Icons.warning_amber_outlined;
     } else if (task.isStartingSoon) {
       itemColor = Colors.orange;
-      urgencyText = daysUntilStart == 0 
-          ? 'Starting today!' 
-          : 'Starts in $daysUntilStart day${daysUntilStart == 1 ? '' : 's'}';
+      urgencyText = daysUntilStart == 0
+          ? context.l10n.startingToday
+          : context.l10n.taskStartsInDays(daysUntilStart);
       urgencyIcon = Icons.timer_outlined;
     } else if (task.isOngoing && daysUntilEnd <= 3 && daysUntilEnd >= 0) {
       urgencyText = daysUntilEnd == 0
-          ? 'Due today!'
-          : 'Due in $daysUntilEnd day${daysUntilEnd == 1 ? '' : 's'}';
+          ? context.l10n.dueToday
+          : context.l10n.dueInDays(daysUntilEnd);
       urgencyIcon = Icons.warning_amber_outlined;
     } else if (task.isUpcoming && daysUntilStart > 0) {
-      urgencyText = 'Starts in $daysUntilStart day${daysUntilStart == 1 ? '' : 's'}';
+      urgencyText = context.l10n.taskStartsInDays(daysUntilStart);
       urgencyIcon = Icons.schedule_outlined;
     }
 
@@ -1219,12 +1222,12 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                                   value: 'started',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.play_circle_outline, 
-                                          size: 20, 
+                                      Icon(Icons.play_circle_outline,
+                                          size: 20,
                                           color: Colors.blue.shade600),
                                       const SizedBox(width: 10),
                                       Text(
-                                        'Mark Started',
+                                        context.l10n.markStarted,
                                         style: TextStyle(fontSize: 14),
                                       ),
                                     ],
@@ -1234,12 +1237,12 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                                   value: 'completed',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.check_circle_outline, 
-                                          size: 20, 
+                                      Icon(Icons.check_circle_outline,
+                                          size: 20,
                                           color: Colors.green.shade600),
                                       const SizedBox(width: 10),
                                       Text(
-                                        'Mark Completed',
+                                        context.l10n.markCompleted,
                                         style: TextStyle(fontSize: 14),
                                       ),
                                     ],
@@ -1251,11 +1254,11 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                         ],
                       ),
                       const SizedBox(height: 10),
-                      
+
                       Row(
                         children: [
-                          Icon(Icons.calendar_today_outlined, 
-                              size: 14, 
+                          Icon(Icons.calendar_today_outlined,
+                              size: 14,
                               color: Colors.grey.shade600),
                           const SizedBox(width: 6),
                           Text(
@@ -1268,15 +1271,15 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                         ],
                       ),
                       const SizedBox(height: 6),
-                      
+
                       Row(
                         children: [
-                          Icon(Icons.timelapse_outlined, 
-                              size: 14, 
+                          Icon(Icons.timelapse_outlined,
+                              size: 14,
                               color: Colors.grey.shade600),
                           const SizedBox(width: 6),
                           Text(
-                            'Duration: ${task.duration} day${task.duration == 1 ? '' : 's'}',
+                            context.l10n.durationDays(task.duration),
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade600,
@@ -1284,18 +1287,18 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                           ),
                         ],
                       ),
-                      
+
                       // Display actual dates if available
                       if (task.actualStartDate != null) ...[
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.play_arrow_outlined, 
-                                size: 14, 
+                            Icon(Icons.play_arrow_outlined,
+                                size: 14,
                                 color: Colors.blue.shade600),
                             const SizedBox(width: 6),
                             Text(
-                              'Started: ${DateFormat('MMM dd, yyyy').format(task.actualStartDate!)}',
+                              context.l10n.startedOn(DateFormat.yMMMd().format(task.actualStartDate!)),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.blue.shade600,
@@ -1308,12 +1311,12 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.check_circle_outlined, 
-                                size: 14, 
+                            Icon(Icons.check_circle_outlined,
+                                size: 14,
                                 color: Colors.green.shade600),
                             const SizedBox(width: 6),
                             Text(
-                              'Completed: ${DateFormat('MMM dd, yyyy').format(task.actualEndDate!)}',
+                              context.l10n.completedOn(DateFormat.yMMMd().format(task.actualEndDate!)),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.green.shade600,
@@ -1322,7 +1325,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                           ],
                         ),
                       ],
-                      
+
                       // Display task status badge
                       if (task.taskStatus != null) ...[
                         const SizedBox(height: 8),
@@ -1332,13 +1335,13 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: task.taskStatus == 'COMPLETED' 
-                                ? Colors.green.shade50 
+                            color: task.taskStatus == 'COMPLETED'
+                                ? Colors.green.shade50
                                 : Colors.blue.shade50,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: task.taskStatus == 'COMPLETED' 
-                                  ? Colors.green.shade300 
+                              color: task.taskStatus == 'COMPLETED'
+                                  ? Colors.green.shade300
                                   : Colors.blue.shade300,
                             ),
                           ),
@@ -1346,22 +1349,22 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                task.taskStatus == 'COMPLETED' 
-                                    ? Icons.check_circle 
+                                task.taskStatus == 'COMPLETED'
+                                    ? Icons.check_circle
                                     : Icons.play_circle,
                                 size: 12,
-                                color: task.taskStatus == 'COMPLETED' 
-                                    ? Colors.green.shade700 
+                                color: task.taskStatus == 'COMPLETED'
+                                    ? Colors.green.shade700
                                     : Colors.blue.shade700,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                task.taskStatus == 'COMPLETED' ? 'Completed' : 'Started',
+                                task.taskStatus == 'COMPLETED' ? context.l10n.taskCompleted : context.l10n.taskStarted,
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color: task.taskStatus == 'COMPLETED' 
-                                      ? Colors.green.shade700 
+                                  color: task.taskStatus == 'COMPLETED'
+                                      ? Colors.green.shade700
                                       : Colors.blue.shade700,
                                 ),
                               ),
@@ -1369,7 +1372,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                           ),
                         ),
                       ],
-                      
+
                       if (urgencyText.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Container(
@@ -1448,7 +1451,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                 ),
                 SizedBox(height: verticalSpacing),
                 Text(
-                  isSearch ? 'No tasks match your search' : 'No $title tasks',
+                  isSearch ? context.l10n.noTasksMatchSearch : context.l10n.noCategoryTasks(title.toLowerCase()),
                   style: TextStyle(
                     fontSize: fontSize,
                     color: Colors.grey.shade600,
@@ -1518,7 +1521,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
             Icon(Icons.timeline, size: 80, color: Colors.grey.shade400),
             const SizedBox(height: 24),
             Text(
-              'No Schedule Data Available',
+              context.l10n.noScheduleData,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
@@ -1528,7 +1531,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
             ),
             const SizedBox(height: 12),
             Text(
-              'Add tasks in the Gantt Chart to see schedule monitoring',
+              context.l10n.noScheduleDataHint,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade500,

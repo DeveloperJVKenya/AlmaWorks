@@ -8599,6 +8599,1452 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete \"{name}\"?'**
   String deleteNamedConfirm(String name);
+
+  /// No description provided for @scheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get scheduleTitle;
+
+  /// No description provided for @generalSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'General schedule'**
+  String get generalSchedule;
+
+  /// No description provided for @dynamicSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Dynamic schedule'**
+  String get dynamicSchedule;
+
+  /// No description provided for @ganttChart.
+  ///
+  /// In en, this message translates to:
+  /// **'Gantt chart'**
+  String get ganttChart;
+
+  /// No description provided for @scheduleMonitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule monitor'**
+  String get scheduleMonitor;
+
+  /// No description provided for @purchasingPlanResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchasing plan / resources'**
+  String get purchasingPlanResources;
+
+  /// No description provided for @couldNotLoadScheduleDocs.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the schedule documents'**
+  String get couldNotLoadScheduleDocs;
+
+  /// No description provided for @noScheduleYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No schedule uploaded yet'**
+  String get noScheduleYet;
+
+  /// No description provided for @tapUploadSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the upload button to add a schedule'**
+  String get tapUploadSchedule;
+
+  /// No description provided for @enterScheduleDocTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter schedule document title'**
+  String get enterScheduleDocTitle;
+
+  /// No description provided for @enterScheduleDocTitleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title for this schedule document:'**
+  String get enterScheduleDocTitleBody;
+
+  /// No description provided for @scheduleDocHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Project master schedule Q1 2025'**
+  String get scheduleDocHint;
+
+  /// No description provided for @uploadingScheduleDoc.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading schedule document'**
+  String get uploadingScheduleDoc;
+
+  /// No description provided for @scheduleDocUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule document \"{title}\" uploaded'**
+  String scheduleDocUploaded(String title);
+
+  /// No description provided for @deleteScheduleDocTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete schedule document'**
+  String get deleteScheduleDocTitle;
+
+  /// No description provided for @scheduleDocDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule document deleted'**
+  String get scheduleDocDeleted;
+
+  /// No description provided for @taskUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Task updated'**
+  String get taskUpdated;
+
+  /// No description provided for @taskMarkedStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'{task} marked as started'**
+  String taskMarkedStarted(String task);
+
+  /// No description provided for @taskMarkedCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{task} marked as completed'**
+  String taskMarkedCompleted(String task);
+
+  /// No description provided for @errorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get errorTitle;
+
+  /// No description provided for @couldNotUpdateTaskStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t update the task status. Please try again.'**
+  String get couldNotUpdateTaskStatus;
+
+  /// No description provided for @couldNotLoadData.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the data'**
+  String get couldNotLoadData;
+
+  /// No description provided for @searchTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Search tasks'**
+  String get searchTasks;
+
+  /// No description provided for @tabWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({count})'**
+  String tabWithCount(String label, int count);
+
+  /// No description provided for @startingSoonSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting soon (≤3 days)'**
+  String get startingSoonSection;
+
+  /// No description provided for @otherUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Other upcoming'**
+  String get otherUpcoming;
+
+  /// No description provided for @overdueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue today!'**
+  String get overdueToday;
+
+  /// No description provided for @overdueByDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Overdue by 1 day!} other{Overdue by {days} days!}}'**
+  String overdueByDays(int days);
+
+  /// No description provided for @startingToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting today!'**
+  String get startingToday;
+
+  /// No description provided for @dueInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Due in 1 day} other{Due in {days} days}}'**
+  String dueInDays(int days);
+
+  /// No description provided for @markStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark started'**
+  String get markStarted;
+
+  /// No description provided for @markCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark completed'**
+  String get markCompleted;
+
+  /// No description provided for @durationDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Duration: 1 day} other{Duration: {days} days}}'**
+  String durationDays(int days);
+
+  /// No description provided for @startedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Started: {date}'**
+  String startedOn(String date);
+
+  /// No description provided for @completedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed: {date}'**
+  String completedOn(String date);
+
+  /// No description provided for @noTasksMatchSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks match your search'**
+  String get noTasksMatchSearch;
+
+  /// No description provided for @noCategoryTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks here: {category}'**
+  String noCategoryTasks(String category);
+
+  /// No description provided for @noScheduleData.
+  ///
+  /// In en, this message translates to:
+  /// **'No schedule data yet'**
+  String get noScheduleData;
+
+  /// No description provided for @noScheduleDataHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tasks in the Gantt chart to see schedule monitoring'**
+  String get noScheduleDataHint;
+
+  /// No description provided for @couldNotLoadResources.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the resources'**
+  String get couldNotLoadResources;
+
+  /// No description provided for @noResourcesAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'No resources added'**
+  String get noResourcesAdded;
+
+  /// No description provided for @noResourcesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add resources to manage your purchasing plan'**
+  String get noResourcesHint;
+
+  /// No description provided for @addFirstResource.
+  ///
+  /// In en, this message translates to:
+  /// **'Add first resource'**
+  String get addFirstResource;
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalLabel;
+
+  /// No description provided for @resOnSite.
+  ///
+  /// In en, this message translates to:
+  /// **'On site'**
+  String get resOnSite;
+
+  /// No description provided for @resInStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'In storage'**
+  String get resInStorage;
+
+  /// No description provided for @resNotOrdered.
+  ///
+  /// In en, this message translates to:
+  /// **'Not ordered'**
+  String get resNotOrdered;
+
+  /// No description provided for @resOrdered.
+  ///
+  /// In en, this message translates to:
+  /// **'Ordered'**
+  String get resOrdered;
+
+  /// No description provided for @resNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get resNotAvailable;
+
+  /// No description provided for @resTypeMaterial.
+  ///
+  /// In en, this message translates to:
+  /// **'Material'**
+  String get resTypeMaterial;
+
+  /// No description provided for @resTypeEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Equipment'**
+  String get resTypeEquipment;
+
+  /// No description provided for @resTypeLabor.
+  ///
+  /// In en, this message translates to:
+  /// **'Labour'**
+  String get resTypeLabor;
+
+  /// No description provided for @resTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get resTypeOther;
+
+  /// No description provided for @addResource.
+  ///
+  /// In en, this message translates to:
+  /// **'Add resource'**
+  String get addResource;
+
+  /// No description provided for @editResource.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit resource'**
+  String get editResource;
+
+  /// No description provided for @deleteResource.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete resource'**
+  String get deleteResource;
+
+  /// No description provided for @nameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get nameLabel;
+
+  /// No description provided for @quantityExampleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity (e.g. 500 kg)'**
+  String get quantityExampleHint;
+
+  /// No description provided for @typeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get typeLabel;
+
+  /// No description provided for @searchResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Search resources…'**
+  String get searchResources;
+
+  /// No description provided for @resourceCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource cleared'**
+  String get resourceCleared;
+
+  /// No description provided for @noneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get noneLabel;
+
+  /// No description provided for @unknownResource.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown resource'**
+  String get unknownResource;
+
+  /// No description provided for @projectDatesFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the project dates, so a default timeline is shown'**
+  String get projectDatesFallback;
+
+  /// No description provided for @workingOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline — changes will sync when the connection is back'**
+  String get workingOffline;
+
+  /// No description provided for @cannotDeleteSavedRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved rows in the default range can\'t be deleted'**
+  String get cannotDeleteSavedRow;
+
+  /// No description provided for @couldNotSaveTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the task.'**
+  String get couldNotSaveTask;
+
+  /// No description provided for @gCalcEndMainOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated end date would put this main task outside the project timeline. Please adjust the duration or start date.'**
+  String get gCalcEndMainOutside;
+
+  /// No description provided for @gCalcEndOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated end date would be outside the project timeline. Please adjust the duration or start date.'**
+  String get gCalcEndOutside;
+
+  /// No description provided for @gCalcEndAfterParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated end date would be after the parent task ends'**
+  String get gCalcEndAfterParent;
+
+  /// No description provided for @gCalcEndBeforeParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated end date would be before the parent task starts'**
+  String get gCalcEndBeforeParent;
+
+  /// No description provided for @gCalcStartMainOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated start date would put this main task outside the project timeline. Please adjust the duration or end date.'**
+  String get gCalcStartMainOutside;
+
+  /// No description provided for @gCalcStartOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated start date would be outside the project timeline. Please adjust the duration or end date.'**
+  String get gCalcStartOutside;
+
+  /// No description provided for @gCalcStartBeforeParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated start date would be before the parent task starts'**
+  String get gCalcStartBeforeParent;
+
+  /// No description provided for @gCalcStartAfterParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The calculated start date would be after the parent task ends'**
+  String get gCalcStartAfterParent;
+
+  /// No description provided for @gMainStartInProject.
+  ///
+  /// In en, this message translates to:
+  /// **'A main task\'s start date must be within the project timeline'**
+  String get gMainStartInProject;
+
+  /// No description provided for @gStartInProject.
+  ///
+  /// In en, this message translates to:
+  /// **'The start date must be within the project timeline ({from} - {to})'**
+  String gStartInProject(String from, String to);
+
+  /// No description provided for @gStartBeforeParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The start date you chose is before the parent task starts'**
+  String get gStartBeforeParent;
+
+  /// No description provided for @gStartAfterParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The start date you chose is after the parent task ends'**
+  String get gStartAfterParent;
+
+  /// No description provided for @gMainEndInProject.
+  ///
+  /// In en, this message translates to:
+  /// **'A main task\'s end date must be within the project timeline'**
+  String get gMainEndInProject;
+
+  /// No description provided for @gEndInProject.
+  ///
+  /// In en, this message translates to:
+  /// **'The end date must be within the project timeline ({from} - {to})'**
+  String gEndInProject(String from, String to);
+
+  /// No description provided for @gEndAfterParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The end date you chose is after the parent task ends'**
+  String get gEndAfterParent;
+
+  /// No description provided for @gEndBeforeParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The end date you chose is before the parent task starts'**
+  String get gEndBeforeParent;
+
+  /// No description provided for @notSetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get notSetLabel;
+
+  /// No description provided for @unnamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed'**
+  String get unnamed;
+
+  /// No description provided for @gAttemptedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date you chose: {date}'**
+  String gAttemptedDate(String date);
+
+  /// No description provided for @gParentTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent task \"{name}\" runs {from} - {to}'**
+  String gParentTimeline(String name, String from, String to);
+
+  /// No description provided for @gAdjustParentQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Would you like to adjust the parent task\'s dates to fit this change?'**
+  String get gAdjustParentQuestion;
+
+  /// No description provided for @gOutsideParentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Date outside the parent task'**
+  String get gOutsideParentTitle;
+
+  /// No description provided for @continueLabel2.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueLabel2;
+
+  /// No description provided for @gAdjustMainOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjusting the main task would put it outside the project timeline'**
+  String get gAdjustMainOutside;
+
+  /// No description provided for @gAdjustParentOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjusting the parent task would put it outside the project timeline'**
+  String get gAdjustParentOutside;
+
+  /// No description provided for @gParentAdjusted.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent task \"{name}\" dates were adjusted to fit the change'**
+  String gParentAdjusted(String name);
+
+  /// No description provided for @gStartAfterChild.
+  ///
+  /// In en, this message translates to:
+  /// **'The start date can\'t be after sub-task \"{name}\" starts ({date})'**
+  String gStartAfterChild(String name, String date);
+
+  /// No description provided for @gEndBeforeChild.
+  ///
+  /// In en, this message translates to:
+  /// **'The end date can\'t be before sub-task \"{name}\" ends ({date})'**
+  String gEndBeforeChild(String name, String date);
+
+  /// No description provided for @changesSavedLocally.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes saved on this device — they\'ll sync when you\'re online'**
+  String get changesSavedLocally;
+
+  /// No description provided for @allChangesSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{All changes saved (1 row)} other{All changes saved ({count} rows)}}'**
+  String allChangesSaved(int count);
+
+  /// No description provided for @couldNotSaveSomeChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Some changes couldn\'t be saved.'**
+  String get couldNotSaveSomeChanges;
+
+  /// No description provided for @addDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Add dates'**
+  String get addDates;
+
+  /// No description provided for @gProjectTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Project timeline: {from} - {to}'**
+  String gProjectTimeline(String from, String to);
+
+  /// No description provided for @gEditProjectQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Would you like to edit the project dates to fit this task?'**
+  String get gEditProjectQuestion;
+
+  /// No description provided for @gOutsideProjectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Date outside the project timeline'**
+  String get gOutsideProjectTitle;
+
+  /// No description provided for @editProjectDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit project dates'**
+  String get editProjectDates;
+
+  /// No description provided for @quantityOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity (optional)'**
+  String get quantityOptional;
+
+  /// No description provided for @quantityExamples.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 5, 10 kg, 2 hours'**
+  String get quantityExamples;
+
+  /// No description provided for @resourceAssignedQty.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource assigned: {name} ({qty})'**
+  String resourceAssignedQty(String name, String qty);
+
+  /// No description provided for @resourceAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource assigned: {name}'**
+  String resourceAssigned(String name);
+
+  /// No description provided for @noResourcesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No resources available'**
+  String get noResourcesAvailable;
+
+  /// No description provided for @addResourcesFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Add resources to your project first'**
+  String get addResourcesFirst;
+
+  /// No description provided for @colNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'No.'**
+  String get colNumber;
+
+  /// No description provided for @colTaskName.
+  ///
+  /// In en, this message translates to:
+  /// **'Task name'**
+  String get colTaskName;
+
+  /// No description provided for @colDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get colDuration;
+
+  /// No description provided for @colStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get colStart;
+
+  /// No description provided for @colFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get colFinish;
+
+  /// No description provided for @colResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get colResources;
+
+  /// No description provided for @colActualDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual dates'**
+  String get colActualDates;
+
+  /// No description provided for @enterTaskName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter task name'**
+  String get enterTaskName;
+
+  /// No description provided for @addActualDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Add actual dates'**
+  String get addActualDates;
+
+  /// No description provided for @manageActualDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage actual dates'**
+  String get manageActualDates;
+
+  /// No description provided for @editActualDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit actual dates'**
+  String get editActualDates;
+
+  /// No description provided for @optActualStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual start date'**
+  String get optActualStart;
+
+  /// No description provided for @optActualFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual finish date'**
+  String get optActualFinish;
+
+  /// No description provided for @optAddActualStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add actual start date'**
+  String get optAddActualStart;
+
+  /// No description provided for @optAddActualFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Add actual finish date'**
+  String get optAddActualFinish;
+
+  /// No description provided for @optEditActualStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit actual start date'**
+  String get optEditActualStart;
+
+  /// No description provided for @optEditActualFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit actual finish date'**
+  String get optEditActualFinish;
+
+  /// No description provided for @optClearActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all actual dates'**
+  String get optClearActual;
+
+  /// No description provided for @taskLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Task: {name}'**
+  String taskLabel(String name);
+
+  /// No description provided for @unnamedTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed task'**
+  String get unnamedTask;
+
+  /// No description provided for @scheduledRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled: {from} - {to}'**
+  String scheduledRange(String from, String to);
+
+  /// No description provided for @currentActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Current actual: {dates}'**
+  String currentActual(String dates);
+
+  /// No description provided for @selectAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an action:'**
+  String get selectAction;
+
+  /// No description provided for @gActStartAfterFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual start date can\'t be after the actual finish date'**
+  String get gActStartAfterFinish;
+
+  /// No description provided for @gActStartBeforeProject.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual start date you chose is before the project starts'**
+  String get gActStartBeforeProject;
+
+  /// No description provided for @gActStartAfterProject.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual start date you chose is after the project ends'**
+  String get gActStartAfterProject;
+
+  /// No description provided for @gActStartBeforeParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual start date you chose is before the parent task starts'**
+  String get gActStartBeforeParent;
+
+  /// No description provided for @gActStartAfterParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual start date you chose is after the parent task ends'**
+  String get gActStartAfterParent;
+
+  /// No description provided for @gActStartBeforeScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual start date is before the scheduled start date'**
+  String get gActStartBeforeScheduled;
+
+  /// No description provided for @gActFinishBeforeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual finish date can\'t be before the actual start date'**
+  String get gActFinishBeforeStart;
+
+  /// No description provided for @gActFinishBeforeProject.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual finish date you chose is before the project starts'**
+  String get gActFinishBeforeProject;
+
+  /// No description provided for @gActFinishAfterProject.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual finish date you chose is after the project ends'**
+  String get gActFinishAfterProject;
+
+  /// No description provided for @gActFinishBeforeParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual finish date you chose is before the parent task starts'**
+  String get gActFinishBeforeParent;
+
+  /// No description provided for @gActFinishAfterParent.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual finish date you chose is after the parent task ends'**
+  String get gActFinishAfterParent;
+
+  /// No description provided for @gActFinishAfterScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual finish date is after the scheduled finish date'**
+  String get gActFinishAfterScheduled;
+
+  /// No description provided for @actualStartSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual start date set to {date} — status: started'**
+  String actualStartSet(String date);
+
+  /// No description provided for @couldNotSaveChangesRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t save your changes. Please try again.'**
+  String get couldNotSaveChangesRetry;
+
+  /// No description provided for @taskCompletedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Task completed on {date}'**
+  String taskCompletedOn(String date);
+
+  /// No description provided for @taskCompletedOnWithStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Task completed on {date} (started {start})'**
+  String taskCompletedOnWithStart(String date, String start);
+
+  /// No description provided for @actualDatesCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual dates cleared'**
+  String get actualDatesCleared;
+
+  /// No description provided for @couldNotClearDates.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t clear the dates. Please try again.'**
+  String get couldNotClearDates;
+
+  /// No description provided for @gBoundaryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit date: {date}'**
+  String gBoundaryDate(String date);
+
+  /// No description provided for @gVarianceQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'This may mean the schedule has slipped. Continue anyway?'**
+  String get gVarianceQuestion;
+
+  /// No description provided for @actualDateCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the actual date'**
+  String get actualDateCheckTitle;
+
+  /// No description provided for @continueAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue anyway'**
+  String get continueAnyway;
+
+  /// No description provided for @couldNotLoadProjectDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load project dates'**
+  String get couldNotLoadProjectDates;
+
+  /// No description provided for @offlineMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get offlineMode;
+
+  /// No description provided for @addRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Add row'**
+  String get addRow;
+
+  /// No description provided for @saveChangesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get saveChangesTooltip;
+
+  /// No description provided for @makeMainTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Make main task'**
+  String get makeMainTask;
+
+  /// No description provided for @makeSubtask.
+  ///
+  /// In en, this message translates to:
+  /// **'Make subtask'**
+  String get makeSubtask;
+
+  /// No description provided for @insertRowBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert row below'**
+  String get insertRowBelow;
+
+  /// No description provided for @deleteRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete row'**
+  String get deleteRow;
+
+  /// No description provided for @dayDoneOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Work done – ongoing ✓'**
+  String get dayDoneOngoing;
+
+  /// No description provided for @dayDoneCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Work done – completed ✓'**
+  String get dayDoneCompleted;
+
+  /// No description provided for @dayHoliday.
+  ///
+  /// In en, this message translates to:
+  /// **'Holiday (H)'**
+  String get dayHoliday;
+
+  /// No description provided for @dayBadWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Bad weather (W)'**
+  String get dayBadWeather;
+
+  /// No description provided for @dayNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get dayNotSet;
+
+  /// No description provided for @progressSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress monitor saved'**
+  String get progressSaved;
+
+  /// No description provided for @couldNotSaveProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the progress monitor.'**
+  String get couldNotSaveProgress;
+
+  /// No description provided for @importStepPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening file picker…'**
+  String get importStepPick;
+
+  /// No description provided for @importStepRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the file…'**
+  String get importStepRead;
+
+  /// No description provided for @importStepParse.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the Excel sheet…'**
+  String get importStepParse;
+
+  /// No description provided for @importStepProcess.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing rows…'**
+  String get importStepProcess;
+
+  /// No description provided for @importStepProcessN.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing {count} rows…'**
+  String importStepProcessN(int count);
+
+  /// No description provided for @importStepConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your confirmation…'**
+  String get importStepConfirm;
+
+  /// No description provided for @importStepConfirmN.
+  ///
+  /// In en, this message translates to:
+  /// **'Found {count} rows — waiting for your confirmation…'**
+  String importStepConfirmN(int count);
+
+  /// No description provided for @importStepSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving rows…'**
+  String get importStepSave;
+
+  /// No description provided for @importStepSaveN.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving {count} rows…'**
+  String importStepSaveN(int count);
+
+  /// No description provided for @importStepWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading to the server…'**
+  String get importStepWrite;
+
+  /// No description provided for @noRowsInExcel.
+  ///
+  /// In en, this message translates to:
+  /// **'No rows were found in the Excel file.'**
+  String get noRowsInExcel;
+
+  /// No description provided for @importFromExcel.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Excel'**
+  String get importFromExcel;
+
+  /// No description provided for @importConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Found 1 row.} other{Found {count} rows.}}\nThis will replace the current table.\n\n{matched, plural, =0{No rows matched an existing task, so all rows start with no progress marks.} =1{1 row matched an existing task by name and will keep its recorded progress marks; any other row starts with no marks.} other{{matched} rows matched an existing task by name and will keep their recorded progress marks; any other row starts with no marks.}} Continue?'**
+  String importConfirmBody(int count, int matched);
+
+  /// No description provided for @importAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importAction;
+
+  /// No description provided for @importedRows.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Imported 1 row} other{Imported {count} rows}}'**
+  String importedRows(int count);
+
+  /// No description provided for @couldNotImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t import the file.'**
+  String get couldNotImport;
+
+  /// No description provided for @newTask.
+  ///
+  /// In en, this message translates to:
+  /// **'New task'**
+  String get newTask;
+
+  /// No description provided for @marksRetrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Some progress marks couldn\'t sync — retrying automatically…'**
+  String get marksRetrying;
+
+  /// No description provided for @clearNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear / not set'**
+  String get clearNotSet;
+
+  /// No description provided for @importingExcel.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing Excel'**
+  String get importingExcel;
+
+  /// No description provided for @pleaseWait.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait…'**
+  String get pleaseWait;
+
+  /// No description provided for @taskProgressMonitorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{project} — Task progress monitor'**
+  String taskProgressMonitorTitle(String project);
+
+  /// No description provided for @projectDateExtensions.
+  ///
+  /// In en, this message translates to:
+  /// **'Project date extensions'**
+  String get projectDateExtensions;
+
+  /// No description provided for @projectProgressPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Project: {percent}%'**
+  String projectProgressPercent(String percent);
+
+  /// No description provided for @rowsToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'# Rows'**
+  String get rowsToggle;
+
+  /// No description provided for @removeLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove last'**
+  String get removeLast;
+
+  /// No description provided for @importExcel.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Excel'**
+  String get importExcel;
+
+  /// No description provided for @legendDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get legendDone;
+
+  /// No description provided for @legendHoliday.
+  ///
+  /// In en, this message translates to:
+  /// **'Holiday'**
+  String get legendHoliday;
+
+  /// No description provided for @legendBadWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Bad weather'**
+  String get legendBadWeather;
+
+  /// No description provided for @startDateCol.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get startDateCol;
+
+  /// No description provided for @finishDateCol.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish date'**
+  String get finishDateCol;
+
+  /// No description provided for @noPhasesWithDates.
+  ///
+  /// In en, this message translates to:
+  /// **'No phases with start/end dates yet'**
+  String get noPhasesWithDates;
+
+  /// No description provided for @deleteTaskRowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete task row?'**
+  String get deleteTaskRowTitle;
+
+  /// No description provided for @deleteTaskRowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" and its recorded progress marks will be removed.'**
+  String deleteTaskRowBody(String name);
+
+  /// No description provided for @outsideProjectBounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside the project dates'**
+  String get outsideProjectBounds;
+
+  /// No description provided for @dateBeforeProjectStart.
+  ///
+  /// In en, this message translates to:
+  /// **'That date is before the project\'s start date ({date}). Request a project date extension first — once approved, this and other tasks can use the new range.'**
+  String dateBeforeProjectStart(String date);
+
+  /// No description provided for @dateAfterProjectEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'That date is after the project\'s end date ({date}). Request a project date extension first — once approved, this and other tasks can use the new range.'**
+  String dateAfterProjectEnd(String date);
+
+  /// No description provided for @requestProjectExtension.
+  ///
+  /// In en, this message translates to:
+  /// **'Request project extension'**
+  String get requestProjectExtension;
+
+  /// No description provided for @requestProjectDateExtension.
+  ///
+  /// In en, this message translates to:
+  /// **'Request project date extension'**
+  String get requestProjectDateExtension;
+
+  /// No description provided for @extensionMainlyEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'This mainly affects the completion date, but the start date can be changed too if needed.'**
+  String get extensionMainlyEnd;
+
+  /// No description provided for @reasonForExtension.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for extension *'**
+  String get reasonForExtension;
+
+  /// No description provided for @reasonForExtensionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Why does the project timeline need to change?'**
+  String get reasonForExtensionHint;
+
+  /// No description provided for @extensionApprovalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Once approved by the Project Manager or a MainAdmin: the project\'s dates update, any phase whose end matched the old project end date moves with it, and task dates can be edited freely within the new range.'**
+  String get extensionApprovalNote;
+
+  /// No description provided for @submitRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit request'**
+  String get submitRequest;
+
+  /// No description provided for @nExtRequestedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Project date extension requested — {project}'**
+  String nExtRequestedTitle(String project);
+
+  /// No description provided for @nExtRequestedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} requested new project dates: {from} – {to}.'**
+  String nExtRequestedBody(String name, String from, String to);
+
+  /// No description provided for @aUser.
+  ///
+  /// In en, this message translates to:
+  /// **'A user'**
+  String get aUser;
+
+  /// No description provided for @extensionRequestedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Project extension requested — waiting for approval.'**
+  String get extensionRequestedSnack;
+
+  /// No description provided for @couldNotSubmitRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t submit the request.'**
+  String get couldNotSubmitRequest;
+
+  /// No description provided for @nExtApprovedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Project date extension approved — {project}'**
+  String nExtApprovedTitle(String project);
+
+  /// No description provided for @nExtRejectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Project date extension rejected — {project}'**
+  String nExtRejectedTitle(String project);
+
+  /// No description provided for @nExtApprovedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Project dates are now {from} – {to}.'**
+  String nExtApprovedBody(String from, String to);
+
+  /// No description provided for @nExtRejectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The project keeps its current dates.'**
+  String get nExtRejectedBody;
+
+  /// No description provided for @nExtRejectedBodyReason.
+  ///
+  /// In en, this message translates to:
+  /// **'The project keeps its current dates. Reason: {reason}'**
+  String nExtRejectedBodyReason(String reason);
+
+  /// No description provided for @extensionApprovedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Extension approved.'**
+  String get extensionApprovedSnack;
+
+  /// No description provided for @extensionRejectedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Extension rejected.'**
+  String get extensionRejectedSnack;
+
+  /// No description provided for @couldNotRecordResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t record your response.'**
+  String get couldNotRecordResponse;
+
+  /// No description provided for @requestedByNameRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested by {name} ({role})'**
+  String requestedByNameRole(String name, String role);
+
+  /// No description provided for @approvedByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved by {name}'**
+  String approvedByName(String name);
+
+  /// No description provided for @rejectedByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected by {name}'**
+  String rejectedByName(String name);
+
+  /// No description provided for @reasonColon.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String reasonColon(String reason);
+
+  /// No description provided for @rejectionReasonOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for rejection (optional)'**
+  String get rejectionReasonOptional;
+
+  /// No description provided for @confirmReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm rejection'**
+  String get confirmReject;
+
+  /// No description provided for @awaitingPmApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval from the Project Manager or a MainAdmin.'**
+  String get awaitingPmApproval;
+
+  /// No description provided for @deadlinePassedRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s deadline has passed — request a date extension to continue.'**
+  String deadlinePassedRequest(String name);
+
+  /// No description provided for @requestAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Request'**
+  String get requestAction;
+
+  /// No description provided for @alreadyCompletedTask.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is already marked as completed.'**
+  String alreadyCompletedTask(String name);
+
+  /// No description provided for @workDaysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} / {total} work days'**
+  String workDaysCount(int done, int total);
+
+  /// No description provided for @percentComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% complete'**
+  String percentComplete(String percent);
+
+  /// No description provided for @noTasksDefined.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks yet'**
+  String get noTasksDefined;
+
+  /// No description provided for @noTasksDefinedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use \"Import Excel\" to load from a file,\nor \"Add row\" to create tasks manually.'**
+  String get noTasksDefinedHint;
 }
 
 class _AppLocalizationsDelegate

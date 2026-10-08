@@ -3,6 +3,7 @@ import 'package:almaworks/models/purchase_resource_model.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 class PurchasingPlanScreen extends StatefulWidget {
   final String projectId;
@@ -58,7 +59,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           widget.logger.e('❌ PurchasingPlan: Error in stream', error: snapshot.error);
-          return Center(child: Text('Error loading resources', style: TextStyle(color: Colors.red)));
+          return Center(child: Text(context.l10n.couldNotLoadResources, style: TextStyle(color: Colors.red)));
         }
 
         if (!snapshot.hasData) {
@@ -103,7 +104,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade400),
           const SizedBox(height: 16),
           Text(
-            'No Resources Added',
+            context.l10n.noResourcesAdded,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -112,7 +113,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Add resources to manage your purchasing plan',
+            context.l10n.noResourcesHint,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey.shade500,
@@ -123,7 +124,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           ElevatedButton.icon(
             onPressed: _addResource,
             icon: const Icon(Icons.add),
-            label: Text('Add First Resource', style: TextStyle()),
+            label: Text(context.l10n.addFirstResource, style: TextStyle()),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0A2E5A),
               foregroundColor: Colors.white,
@@ -141,11 +142,11 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
         // Determine screen type and optimal layout
         final width = constraints.maxWidth;
         final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
-        
+
         int crossAxisCount;
         double childAspectRatio;
         double spacing;
-        
+
         // Desktop (wide screens)
         if (width > 1200) {
           crossAxisCount = 6;
@@ -185,12 +186,12 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           mainAxisSpacing: spacing,
           childAspectRatio: childAspectRatio,
           children: [
-            _buildSummaryCard('Total', _totalResources, Icons.list, Colors.blue, width),
-            _buildSummaryCard('On Site', _onSiteCount, Icons.location_on, Colors.green, width),
-            _buildSummaryCard('In Storage', _inStorageCount, Icons.warehouse, Colors.blueGrey, width),
-            _buildSummaryCard('Not Ordered', _notOrderedCount, Icons.shopping_cart, Colors.orange, width),
-            _buildSummaryCard('Ordered', _orderedCount, Icons.local_shipping, Colors.teal, width),
-            _buildSummaryCard('Not Available', _notAvailableCount, Icons.block, Colors.red, width),
+            _buildSummaryCard(context.l10n.totalLabel, _totalResources, Icons.list, Colors.blue, width),
+            _buildSummaryCard(resourceStatusLabel('On site'), _onSiteCount, Icons.location_on, Colors.green, width),
+            _buildSummaryCard(resourceStatusLabel('In storage'), _inStorageCount, Icons.warehouse, Colors.blueGrey, width),
+            _buildSummaryCard(resourceStatusLabel('Not Ordered'), _notOrderedCount, Icons.shopping_cart, Colors.orange, width),
+            _buildSummaryCard(resourceStatusLabel('Ordered'), _orderedCount, Icons.local_shipping, Colors.teal, width),
+            _buildSummaryCard(resourceStatusLabel('Not Available'), _notAvailableCount, Icons.block, Colors.red, width),
           ],
         );
       },
@@ -203,7 +204,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
     double countSize;
     double titleSize;
     double cardPadding;
-    
+
     if (screenWidth > 1200) {
       iconSize = 32;
       countSize = 24;
@@ -281,7 +282,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
           onPressed: _addResource,
           icon: const Icon(Icons.add),
           label: Text(
-            'Add Resource',
+            context.l10n.addResource,
             style: TextStyle(fontSize: isWide ? 16 : 14),
           ),
           style: ElevatedButton.styleFrom(
@@ -336,7 +337,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 600;
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           elevation: 2,
@@ -380,7 +381,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
                     Icon(Icons.circle, size: isWide ? 14 : 12, color: statusColor),
                     const SizedBox(width: 4),
                     Text(
-                      resource.status,
+                      resourceStatusLabel(resource.status),
                       style: TextStyle(
                         fontSize: isWide ? 14 : 12,
                         color: statusColor,
@@ -394,23 +395,23 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
             trailing: PopupMenuButton<String>(
               onSelected: (value) => _handleResourceAction(value, resource),
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit),
-                      SizedBox(width: 8),
-                      Text('Edit'),
+                      const Icon(Icons.edit),
+                      const SizedBox(width: 8),
+                      Text(context.l10n.edit),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
+                      const Icon(Icons.delete, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Text(context.l10n.delete, style: const TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),
@@ -435,58 +436,58 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Add Resource', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(context.l10n.addResource, style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.nameLabel,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: quantityController,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity (e.g., 500 kg)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.quantityExampleHint,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: selectedType,
-                  decoration: const InputDecoration(
-                    labelText: 'Type',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.typeLabel,
+                    border: const OutlineInputBorder(),
                   ),
-                  items: typeOptions.map((type) => DropdownMenuItem(value: type, child: Text(type.capitalize()))).toList(),
+                  items: typeOptions.map((type) => DropdownMenuItem(value: type, child: Text(resourceTypeLabel(type)))).toList(),
                   onChanged: (value) => setState(() => selectedType = value!),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: selectedStatus,
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.status,
+                    border: const OutlineInputBorder(),
                   ),
-                  items: statusOptions.map((status) => DropdownMenuItem(value: status, child: Text(status))).toList(),
+                  items: statusOptions.map((status) => DropdownMenuItem(value: status, child: Text(resourceStatusLabel(status)))).toList(),
                   onChanged: (value) => setState(() => selectedStatus = value!),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
             ElevatedButton(
               onPressed: () {
                 if (nameController.text.isNotEmpty && quantityController.text.isNotEmpty) {
                   Navigator.pop(context, true);
                 }
               },
-              child: const Text('Add'),
+              child: Text(context.l10n.add),
             ),
           ],
         ),
@@ -528,58 +529,58 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
         context: context,
         builder: (context) => StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: Text('Edit Resource', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(context.l10n.editResource, style: TextStyle(fontWeight: FontWeight.bold)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.nameLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: quantityController,
-                    decoration: const InputDecoration(
-                      labelText: 'Quantity (e.g., 500 kg)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.quantityExampleHint,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: selectedType,
-                    decoration: const InputDecoration(
-                      labelText: 'Type',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.typeLabel,
+                      border: const OutlineInputBorder(),
                     ),
-                    items: typeOptions.map((type) => DropdownMenuItem(value: type, child: Text(type.capitalize()))).toList(),
+                    items: typeOptions.map((type) => DropdownMenuItem(value: type, child: Text(resourceTypeLabel(type)))).toList(),
                     onChanged: (value) => setState(() => selectedType = value!),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: selectedStatus,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.status,
+                      border: const OutlineInputBorder(),
                     ),
-                    items: statusOptions.map((status) => DropdownMenuItem(value: status, child: Text(status))).toList(),
+                    items: statusOptions.map((status) => DropdownMenuItem(value: status, child: Text(resourceStatusLabel(status)))).toList(),
                     onChanged: (value) => setState(() => selectedStatus = value!),
                   ),
                 ],
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
               ElevatedButton(
                 onPressed: () {
                   if (nameController.text.isNotEmpty && quantityController.text.isNotEmpty) {
                     Navigator.pop(context, true);
                   }
                 },
-                child: const Text('Save'),
+                child: Text(context.l10n.save),
               ),
             ],
           ),
@@ -609,11 +610,11 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Delete Resource', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text('Are you sure you want to delete "${resource.name}"?'),
+          title: Text(context.l10n.deleteResource, style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(context.l10n.deleteNamedConfirm(resource.name)),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.delete, style: const TextStyle(color: Colors.red))),
           ],
         ),
       );
@@ -634,4 +635,28 @@ extension StringExtension on String {
   String capitalize() {
     return "${this[0].toUpperCase()}${substring(1)}";
   }
+}
+
+/// Display name for a stored purchase-resource status ('On site', 'Ordered', …).
+String resourceStatusLabel(String status) {
+  final l = l10nNow;
+  return switch (status) {
+    'On site' => l.resOnSite,
+    'In storage' => l.resInStorage,
+    'Not Ordered' => l.resNotOrdered,
+    'Ordered' => l.resOrdered,
+    'Not Available' => l.resNotAvailable,
+    _ => status,
+  };
+}
+
+/// Display name for a stored purchase-resource type ('material', 'labor', …).
+String resourceTypeLabel(String type) {
+  final l = l10nNow;
+  return switch (type.toLowerCase()) {
+    'material' => l.resTypeMaterial,
+    'equipment' => l.resTypeEquipment,
+    'labor' => l.resTypeLabor,
+    _ => l.resTypeOther,
+  };
 }
