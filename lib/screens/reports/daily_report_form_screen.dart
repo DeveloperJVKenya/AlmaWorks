@@ -17,6 +17,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 // ══════════════════════════════════════════════════════════════════
 //  DATA MODEL
@@ -417,12 +419,12 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         child: child!,
       ),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
 
     if (!_isWithinWorkingHours(picked)) {
       widget.logger.w('⚠️ DailyForm: time out of working hours → ${picked.hour}:${picked.minute}');
       _showError(
-          'Time must be between 06:00 AM and 07:00 PM (working hours only).');
+          context.l10n.rfWorkingHoursOnly);
       return;
     }
     if (!isStart && _startTime != null) {
@@ -430,7 +432,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       final e = picked.hour * 60 + picked.minute;
       if (e <= s) {
         widget.logger.w('⚠️ DailyForm: stop time not after start time');
-        _showError('Stop time must be after start time.');
+        _showError(context.l10n.rfStopAfterStart);
         return;
       }
     }
@@ -439,7 +441,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       final e = _stopTime!.hour * 60 + _stopTime!.minute;
       if (s >= e) {
         widget.logger.w('⚠️ DailyForm: start time not before stop time');
-        _showError('Start time must be before stop time.');
+        _showError(context.l10n.rfStartBeforeStop);
         return;
       }
     }
@@ -539,7 +541,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         // Use the date filled in the form (not the save timestamp) as the
         // human-readable document title shown in the reports list.
         final readableName =
-            'Daily Report – ${DateFormat('dd MMM yyyy').format(_date)}';
+            l10nNow.reportTitleDated(l10nNow.rptDailyReport, DateFormat.yMMMd().format(_date));
         await FirebaseFirestore.instance
             .collection('Reports')
             .doc(_reportId)
@@ -562,13 +564,13 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content:
-              Text('Daily report saved successfully.', style: TextStyle()),
+              Text(context.l10n.dailyReportSaved, style: TextStyle()),
           backgroundColor: Colors.green,
         ));
       }
     } catch (e, st) {
       widget.logger.e('❌ DailyForm: _saveReport: FAILED', error: e, stackTrace: st);
-      if (mounted) _showError('Error saving report: $e');
+      if (mounted) _showError(friendlyError(e, action: context.l10n.couldNotSaveReport));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -816,7 +818,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-            'PDF saved to Downloads: $fileName',
+            context.l10n.pdfSavedToDownloads(fileName),
             style: TextStyle(),
           ),
           backgroundColor: Colors.green,
@@ -879,7 +881,9 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
     setState(() => _isGeneratingPdf = true);
     try {
       final report  = await _buildReportData();
-      final dateStr = DateFormat('MMMM d, yyyy').format(report.date);
+      if (!mounted) return;
+      final l = context.l10n;
+      final dateStr = DateFormat.yMMMMd().format(report.date);
       final fileName =
           'Daily_Report_${report.projectName.replaceAll(' ', '_')}_'
           '${DateFormat('yyyyMMdd').format(_date)}.pdf';
@@ -1114,14 +1118,14 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  '© JV Almacis Site Management System Daily Report',
+                  l.pdfDailyFooter,
                   style: pw.TextStyle(
                       font: pw.Font.helvetica(),
                       fontSize: 7,
                       color: PdfColors.grey600),
                 ),
                 pw.Text(
-                  'Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                  l.pdfPageOf(ctx.pageNumber, ctx.pagesCount),
                   style: pw.TextStyle(
                       font: pw.Font.helvetica(),
                       fontSize: 7,
@@ -1157,7 +1161,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               padding: const pw.EdgeInsets.symmetric(
                   horizontal: 16, vertical: 4),
               child: pw.Text(
-                'DAILY REPORT',
+                l.rfDailyReportCaps,
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   font: pw.Font.helveticaBold(),
@@ -1172,7 +1176,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               color: navyColor,
               padding: const pw.EdgeInsets.fromLTRB(16, 2, 16, 12),
               child: pw.Text(
-                'Contract No: ${report.contractNumber}',
+                l.contractNoValue(report.contractNumber),
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   font: pw.Font.helvetica(),
@@ -1188,20 +1192,20 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 isFilled
-                    ? metaCellFilled('DATE', dateStr)
-                    : metaCell('DATE', ''),
+                    ? metaCellFilled(l.rfDateCaps, dateStr)
+                    : metaCell(l.rfDateCaps, ''),
                 pw.SizedBox(width: 4),
                 isFilled
-                    ? metaCellFilled('START TIME', fmtTime(_startTime))
-                    : metaCell('START TIME', ''),
+                    ? metaCellFilled(l.rfStartTimeCaps, fmtTime(_startTime))
+                    : metaCell(l.rfStartTimeCaps, ''),
                 pw.SizedBox(width: 4),
                 isFilled
-                    ? metaCellFilled('STOP TIME', fmtTime(_stopTime))
-                    : metaCell('STOP TIME', ''),
+                    ? metaCellFilled(l.rfStopTimeCaps, fmtTime(_stopTime))
+                    : metaCell(l.rfStopTimeCaps, ''),
                 pw.SizedBox(width: 4),
                 isFilled
-                    ? metaCellFilled('WEATHER', report.weather)
-                    : metaCell('WEATHER', ''),
+                    ? metaCellFilled(l.rfWeatherCaps, weatherLabel(report.weather))
+                    : metaCell(l.rfWeatherCaps, ''),
               ],
             ),
             pw.SizedBox(height: 6),
@@ -1218,7 +1222,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                     color: lightBlue,
                     padding: const pw.EdgeInsets.symmetric(
                         horizontal: 5, vertical: 10),
-                    child: pw.Text('BUILDING', style: fieldLabelStyle),
+                    child: pw.Text(l.rfBuildingCaps, style: fieldLabelStyle),
                   ),
                   pw.Expanded(
                     child: pw.Padding(
@@ -1238,17 +1242,17 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             pw.SizedBox(height: 8),
 
             // ══ CONTENT SECTIONS ═════════════════════════════════
-            ...richSectionWidgets('MAIN CONTRACTOR/VISITORS', _visitorsCtrl),
+            ...richSectionWidgets(l.rfVisitorsCaps, _visitorsCtrl),
             ...subContractorSectionWidgets(
-                'SUB-CONTRACTOR', report.subContractors),
+                l.rfSubContractorCaps, report.subContractors),
             ...richSectionWidgets(
-                'PERSONNEL AND VEHICLES', _personnelCtrl),
-            ...richSectionWidgets('ACTIVITIES', _activitiesCtrl),
-            ...richSectionWidgets('REMARKS', _remarksCtrl),
+                l.rfPersonnelCaps, _personnelCtrl),
+            ...richSectionWidgets(l.rfActivitiesCaps, _activitiesCtrl),
+            ...richSectionWidgets(l.rfRemarksCaps, _remarksCtrl),
 
             // ══ ATTACHED IMAGES ══════════════════════════════════
             if (pdfImages.isNotEmpty) ...[
-              sectionBar('ATTACHED IMAGES'),
+              sectionBar(l.rfAttachedImagesCaps),
               pw.SizedBox(height: 8),
               // 2-column grid: single image centred at 60% width,
               // multiple images in rows of 2 filling page width.
@@ -1264,7 +1268,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
     } catch (e, st) {
       widget.logger.e('❌ DailyForm: _downloadAsPdf FAILED',
           error: e, stackTrace: st);
-      if (mounted) _showError('Error generating PDF: $e');
+      if (mounted) _showError(friendlyError(e, action: context.l10n.couldNotCreatePdf));
     } finally {
       if (mounted) setState(() => _isGeneratingPdf = false);
     }
@@ -1280,20 +1284,20 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('New Daily Report',
+        title: Text(context.l10n.newDailyReport,
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
-            'Your current form has been saved. Start a fresh daily report?',
+            context.l10n.newDailyReportBody,
             style: TextStyle()),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle())),
+              child: Text(context.l10n.cancel, style: TextStyle())),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: _navy, foregroundColor: Colors.white),
-            child: Text('New Form', style: TextStyle()),
+            child: Text(context.l10n.newForm, style: TextStyle()),
           ),
         ],
       ),
@@ -1330,8 +1334,8 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          '${widget.project.name} — Daily Report'
-          '${_isReadOnly ? '  (View)' : ''}',
+          '${context.l10n.projectDailyReport(widget.project.name)}'
+          '${_isReadOnly ? context.l10n.viewSuffix : ''}',
           style: TextStyle(
               fontWeight: FontWeight.w600, fontSize: 16),
         ),
@@ -1355,7 +1359,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               backgroundColor: _navy,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_rounded),
-              label: Text('Edit', style: TextStyle(fontWeight: FontWeight.w600)),
+              label: Text(context.l10n.edit, style: TextStyle(fontWeight: FontWeight.w600)),
             )
           : null,
       body: LayoutBuilder(
@@ -1403,9 +1407,9 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
 
                         // ── VISITORS ─────────────────────────────
                         _buildRichSection(
-                          title: 'MAIN CONTRACTOR/VISITORS',
+                          title: context.l10n.rfVisitorsCaps,
                           fieldKey: 'visitors',
-                          hint: 'Enter visitor names…',
+                          hint: context.l10n.rfVisitorsHint,
                           controller: _visitorsCtrl,
                           aw: contentW,
                         ),
@@ -1417,9 +1421,9 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
 
                         // ── PERSONNEL AND VEHICLES ───────────────
                         _buildRichSection(
-                          title: 'PERSONNEL AND VEHICLES',
+                          title: context.l10n.rfPersonnelCaps,
                           fieldKey: 'personnel',
-                          hint: 'Enter personnel and vehicle details…',
+                          hint: context.l10n.rfPersonnelHint,
                           controller: _personnelCtrl,
                           aw: contentW,
                         ),
@@ -1427,9 +1431,9 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
 
                         // ── ACTIVITIES ───────────────────────────
                         _buildRichSection(
-                          title: 'ACTIVITIES',
+                          title: context.l10n.rfActivitiesCaps,
                           fieldKey: 'activities',
-                          hint: 'Describe site activities for the day…',
+                          hint: context.l10n.rfActivitiesHint,
                           controller: _activitiesCtrl,
                           aw: contentW,
                         ),
@@ -1437,9 +1441,9 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
 
                         // ── REMARKS ──────────────────────────────
                         _buildRichSection(
-                          title: 'REMARKS',
+                          title: context.l10n.rfRemarksCaps,
                           fieldKey: 'remarks',
-                          hint: 'Add any remarks or observations…',
+                          hint: context.l10n.rfRemarksHint,
                           controller: _remarksCtrl,
                           aw: contentW,
                         ),
@@ -1499,7 +1503,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Contract No: ',
+                context.l10n.contractNoLabel,
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
@@ -1514,7 +1518,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   style: TextStyle(
                       color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: _isReadOnly ? '—' : 'e.g. CN-2024-001',
+                    hintText: _isReadOnly ? '—' : context.l10n.contractNoHint,
                     hintStyle: TextStyle(
                         color: Colors.white38, fontSize: 12),
                     isDense: true,
@@ -1551,7 +1555,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Text(
-          'DAILY REPORT',
+          context.l10n.rfDailyReportCaps,
           style: TextStyle(
             color: _navy,
             fontSize: 18,
@@ -1574,9 +1578,10 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
     const double cellPV  = 8.0;
     const double cellRad = 6.0;
 
-    final String dateStr = DateFormat('EEE, MMM d, yyyy').format(_date);
+    final String dateStr = DateFormat.yMMMEd().format(_date);
+    final tapToSet = context.l10n.tapToSet;
     String fmtTime(TimeOfDay? t) => t == null
-        ? 'Tap to set'
+        ? tapToSet
         : '${t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod}:'
             '${t.minute.toString().padLeft(2, '0')} '
             '${t.period == DayPeriod.am ? 'AM' : 'PM'}';
@@ -1630,7 +1635,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 style: TextStyle(
                   fontSize: valueFs,
                   fontWeight: FontWeight.w500,
-                  color: value == 'Tap to set'
+                  color: value == tapToSet
                       ? Colors.grey[400]
                       : Colors.black87,
                 ),
@@ -1666,7 +1671,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           Row(children: [
             const Icon(Icons.wb_sunny_rounded, color: _navy, size: iconSz),
             const SizedBox(width: 4),
-            Text('WEATHER',
+            Text(context.l10n.rfWeatherCaps,
                 style: TextStyle(
                   fontSize: labelFs,
                   fontWeight: FontWeight.w600,
@@ -1678,7 +1683,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _weather.isEmpty ? null : _weather,
-              hint: Text('Select…',
+              hint: Text(context.l10n.selectEllipsis,
                   style: TextStyle(
                       color: Colors.grey[400], fontSize: valueFs)),
               isExpanded: true,
@@ -1690,7 +1695,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               items: _weatherOptions
                   .map((w) => DropdownMenuItem(
                       value: w,
-                      child: Text(w,
+                      child: Text(weatherLabel(w),
                           style:
                               TextStyle(fontSize: valueFs))))
                   .toList(),
@@ -1709,21 +1714,21 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       children: [
         Expanded(
             child: cell(
-                label: 'DATE',
+                label: context.l10n.rfDateCaps,
                 value: dateStr,
                 icon: Icons.calendar_today_rounded,
                 onTap: _pickDate)),
         const SizedBox(width: 8),
         Expanded(
             child: cell(
-                label: 'START TIME',
+                label: context.l10n.rfStartTimeCaps,
                 value: fmtTime(_startTime),
                 icon: Icons.access_time_rounded,
                 onTap: () => _pickTime(isStart: true))),
         const SizedBox(width: 8),
         Expanded(
             child: cell(
-                label: 'STOP TIME',
+                label: context.l10n.rfStopTimeCaps,
                 value: fmtTime(_stopTime),
                 icon: Icons.timer_off_rounded,
                 onTap: () => _pickTime(isStart: false))),
@@ -1758,7 +1763,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               ),
             ),
             child: Text(
-              'BUILDING',
+              context.l10n.rfBuildingCaps,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -1781,7 +1786,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 style:
                     TextStyle(fontSize: 13, color: Colors.black87),
                 decoration: InputDecoration(
-                  hintText: _isReadOnly ? '—' : 'Building number, ID, or name…',
+                  hintText: _isReadOnly ? '—' : context.l10n.buildingHint,
                   hintStyle: TextStyle(
                       color: Colors.grey[400], fontSize: 12),
                   border: InputBorder.none,
@@ -1863,7 +1868,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           color: Colors.amber[100],
           padding: EdgeInsets.all(editorPad),
           child: Text(
-            '⚠ Toolbar error [$fieldKey] — see logs\n$e',
+            '⚠ ${context.l10n.rfSectionError}',
             style: TextStyle(
                 color: Colors.red[800], fontSize: 11),
           ),
@@ -1919,7 +1924,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           color: Colors.red[50],
           padding: EdgeInsets.all(editorPad),
           child: Text(
-            '⚠ Editor error [$fieldKey] — see logs\n$e',
+            '⚠ ${context.l10n.rfSectionError}',
             style: TextStyle(
                 color: Colors.red[800], fontSize: 11),
           ),
@@ -1981,7 +1986,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           color: Colors.red[50],
         ),
         child: Text(
-          '⚠ Section "$title" failed to render — see logs\n$e',
+          '⚠ ${context.l10n.rfSectionError}',
           style: TextStyle(color: Colors.red[800], fontSize: 11),
         ),
       );
@@ -2071,7 +2076,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   icon: const Icon(
                       Icons.remove_circle_outline_rounded, size: 18),
                   color: Colors.red[400],
-                  tooltip: 'Remove',
+                  tooltip: context.l10n.remove,
                   padding: const EdgeInsets.all(8),
                   constraints: const BoxConstraints(),
                 ),
@@ -2109,7 +2114,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             ),
             child: Row(
               children: [
-                Text('SUB-CONTRACTOR',
+                Text(context.l10n.rfSubContractorCaps,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -2125,7 +2130,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '${_selectedSubContractors.length} selected',
+                      context.l10n.selectedCount(_selectedSubContractors.length),
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: titleFs * 0.82,
@@ -2144,7 +2149,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                 // ── No sub-contractors on this project at all ──
                 if (_subcontractorNames.isEmpty)
                   Text(
-                    'No sub-contractors added to this project.',
+                    context.l10n.noSubcontractorsOnProject,
                     style: TextStyle(
                         color: Colors.grey[500], fontSize: valueFs),
                   )
@@ -2153,7 +2158,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   // ── Dropdown — edit mode, un-selected names only ──
                   if (canAddMore) ...[
                     Text(
-                      'ADD SUB-CONTRACTOR',
+                      context.l10n.rfAddSubContractorCaps,
                       style: TextStyle(
                           fontSize: labelFs,
                           fontWeight: FontWeight.w600,
@@ -2165,7 +2170,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       // key forces rebuild → hint reappears after each pick
                       key: ValueKey(_selectedSubContractors.length),
                       initialValue: null,
-                      hint: Text('Select sub-contractor…',
+                      hint: Text(context.l10n.selectSubContractor,
                           style: TextStyle(
                               color: Colors.grey[400], fontSize: valueFs)),
                       isExpanded: true,
@@ -2222,7 +2227,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       Padding(
                         padding: EdgeInsets.only(bottom: padV * 0.6),
                         child: Text(
-                          'All sub-contractors have been selected.',
+                          context.l10n.allSubcontractorsSelected,
                           style: TextStyle(
                               color: Colors.green[700],
                               fontSize: labelFs,
@@ -2232,8 +2237,8 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                     if (!_isReadOnly || _selectedSubContractors.isNotEmpty)
                       Text(
                         _isReadOnly
-                            ? 'SUB-CONTRACTORS'
-                            : 'SELECTED SUB-CONTRACTORS',
+                            ? context.l10n.rfSubContractorsCaps
+                            : context.l10n.rfSelectedSubContractorsCaps,
                         style: TextStyle(
                             fontSize: labelFs,
                             fontWeight: FontWeight.w600,
@@ -2250,7 +2255,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                     Padding(
                       padding: EdgeInsets.only(top: padV * 0.5),
                       child: Text(
-                        'No sub-contractor selected yet.',
+                        context.l10n.noSubcontractorSelected,
                         style: TextStyle(
                             color: Colors.grey[400], fontSize: valueFs),
                       ),
@@ -2313,7 +2318,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               const Icon(Icons.photo_library_rounded,
                   color: Colors.white70, size: 16),
               const SizedBox(width: 8),
-              Text('ATTACHED IMAGES',
+              Text(context.l10n.rfAttachedImagesCaps,
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -2321,7 +2326,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       letterSpacing: 0.8)),
               const Spacer(),
               if (allImages.isNotEmpty)
-                Text('${allImages.length} image(s)',
+                Text(context.l10n.imagesCount(allImages.length),
                     style: TextStyle(
                         color: Colors.white70,
                         fontSize: titleFs * 0.85)),
@@ -2467,7 +2472,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                     icon: const Icon(
                         Icons.add_photo_alternate_rounded, size: 18),
                     label: Text(
-                      allImages.isEmpty ? 'Attach Image(s)' : 'Add More Images',
+                      allImages.isEmpty ? context.l10n.attachImages : context.l10n.addMoreImages,
                       style: TextStyle(
                           fontSize: (aw * 0.032).clamp(11.0, 14.0)),
                     ),
@@ -2537,7 +2542,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
     return _isReadOnly
         ? Row(children: [
             btn(
-              label: 'Download PDF',
+              label: context.l10n.downloadPdf,
               icon: Icons.picture_as_pdf_rounded,
               color: const Color(0xFF1B5E20),
               isLoading: _isGeneratingPdf,
@@ -2549,7 +2554,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           ])
         : Row(children: [
       btn(
-        label: 'Save Report',
+        label: context.l10n.saveReport,
         icon: Icons.save_rounded,
         color: _navy,
         isLoading: _isSaving,
@@ -2560,7 +2565,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       ),
       const SizedBox(width: 10),
       btn(
-        label: 'Download PDF',
+        label: context.l10n.downloadPdf,
         icon: Icons.picture_as_pdf_rounded,
         color: const Color(0xFF1B5E20),
         isLoading: _isGeneratingPdf,
@@ -2571,7 +2576,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       ),
       const SizedBox(width: 10),
       btn(
-        label: '+ New Form',
+        label: context.l10n.newFormPlus,
         icon: Icons.add_circle_outline_rounded,
         color: const Color(0xFF6A1B9A),
         isLoading: false,
@@ -2761,4 +2766,17 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
       ),
     );
   }
+}
+
+/// Display name for a stored weather value ('Calm & Warm', 'Rainy', …).
+String weatherLabel(String weather) {
+  final l = l10nNow;
+  return switch (weather) {
+    'Calm & Warm' => l.wxCalmWarm,
+    'Chilly & Cold' => l.wxChillyCold,
+    'Hot' => l.wxHot,
+    'Windy' => l.wxWindy,
+    'Rainy' => l.wxRainy,
+    _ => weather,
+  };
 }

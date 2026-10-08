@@ -4093,5 +4093,487 @@
     }
   },
   "noTasksDefined": "No tasks yet",
-  "noTasksDefinedHint": "Use \"Import Excel\" to load from a file,\nor \"Add row\" to create tasks manually."
+  "noTasksDefinedHint": "Use \"Import Excel\" to load from a file,\nor \"Add row\" to create tasks manually.",
+  "reports": "Reports",
+  "rptDaily": "Daily",
+  "rptWeekly": "Weekly",
+  "rptMonthly": "Monthly",
+  "rptSafetyMeetings": "Safety meetings",
+  "rptQuality": "Quality",
+  "rptDailyReport": "Daily report",
+  "rptWeeklyReport": "Weekly report",
+  "rptMonthlyReport": "Monthly report",
+  "rptSafetyReport": "Safety meeting report",
+  "rptQualityReport": "Quality report",
+  "rptWeeklySafetyMeeting": "Weekly safety meeting",
+  "rptMonthlySafetyMeeting": "Monthly safety meeting",
+  "typeReports": "{type} reports",
+  "@typeReports": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotLoadReports": "We couldn't load the reports",
+  "noTypeReportsYet": "No reports here yet: {type}",
+  "@noTypeReportsYet": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "tapUploadToAdd": "Tap the upload button to add one",
+  "viewFile": "View file",
+  "viewEditForm": "View / edit form",
+  "downloadPdf": "Download PDF",
+  "reportTitleDated": "{type} – {date}",
+  "@reportTitleDated": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "savedColon": "Saved: {date}",
+  "@savedColon": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "typeForm": "{type} form",
+  "@typeForm": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "safetyForm": "Safety form",
+  "noInAppViewer": "This kind of report can't be opened in the app yet.",
+  "couldNotOpenReport": "Couldn't open the report.",
+  "deleteReport": "Delete report",
+  "deleteSafetyReportConfirm": "Are you sure you want to delete this safety report?",
+  "reportDeleted": "Report deleted",
+  "preparingPdf": "Preparing PDF…",
+  "pdfWeeklySafetyTitle": "WEEKLY SAFETY MEETING REPORT",
+  "pdfMonthlySafetyTitle": "MONTHLY SAFETY MEETING REPORT",
+  "pdfSafetyFooter": "© JV Almacis Site Management System - Safety report",
+  "pdfPageOf": "Page {page} of {total}",
+  "@pdfPageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "dateLabel": "Date",
+  "contractNo": "Contract no.",
+  "buildingArea": "Building/area",
+  "safetyChecklist": "Safety checklist",
+  "jvAlmaAttendance": "JV Alma CIS attendance",
+  "subContractorAttendance": "Sub-contractor attendance",
+  "couldNotCreatePdf": "Couldn't create the PDF.",
+  "fillDailyForm": "Fill in daily report form",
+  "fillWeeklyForm": "Fill in weekly report form",
+  "fillMonthlyForm": "Fill in monthly report form",
+  "fillSafetyForm": "Fill in safety form",
+  "completeFormInApp": "Complete the structured form in the app",
+  "uploadDailyFile": "Upload daily report file",
+  "uploadWeeklyFile": "Upload weekly report file",
+  "uploadMonthlyFile": "Upload monthly report file",
+  "uploadSafetyFile": "Upload safety file",
+  "fileTypesFromDevice": "PDF, DOCX, PPTX or TXT file from your device",
+  "enterReportTitle": "Enter report title",
+  "enterReportTitleBody": "Enter a title for this report:",
+  "uploadingReport": "Uploading report",
+  "reportUploaded": "Report uploaded",
+  "couldNotUploadReport": "Couldn't upload the report.",
+  "titleCannotBeEmpty": "The title can't be empty",
+  "safetyTextItems": "Items:",
+  "safetyTextObservations": "Observations and comments:",
+  "safetyTextActions": "Actions taken:",
+  "safetyTextAttendee": "- Name: {name}, Title: {title}, Signature: {signature}",
+  "@safetyTextAttendee": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      },
+      "signature": {
+        "type": "String"
+      }
+    }
+  },
+  "safetyTextSubAttendee": "- Company: {company}, Name: {name}, Title: {title}, Signature: {signature}",
+  "@safetyTextSubAttendee": {
+    "placeholders": {
+      "company": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      },
+      "signature": {
+        "type": "String"
+      }
+    }
+  },
+  "weeklySafetyMeetingForm": "Weekly safety meeting form",
+  "monthlySafetyMeetingForm": "Monthly safety meeting form",
+  "dateColon": "Date: {date}",
+  "@dateColon": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noFormDataToDownload": "There is no form or file to download for this report.",
+  "pdfSaved": "PDF saved: {file}",
+  "@pdfSaved": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "wxCalmWarm": "Calm & warm",
+  "wxChillyCold": "Chilly & cold",
+  "wxHot": "Hot",
+  "wxWindy": "Windy",
+  "wxRainy": "Rainy",
+  "rfWorkingHoursOnly": "Please pick a time between 06:00 and 19:00 (working hours).",
+  "rfStopAfterStart": "The stop time must be after the start time.",
+  "rfStartBeforeStop": "The start time must be before the stop time.",
+  "dailyReportSaved": "Daily report saved.",
+  "couldNotSaveReport": "Couldn't save the report.",
+  "pdfSavedToDownloads": "PDF saved to Downloads: {file}",
+  "@pdfSavedToDownloads": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfDailyFooter": "© JV Almacis Site Management System Daily report",
+  "rfDailyReportCaps": "DAILY REPORT",
+  "contractNoValue": "Contract no: {number}",
+  "@contractNoValue": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "contractNoLabel": "Contract no: ",
+  "rfDateCaps": "DATE",
+  "rfStartTimeCaps": "START TIME",
+  "rfStopTimeCaps": "STOP TIME",
+  "rfWeatherCaps": "WEATHER",
+  "rfBuildingCaps": "BUILDING",
+  "rfVisitorsCaps": "MAIN CONTRACTOR/VISITORS",
+  "rfSubContractorCaps": "SUB-CONTRACTOR",
+  "rfPersonnelCaps": "PERSONNEL AND VEHICLES",
+  "rfActivitiesCaps": "ACTIVITIES",
+  "rfRemarksCaps": "REMARKS",
+  "rfAttachedImagesCaps": "ATTACHED IMAGES",
+  "newDailyReport": "New daily report",
+  "newDailyReportBody": "Your current form has been saved. Start a fresh daily report?",
+  "newForm": "New form",
+  "viewSuffix": "  (view)",
+  "projectDailyReport": "{project} — Daily report",
+  "@projectDailyReport": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "rfVisitorsHint": "Enter visitor names…",
+  "rfPersonnelHint": "Enter personnel and vehicle details…",
+  "rfActivitiesHint": "Describe the site activities for the day…",
+  "rfRemarksHint": "Add any remarks or observations…",
+  "contractNoHint": "e.g. CN-2024-001",
+  "tapToSet": "Tap to set",
+  "selectEllipsis": "Select…",
+  "buildingHint": "Building number, ID or name…",
+  "rfSectionError": "This section couldn't be shown. Please close and reopen the report.",
+  "noSubcontractorsOnProject": "No sub-contractors have been added to this project.",
+  "rfAddSubContractorCaps": "ADD SUB-CONTRACTOR",
+  "selectSubContractor": "Select sub-contractor…",
+  "allSubcontractorsSelected": "All sub-contractors have been selected.",
+  "rfSubContractorsCaps": "SUB-CONTRACTORS",
+  "rfSelectedSubContractorsCaps": "SELECTED SUB-CONTRACTORS",
+  "noSubcontractorSelected": "No sub-contractor selected yet.",
+  "imagesCount": "{count, plural, =1{1 image} other{{count} images}}",
+  "@imagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attachImages": "Attach images",
+  "addMoreImages": "Add more images",
+  "saveReport": "Save report",
+  "newFormPlus": "+ New form",
+  "weeklyReportSaved": "Weekly report saved.",
+  "colActivity": "Activity",
+  "colProgress": "Progress",
+  "colComment": "Comment",
+  "pdfWeeklyFooter": "© JV Almacis Site Management System - Weekly report",
+  "rfWeeklyReportCaps": "WEEKLY REPORT",
+  "rfWeekStartCaps": "WEEK START",
+  "rfWeekEndCaps": "WEEK END",
+  "rfActivitiesTemplateCaps": "ACTIVITIES TEMPLATE",
+  "rfSlopedRoofCaps": "SLOPED ROOF",
+  "rfNotesCaps": "NOTES",
+  "rfPercentWorkDoneCaps": "PERCENTAGE OF WORK DONE",
+  "newWeeklyReport": "New weekly report",
+  "newWeeklyReportBody": "Your current form has been saved. Start a fresh weekly report?",
+  "projectWeeklyReport": "{project} — Weekly report",
+  "@projectWeeklyReport": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "additionalNotesHint": "Enter any additional notes…",
+  "enterANumber": "Enter a number",
+  "editColumnHeaders": "Edit column headers",
+  "columnN": "Column {n}",
+  "@columnN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "activityTable": "Activity table",
+  "hideRowNumbers": "Hide row numbers",
+  "showRowNumbers": "Show row numbers",
+  "headersButton": "Headers",
+  "removeLastRow": "Remove last row",
+  "headersTip": "Tap \"Headers\" to rename columns • Text wraps automatically",
+  "cropSignature": "Crop signature",
+  "useAction": "Use",
+  "selectSignaturePhoto": "Select signature photo",
+  "chooseFromGallery": "Choose from gallery",
+  "takeAPhoto": "Take a photo",
+  "couldNotProcessPhoto": "Couldn't process the photo.",
+  "couldNotReadPdf": "We couldn't read the selected PDF file.",
+  "couldNotShowPdf": "Couldn't show the PDF.",
+  "selectAPage": "Select a page",
+  "tapPageWithSignature": "Tap the page that contains the signature",
+  "pageN": "Page {n}",
+  "@pageN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "monthlyReportSaved": "Monthly report saved.",
+  "newMonthlyReport": "New monthly report",
+  "newMonthlyReportBody": "Your current form has been saved. Start a fresh monthly report?",
+  "nameField": "Name",
+  "organisationField": "Organisation",
+  "signatureColon": "Signature:",
+  "pdfMonthlyFooter": "© JV Almacis Site Management System - Monthly report",
+  "rfMonthlyReportCaps": "MONTHLY REPORT",
+  "rfMonthStartCaps": "MONTH START",
+  "rfMonthEndCaps": "MONTH END",
+  "rfSiteActivitiesCaps": "SITE ACTIVITIES",
+  "rfQualityReportCaps": "QUALITY REPORT",
+  "rfSafetyReportCaps": "SAFETY REPORT",
+  "rfPlannedActivitiesForCaps": "PLANNED ACTIVITIES FOR",
+  "rfPlannedActivitiesCaps": "PLANNED ACTIVITIES",
+  "rfSignaturesCaps": "SIGNATURES",
+  "rfSigneeNCaps": "SIGNEE {n}",
+  "@rfSigneeNCaps": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "projectMonthlyReport": "{project} — Monthly report",
+  "@projectMonthlyReport": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "siteActivitiesHint": "Describe the site activities for the month…",
+  "qualityHint": "Enter quality observations and findings…",
+  "safetyHint": "Record safety incidents and observations…",
+  "imagesWithCount": "Images ({count})",
+  "@imagesWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "plannedActivitiesHint": "Describe the planned activities for {month}…",
+  "@plannedActivitiesHint": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "insertTable": "Insert table",
+  "tapToInsertTable": "Tap ⊞ in the toolbar to insert a table",
+  "attachWithCount": "Attach ({count})",
+  "@attachWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attach": "Attach",
+  "addForm": "Add form",
+  "signeeN": "Signee {n}",
+  "@signeeN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "signed": "Signed",
+  "fullNameHint": "Full name…",
+  "organisationHint": "Company / organisation…",
+  "signature": "Signature",
+  "sigDraw": "Draw",
+  "sigPhoto": "Photo",
+  "sigFromPdf": "From PDF",
+  "replaceAndCrop": "Replace & crop",
+  "pickPhotoAndCrop": "Pick photo & crop",
+  "pdfSignatureSteps": "Pick a PDF → select the page → drag to crop the signature",
+  "replaceFromPdf": "Replace from PDF",
+  "pickPdfAndCrop": "Pick PDF & crop",
+  "couldNotLoadSignature": "Couldn't load the signature",
+  "noSignatureYet": "No signature yet",
+  "noSignatureProvided": "No signature provided",
+  "addNewColumn": "Add new column",
+  "columnName": "Column name",
+  "columnNameHint": "e.g. Status",
+  "addColumn": "Add column",
+  "maxColumnsReached": "Maximum of 10 columns reached",
+  "addColShort": "+ Col",
+  "deleteTable": "Delete table",
+  "deleteTableConfirm": "Delete \"{title}\"?",
+  "@deleteTableConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "tableTip": "\"Headers\" to rename · \"+ Col\" to add a column · text wraps automatically",
+  "tableDefault": "Table",
+  "tableTitle": "Table title",
+  "tableTitleHint": "e.g. Materials used",
+  "columns": "Columns",
+  "headerN": "Header {n}",
+  "@headerN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "initialRows": "Initial rows",
+  "showRowNumbersShort": "Show row numbers",
+  "insert": "Insert",
+  "deviceStylus": "✒ Stylus",
+  "deviceTouch": "👆 Touch",
+  "deviceMouse": "🖱 Mouse",
+  "signHere": "Sign here",
+  "signInputsSupported": "Finger · Stylus · Mouse — all supported",
+  "signatureCaptured": "Signature captured",
+  "drawSignatureAbove": "Draw your signature above",
+  "cropHelp": "Drag to move · use the handles to resize the crop area",
+  "cropping": "Cropping…",
+  "useCrop": "Use crop",
+  "chkHousekeeping": "Housekeeping",
+  "chkPpe": "Personal protective equipment",
+  "chkFallProtection": "Fall protection",
+  "chkScaffolds": "Scaffolds",
+  "chkLadders": "Ladders",
+  "chkExcavations": "Excavations",
+  "chkElectrical": "Electrical",
+  "chkTools": "Hand & power tools",
+  "chkFireProtection": "Fire protection",
+  "chkHazardComm": "Hazard communication",
+  "chkCranes": "Cranes & rigging",
+  "chkHeavyEquipment": "Heavy equipment",
+  "chkTrafficControl": "Traffic control",
+  "chkOther": "Other",
+  "newItem": "New item",
+  "safetyReportSaved": "Safety report saved.",
+  "noEntries": "No entries",
+  "noChecklistItems": "No checklist items",
+  "pdfSafetyFooterFull": "© JV Almacis Site Management System – Safety report",
+  "pdfSafetyTitleWeekly": "SAFETY REPORT — WEEKLY",
+  "pdfSafetyTitleMonthly": "SAFETY REPORT — MONTHLY",
+  "rfTimeCaps": "TIME",
+  "rfChecklistItemsCaps": "SAFETY CHECKLIST ITEMS",
+  "rfObservationsCaps": "OBSERVATIONS & COMMENTS",
+  "rfActionsTakenCaps": "ACTIONS TAKEN",
+  "rfJvAlmaAttendanceCaps": "JV ALMA CIS ATTENDANCE",
+  "rfSubAttendanceCaps": "SUB-CONTRACTOR ATTENDANCE",
+  "rfSafetyReportShortCaps": "SAFETY REPORT",
+  "rfReportTypeCaps": "REPORT TYPE",
+  "rfWeeklyCaps": "WEEKLY",
+  "rfMonthlyCaps": "MONTHLY",
+  "projectSafetyReport": "{project} — Safety report",
+  "@projectSafetyReport": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "removeItem": "Remove item",
+  "addChecklistItem": "Add checklist item",
+  "newColumn": "New column",
+  "removeLastColumn": "Remove last column",
+  "noTableData": "No data — use the toolbar to add rows or columns",
+  "tapToSign": "Tap to sign",
+  "couldNotOpenImagePicker": "We couldn't open your photos. Please try again.",
+  "couldNotCropImage": "We couldn't crop the image. Please try again.",
+  "couldNotOpenFilePicker": "We couldn't open the file picker. Please try again.",
+  "pdfHasNoPages": "This PDF seems to have no pages.",
+  "addSignature": "Add signature",
+  "couldNotReadImage": "We couldn't read this image. Please try another one.",
+  "couldNotCrop": "Couldn't crop the image.",
+  "rotateLeft": "Rotate left",
+  "rotateRight": "Rotate right",
+  "attCompanyName": "Company name",
+  "attName": "Name",
+  "attTitle": "Title",
+  "attSignature": "Signature"
 }

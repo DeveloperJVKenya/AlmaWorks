@@ -23,6 +23,8 @@ import 'package:open_file/open_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 // ══════════════════════════════════════════════════════════════════
 // CHECKLIST ITEM MODEL
@@ -155,20 +157,20 @@ class SafetyReportData {
         subContractorRows = subContractorRows ?? [];
 
   static List<ChecklistItem> _defaultChecklist() => [
-        ChecklistItem(label: 'Housekeeping'),
-        ChecklistItem(label: 'Personal Protective Equipment'),
-        ChecklistItem(label: 'Fall Protection'),
-        ChecklistItem(label: 'Scaffolds'),
-        ChecklistItem(label: 'Ladders'),
-        ChecklistItem(label: 'Excavations'),
-        ChecklistItem(label: 'Electrical'),
-        ChecklistItem(label: 'Hand & Power Tools'),
-        ChecklistItem(label: 'Fire Protection'),
-        ChecklistItem(label: 'Hazard Communication'),
-        ChecklistItem(label: 'Cranes & Rigging'),
-        ChecklistItem(label: 'Heavy Equipment'),
-        ChecklistItem(label: 'Traffic Control'),
-        ChecklistItem(label: 'Other'),
+        ChecklistItem(label: l10nNow.chkHousekeeping),
+        ChecklistItem(label: l10nNow.chkPpe),
+        ChecklistItem(label: l10nNow.chkFallProtection),
+        ChecklistItem(label: l10nNow.chkScaffolds),
+        ChecklistItem(label: l10nNow.chkLadders),
+        ChecklistItem(label: l10nNow.chkExcavations),
+        ChecklistItem(label: l10nNow.chkElectrical),
+        ChecklistItem(label: l10nNow.chkTools),
+        ChecklistItem(label: l10nNow.chkFireProtection),
+        ChecklistItem(label: l10nNow.chkHazardComm),
+        ChecklistItem(label: l10nNow.chkCranes),
+        ChecklistItem(label: l10nNow.chkHeavyEquipment),
+        ChecklistItem(label: l10nNow.chkTrafficControl),
+        ChecklistItem(label: l10nNow.chkOther),
       ];
 
   Map<String, dynamic> toMap() => {
@@ -542,9 +544,9 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
   // ─────────────────────────────────────────────────────────────
   void _addChecklistItem() {
     setState(() {
-      _checklistItems.add(ChecklistItem(label: 'New Item'));
+      _checklistItems.add(ChecklistItem(label: l10nNow.newItem));
       _checklistLabelCtrls
-          .add(TextEditingController(text: 'New Item'));
+          .add(TextEditingController(text: l10nNow.newItem));
     });
     _saveDraftToCache();
   }
@@ -684,7 +686,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       if (widget.existingReport == null) {
         map['uploadedAt'] = Timestamp.now();
         map['name'] =
-            'Safety Report – ${DateFormat('dd MMM yyyy HH:mm').format(_reportDate)}';
+            l10nNow.reportTitleDated(l10nNow.rptSafetyReport, DateFormat.yMMMd().add_Hm().format(_reportDate));
         await FirebaseFirestore.instance
             .collection('Reports')
             .doc(_reportId)
@@ -719,7 +721,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
 
       if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Safety report saved successfully.',
+          content: Text(context.l10n.safetyReportSaved,
               style: TextStyle()),
           backgroundColor: Colors.green,
         ));
@@ -727,7 +729,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
     } catch (e, st) {
       widget.logger.e('❌ SafetyForm: save failed',
           error: e, stackTrace: st);
-      if (mounted) _showError('Error saving report: $e');
+      if (mounted) _showError(friendlyError(e, action: context.l10n.couldNotSaveReport));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -771,7 +773,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
     } catch (e, st) {
       widget.logger.e('❌ SafetyForm: PDF failed',
           error: e, stackTrace: st);
-      if (mounted) _showError('Error generating PDF: $e');
+      if (mounted) _showError(friendlyError(e, action: context.l10n.couldNotCreatePdf));
     } finally {
       if (mounted) setState(() => _isGeneratingPdf = false);
     }
@@ -833,7 +835,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       final ctx = context;
       if (!ctx.mounted) return;
       ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-        content: Text('PDF saved: $fileName',
+        content: Text(ctx.l10n.pdfSaved(fileName),
             style: TextStyle()),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 4),
@@ -873,9 +875,6 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
   /// (called at save time) and the fallback path in [_downloadAsPdf] use this.
   Future<Uint8List?> _buildPdfBytes(SafetyReportData report) async {
     try {
-      final typeLabel =
-          report.type == 'SafetyWeekly' ? 'Weekly' : 'Monthly';
-
       // ── Load Unicode-capable TTF fonts ────────────────────────
       // Roboto supports hyphens (U+2013 –), bullets (U+2022 •),
       // checkmarks (U+2713 ✓) and all other Latin extended chars
@@ -1125,7 +1124,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                     color: PdfColors.blueGrey300, width: 0.5)),
             padding: const pw.EdgeInsets.symmetric(
                 horizontal: 8, vertical: 8),
-            child: pw.Text('No entries',
+            child: pw.Text(l10nNow.noEntries,
                 style: pw.TextStyle(
                     font: robotoRegularFont,
                     fontSize: 8,
@@ -1159,7 +1158,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
           headerCells.add(pw.Container(
             color: navyColor,
             padding: const pw.EdgeInsets.all(4),
-            child: pw.Text(col, style: headerStyle),
+            child: pw.Text(attendanceColumnLabel(col), style: headerStyle),
           ));
         }
         final dataRows = <pw.TableRow>[];
@@ -1228,7 +1227,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             decoration: pw.BoxDecoration(
                 border: pw.Border.all(
                     color: PdfColors.blueGrey200, width: 0.4)),
-            child: pw.Text('No checklist items',
+            child: pw.Text(l10nNow.noChecklistItems,
                 style: pw.TextStyle(
                     font: robotoRegularFont,
                     fontSize: 8,
@@ -1364,14 +1363,14 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  '\u00A9 JV Almacis Site Management System \u2013 Safety Report',
+                  l10nNow.pdfSafetyFooterFull,
                   style: pw.TextStyle(
                       font: robotoRegularFont,
                       fontSize: 7,
                       color: PdfColors.grey600),
                 ),
                 pw.Text(
-                    'Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                    l10nNow.pdfPageOf(ctx.pageNumber, ctx.pagesCount),
                     style: pw.TextStyle(
                         font: robotoRegularFont,
                         fontSize: 7,
@@ -1401,7 +1400,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               padding: const pw.EdgeInsets.symmetric(
                   horizontal: 16, vertical: 4),
               child: pw.Text(
-                'SAFETY REPORT \u2014 $typeLabel'.toUpperCase(),
+                report.type == 'SafetyWeekly' ? l10nNow.pdfSafetyTitleWeekly : l10nNow.pdfSafetyTitleMonthly,
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   font: robotoBoldFont,
@@ -1417,8 +1416,8 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               padding: const pw.EdgeInsets.fromLTRB(16, 2, 16, 12),
               child: pw.Text(
                 report.contractNumber.isEmpty
-                    ? 'Contract No: \u2014'
-                    : 'Contract No: ${report.contractNumber}',
+                    ? l10nNow.contractNoValue('\u2014')
+                    : l10nNow.contractNoValue(report.contractNumber),
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   font: robotoRegularFont,
@@ -1433,11 +1432,11 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                metaCellFilled('DATE',
-                    DateFormat('EEE, MMM d, yyyy')
+                metaCellFilled(l10nNow.rfDateCaps,
+                    DateFormat.yMMMEd()
                         .format(report.reportDate)),
                 pw.SizedBox(width: 4),
-                metaCellFilled('TIME',
+                metaCellFilled(l10nNow.rfTimeCaps,
                     DateFormat('HH:mm').format(report.reportDate)),
               ],
             ),
@@ -1447,17 +1446,17 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                metaCellFilled('BUILDING', report.building),
+                metaCellFilled(l10nNow.rfBuildingCaps, report.building),
               ],
             ),
             pw.SizedBox(height: 8),
             // ══ CHECKLIST ══════════════════════════════════════
-            sectionBar('SAFETY CHECKLIST ITEMS'),
+            sectionBar(l10nNow.rfChecklistItemsCaps),
             pw.SizedBox(height: 4),
             buildChecklistPdf(),
             pw.SizedBox(height: 8),
             // ══ OBSERVATIONS ═══════════════════════════════════
-            sectionBar('OBSERVATIONS & COMMENTS'),
+            sectionBar(l10nNow.rfObservationsCaps),
             pw.Container(
               width: double.infinity,
               decoration: pw.BoxDecoration(
@@ -1479,7 +1478,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             ),
             pw.SizedBox(height: 8),
             // ══ ACTIONS TAKEN ══════════════════════════════════
-            sectionBar('ACTIONS TAKEN'),
+            sectionBar(l10nNow.rfActionsTakenCaps),
             pw.Container(
               width: double.infinity,
               decoration: pw.BoxDecoration(
@@ -1500,14 +1499,14 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             ),
             pw.SizedBox(height: 8),
             // ══ JV ALMA CIS ATTENDANCE ═════════════════════════
-            sectionBar('JV ALMA CIS ATTENDANCE'),
+            sectionBar(l10nNow.rfJvAlmaAttendanceCaps),
             pw.SizedBox(height: 4),
             buildAttendanceTable(
                 _jvAlmaTable, tableHeaderStyle, cellStyle),
             pw.SizedBox(height: 8),
             // ══ SUB-CONTRACTOR ATTENDANCE (Weekly only) ════════
             if (report.type == 'SafetyWeekly') ...[
-              sectionBar('SUB-CONTRACTOR ATTENDANCE'),
+              sectionBar(l10nNow.rfSubAttendanceCaps),
               pw.SizedBox(height: 4),
               buildAttendanceTable(
                   _subContractorTable, tableHeaderStyle, cellStyle),
@@ -1515,7 +1514,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             ],
             // ══ IMAGES ═════════════════════════════════════════
             if (pdfImages.isNotEmpty) ...[
-              sectionBar('ATTACHED IMAGES'),
+              sectionBar(l10nNow.rfAttachedImagesCaps),
               pw.SizedBox(height: 8),
               ...buildPdfImageGrid(pdfImages),
             ],
@@ -1545,7 +1544,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               backgroundColor: _navy,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_rounded),
-              label: Text('Edit',
+              label: Text(context.l10n.edit,
                   style: TextStyle(
                       fontWeight: FontWeight.w600)),
             )
@@ -1554,8 +1553,8 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         backgroundColor: _navy,
         foregroundColor: Colors.white,
         title: Text(
-          '${widget.project.name} — Safety Report'
-          '${_isReadOnly ? ' (View)' : ''}',
+          '${context.l10n.projectSafetyReport(widget.project.name)}'
+          '${_isReadOnly ? context.l10n.viewSuffix : ''}',
           style: TextStyle(
               fontWeight: FontWeight.w600, fontSize: 15),
         ),
@@ -1599,23 +1598,23 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                         const SizedBox(height: _gap),
                         // ── Observations & Comments ────────────
                         _buildRichTextSection(
-                            'OBSERVATIONS & COMMENTS',
+                            context.l10n.rfObservationsCaps,
                             _observationsCtrl),
                         const SizedBox(height: _gap),
                         // ── Actions Taken ──────────────────────
                         _buildRichTextSection(
-                            'ACTIONS TAKEN', _actionsCtrl),
+                            context.l10n.rfActionsTakenCaps, _actionsCtrl),
                         const SizedBox(height: _gap),
                         // ── JV Alma attendance ─────────────────
                         _buildAttendanceSectionCard(
-                            'JV ALMA CIS ATTENDANCE',
+                            context.l10n.rfJvAlmaAttendanceCaps,
                             _jvAlmaTable,
                             signatureColumnName: 'Signature'),
                         // ── Sub-contractor (Weekly only) ───────
                         if (_type == 'SafetyWeekly') ...[
                           const SizedBox(height: _gap),
                           _buildAttendanceSectionCard(
-                              'SUB-CONTRACTOR ATTENDANCE',
+                              context.l10n.rfSubAttendanceCaps,
                               _subContractorTable,
                               signatureColumnName: 'Signature'),
                         ],
@@ -1670,7 +1669,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Contract No: ',
+              Text(context.l10n.contractNoLabel,
                   style: TextStyle(
                       color: Colors.white70, fontSize: 13)),
               SizedBox(
@@ -1682,7 +1681,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                   style: TextStyle(
                       color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: 'e.g. CN-2024-001',
+                    hintText: context.l10n.contractNoHint,
                     hintStyle: TextStyle(
                         color: Colors.white38, fontSize: 12),
                     isDense: true,
@@ -1718,7 +1717,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         child: Column(
           children: [
             Text(
-              'SAFETY REPORT',
+              context.l10n.rfSafetyReportShortCaps,
               style: TextStyle(
                 color: _navy,
                 fontSize: 18,
@@ -1737,7 +1736,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                isWeekly ? 'WEEKLY' : 'MONTHLY',
+                isWeekly ? context.l10n.rfWeeklyCaps : context.l10n.rfMonthlyCaps,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 10,
@@ -1870,7 +1869,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
               style: TextStyle(
                   fontSize: 13, color: Colors.black87),
               decoration: InputDecoration(
-                hintText: 'Building number, ID, or name…',
+                hintText: context.l10n.buildingHint,
                 hintStyle: TextStyle(
                     color: Colors.grey[400], fontSize: 12),
                 border: InputBorder.none,
@@ -1944,14 +1943,14 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionTitleBar('REPORT TYPE', 8),
+          _sectionTitleBar(context.l10n.rfReportTypeCaps, 8),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(children: [
-              typeChip('SafetyWeekly', 'Weekly',
+              typeChip('SafetyWeekly', context.l10n.weekly,
                   Icons.calendar_view_week_rounded),
               const SizedBox(width: 12),
-              typeChip('SafetyMonthly', 'Monthly',
+              typeChip('SafetyMonthly', context.l10n.monthly,
                   Icons.calendar_month_rounded),
             ]),
           ),
@@ -1970,7 +1969,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       ),
       child: Column(
         children: [
-          _sectionTitleBar('SAFETY CHECKLIST ITEMS', 8),
+          _sectionTitleBar(context.l10n.rfChecklistItemsCaps, 8),
           ..._checklistItems.asMap().entries.map((entry) {
             final i = entry.key;
             final item = entry.value;
@@ -2064,7 +2063,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                       icon: Icon(Icons.remove_circle_outline_rounded,
                           size: 18, color: Colors.red[400]),
                       onPressed: () => _removeChecklistItem(i),
-                      tooltip: 'Remove item',
+                      tooltip: context.l10n.removeItem,
                       padding: const EdgeInsets.all(8),
                       constraints: const BoxConstraints(),
                     ),
@@ -2083,7 +2082,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                   icon: const Icon(
                       Icons.add_circle_outline_rounded,
                       size: 16),
-                  label: Text('Add Checklist Item',
+                  label: Text(context.l10n.addChecklistItem,
                       style: TextStyle(fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _navy,
@@ -2264,7 +2263,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionTitleBar('ATTACHED IMAGES', 8),
+          _sectionTitleBar(context.l10n.rfAttachedImagesCaps, 8),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -2384,8 +2383,8 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                         size: 18),
                     label: Text(
                       allImages.isEmpty
-                          ? 'Attach Image(s)'
-                          : 'Add More Images',
+                          ? context.l10n.attachImages
+                          : context.l10n.addMoreImages,
                       style: TextStyle(fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
@@ -2449,7 +2448,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
     return Row(children: [
       if (!_isReadOnly) ...[
         btn(
-          label: 'Save Report',
+          label: context.l10n.saveReport,
           icon: Icons.save_rounded,
           color: _navy,
           isLoading: _isSaving,
@@ -2458,7 +2457,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         const SizedBox(width: 10),
       ],
       btn(
-        label: 'Download PDF',
+        label: context.l10n.downloadPdf,
         icon: Icons.picture_as_pdf_rounded,
         color: const Color(0xFF1B5E20),
         isLoading: _isGeneratingPdf,
@@ -2620,7 +2619,7 @@ class _SafetyAttendanceTableWidgetState
 
   // ── Column management ─────────────────────────────────────────
   void _addColumn() {
-    const newCol = 'New Column';
+    final newCol = l10nNow.newColumn;
     // Ensure unique name
     String col = newCol;
     int n = 2;
@@ -2689,7 +2688,7 @@ class _SafetyAttendanceTableWidgetState
                       Icons.drive_file_rename_outline_rounded,
                       color: Colors.white, size: 18),
                   const SizedBox(width: 10),
-                  Text('Edit Column Headers',
+                  Text(context.l10n.editColumnHeaders,
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -2736,7 +2735,7 @@ class _SafetyAttendanceTableWidgetState
                                   : TextInputAction.done,
                               decoration: InputDecoration(
                                 isDense: true,
-                                hintText: 'Column ${i + 1}',
+                                hintText: context.l10n.columnN(i + 1),
                                 hintStyle: TextStyle(
                                     color: Colors.grey[400],
                                     fontSize: 11),
@@ -2773,7 +2772,7 @@ class _SafetyAttendanceTableWidgetState
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: Text('Cancel',
+                      child: Text(context.l10n.cancel,
                           style: TextStyle(
                               color: _navy, fontSize: 13)),
                     ),
@@ -2784,7 +2783,7 @@ class _SafetyAttendanceTableWidgetState
                       onPressed: () => Navigator.pop(ctx, true),
                       icon: const Icon(Icons.check_rounded,
                           size: 16),
-                      label: Text('Apply',
+                      label: Text(context.l10n.apply,
                           style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 13)),
@@ -2914,14 +2913,14 @@ class _SafetyAttendanceTableWidgetState
                 // Row management
                 _actionBtn(
                   icon: Icons.add_box_outlined,
-                  tooltip: 'Add Row',
+                  tooltip: context.l10n.addRow,
                   color: const Color(0xFF1B5E20),
                   onTap: _addRow,
                 ),
                 const SizedBox(width: 4),
                 _actionBtn(
                   icon: Icons.indeterminate_check_box_outlined,
-                  tooltip: 'Remove Last Row',
+                  tooltip: context.l10n.removeLastRow,
                   color: Colors.red,
                   onTap: canRemoveRow ? _removeLastRow : null,
                 ),
@@ -2933,14 +2932,14 @@ class _SafetyAttendanceTableWidgetState
                 // Column management
                 _actionBtn(
                   icon: Icons.view_column_outlined,
-                  tooltip: 'Add Column',
+                  tooltip: context.l10n.addColumn,
                   color: const Color(0xFF1565C0),
                   onTap: _addColumn,
                 ),
                 const SizedBox(width: 4),
                 _actionBtn(
                   icon: Icons.remove_circle_outline,
-                  tooltip: 'Remove Last Column',
+                  tooltip: context.l10n.removeLastColumn,
                   color: Colors.orange,
                   onTap: canRemoveCol ? _removeLastColumn : null,
                 ),
@@ -2952,7 +2951,7 @@ class _SafetyAttendanceTableWidgetState
                 // Headers
                 _actionBtn(
                   icon: Icons.drive_file_rename_outline_rounded,
-                  tooltip: 'Edit Column Headers',
+                  tooltip: context.l10n.editColumnHeaders,
                   color: const Color(0xFF6A1B9A),
                   onTap: _showEditHeadersDialog,
                 ),
@@ -2960,8 +2959,8 @@ class _SafetyAttendanceTableWidgetState
                 // Row numbers toggle
                 Tooltip(
                   message: showNums
-                      ? 'Hide Row Numbers'
-                      : 'Show Row Numbers',
+                      ? context.l10n.hideRowNumbers
+                      : context.l10n.showRowNumbers,
                   child: GestureDetector(
                     onTap: _toggleRowNumbers,
                     child: Container(
@@ -3002,7 +3001,7 @@ class _SafetyAttendanceTableWidgetState
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
-              child: Text('No data — use toolbar to add rows/columns',
+              child: Text(context.l10n.noTableData,
                   style: TextStyle(
                       color: Colors.grey[400], fontSize: 12)),
             ),
@@ -3044,7 +3043,7 @@ class _SafetyAttendanceTableWidgetState
                       children: [
                         if (showNums)
                           _headerCell('#'),
-                        ...cols.map((col) => _headerCell(col)),
+                        ...cols.map((col) => _headerCell(attendanceColumnLabel(col))),
                         if (!widget.readOnly)
                           _headerCell(''),
                       ],
@@ -3110,7 +3109,7 @@ class _SafetyAttendanceTableWidgetState
             child: OutlinedButton.icon(
               onPressed: _addRow,
               icon: const Icon(Icons.add_rounded, size: 16),
-              label: Text('Add Row',
+              label: Text(context.l10n.addRow,
                   style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _navy,
@@ -3247,7 +3246,7 @@ class _SafetyAttendanceTableWidgetState
                             color: const Color(0xFF2E7D32)),
                         const SizedBox(width: 4),
                         Text(
-                          'Signed',
+                          context.l10n.signed,
                           style: TextStyle(
                             fontSize: 11,
                             color: const Color(0xFF2E7D32),
@@ -3267,7 +3266,7 @@ class _SafetyAttendanceTableWidgetState
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            widget.readOnly ? '—' : 'Tap to sign',
+                            widget.readOnly ? '—' : context.l10n.tapToSign,
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[400],
@@ -3319,7 +3318,7 @@ class _SSignaturePickerDialogState
         sourcePath: sourcePath,
         uiSettings: [
           AndroidUiSettings(
-            toolbarTitle: 'Crop Signature',
+            toolbarTitle: l10nNow.cropSignature,
             toolbarColor: _navy,
             toolbarWidgetColor: Colors.white,
             statusBarLight: false,
@@ -3335,9 +3334,9 @@ class _SSignaturePickerDialogState
             ],
           ),
           IOSUiSettings(
-            title: 'Crop Signature',
-            doneButtonTitle: 'Use',
-            cancelButtonTitle: 'Cancel',
+            title: l10nNow.cropSignature,
+            doneButtonTitle: l10nNow.useAction,
+            cancelButtonTitle: l10nNow.cancel,
             resetAspectRatioEnabled: true,
             aspectRatioPickerButtonHidden: false,
             minimumAspectRatio: 0.2,
@@ -3511,7 +3510,7 @@ class _SSignaturePickerDialogState
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-              child: Text('Select Signature Photo',
+              child: Text(context.l10n.selectSignaturePhoto,
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
@@ -3521,14 +3520,14 @@ class _SSignaturePickerDialogState
             ListTile(
               leading:
                   const Icon(Icons.photo_library_rounded, color: _navy),
-              title: Text('Choose from Gallery',
+              title: Text(context.l10n.chooseFromGallery,
                   style: TextStyle(fontSize: 13)),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
             ListTile(
               leading:
                   const Icon(Icons.camera_alt_rounded, color: _navy),
-              title: Text('Take a Photo',
+              title: Text(context.l10n.takeAPhoto,
                   style: TextStyle(fontSize: 13)),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
@@ -3553,7 +3552,7 @@ class _SSignaturePickerDialogState
     } catch (e, st) {
       widget.logger.e('❌ SigDialog: ImagePicker.pickImage failed',
           error: e, stackTrace: st);
-      _showError('Could not open image picker: $e');
+      _showError(l10nNow.couldNotOpenImagePicker);
       return;
     }
 
@@ -3581,7 +3580,7 @@ class _SSignaturePickerDialogState
       }
     } catch (e, st) {
       widget.logger.e('❌ SigDialog: crop step failed', error: e, stackTrace: st);
-      _showError('Could not crop image: $e');
+      _showError(l10nNow.couldNotCropImage);
       return;
     }
 
@@ -3614,7 +3613,7 @@ class _SSignaturePickerDialogState
       );
     } catch (e, st) {
       widget.logger.e('❌ SigDialog: FilePicker failed', error: e, stackTrace: st);
-      _showError('Could not open file picker: $e');
+      _showError(l10nNow.couldNotOpenFilePicker);
       return;
     }
 
@@ -3642,7 +3641,7 @@ class _SSignaturePickerDialogState
     }
     if (pdfBytes == null) {
       widget.logger.e('❌ SigDialog: pdfBytes still null – cannot proceed');
-      _showError('Could not read the selected PDF file.');
+      _showError(l10nNow.couldNotReadPdf);
       return;
     }
     widget.logger.i('📄 SigDialog: PDF bytes ready (${pdfBytes.length} bytes) – rasterising');
@@ -3661,7 +3660,7 @@ class _SSignaturePickerDialogState
       widget.logger.e('❌ SigDialog: PDF raster failed', error: e, stackTrace: st);
       if (mounted) {
         setState(() => _isLoadingPdf = false);
-        _showError('Could not render PDF: $e');
+        _showError(friendlyError(e, action: context.l10n.couldNotShowPdf));
       }
       return;
     } finally {
@@ -3672,7 +3671,7 @@ class _SSignaturePickerDialogState
 
     if (pageImages.isEmpty) {
       widget.logger.w('⚠️ SigDialog: no pages rasterised from PDF');
-      _showError('The PDF appears to have no pages.');
+      _showError(l10nNow.pdfHasNoPages);
       return;
     }
     if (!mounted) return;
@@ -3707,7 +3706,7 @@ class _SSignaturePickerDialogState
                     const Icon(Icons.picture_as_pdf_rounded,
                         color: Colors.white, size: 18),
                     const SizedBox(width: 10),
-                    Text('Select a Page',
+                    Text(context.l10n.selectAPage,
                         style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -3723,7 +3722,7 @@ class _SSignaturePickerDialogState
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                   child: Text(
-                    'Tap the page that contains the signature',
+                    context.l10n.tapPageWithSignature,
                     style: TextStyle(
                         fontSize: 12, color: Colors.grey[600]),
                   ),
@@ -3759,7 +3758,7 @@ class _SSignaturePickerDialogState
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text('Page ${i + 1}',
+                        Text(context.l10n.pageN(i + 1),
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -3835,7 +3834,7 @@ class _SSignaturePickerDialogState
                               Icon(Icons.broken_image_rounded,
                                   color: Colors.grey[400], size: 18),
                               const SizedBox(width: 6),
-                              Text('Could not load signature',
+                              Text(context.l10n.couldNotLoadSignature,
                                   style: TextStyle(
                                       color: Colors.grey[400],
                                       fontSize: 11)),
@@ -3850,7 +3849,7 @@ class _SSignaturePickerDialogState
                   Icon(Icons.crop_free_rounded,
                       color: Colors.grey[300], size: 28),
                   const SizedBox(height: 6),
-                  Text('No signature yet',
+                  Text(context.l10n.noSignatureYet,
                       style: TextStyle(
                           color: Colors.grey[400], fontSize: 12)),
                 ],
@@ -3894,7 +3893,7 @@ class _SSignaturePickerDialogState
                 const Icon(Icons.draw_rounded,
                     color: Colors.white, size: 18),
                 const SizedBox(width: 10),
-                Text('Add Signature',
+                Text(context.l10n.addSignature,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -3923,7 +3922,7 @@ class _SSignaturePickerDialogState
                       scrollDirection: Axis.horizontal,
                       child: Row(children: [
                         _modeTab(
-                          label: 'Draw',
+                          label: context.l10n.sigDraw,
                           icon: Icons.draw_rounded,
                           active: _mode == 0,
                           onTap: () {
@@ -3933,7 +3932,7 @@ class _SSignaturePickerDialogState
                         ),
                         const SizedBox(width: 6),
                         _modeTab(
-                          label: 'Photo',
+                          label: context.l10n.sigPhoto,
                           icon: Icons.photo_camera_rounded,
                           active: _mode == 1,
                           onTap: () {
@@ -3943,7 +3942,7 @@ class _SSignaturePickerDialogState
                         ),
                         const SizedBox(width: 6),
                         _modeTab(
-                          label: 'From PDF',
+                          label: context.l10n.sigFromPdf,
                           icon: Icons.picture_as_pdf_rounded,
                           active: _mode == 2,
                           onTap: () {
@@ -3980,8 +3979,8 @@ class _SSignaturePickerDialogState
                                 size: 14),
                             label: Text(
                               (_pickedBytes ?? _drawnBytes) != null
-                                  ? 'Replace & Crop'
-                                  : 'Pick Photo & Crop',
+                                  ? context.l10n.replaceAndCrop
+                                  : context.l10n.pickPhotoAndCrop,
                               style:
                                   TextStyle(fontSize: 11),
                             ),
@@ -4019,7 +4018,7 @@ class _SSignaturePickerDialogState
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'Pick a PDF → select the page → drag to crop the signature area',
+                              context.l10n.pdfSignatureSteps,
                               style: TextStyle(
                                   fontSize: 10,
                                   color:
@@ -4049,8 +4048,8 @@ class _SSignaturePickerDialogState
                                     size: 14),
                             label: Text(
                               (_pickedBytes ?? _drawnBytes) != null
-                                  ? 'Replace from PDF'
-                                  : 'Pick PDF & Crop',
+                                  ? context.l10n.replaceFromPdf
+                                  : context.l10n.pickPdfAndCrop,
                               style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 11),
@@ -4096,7 +4095,7 @@ class _SSignaturePickerDialogState
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: Text('Cancel',
+                    child: Text(context.l10n.cancel,
                         style: TextStyle(
                             color: _navy, fontSize: 13)),
                   ),
@@ -4112,7 +4111,7 @@ class _SSignaturePickerDialogState
                           }
                         : null,
                     icon: const Icon(Icons.check_rounded, size: 16),
-                    label: Text('Confirm',
+                    label: Text(context.l10n.confirm,
                         style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 13)),
@@ -4146,7 +4145,7 @@ class _SSignaturePickerDialogState
         },
         icon: Icon(Icons.delete_outline_rounded,
             size: 14, color: Colors.red[400]),
-        label: Text('Clear',
+        label: Text(context.l10n.clear,
             style: TextStyle(
                 fontSize: 11,
                 color: Colors.red[400],
@@ -4248,11 +4247,11 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
     switch (kind) {
       case PointerDeviceKind.stylus:
       case PointerDeviceKind.invertedStylus:
-        return '✒ Stylus';
+        return l10nNow.deviceStylus;
       case PointerDeviceKind.touch:
-        return '👆 Touch';
+        return l10nNow.deviceTouch;
       default:
-        return '🖱 Mouse';
+        return l10nNow.deviceMouse;
     }
   }
 
@@ -4345,13 +4344,13 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                               Icon(Icons.draw_outlined,
                                   color: Colors.grey[300], size: 28),
                               const SizedBox(height: 5),
-                              Text('Sign here',
+                              Text(context.l10n.signHere,
                                   style: TextStyle(
                                       color: Colors.grey[350],
                                       fontSize: 12)),
                               const SizedBox(height: 2),
                               Text(
-                                  'Finger · Stylus · Mouse — all supported',
+                                  context.l10n.signInputsSupported,
                                   style: TextStyle(
                                       color: Colors.grey[350],
                                       fontSize: 9.5)),
@@ -4374,7 +4373,7 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                 Icon(Icons.check_circle_rounded,
                     size: 13, color: Colors.green[700]),
                 const SizedBox(width: 4),
-                Text('Signature captured',
+                Text(context.l10n.signatureCaptured,
                     style: TextStyle(
                         color: Colors.green[700],
                         fontSize: 10,
@@ -4396,7 +4395,7 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                   ),
                 ],
               ] else
-                Text('Draw your signature above',
+                Text(context.l10n.drawSignatureAbove,
                     style: TextStyle(
                         color: Colors.grey[400], fontSize: 10)),
             ]),
@@ -4405,7 +4404,7 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
                 onPressed: _doReset,
                 icon: Icon(Icons.refresh_rounded,
                     size: 13, color: Colors.red[400]),
-                label: Text('Clear',
+                label: Text(context.l10n.clear,
                     style: TextStyle(
                         color: Colors.red[400],
                         fontSize: 11,
@@ -4765,7 +4764,7 @@ class _InAppCropperDialogState
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = 'Could not decode image: $e'; });
+      setState(() { _loading = false; _error = context.l10n.couldNotReadImage; });
     }
   }
 
@@ -4842,7 +4841,7 @@ class _InAppCropperDialogState
       if (mounted) {
         setState(() => _cropping = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Crop failed: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotCrop),
               style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
@@ -5005,7 +5004,7 @@ class _InAppCropperDialogState
                 const Icon(Icons.crop_rounded,
                     color: Colors.white, size: 18),
                 const SizedBox(width: 10),
-                Text('Crop Signature',
+                Text(context.l10n.cropSignature,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -5100,7 +5099,7 @@ class _InAppCropperDialogState
                 // ── Rotate CCW ──────────────────────────────────
                 _ToolbarIconBtn(
                   icon: Icons.rotate_left_rounded,
-                  label: 'Rotate Left',
+                  label: context.l10n.rotateLeft,
                   enabled: !_loading && !_cropping,
                   onTap: () => _rotate(clockwise: false),
                 ),
@@ -5108,7 +5107,7 @@ class _InAppCropperDialogState
                 // ── Rotate CW ───────────────────────────────────
                 _ToolbarIconBtn(
                   icon: Icons.rotate_right_rounded,
-                  label: 'Rotate Right',
+                  label: context.l10n.rotateRight,
                   enabled: !_loading && !_cropping,
                   onTap: () => _rotate(clockwise: true),
                 ),
@@ -5116,7 +5115,7 @@ class _InAppCropperDialogState
                 // ── Cancel ──────────────────────────────────────
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(null),
-                  child: Text('Cancel',
+                  child: Text(context.l10n.cancel,
                       style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 13,
@@ -5146,7 +5145,7 @@ class _InAppCropperDialogState
                               color: Colors.white))
                       : const Icon(Icons.check_rounded, size: 16),
                   label: Text(
-                      _cropping ? 'Cropping…' : 'Use Crop',
+                      _cropping ? context.l10n.cropping : context.l10n.useCrop,
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600)),
@@ -5323,4 +5322,18 @@ class _CropOverlayPainter extends CustomPainter {
       old.image            != image            ||
       old.imageDisplayRect != imageDisplayRect ||
       old.cropRect         != cropRect;
+}
+
+/// Header text for an attendance-table column. The stored column names
+/// ('Name', 'Signature', …) are also the row-map keys, so they never change;
+/// only what's shown is translated. Custom columns show as typed.
+String attendanceColumnLabel(String column) {
+  final l = l10nNow;
+  return switch (column) {
+    'Company Name' => l.attCompanyName,
+    'Name' => l.attName,
+    'Title' => l.attTitle,
+    'Signature' => l.attSignature,
+    _ => column,
+  };
 }

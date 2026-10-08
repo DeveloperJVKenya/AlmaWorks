@@ -10045,6 +10045,1685 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use \"Import Excel\" to load from a file,\nor \"Add row\" to create tasks manually.'**
   String get noTasksDefinedHint;
+
+  /// No description provided for @reports.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get reports;
+
+  /// No description provided for @rptDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get rptDaily;
+
+  /// No description provided for @rptWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get rptWeekly;
+
+  /// No description provided for @rptMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get rptMonthly;
+
+  /// No description provided for @rptSafetyMeetings.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety meetings'**
+  String get rptSafetyMeetings;
+
+  /// No description provided for @rptQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality'**
+  String get rptQuality;
+
+  /// No description provided for @rptDailyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily report'**
+  String get rptDailyReport;
+
+  /// No description provided for @rptWeeklyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly report'**
+  String get rptWeeklyReport;
+
+  /// No description provided for @rptMonthlyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly report'**
+  String get rptMonthlyReport;
+
+  /// No description provided for @rptSafetyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety meeting report'**
+  String get rptSafetyReport;
+
+  /// No description provided for @rptQualityReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality report'**
+  String get rptQualityReport;
+
+  /// No description provided for @rptWeeklySafetyMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly safety meeting'**
+  String get rptWeeklySafetyMeeting;
+
+  /// No description provided for @rptMonthlySafetyMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly safety meeting'**
+  String get rptMonthlySafetyMeeting;
+
+  /// No description provided for @typeReports.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} reports'**
+  String typeReports(String type);
+
+  /// No description provided for @couldNotLoadReports.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the reports'**
+  String get couldNotLoadReports;
+
+  /// No description provided for @noTypeReportsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No reports here yet: {type}'**
+  String noTypeReportsYet(String type);
+
+  /// No description provided for @tapUploadToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the upload button to add one'**
+  String get tapUploadToAdd;
+
+  /// No description provided for @viewFile.
+  ///
+  /// In en, this message translates to:
+  /// **'View file'**
+  String get viewFile;
+
+  /// No description provided for @viewEditForm.
+  ///
+  /// In en, this message translates to:
+  /// **'View / edit form'**
+  String get viewEditForm;
+
+  /// No description provided for @downloadPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Download PDF'**
+  String get downloadPdf;
+
+  /// No description provided for @reportTitleDated.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} – {date}'**
+  String reportTitleDated(String type, String date);
+
+  /// No description provided for @savedColon.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved: {date}'**
+  String savedColon(String date);
+
+  /// No description provided for @typeForm.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} form'**
+  String typeForm(String type);
+
+  /// No description provided for @safetyForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety form'**
+  String get safetyForm;
+
+  /// No description provided for @noInAppViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'This kind of report can\'t be opened in the app yet.'**
+  String get noInAppViewer;
+
+  /// No description provided for @couldNotOpenReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the report.'**
+  String get couldNotOpenReport;
+
+  /// No description provided for @deleteReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete report'**
+  String get deleteReport;
+
+  /// No description provided for @deleteSafetyReportConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this safety report?'**
+  String get deleteSafetyReportConfirm;
+
+  /// No description provided for @reportDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Report deleted'**
+  String get reportDeleted;
+
+  /// No description provided for @preparingPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing PDF…'**
+  String get preparingPdf;
+
+  /// No description provided for @pdfWeeklySafetyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WEEKLY SAFETY MEETING REPORT'**
+  String get pdfWeeklySafetyTitle;
+
+  /// No description provided for @pdfMonthlySafetyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTHLY SAFETY MEETING REPORT'**
+  String get pdfMonthlySafetyTitle;
+
+  /// No description provided for @pdfSafetyFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'© JV Almacis Site Management System - Safety report'**
+  String get pdfSafetyFooter;
+
+  /// No description provided for @pdfPageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {total}'**
+  String pdfPageOf(int page, int total);
+
+  /// No description provided for @dateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get dateLabel;
+
+  /// No description provided for @contractNo.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract no.'**
+  String get contractNo;
+
+  /// No description provided for @buildingArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Building/area'**
+  String get buildingArea;
+
+  /// No description provided for @safetyChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety checklist'**
+  String get safetyChecklist;
+
+  /// No description provided for @jvAlmaAttendance.
+  ///
+  /// In en, this message translates to:
+  /// **'JV Alma CIS attendance'**
+  String get jvAlmaAttendance;
+
+  /// No description provided for @subContractorAttendance.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub-contractor attendance'**
+  String get subContractorAttendance;
+
+  /// No description provided for @couldNotCreatePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the PDF.'**
+  String get couldNotCreatePdf;
+
+  /// No description provided for @fillDailyForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in daily report form'**
+  String get fillDailyForm;
+
+  /// No description provided for @fillWeeklyForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in weekly report form'**
+  String get fillWeeklyForm;
+
+  /// No description provided for @fillMonthlyForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in monthly report form'**
+  String get fillMonthlyForm;
+
+  /// No description provided for @fillSafetyForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in safety form'**
+  String get fillSafetyForm;
+
+  /// No description provided for @completeFormInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the structured form in the app'**
+  String get completeFormInApp;
+
+  /// No description provided for @uploadDailyFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload daily report file'**
+  String get uploadDailyFile;
+
+  /// No description provided for @uploadWeeklyFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload weekly report file'**
+  String get uploadWeeklyFile;
+
+  /// No description provided for @uploadMonthlyFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload monthly report file'**
+  String get uploadMonthlyFile;
+
+  /// No description provided for @uploadSafetyFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload safety file'**
+  String get uploadSafetyFile;
+
+  /// No description provided for @fileTypesFromDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF, DOCX, PPTX or TXT file from your device'**
+  String get fileTypesFromDevice;
+
+  /// No description provided for @enterReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter report title'**
+  String get enterReportTitle;
+
+  /// No description provided for @enterReportTitleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title for this report:'**
+  String get enterReportTitleBody;
+
+  /// No description provided for @uploadingReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading report'**
+  String get uploadingReport;
+
+  /// No description provided for @reportUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Report uploaded'**
+  String get reportUploaded;
+
+  /// No description provided for @couldNotUploadReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t upload the report.'**
+  String get couldNotUploadReport;
+
+  /// No description provided for @titleCannotBeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The title can\'t be empty'**
+  String get titleCannotBeEmpty;
+
+  /// No description provided for @safetyTextItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Items:'**
+  String get safetyTextItems;
+
+  /// No description provided for @safetyTextObservations.
+  ///
+  /// In en, this message translates to:
+  /// **'Observations and comments:'**
+  String get safetyTextObservations;
+
+  /// No description provided for @safetyTextActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions taken:'**
+  String get safetyTextActions;
+
+  /// No description provided for @safetyTextAttendee.
+  ///
+  /// In en, this message translates to:
+  /// **'- Name: {name}, Title: {title}, Signature: {signature}'**
+  String safetyTextAttendee(String name, String title, String signature);
+
+  /// No description provided for @safetyTextSubAttendee.
+  ///
+  /// In en, this message translates to:
+  /// **'- Company: {company}, Name: {name}, Title: {title}, Signature: {signature}'**
+  String safetyTextSubAttendee(
+    String company,
+    String name,
+    String title,
+    String signature,
+  );
+
+  /// No description provided for @weeklySafetyMeetingForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly safety meeting form'**
+  String get weeklySafetyMeetingForm;
+
+  /// No description provided for @monthlySafetyMeetingForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly safety meeting form'**
+  String get monthlySafetyMeetingForm;
+
+  /// No description provided for @dateColon.
+  ///
+  /// In en, this message translates to:
+  /// **'Date: {date}'**
+  String dateColon(String date);
+
+  /// No description provided for @noFormDataToDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no form or file to download for this report.'**
+  String get noFormDataToDownload;
+
+  /// No description provided for @pdfSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF saved: {file}'**
+  String pdfSaved(String file);
+
+  /// No description provided for @wxCalmWarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Calm & warm'**
+  String get wxCalmWarm;
+
+  /// No description provided for @wxChillyCold.
+  ///
+  /// In en, this message translates to:
+  /// **'Chilly & cold'**
+  String get wxChillyCold;
+
+  /// No description provided for @wxHot.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot'**
+  String get wxHot;
+
+  /// No description provided for @wxWindy.
+  ///
+  /// In en, this message translates to:
+  /// **'Windy'**
+  String get wxWindy;
+
+  /// No description provided for @wxRainy.
+  ///
+  /// In en, this message translates to:
+  /// **'Rainy'**
+  String get wxRainy;
+
+  /// No description provided for @rfWorkingHoursOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Please pick a time between 06:00 and 19:00 (working hours).'**
+  String get rfWorkingHoursOnly;
+
+  /// No description provided for @rfStopAfterStart.
+  ///
+  /// In en, this message translates to:
+  /// **'The stop time must be after the start time.'**
+  String get rfStopAfterStart;
+
+  /// No description provided for @rfStartBeforeStop.
+  ///
+  /// In en, this message translates to:
+  /// **'The start time must be before the stop time.'**
+  String get rfStartBeforeStop;
+
+  /// No description provided for @dailyReportSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily report saved.'**
+  String get dailyReportSaved;
+
+  /// No description provided for @couldNotSaveReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the report.'**
+  String get couldNotSaveReport;
+
+  /// No description provided for @pdfSavedToDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF saved to Downloads: {file}'**
+  String pdfSavedToDownloads(String file);
+
+  /// No description provided for @pdfDailyFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'© JV Almacis Site Management System Daily report'**
+  String get pdfDailyFooter;
+
+  /// No description provided for @rfDailyReportCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'DAILY REPORT'**
+  String get rfDailyReportCaps;
+
+  /// No description provided for @contractNoValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract no: {number}'**
+  String contractNoValue(String number);
+
+  /// No description provided for @contractNoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract no: '**
+  String get contractNoLabel;
+
+  /// No description provided for @rfDateCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'DATE'**
+  String get rfDateCaps;
+
+  /// No description provided for @rfStartTimeCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'START TIME'**
+  String get rfStartTimeCaps;
+
+  /// No description provided for @rfStopTimeCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'STOP TIME'**
+  String get rfStopTimeCaps;
+
+  /// No description provided for @rfWeatherCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'WEATHER'**
+  String get rfWeatherCaps;
+
+  /// No description provided for @rfBuildingCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'BUILDING'**
+  String get rfBuildingCaps;
+
+  /// No description provided for @rfVisitorsCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'MAIN CONTRACTOR/VISITORS'**
+  String get rfVisitorsCaps;
+
+  /// No description provided for @rfSubContractorCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SUB-CONTRACTOR'**
+  String get rfSubContractorCaps;
+
+  /// No description provided for @rfPersonnelCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'PERSONNEL AND VEHICLES'**
+  String get rfPersonnelCaps;
+
+  /// No description provided for @rfActivitiesCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVITIES'**
+  String get rfActivitiesCaps;
+
+  /// No description provided for @rfRemarksCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'REMARKS'**
+  String get rfRemarksCaps;
+
+  /// No description provided for @rfAttachedImagesCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'ATTACHED IMAGES'**
+  String get rfAttachedImagesCaps;
+
+  /// No description provided for @newDailyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'New daily report'**
+  String get newDailyReport;
+
+  /// No description provided for @newDailyReportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current form has been saved. Start a fresh daily report?'**
+  String get newDailyReportBody;
+
+  /// No description provided for @newForm.
+  ///
+  /// In en, this message translates to:
+  /// **'New form'**
+  String get newForm;
+
+  /// No description provided for @viewSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'  (view)'**
+  String get viewSuffix;
+
+  /// No description provided for @projectDailyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'{project} — Daily report'**
+  String projectDailyReport(String project);
+
+  /// No description provided for @rfVisitorsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter visitor names…'**
+  String get rfVisitorsHint;
+
+  /// No description provided for @rfPersonnelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter personnel and vehicle details…'**
+  String get rfPersonnelHint;
+
+  /// No description provided for @rfActivitiesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the site activities for the day…'**
+  String get rfActivitiesHint;
+
+  /// No description provided for @rfRemarksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add any remarks or observations…'**
+  String get rfRemarksHint;
+
+  /// No description provided for @contractNoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. CN-2024-001'**
+  String get contractNoHint;
+
+  /// No description provided for @tapToSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to set'**
+  String get tapToSet;
+
+  /// No description provided for @selectEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Select…'**
+  String get selectEllipsis;
+
+  /// No description provided for @buildingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Building number, ID or name…'**
+  String get buildingHint;
+
+  /// No description provided for @rfSectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'This section couldn\'t be shown. Please close and reopen the report.'**
+  String get rfSectionError;
+
+  /// No description provided for @noSubcontractorsOnProject.
+  ///
+  /// In en, this message translates to:
+  /// **'No sub-contractors have been added to this project.'**
+  String get noSubcontractorsOnProject;
+
+  /// No description provided for @rfAddSubContractorCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD SUB-CONTRACTOR'**
+  String get rfAddSubContractorCaps;
+
+  /// No description provided for @selectSubContractor.
+  ///
+  /// In en, this message translates to:
+  /// **'Select sub-contractor…'**
+  String get selectSubContractor;
+
+  /// No description provided for @allSubcontractorsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'All sub-contractors have been selected.'**
+  String get allSubcontractorsSelected;
+
+  /// No description provided for @rfSubContractorsCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SUB-CONTRACTORS'**
+  String get rfSubContractorsCaps;
+
+  /// No description provided for @rfSelectedSubContractorsCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECTED SUB-CONTRACTORS'**
+  String get rfSelectedSubContractorsCaps;
+
+  /// No description provided for @noSubcontractorSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No sub-contractor selected yet.'**
+  String get noSubcontractorSelected;
+
+  /// No description provided for @imagesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 image} other{{count} images}}'**
+  String imagesCount(int count);
+
+  /// No description provided for @attachImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach images'**
+  String get attachImages;
+
+  /// No description provided for @addMoreImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Add more images'**
+  String get addMoreImages;
+
+  /// No description provided for @saveReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Save report'**
+  String get saveReport;
+
+  /// No description provided for @newFormPlus.
+  ///
+  /// In en, this message translates to:
+  /// **'+ New form'**
+  String get newFormPlus;
+
+  /// No description provided for @weeklyReportSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly report saved.'**
+  String get weeklyReportSaved;
+
+  /// No description provided for @colActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get colActivity;
+
+  /// No description provided for @colProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get colProgress;
+
+  /// No description provided for @colComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get colComment;
+
+  /// No description provided for @pdfWeeklyFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'© JV Almacis Site Management System - Weekly report'**
+  String get pdfWeeklyFooter;
+
+  /// No description provided for @rfWeeklyReportCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'WEEKLY REPORT'**
+  String get rfWeeklyReportCaps;
+
+  /// No description provided for @rfWeekStartCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'WEEK START'**
+  String get rfWeekStartCaps;
+
+  /// No description provided for @rfWeekEndCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'WEEK END'**
+  String get rfWeekEndCaps;
+
+  /// No description provided for @rfActivitiesTemplateCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVITIES TEMPLATE'**
+  String get rfActivitiesTemplateCaps;
+
+  /// No description provided for @rfSlopedRoofCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SLOPED ROOF'**
+  String get rfSlopedRoofCaps;
+
+  /// No description provided for @rfNotesCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'NOTES'**
+  String get rfNotesCaps;
+
+  /// No description provided for @rfPercentWorkDoneCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'PERCENTAGE OF WORK DONE'**
+  String get rfPercentWorkDoneCaps;
+
+  /// No description provided for @newWeeklyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'New weekly report'**
+  String get newWeeklyReport;
+
+  /// No description provided for @newWeeklyReportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current form has been saved. Start a fresh weekly report?'**
+  String get newWeeklyReportBody;
+
+  /// No description provided for @projectWeeklyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'{project} — Weekly report'**
+  String projectWeeklyReport(String project);
+
+  /// No description provided for @additionalNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter any additional notes…'**
+  String get additionalNotesHint;
+
+  /// No description provided for @enterANumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number'**
+  String get enterANumber;
+
+  /// No description provided for @editColumnHeaders.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit column headers'**
+  String get editColumnHeaders;
+
+  /// No description provided for @columnN.
+  ///
+  /// In en, this message translates to:
+  /// **'Column {n}'**
+  String columnN(int n);
+
+  /// No description provided for @activityTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity table'**
+  String get activityTable;
+
+  /// No description provided for @hideRowNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide row numbers'**
+  String get hideRowNumbers;
+
+  /// No description provided for @showRowNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Show row numbers'**
+  String get showRowNumbers;
+
+  /// No description provided for @headersButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Headers'**
+  String get headersButton;
+
+  /// No description provided for @removeLastRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove last row'**
+  String get removeLastRow;
+
+  /// No description provided for @headersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \"Headers\" to rename columns • Text wraps automatically'**
+  String get headersTip;
+
+  /// No description provided for @cropSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop signature'**
+  String get cropSignature;
+
+  /// No description provided for @useAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get useAction;
+
+  /// No description provided for @selectSignaturePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Select signature photo'**
+  String get selectSignaturePhoto;
+
+  /// No description provided for @chooseFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get chooseFromGallery;
+
+  /// No description provided for @takeAPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get takeAPhoto;
+
+  /// No description provided for @couldNotProcessPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t process the photo.'**
+  String get couldNotProcessPhoto;
+
+  /// No description provided for @couldNotReadPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t read the selected PDF file.'**
+  String get couldNotReadPdf;
+
+  /// No description provided for @couldNotShowPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t show the PDF.'**
+  String get couldNotShowPdf;
+
+  /// No description provided for @selectAPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a page'**
+  String get selectAPage;
+
+  /// No description provided for @tapPageWithSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the page that contains the signature'**
+  String get tapPageWithSignature;
+
+  /// No description provided for @pageN.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {n}'**
+  String pageN(int n);
+
+  /// No description provided for @monthlyReportSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly report saved.'**
+  String get monthlyReportSaved;
+
+  /// No description provided for @newMonthlyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'New monthly report'**
+  String get newMonthlyReport;
+
+  /// No description provided for @newMonthlyReportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current form has been saved. Start a fresh monthly report?'**
+  String get newMonthlyReportBody;
+
+  /// No description provided for @nameField.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get nameField;
+
+  /// No description provided for @organisationField.
+  ///
+  /// In en, this message translates to:
+  /// **'Organisation'**
+  String get organisationField;
+
+  /// No description provided for @signatureColon.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature:'**
+  String get signatureColon;
+
+  /// No description provided for @pdfMonthlyFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'© JV Almacis Site Management System - Monthly report'**
+  String get pdfMonthlyFooter;
+
+  /// No description provided for @rfMonthlyReportCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTHLY REPORT'**
+  String get rfMonthlyReportCaps;
+
+  /// No description provided for @rfMonthStartCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTH START'**
+  String get rfMonthStartCaps;
+
+  /// No description provided for @rfMonthEndCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTH END'**
+  String get rfMonthEndCaps;
+
+  /// No description provided for @rfSiteActivitiesCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SITE ACTIVITIES'**
+  String get rfSiteActivitiesCaps;
+
+  /// No description provided for @rfQualityReportCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'QUALITY REPORT'**
+  String get rfQualityReportCaps;
+
+  /// No description provided for @rfSafetyReportCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SAFETY REPORT'**
+  String get rfSafetyReportCaps;
+
+  /// No description provided for @rfPlannedActivitiesForCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'PLANNED ACTIVITIES FOR'**
+  String get rfPlannedActivitiesForCaps;
+
+  /// No description provided for @rfPlannedActivitiesCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'PLANNED ACTIVITIES'**
+  String get rfPlannedActivitiesCaps;
+
+  /// No description provided for @rfSignaturesCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGNATURES'**
+  String get rfSignaturesCaps;
+
+  /// No description provided for @rfSigneeNCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGNEE {n}'**
+  String rfSigneeNCaps(int n);
+
+  /// No description provided for @projectMonthlyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'{project} — Monthly report'**
+  String projectMonthlyReport(String project);
+
+  /// No description provided for @siteActivitiesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the site activities for the month…'**
+  String get siteActivitiesHint;
+
+  /// No description provided for @qualityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter quality observations and findings…'**
+  String get qualityHint;
+
+  /// No description provided for @safetyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Record safety incidents and observations…'**
+  String get safetyHint;
+
+  /// No description provided for @imagesWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Images ({count})'**
+  String imagesWithCount(int count);
+
+  /// No description provided for @plannedActivitiesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the planned activities for {month}…'**
+  String plannedActivitiesHint(String month);
+
+  /// No description provided for @insertTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert table'**
+  String get insertTable;
+
+  /// No description provided for @tapToInsertTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap ⊞ in the toolbar to insert a table'**
+  String get tapToInsertTable;
+
+  /// No description provided for @attachWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach ({count})'**
+  String attachWithCount(int count);
+
+  /// No description provided for @attach.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach'**
+  String get attach;
+
+  /// No description provided for @addForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Add form'**
+  String get addForm;
+
+  /// No description provided for @signeeN.
+  ///
+  /// In en, this message translates to:
+  /// **'Signee {n}'**
+  String signeeN(int n);
+
+  /// No description provided for @signed.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed'**
+  String get signed;
+
+  /// No description provided for @fullNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name…'**
+  String get fullNameHint;
+
+  /// No description provided for @organisationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Company / organisation…'**
+  String get organisationHint;
+
+  /// No description provided for @signature.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature'**
+  String get signature;
+
+  /// No description provided for @sigDraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw'**
+  String get sigDraw;
+
+  /// No description provided for @sigPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get sigPhoto;
+
+  /// No description provided for @sigFromPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'From PDF'**
+  String get sigFromPdf;
+
+  /// No description provided for @replaceAndCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace & crop'**
+  String get replaceAndCrop;
+
+  /// No description provided for @pickPhotoAndCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick photo & crop'**
+  String get pickPhotoAndCrop;
+
+  /// No description provided for @pdfSignatureSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a PDF → select the page → drag to crop the signature'**
+  String get pdfSignatureSteps;
+
+  /// No description provided for @replaceFromPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace from PDF'**
+  String get replaceFromPdf;
+
+  /// No description provided for @pickPdfAndCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick PDF & crop'**
+  String get pickPdfAndCrop;
+
+  /// No description provided for @couldNotLoadSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the signature'**
+  String get couldNotLoadSignature;
+
+  /// No description provided for @noSignatureYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No signature yet'**
+  String get noSignatureYet;
+
+  /// No description provided for @noSignatureProvided.
+  ///
+  /// In en, this message translates to:
+  /// **'No signature provided'**
+  String get noSignatureProvided;
+
+  /// No description provided for @addNewColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new column'**
+  String get addNewColumn;
+
+  /// No description provided for @columnName.
+  ///
+  /// In en, this message translates to:
+  /// **'Column name'**
+  String get columnName;
+
+  /// No description provided for @columnNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Status'**
+  String get columnNameHint;
+
+  /// No description provided for @addColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add column'**
+  String get addColumn;
+
+  /// No description provided for @maxColumnsReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum of 10 columns reached'**
+  String get maxColumnsReached;
+
+  /// No description provided for @addColShort.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Col'**
+  String get addColShort;
+
+  /// No description provided for @deleteTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete table'**
+  String get deleteTable;
+
+  /// No description provided for @deleteTableConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{title}\"?'**
+  String deleteTableConfirm(String title);
+
+  /// No description provided for @tableTip.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Headers\" to rename · \"+ Col\" to add a column · text wraps automatically'**
+  String get tableTip;
+
+  /// No description provided for @tableDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Table'**
+  String get tableDefault;
+
+  /// No description provided for @tableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Table title'**
+  String get tableTitle;
+
+  /// No description provided for @tableTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Materials used'**
+  String get tableTitleHint;
+
+  /// No description provided for @columns.
+  ///
+  /// In en, this message translates to:
+  /// **'Columns'**
+  String get columns;
+
+  /// No description provided for @headerN.
+  ///
+  /// In en, this message translates to:
+  /// **'Header {n}'**
+  String headerN(int n);
+
+  /// No description provided for @initialRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial rows'**
+  String get initialRows;
+
+  /// No description provided for @showRowNumbersShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Show row numbers'**
+  String get showRowNumbersShort;
+
+  /// No description provided for @insert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get insert;
+
+  /// No description provided for @deviceStylus.
+  ///
+  /// In en, this message translates to:
+  /// **'✒ Stylus'**
+  String get deviceStylus;
+
+  /// No description provided for @deviceTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'👆 Touch'**
+  String get deviceTouch;
+
+  /// No description provided for @deviceMouse.
+  ///
+  /// In en, this message translates to:
+  /// **'🖱 Mouse'**
+  String get deviceMouse;
+
+  /// No description provided for @signHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign here'**
+  String get signHere;
+
+  /// No description provided for @signInputsSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Finger · Stylus · Mouse — all supported'**
+  String get signInputsSupported;
+
+  /// No description provided for @signatureCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature captured'**
+  String get signatureCaptured;
+
+  /// No description provided for @drawSignatureAbove.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw your signature above'**
+  String get drawSignatureAbove;
+
+  /// No description provided for @cropHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move · use the handles to resize the crop area'**
+  String get cropHelp;
+
+  /// No description provided for @cropping.
+  ///
+  /// In en, this message translates to:
+  /// **'Cropping…'**
+  String get cropping;
+
+  /// No description provided for @useCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Use crop'**
+  String get useCrop;
+
+  /// No description provided for @chkHousekeeping.
+  ///
+  /// In en, this message translates to:
+  /// **'Housekeeping'**
+  String get chkHousekeeping;
+
+  /// No description provided for @chkPpe.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal protective equipment'**
+  String get chkPpe;
+
+  /// No description provided for @chkFallProtection.
+  ///
+  /// In en, this message translates to:
+  /// **'Fall protection'**
+  String get chkFallProtection;
+
+  /// No description provided for @chkScaffolds.
+  ///
+  /// In en, this message translates to:
+  /// **'Scaffolds'**
+  String get chkScaffolds;
+
+  /// No description provided for @chkLadders.
+  ///
+  /// In en, this message translates to:
+  /// **'Ladders'**
+  String get chkLadders;
+
+  /// No description provided for @chkExcavations.
+  ///
+  /// In en, this message translates to:
+  /// **'Excavations'**
+  String get chkExcavations;
+
+  /// No description provided for @chkElectrical.
+  ///
+  /// In en, this message translates to:
+  /// **'Electrical'**
+  String get chkElectrical;
+
+  /// No description provided for @chkTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Hand & power tools'**
+  String get chkTools;
+
+  /// No description provided for @chkFireProtection.
+  ///
+  /// In en, this message translates to:
+  /// **'Fire protection'**
+  String get chkFireProtection;
+
+  /// No description provided for @chkHazardComm.
+  ///
+  /// In en, this message translates to:
+  /// **'Hazard communication'**
+  String get chkHazardComm;
+
+  /// No description provided for @chkCranes.
+  ///
+  /// In en, this message translates to:
+  /// **'Cranes & rigging'**
+  String get chkCranes;
+
+  /// No description provided for @chkHeavyEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy equipment'**
+  String get chkHeavyEquipment;
+
+  /// No description provided for @chkTrafficControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic control'**
+  String get chkTrafficControl;
+
+  /// No description provided for @chkOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get chkOther;
+
+  /// No description provided for @newItem.
+  ///
+  /// In en, this message translates to:
+  /// **'New item'**
+  String get newItem;
+
+  /// No description provided for @safetyReportSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety report saved.'**
+  String get safetyReportSaved;
+
+  /// No description provided for @noEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries'**
+  String get noEntries;
+
+  /// No description provided for @noChecklistItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No checklist items'**
+  String get noChecklistItems;
+
+  /// No description provided for @pdfSafetyFooterFull.
+  ///
+  /// In en, this message translates to:
+  /// **'© JV Almacis Site Management System – Safety report'**
+  String get pdfSafetyFooterFull;
+
+  /// No description provided for @pdfSafetyTitleWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'SAFETY REPORT — WEEKLY'**
+  String get pdfSafetyTitleWeekly;
+
+  /// No description provided for @pdfSafetyTitleMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'SAFETY REPORT — MONTHLY'**
+  String get pdfSafetyTitleMonthly;
+
+  /// No description provided for @rfTimeCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'TIME'**
+  String get rfTimeCaps;
+
+  /// No description provided for @rfChecklistItemsCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SAFETY CHECKLIST ITEMS'**
+  String get rfChecklistItemsCaps;
+
+  /// No description provided for @rfObservationsCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'OBSERVATIONS & COMMENTS'**
+  String get rfObservationsCaps;
+
+  /// No description provided for @rfActionsTakenCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIONS TAKEN'**
+  String get rfActionsTakenCaps;
+
+  /// No description provided for @rfJvAlmaAttendanceCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'JV ALMA CIS ATTENDANCE'**
+  String get rfJvAlmaAttendanceCaps;
+
+  /// No description provided for @rfSubAttendanceCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SUB-CONTRACTOR ATTENDANCE'**
+  String get rfSubAttendanceCaps;
+
+  /// No description provided for @rfSafetyReportShortCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'SAFETY REPORT'**
+  String get rfSafetyReportShortCaps;
+
+  /// No description provided for @rfReportTypeCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'REPORT TYPE'**
+  String get rfReportTypeCaps;
+
+  /// No description provided for @rfWeeklyCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'WEEKLY'**
+  String get rfWeeklyCaps;
+
+  /// No description provided for @rfMonthlyCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTHLY'**
+  String get rfMonthlyCaps;
+
+  /// No description provided for @projectSafetyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'{project} — Safety report'**
+  String projectSafetyReport(String project);
+
+  /// No description provided for @weekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get weekly;
+
+  /// No description provided for @monthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get monthly;
+
+  /// No description provided for @removeItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove item'**
+  String get removeItem;
+
+  /// No description provided for @addChecklistItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add checklist item'**
+  String get addChecklistItem;
+
+  /// No description provided for @newColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'New column'**
+  String get newColumn;
+
+  /// No description provided for @removeLastColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove last column'**
+  String get removeLastColumn;
+
+  /// No description provided for @noTableData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data — use the toolbar to add rows or columns'**
+  String get noTableData;
+
+  /// No description provided for @tapToSign.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to sign'**
+  String get tapToSign;
+
+  /// No description provided for @couldNotOpenImagePicker.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t open your photos. Please try again.'**
+  String get couldNotOpenImagePicker;
+
+  /// No description provided for @couldNotCropImage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t crop the image. Please try again.'**
+  String get couldNotCropImage;
+
+  /// No description provided for @couldNotOpenFilePicker.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t open the file picker. Please try again.'**
+  String get couldNotOpenFilePicker;
+
+  /// No description provided for @pdfHasNoPages.
+  ///
+  /// In en, this message translates to:
+  /// **'This PDF seems to have no pages.'**
+  String get pdfHasNoPages;
+
+  /// No description provided for @addSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Add signature'**
+  String get addSignature;
+
+  /// No description provided for @couldNotReadImage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t read this image. Please try another one.'**
+  String get couldNotReadImage;
+
+  /// No description provided for @couldNotCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t crop the image.'**
+  String get couldNotCrop;
+
+  /// No description provided for @rotateLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate left'**
+  String get rotateLeft;
+
+  /// No description provided for @rotateRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate right'**
+  String get rotateRight;
+
+  /// No description provided for @attCompanyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Company name'**
+  String get attCompanyName;
+
+  /// No description provided for @attName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get attName;
+
+  /// No description provided for @attTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get attTitle;
+
+  /// No description provided for @attSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature'**
+  String get attSignature;
 }
 
 class _AppLocalizationsDelegate

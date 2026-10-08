@@ -17,15 +17,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:open_file/open_file.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:almaworks/helpers/download_helper.dart';
+import 'package:almaworks/helpers/download_feedback.dart';
 
 import 'dart:io' show Directory, File, Platform;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class ReportsScreen extends StatefulWidget {
   final ProjectModel project;
@@ -57,7 +59,7 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+  DateFormat get _dateFormat => DateFormat.yMd().add_Hm();
   bool _isLoading = false;
 
   // Full tab list – admin / main-admin see all five tabs.
@@ -97,7 +99,7 @@ class _ReportsScreenState extends State<ReportsScreen>
   @override
   Widget build(BuildContext context) {
     return BaseLayout(
-      title: '${widget.project.name} - Reports',
+      title: context.l10n.projectSectionTitle(widget.project.name, context.l10n.reports),
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Reports',
@@ -152,7 +154,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                       fontWeight: FontWeight.w600, fontSize: 13),
                   unselectedLabelStyle: TextStyle(
                       fontWeight: FontWeight.w400, fontSize: 13),
-                  tabs: _tabs.map((t) => Tab(text: t['label'])).toList(),
+                  tabs: _tabs.map((t) => Tab(text: reportTabLabel(t['type']!))).toList(),
                 );
               },
             ),
@@ -186,7 +188,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       color: const Color(0xFF0A2E5A),
       child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
@@ -218,7 +220,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               stackTrace: snapshot.stackTrace);
           return Center(
             child: Text(
-              'Error loading documents: ${snapshot.error}',
+              context.l10n.couldNotLoadReports,
               style: TextStyle(color: Colors.red[600]),
             ),
           );
@@ -248,7 +250,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildSectionHeader('$type Reports'),
+            _buildSectionHeader(context.l10n.typeReports(reportTabLabel(type))),
             const SizedBox(height: 16),
             ...documents.map((doc) {
               try {
@@ -296,7 +298,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               stackTrace: snapshot.stackTrace);
           return Center(
             child: Text(
-              'Error loading safety reports: ${snapshot.error}',
+              context.l10n.couldNotLoadReports,
               style: TextStyle(color: Colors.red[600]),
             ),
           );
@@ -320,13 +322,13 @@ class _ReportsScreenState extends State<ReportsScreen>
         });
 
         if (reports.isEmpty) {
-          return _buildEmptyState('Safety Meeting');
+          return _buildEmptyState('Safety');
         }
 
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildSectionHeader('Safety Meeting Reports'),
+            _buildSectionHeader(reportTabLabel('Safety')),
             const SizedBox(height: 16),
             ...reports.map((doc) {
               try {
@@ -364,7 +366,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No $type reports added yet',
+            context.l10n.noTypeReportsYet(reportTabLabel(type).toLowerCase()),
             style: TextStyle(
                 color: Colors.grey[600], fontSize: 16),
           ),
@@ -372,7 +374,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           // Clients/Technician cannot create reports — show a neutral message instead.
           if (!widget.isClient && !widget.isTechnician)
             Text(
-              'Tap the upload button to add one',
+              context.l10n.tapUploadToAdd,
               style: TextStyle(
                   color: Colors.grey[400], fontSize: 13),
             ),
@@ -434,7 +436,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           children: [
             const SizedBox(height: 2),
             Text(
-              'Uploaded: ${_dateFormat.format(report.uploadedAt)}',
+              context.l10n.uploadedColon(_dateFormat.format(report.uploadedAt)),
               style: TextStyle(
                   color: Colors.grey[600], fontSize: 13),
             ),
@@ -449,7 +451,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                report.type,
+                reportTabLabel(report.type),
                 style: TextStyle(
                     fontSize: 11,
                     color: const Color(0xFF0A2E5A),
@@ -472,17 +474,17 @@ class _ReportsScreenState extends State<ReportsScreen>
 
             return [
               if (report.url != null)
-                _popupItem('view', Icons.visibility, Colors.blue[600]!, 'View File'),
+                _popupItem('view', Icons.visibility, Colors.blue[600]!, context.l10n.viewFile),
               if (isSafetyFormReport)
                 _popupItem(
-                    'view_form', Icons.assignment, Colors.blue[600]!, 'View / Edit Form'),
+                    'view_form', Icons.assignment, Colors.blue[600]!, context.l10n.viewEditForm),
               // Technician is view-only — no download.
               if (!widget.isTechnician)
                 _popupItem(
-                    'download', Icons.download, Colors.green[600]!, 'Download PDF'),
+                    'download', Icons.download, Colors.green[600]!, context.l10n.downloadPdf),
               // Clients and Technician cannot delete reports.
               if (!widget.isClient && !widget.isTechnician)
-                _popupItem('delete', Icons.delete, Colors.red[600]!, 'Delete'),
+                _popupItem('delete', Icons.delete, Colors.red[600]!, context.l10n.delete),
             ];
           },
         ),
@@ -531,28 +533,29 @@ class _ReportsScreenState extends State<ReportsScreen>
             : DateTime.now());
 
     final String displayName;
+    final typeName = reportTypeName(type);
     if (formDate != null) {
       // Daily (and any form that stores a single 'date' field)
       displayName =
-          '$type Report – ${DateFormat('dd MMM yyyy').format(formDate)}';
+          context.l10n.reportTitleDated(typeName, DateFormat.yMMMd().format(formDate));
     } else if (weekStart != null) {
       // Weekly (stores weekStart + weekEnd instead of a single date)
       final endPart = weekEnd != null
-          ? ' → ${DateFormat('dd MMM yyyy').format(weekEnd)}'
+          ? ' → ${DateFormat.yMMMd().format(weekEnd)}'
           : '';
       displayName =
-          '$type Report – ${DateFormat('dd MMM yyyy').format(weekStart)}$endPart';
+          context.l10n.reportTitleDated(typeName, '${DateFormat.yMMMd().format(weekStart)}$endPart');
     } else if (monthStart != null) {
       // Monthly (stores monthStart — show as full month name + year)
       displayName =
-          '$type Report – ${DateFormat('MMMM yyyy').format(monthStart)}';
+          context.l10n.reportTitleDated(typeName, DateFormat.yMMMM().format(monthStart));
     } else {
       // Fallback for any legacy doc that lacks both 'date' and 'weekStart':
       // use the stored name, or derive from savedAt as a last resort.
       final storedName = data['name'] as String?;
       displayName = storedName != null && storedName.isNotEmpty
           ? storedName
-          : '$type Report – ${DateFormat('dd MMM yyyy, hh:mm a').format(savedAt)}';
+          : context.l10n.reportTitleDated(typeName, DateFormat.yMMMd().add_jm().format(savedAt));
     }
 
     return Card(
@@ -584,7 +587,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             children: [
               const SizedBox(height: 2),
               Text(
-                'Saved: ${_dateFormat.format(savedAt)}',
+                context.l10n.savedColon(_dateFormat.format(savedAt)),
                 style:
                     TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
@@ -597,7 +600,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '$type Form',
+                  context.l10n.typeForm(reportTabLabel(type)),
                   style: TextStyle(
                       fontSize: 11,
                       color: const Color(0xFF0A2E5A),
@@ -614,13 +617,13 @@ class _ReportsScreenState extends State<ReportsScreen>
                 borderRadius: BorderRadius.circular(12)),
             itemBuilder: (context) => [
               _popupItem('open', Icons.visibility_rounded,
-                  Colors.blue[700]!, 'Open'),
+                  Colors.blue[700]!, context.l10n.open),
               // Clients and Technician are view-only — Edit and Delete are hidden.
               if (!widget.isClient && !widget.isTechnician) ...[
                 _popupItem('edit', Icons.edit_rounded,
-                    const Color(0xFF0A2E5A), 'Edit'),
+                    const Color(0xFF0A2E5A), context.l10n.edit),
                 _popupItem('delete', Icons.delete_rounded,
-                    Colors.red[600]!, 'Delete'),
+                    Colors.red[600]!, context.l10n.delete),
               ],
             ],
           ),
@@ -672,23 +675,23 @@ class _ReportsScreenState extends State<ReportsScreen>
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
-            title: Text('Delete Report',
+            title: Text(context.l10n.deleteReport,
                 style: TextStyle(
                     fontWeight: FontWeight.w600)),
             content: Text(
-                'Are you sure you want to delete "${report.name}"?',
+                context.l10n.deleteNamedConfirm(report.name),
                 style: TextStyle()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel', style: TextStyle()),
+                child: Text(context.l10n.cancel, style: TextStyle()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white),
-                child: Text('Delete', style: TextStyle()),
+                child: Text(context.l10n.delete, style: TextStyle()),
               ),
             ],
           ),
@@ -762,7 +765,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             '⚠️ ReportsScreen: No form viewer for type=$type');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('In-app viewer not available for $type reports.',
+            content: Text(context.l10n.noInAppViewer,
                 style: TextStyle()),
           ));
         }
@@ -772,7 +775,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           error: e, stackTrace: st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error opening report: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotOpenReport),
               style: TextStyle()),
           backgroundColor: Colors.red,
         ));
@@ -799,11 +802,11 @@ class _ReportsScreenState extends State<ReportsScreen>
     final String safetyType =
         data['type'] as String? ?? 'SafetyWeekly';
     final String meetingLabel = safetyType == 'SafetyMonthly'
-        ? 'Monthly Safety Meeting'
-        : 'Weekly Safety Meeting';
+        ? context.l10n.rptMonthlySafetyMeeting
+        : context.l10n.rptWeeklySafetyMeeting;
 
     final displayName =
-        '$meetingLabel – ${DateFormat('dd MMM yyyy').format(reportDate)}';
+        context.l10n.reportTitleDated(meetingLabel, DateFormat.yMMMd().format(reportDate));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -835,7 +838,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             children: [
               const SizedBox(height: 2),
               Text(
-                'Saved: ${_dateFormat.format(savedAt)}',
+                context.l10n.savedColon(_dateFormat.format(savedAt)),
                 style: TextStyle(
                     color: Colors.grey[600], fontSize: 13),
               ),
@@ -848,7 +851,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Safety Form',
+                  context.l10n.safetyForm,
                   style: TextStyle(
                       fontSize: 11,
                       color: const Color(0xFF0A2E5A),
@@ -865,13 +868,13 @@ class _ReportsScreenState extends State<ReportsScreen>
                 borderRadius: BorderRadius.circular(12)),
             itemBuilder: (context) => [
               _popupItem('open', Icons.visibility_rounded,
-                  Colors.blue[700]!, 'Open'),
+                  Colors.blue[700]!, context.l10n.open),
               // Edit and Delete are hidden from clients and Technician.
               if (!widget.isClient && !widget.isTechnician) ...[
                 _popupItem('edit', Icons.edit_rounded,
-                    const Color(0xFF0A2E5A), 'Edit'),
+                    const Color(0xFF0A2E5A), context.l10n.edit),
                 _popupItem('delete', Icons.delete_rounded,
-                    Colors.red[600]!, 'Delete'),
+                    Colors.red[600]!, context.l10n.delete),
               ],
             ],
           ),
@@ -916,23 +919,23 @@ class _ReportsScreenState extends State<ReportsScreen>
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
-            title: Text('Delete Report',
+            title: Text(context.l10n.deleteReport,
                 style:
                     TextStyle(fontWeight: FontWeight.w600)),
             content: Text(
-                'Are you sure you want to delete this safety report?',
+                context.l10n.deleteSafetyReportConfirm,
                 style: TextStyle()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel', style: TextStyle()),
+                child: Text(context.l10n.cancel, style: TextStyle()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white),
-                child: Text('Delete', style: TextStyle()),
+                child: Text(context.l10n.delete, style: TextStyle()),
               ),
             ],
           ),
@@ -963,7 +966,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               '✅ ReportsScreen: Safety form report $docId deleted');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Report deleted successfully',
+              content: Text(context.l10n.reportDeleted,
                   style: TextStyle()),
               backgroundColor: Colors.green,
             ));
@@ -1004,7 +1007,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           stackTrace: st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error opening report: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotOpenReport),
               style: TextStyle()),
           backgroundColor: Colors.red,
         ));
@@ -1035,7 +1038,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: Colors.white)),
           const SizedBox(width: 14),
-          Text('Preparing PDF…', style: TextStyle()),
+          Text(context.l10n.preparingPdf, style: TextStyle()),
         ]),
         duration: const Duration(seconds: 30),
       ));
@@ -1067,9 +1070,10 @@ class _ReportsScreenState extends State<ReportsScreen>
       // ── Path 2: generate PDF on the fly ───────────────────────
       final pdf = pw.Document();
       final navyColor = PdfColor.fromHex('#0A2E5A');
+      final l = context.l10n;
       final meetingTitle = safetyData.type == 'SafetyMonthly'
-          ? 'MONTHLY SAFETY MEETING REPORT'
-          : 'WEEKLY SAFETY MEETING REPORT';
+          ? l.pdfMonthlySafetyTitle
+          : l.pdfWeeklySafetyTitle;
 
       pdf.addPage(
         pw.MultiPage(
@@ -1085,13 +1089,13 @@ class _ReportsScreenState extends State<ReportsScreen>
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                    '© JV Almacis Site Management System - Safety Report',
+                    l10nNow.pdfSafetyFooter,
                     style: pw.TextStyle(
                         font: pw.Font.helvetica(),
                         fontSize: 7,
                         color: PdfColors.grey600)),
                 pw.Text(
-                    'Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                    l10nNow.pdfPageOf(ctx.pageNumber, ctx.pagesCount),
                     style: pw.TextStyle(
                         font: pw.Font.helvetica(),
                         fontSize: 7,
@@ -1136,17 +1140,17 @@ class _ReportsScreenState extends State<ReportsScreen>
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  _pdfLabelValue('Date',
-                      DateFormat('dd MMM yyyy').format(safetyData.reportDate)),
+                  _pdfLabelValue(l.dateLabel,
+                      DateFormat.yMMMd().format(safetyData.reportDate)),
                   if (safetyData.contractNumber.isNotEmpty)
                     _pdfLabelValue(
-                        'Contract No.', safetyData.contractNumber),
+                        l.contractNo, safetyData.contractNumber),
                   if (safetyData.building.isNotEmpty)
                     _pdfLabelValue(
-                        'Building/Area', safetyData.building),
+                        l.buildingArea, safetyData.building),
                   pw.SizedBox(height: 8),
                   // Safety checklist
-                  pw.Text('Safety Checklist',
+                  pw.Text(l.safetyChecklist,
                       style: pw.TextStyle(
                           font: pw.Font.helveticaBold(),
                           fontSize: 10)),
@@ -1172,7 +1176,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                   pw.SizedBox(height: 8),
                   // JV Alma attendance
                   if (safetyData.jvAlmaRows.isNotEmpty) ...[
-                    pw.Text('JV Alma CIS Attendance',
+                    pw.Text(l.jvAlmaAttendance,
                         style: pw.TextStyle(
                             font: pw.Font.helveticaBold(),
                             fontSize: 10)),
@@ -1192,7 +1196,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                   ],
                   // Sub-contractor attendance (weekly only)
                   if (safetyData.subContractorRows.isNotEmpty) ...[
-                    pw.Text('Sub-Contractor Attendance',
+                    pw.Text(l.subContractorAttendance,
                         style: pw.TextStyle(
                             font: pw.Font.helveticaBold(),
                             fontSize: 10)),
@@ -1227,7 +1231,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error generating PDF: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotCreatePdf),
               style: TextStyle()),
           backgroundColor: Colors.red,
         ));
@@ -1274,7 +1278,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       widget.logger.i('✅ ReportsScreen: Form report $docId deleted');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Report deleted successfully',
+          content: Text(context.l10n.reportDeleted,
               style: TextStyle()),
           backgroundColor: Colors.green,
         ));
@@ -1341,7 +1345,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
-                'Daily Report',
+                context.l10n.rptDailyReport,
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -1354,9 +1358,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F0FB),
                 child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
               ),
-              title: Text('Fill Daily Report Form', style: TextStyle()),
+              title: Text(context.l10n.fillDailyForm, style: TextStyle()),
               subtitle: Text(
-                'Complete the structured form within the app',
+                context.l10n.completeFormInApp,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
@@ -1379,9 +1383,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
-              title: Text('Upload Daily Report File', style: TextStyle()),
+              title: Text(context.l10n.uploadDailyFile, style: TextStyle()),
               subtitle: Text(
-                'PDF, DOCX, PPTX, or TXT file from your device',
+                context.l10n.fileTypesFromDevice,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
@@ -1419,7 +1423,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
-                'Weekly Report',
+                context.l10n.rptWeeklyReport,
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -1432,9 +1436,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F0FB),
                 child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
               ),
-              title: Text('Fill Weekly Report Form', style: TextStyle()),
+              title: Text(context.l10n.fillWeeklyForm, style: TextStyle()),
               subtitle: Text(
-                'Complete the structured form within the app',
+                context.l10n.completeFormInApp,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
@@ -1457,9 +1461,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
-              title: Text('Upload Weekly Report File', style: TextStyle()),
+              title: Text(context.l10n.uploadWeeklyFile, style: TextStyle()),
               subtitle: Text(
-                'PDF, DOCX, PPTX, or TXT file from your device',
+                context.l10n.fileTypesFromDevice,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
@@ -1497,7 +1501,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
-                'Monthly Report',
+                context.l10n.rptMonthlyReport,
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -1510,9 +1514,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F0FB),
                 child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
               ),
-              title: Text('Fill Monthly Report Form', style: TextStyle()),
+              title: Text(context.l10n.fillMonthlyForm, style: TextStyle()),
               subtitle: Text(
-                'Complete the structured form within the app',
+                context.l10n.completeFormInApp,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
@@ -1535,9 +1539,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
-              title: Text('Upload Monthly Report File', style: TextStyle()),
+              title: Text(context.l10n.uploadMonthlyFile, style: TextStyle()),
               subtitle: Text(
-                'PDF, DOCX, PPTX, or TXT file from your device',
+                context.l10n.fileTypesFromDevice,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               onTap: () {
@@ -1574,7 +1578,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
-                'Safety Meeting Report',
+                context.l10n.rptSafetyReport,
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -1589,8 +1593,8 @@ class _ReportsScreenState extends State<ReportsScreen>
                     Icon(Icons.edit_note, color: Color(0xFF0A2E5A)),
               ),
               title:
-                  Text('Fill Safety Form', style: TextStyle()),
-              subtitle: Text('Complete the form within the app',
+                  Text(context.l10n.fillSafetyForm, style: TextStyle()),
+              subtitle: Text(context.l10n.completeFormInApp,
                   style: TextStyle(
                       fontSize: 12, color: Colors.grey[600])),
               onTap: () {
@@ -1613,9 +1617,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                 backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(Icons.upload_file, color: Colors.green),
               ),
-              title: Text('Upload Safety File',
+              title: Text(context.l10n.uploadSafetyFile,
                   style: TextStyle()),
-              subtitle: Text('PDF, DOCX, PPTX, or TXT file',
+              subtitle: Text(context.l10n.fileTypesFromDevice,
                   style: TextStyle(
                       fontSize: 12, color: Colors.grey[600])),
               onTap: () {
@@ -1655,10 +1659,11 @@ class _ReportsScreenState extends State<ReportsScreen>
           .i('📤 ReportsScreen: File selected: $originalFileName');
 
       // 2. Ask for title (pre-filled)
+      if (!mounted) return;
       final title = await _showTextInputDialog(
-        dialogTitle: 'Enter Report Title',
-        contentText: 'Enter a title for this report:',
-        hintText: 'Enter report title',
+        dialogTitle: context.l10n.enterReportTitle,
+        contentText: context.l10n.enterReportTitleBody,
+        hintText: context.l10n.enterReportTitle,
         prefill: originalFileName.split('.').first,
         fileName: originalFileName,
         showFileName: true,
@@ -1681,14 +1686,14 @@ class _ReportsScreenState extends State<ReportsScreen>
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
-            title: Text('Uploading Report',
+            title: Text(context.l10n.uploadingReport,
                 style: TextStyle(fontWeight: FontWeight.w600)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
-                Text('Uploading $finalFileName...',
+                Text(context.l10n.uploadingFile(finalFileName),
                     style: TextStyle()),
               ],
             ),
@@ -1728,7 +1733,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         Navigator.pop(context); // close progress dialog
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Report uploaded successfully',
+          content: Text(context.l10n.reportUploaded,
               style: TextStyle()),
           backgroundColor: Colors.green,
         ));
@@ -1739,7 +1744,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         if (Navigator.canPop(context)) Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error uploading report: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotUploadReport),
               style: TextStyle()),
           backgroundColor: Colors.red,
         ));
@@ -1797,7 +1802,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             ),
             if (showFileName && fileName != null) ...[
               const SizedBox(height: 8),
-              Text('File: $fileName',
+              Text(context.l10n.fileLabel(fileName),
                   style: TextStyle(
                       fontSize: 12, color: Colors.grey[600])),
             ],
@@ -1806,7 +1811,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
+            child: Text(context.l10n.cancel,
                 style:
                     TextStyle(color: const Color(0xFF800000))),
           ),
@@ -1816,7 +1821,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                 Navigator.pop(context, controller.text.trim());
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Title cannot be empty',
+                  content: Text(context.l10n.titleCannotBeEmpty,
                       style: TextStyle()),
                 ));
               }
@@ -1827,7 +1832,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text('Confirm', style: TextStyle()),
+            child: Text(context.l10n.confirm, style: TextStyle()),
           ),
         ],
       ),
@@ -1859,23 +1864,23 @@ class _ReportsScreenState extends State<ReportsScreen>
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
-            title: Text('Delete Report',
+            title: Text(context.l10n.deleteReport,
                 style: TextStyle(
                     fontWeight: FontWeight.w600)),
             content: Text(
-                'Are you sure you want to delete "${report.name}"?',
+                context.l10n.deleteNamedConfirm(report.name),
                 style: TextStyle()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel', style: TextStyle()),
+                child: Text(context.l10n.cancel, style: TextStyle()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white),
-                child: Text('Delete', style: TextStyle()),
+                child: Text(context.l10n.delete, style: TextStyle()),
               ),
             ],
           ),
@@ -1923,7 +1928,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child:
-                        Text('Close', style: TextStyle()),
+                        Text(context.l10n.close, style: TextStyle()),
                   ),
                 ],
               ),
@@ -1937,7 +1942,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                 mode: LaunchMode.externalApplication);
           } else if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Could not open document viewer',
+              content: Text(context.l10n.couldNotOpenViewer,
                   style: TextStyle()),
             ));
           }
@@ -1945,10 +1950,10 @@ class _ReportsScreenState extends State<ReportsScreen>
           final result = await OpenFile.open(localPath);
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Could not open file: ${result.message}',
+              content: Text(context.l10n.couldNotOpenThisFile,
                   style: TextStyle()),
               action: SnackBarAction(
-                label: 'Download instead',
+                label: context.l10n.downloadInstead,
                 onPressed: () => _downloadDocument(url, name),
               ),
             ));
@@ -1956,7 +1961,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('No internet and no cache available',
+          content: Text(context.l10n.offlineNoCopy,
               style: TextStyle()),
         ));
       }
@@ -1965,7 +1970,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content:
-              Text('Error viewing document: $e', style: TextStyle()),
+              Text(friendlyError(e, action: context.l10n.couldNotOpenDocument), style: TextStyle()),
         ));
       }
     }
@@ -1985,40 +1990,12 @@ class _ReportsScreenState extends State<ReportsScreen>
 
       if (!mounted) return;
       if (result != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-            'Downloaded successfully!\nLocation: $result',
-            style: TextStyle(),
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'Open',
-            textColor: Colors.white,
-            onPressed: () async => await OpenFile.open(result),
-          ),
-        ));
+        showDownloadSuccess(context, result);
       }
     } catch (e) {
       widget.logger.e('❌ Error downloading', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-            e.toString().contains('permission')
-                ? 'Storage permission denied. Please enable it in Settings.'
-                : 'Error downloading: $e',
-            style: TextStyle(),
-          ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-          action: e.toString().contains('permission')
-              ? SnackBarAction(
-                  label: 'Settings',
-                  textColor: Colors.white,
-                  onPressed: () => openAppSettings(),
-                )
-              : null,
-        ));
+        showDownloadError(context, e);
       }
     }
   }
@@ -2039,7 +2016,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           .delete();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Document deleted successfully',
+          content: Text(context.l10n.documentDeleted,
               style: TextStyle()),
         ));
       }
@@ -2048,7 +2025,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error deleting: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotDeleteDocument),
               style: TextStyle()),
         ));
       }
@@ -2071,7 +2048,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Close', style: TextStyle()),
+              child: Text(context.l10n.close, style: TextStyle()),
             ),
           ],
         ),
@@ -2080,34 +2057,35 @@ class _ReportsScreenState extends State<ReportsScreen>
   }
 
   String _generateSafetyReportContent(ReportModel report) {
+    final l = l10nNow;
     final buffer = StringBuffer();
     buffer.writeln(report.type == 'SafetyWeekly'
-        ? 'Weekly Safety Meeting Form'
-        : 'Monthly Safety Meeting Form');
-    buffer.writeln('Date: ${_dateFormat.format(report.uploadedAt)}');
-    buffer.writeln('\nItems:');
+        ? l.weeklySafetyMeetingForm
+        : l.monthlySafetyMeetingForm);
+    buffer.writeln(l.dateColon(_dateFormat.format(report.uploadedAt)));
+    buffer.writeln('\n${l.safetyTextItems}');
     for (var item in (report.safetyFormData!['items']
             as Map<String, dynamic>)
         .entries) {
       buffer.writeln('| ${item.key} | ${item.value ? 'X' : ' '} |');
     }
-    buffer.writeln('\nObservations and Comments:');
+    buffer.writeln('\n${l.safetyTextObservations}');
     buffer.writeln(report.safetyFormData!['observations'] ?? '');
-    buffer.writeln('\nActions Taken:');
+    buffer.writeln('\n${l.safetyTextActions}');
     buffer.writeln(report.safetyFormData!['actions'] ?? '');
-    buffer.writeln('\nJV Alma CIS Attendance:');
+    buffer.writeln('\n${l.jvAlmaAttendance}:');
     for (var attendee
         in (report.safetyFormData!['jvAlmaAttendance'] ?? []) as List) {
       buffer.writeln(
-          '- Name: ${attendee['name']}, Title: ${attendee['title']}, Signature: ${attendee['signature']}');
+          l.safetyTextAttendee('${attendee['name']}', '${attendee['title']}', '${attendee['signature']}'));
     }
     if (report.type == 'SafetyWeekly') {
-      buffer.writeln('\nSub-Contractor Attendance:');
+      buffer.writeln('\n${l.subContractorAttendance}:');
       for (var attendee in (report.safetyFormData![
               'subContractorAttendance'] ??
           []) as List) {
         buffer.writeln(
-            '- Company: ${attendee['companyName']}, Name: ${attendee['name']}, Title: ${attendee['title']}, Signature: ${attendee['signature']}');
+            l.safetyTextSubAttendee('${attendee['companyName']}', '${attendee['name']}', '${attendee['title']}', '${attendee['signature']}'));
       }
     }
     return buffer.toString();
@@ -2122,7 +2100,7 @@ class _ReportsScreenState extends State<ReportsScreen>
     if (report.safetyFormData == null && report.url == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('No form data or file available for download.',
+          content: Text(context.l10n.noFormDataToDownload,
               style: TextStyle()),
         ));
       }
@@ -2139,7 +2117,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: Colors.white)),
           const SizedBox(width: 14),
-          Text('Preparing PDF…', style: TextStyle()),
+          Text(context.l10n.preparingPdf, style: TextStyle()),
         ]),
         duration: const Duration(seconds: 30),
       ));
@@ -2186,12 +2164,12 @@ class _ReportsScreenState extends State<ReportsScreen>
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                    '© JV Almacis Site Management System - Safety Report',
+                    l10nNow.pdfSafetyFooter,
                     style: pw.TextStyle(
                         font: pw.Font.helvetica(),
                         fontSize: 7,
                         color: PdfColors.grey600)),
-                pw.Text('Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                pw.Text(l10nNow.pdfPageOf(ctx.pageNumber, ctx.pagesCount),
                     style: pw.TextStyle(
                         font: pw.Font.helvetica(),
                         fontSize: 7,
@@ -2217,8 +2195,8 @@ class _ReportsScreenState extends State<ReportsScreen>
                   pw.SizedBox(height: 6),
                   pw.Text(
                     report.type == 'SafetyWeekly'
-                        ? 'WEEKLY SAFETY MEETING REPORT'
-                        : 'MONTHLY SAFETY MEETING REPORT',
+                        ? l10nNow.pdfWeeklySafetyTitle
+                        : l10nNow.pdfMonthlySafetyTitle,
                     style: pw.TextStyle(
                         font: pw.Font.helveticaBold(),
                         fontSize: 10,
@@ -2260,7 +2238,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error generating PDF: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotCreatePdf),
               style: TextStyle()),
           backgroundColor: Colors.red,
         ));
@@ -2312,11 +2290,11 @@ class _ReportsScreenState extends State<ReportsScreen>
       await OpenFile.open(filePath);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('PDF saved: $fileName', style: TextStyle()),
+        content: Text(context.l10n.pdfSaved(fileName), style: TextStyle()),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 4),
         action: SnackBarAction(
-          label: 'Open',
+          label: context.l10n.open,
           textColor: Colors.white,
           onPressed: () async => await OpenFile.open(filePath),
         ),
@@ -2387,4 +2365,32 @@ class _ReportsScreenState extends State<ReportsScreen>
         return Colors.grey[600]!;
     }
   }
+}
+
+/// Tab / chip name for a stored report type ('Daily', 'SafetyWeekly', …).
+String reportTabLabel(String type) {
+  final l = l10nNow;
+  return switch (type) {
+    'Daily' => l.rptDaily,
+    'Weekly' => l.rptWeekly,
+    'Monthly' => l.rptMonthly,
+    'Safety' || 'SafetyWeekly' || 'SafetyMonthly' => l.rptSafetyMeetings,
+    'Quality' => l.rptQuality,
+    _ => type,
+  };
+}
+
+/// Singular report name for a stored report type ("Daily report", …).
+String reportTypeName(String type) {
+  final l = l10nNow;
+  return switch (type) {
+    'Daily' => l.rptDailyReport,
+    'Weekly' => l.rptWeeklyReport,
+    'Monthly' => l.rptMonthlyReport,
+    'SafetyWeekly' => l.rptWeeklySafetyMeeting,
+    'SafetyMonthly' => l.rptMonthlySafetyMeeting,
+    'Safety' => l.rptSafetyReport,
+    'Quality' => l.rptQualityReport,
+    _ => type,
+  };
 }

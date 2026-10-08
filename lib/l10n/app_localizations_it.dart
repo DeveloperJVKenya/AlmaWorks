@@ -6042,4 +6042,936 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get noTasksDefinedHint =>
       'Usa \"Importa Excel\" per caricare da un file,\noppure \"Aggiungi riga\" per creare attività a mano.';
+
+  @override
+  String get reports => 'Report';
+
+  @override
+  String get rptDaily => 'Giornalieri';
+
+  @override
+  String get rptWeekly => 'Settimanali';
+
+  @override
+  String get rptMonthly => 'Mensili';
+
+  @override
+  String get rptSafetyMeetings => 'Riunioni sulla sicurezza';
+
+  @override
+  String get rptQuality => 'Qualità';
+
+  @override
+  String get rptDailyReport => 'Report giornaliero';
+
+  @override
+  String get rptWeeklyReport => 'Report settimanale';
+
+  @override
+  String get rptMonthlyReport => 'Report mensile';
+
+  @override
+  String get rptSafetyReport => 'Report riunione sicurezza';
+
+  @override
+  String get rptQualityReport => 'Report qualità';
+
+  @override
+  String get rptWeeklySafetyMeeting => 'Riunione settimanale sulla sicurezza';
+
+  @override
+  String get rptMonthlySafetyMeeting => 'Riunione mensile sulla sicurezza';
+
+  @override
+  String typeReports(String type) {
+    return 'Report: $type';
+  }
+
+  @override
+  String get couldNotLoadReports => 'Impossibile caricare i report';
+
+  @override
+  String noTypeReportsYet(String type) {
+    return 'Nessun report ancora: $type';
+  }
+
+  @override
+  String get tapUploadToAdd =>
+      'Tocca il pulsante di caricamento per aggiungerne uno';
+
+  @override
+  String get viewFile => 'Vedi file';
+
+  @override
+  String get viewEditForm => 'Vedi / modifica modulo';
+
+  @override
+  String get downloadPdf => 'Scarica PDF';
+
+  @override
+  String reportTitleDated(String type, String date) {
+    return '$type – $date';
+  }
+
+  @override
+  String savedColon(String date) {
+    return 'Salvato: $date';
+  }
+
+  @override
+  String typeForm(String type) {
+    return 'Modulo: $type';
+  }
+
+  @override
+  String get safetyForm => 'Modulo sicurezza';
+
+  @override
+  String get noInAppViewer =>
+      'Questo tipo di report non si può ancora aprire nell\'app.';
+
+  @override
+  String get couldNotOpenReport => 'Impossibile aprire il report.';
+
+  @override
+  String get deleteReport => 'Elimina report';
+
+  @override
+  String get deleteSafetyReportConfirm =>
+      'Vuoi davvero eliminare questo report sulla sicurezza?';
+
+  @override
+  String get reportDeleted => 'Report eliminato';
+
+  @override
+  String get preparingPdf => 'Preparazione PDF…';
+
+  @override
+  String get pdfWeeklySafetyTitle =>
+      'REPORT RIUNIONE SETTIMANALE SULLA SICUREZZA';
+
+  @override
+  String get pdfMonthlySafetyTitle => 'REPORT RIUNIONE MENSILE SULLA SICUREZZA';
+
+  @override
+  String get pdfSafetyFooter =>
+      '© JV Almacis Site Management System - Report sicurezza';
+
+  @override
+  String pdfPageOf(int page, int total) {
+    return 'Pagina $page di $total';
+  }
+
+  @override
+  String get dateLabel => 'Data';
+
+  @override
+  String get contractNo => 'N. contratto';
+
+  @override
+  String get buildingArea => 'Edificio/area';
+
+  @override
+  String get safetyChecklist => 'Lista di controllo sicurezza';
+
+  @override
+  String get jvAlmaAttendance => 'Presenze JV Alma CIS';
+
+  @override
+  String get subContractorAttendance => 'Presenze subappaltatori';
+
+  @override
+  String get couldNotCreatePdf => 'Impossibile creare il PDF.';
+
+  @override
+  String get fillDailyForm => 'Compila il report giornaliero';
+
+  @override
+  String get fillWeeklyForm => 'Compila il report settimanale';
+
+  @override
+  String get fillMonthlyForm => 'Compila il report mensile';
+
+  @override
+  String get fillSafetyForm => 'Compila il modulo sicurezza';
+
+  @override
+  String get completeFormInApp => 'Compila il modulo strutturato nell\'app';
+
+  @override
+  String get uploadDailyFile => 'Carica file report giornaliero';
+
+  @override
+  String get uploadWeeklyFile => 'Carica file report settimanale';
+
+  @override
+  String get uploadMonthlyFile => 'Carica file report mensile';
+
+  @override
+  String get uploadSafetyFile => 'Carica file sicurezza';
+
+  @override
+  String get fileTypesFromDevice =>
+      'File PDF, DOCX, PPTX o TXT dal dispositivo';
+
+  @override
+  String get enterReportTitle => 'Inserisci il titolo del report';
+
+  @override
+  String get enterReportTitleBody => 'Inserisci un titolo per questo report:';
+
+  @override
+  String get uploadingReport => 'Caricamento report';
+
+  @override
+  String get reportUploaded => 'Report caricato';
+
+  @override
+  String get couldNotUploadReport => 'Impossibile caricare il report.';
+
+  @override
+  String get titleCannotBeEmpty => 'Il titolo non può essere vuoto';
+
+  @override
+  String get safetyTextItems => 'Voci:';
+
+  @override
+  String get safetyTextObservations => 'Osservazioni e commenti:';
+
+  @override
+  String get safetyTextActions => 'Azioni intraprese:';
+
+  @override
+  String safetyTextAttendee(String name, String title, String signature) {
+    return '- Nome: $name, Qualifica: $title, Firma: $signature';
+  }
+
+  @override
+  String safetyTextSubAttendee(
+    String company,
+    String name,
+    String title,
+    String signature,
+  ) {
+    return '- Azienda: $company, Nome: $name, Qualifica: $title, Firma: $signature';
+  }
+
+  @override
+  String get weeklySafetyMeetingForm =>
+      'Modulo riunione settimanale sulla sicurezza';
+
+  @override
+  String get monthlySafetyMeetingForm =>
+      'Modulo riunione mensile sulla sicurezza';
+
+  @override
+  String dateColon(String date) {
+    return 'Data: $date';
+  }
+
+  @override
+  String get noFormDataToDownload =>
+      'Non ci sono moduli o file da scaricare per questo report.';
+
+  @override
+  String pdfSaved(String file) {
+    return 'PDF salvato: $file';
+  }
+
+  @override
+  String get wxCalmWarm => 'Calmo e mite';
+
+  @override
+  String get wxChillyCold => 'Fresco e freddo';
+
+  @override
+  String get wxHot => 'Caldo';
+
+  @override
+  String get wxWindy => 'Ventoso';
+
+  @override
+  String get wxRainy => 'Piovoso';
+
+  @override
+  String get rfWorkingHoursOnly =>
+      'Scegli un orario tra le 06:00 e le 19:00 (orario di lavoro).';
+
+  @override
+  String get rfStopAfterStart =>
+      'L\'ora di fine deve essere successiva all\'ora di inizio.';
+
+  @override
+  String get rfStartBeforeStop =>
+      'L\'ora di inizio deve essere precedente all\'ora di fine.';
+
+  @override
+  String get dailyReportSaved => 'Report giornaliero salvato.';
+
+  @override
+  String get couldNotSaveReport => 'Impossibile salvare il report.';
+
+  @override
+  String pdfSavedToDownloads(String file) {
+    return 'PDF salvato in Download: $file';
+  }
+
+  @override
+  String get pdfDailyFooter =>
+      '© JV Almacis Site Management System Report giornaliero';
+
+  @override
+  String get rfDailyReportCaps => 'REPORT GIORNALIERO';
+
+  @override
+  String contractNoValue(String number) {
+    return 'N. contratto: $number';
+  }
+
+  @override
+  String get contractNoLabel => 'N. contratto: ';
+
+  @override
+  String get rfDateCaps => 'DATA';
+
+  @override
+  String get rfStartTimeCaps => 'ORA INIZIO';
+
+  @override
+  String get rfStopTimeCaps => 'ORA FINE';
+
+  @override
+  String get rfWeatherCaps => 'METEO';
+
+  @override
+  String get rfBuildingCaps => 'EDIFICIO';
+
+  @override
+  String get rfVisitorsCaps => 'IMPRESA PRINCIPALE/VISITATORI';
+
+  @override
+  String get rfSubContractorCaps => 'SUBAPPALTATORE';
+
+  @override
+  String get rfPersonnelCaps => 'PERSONALE E MEZZI';
+
+  @override
+  String get rfActivitiesCaps => 'ATTIVITÀ';
+
+  @override
+  String get rfRemarksCaps => 'NOTE';
+
+  @override
+  String get rfAttachedImagesCaps => 'IMMAGINI ALLEGATE';
+
+  @override
+  String get newDailyReport => 'Nuovo report giornaliero';
+
+  @override
+  String get newDailyReportBody =>
+      'Il modulo attuale è stato salvato. Iniziare un nuovo report giornaliero?';
+
+  @override
+  String get newForm => 'Nuovo modulo';
+
+  @override
+  String get viewSuffix => '  (sola lettura)';
+
+  @override
+  String projectDailyReport(String project) {
+    return '$project — Report giornaliero';
+  }
+
+  @override
+  String get rfVisitorsHint => 'Inserisci i nomi dei visitatori…';
+
+  @override
+  String get rfPersonnelHint => 'Inserisci i dettagli di personale e mezzi…';
+
+  @override
+  String get rfActivitiesHint =>
+      'Descrivi le attività di cantiere della giornata…';
+
+  @override
+  String get rfRemarksHint => 'Aggiungi note od osservazioni…';
+
+  @override
+  String get contractNoHint => 'es. CN-2024-001';
+
+  @override
+  String get tapToSet => 'Tocca per impostare';
+
+  @override
+  String get selectEllipsis => 'Seleziona…';
+
+  @override
+  String get buildingHint => 'Numero, codice o nome dell\'edificio…';
+
+  @override
+  String get rfSectionError =>
+      'Impossibile mostrare questa sezione. Chiudi e riapri il report.';
+
+  @override
+  String get noSubcontractorsOnProject =>
+      'Nessun subappaltatore è stato aggiunto al progetto.';
+
+  @override
+  String get rfAddSubContractorCaps => 'AGGIUNGI SUBAPPALTATORE';
+
+  @override
+  String get selectSubContractor => 'Seleziona subappaltatore…';
+
+  @override
+  String get allSubcontractorsSelected =>
+      'Tutti i subappaltatori sono stati selezionati.';
+
+  @override
+  String get rfSubContractorsCaps => 'SUBAPPALTATORI';
+
+  @override
+  String get rfSelectedSubContractorsCaps => 'SUBAPPALTATORI SELEZIONATI';
+
+  @override
+  String get noSubcontractorSelected => 'Nessun subappaltatore selezionato.';
+
+  @override
+  String imagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count immagini',
+      one: '1 immagine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get attachImages => 'Allega immagini';
+
+  @override
+  String get addMoreImages => 'Aggiungi altre immagini';
+
+  @override
+  String get saveReport => 'Salva report';
+
+  @override
+  String get newFormPlus => '+ Nuovo modulo';
+
+  @override
+  String get weeklyReportSaved => 'Report settimanale salvato.';
+
+  @override
+  String get colActivity => 'Attività';
+
+  @override
+  String get colProgress => 'Avanzamento';
+
+  @override
+  String get colComment => 'Commento';
+
+  @override
+  String get pdfWeeklyFooter =>
+      '© JV Almacis Site Management System - Report settimanale';
+
+  @override
+  String get rfWeeklyReportCaps => 'REPORT SETTIMANALE';
+
+  @override
+  String get rfWeekStartCaps => 'INIZIO SETTIMANA';
+
+  @override
+  String get rfWeekEndCaps => 'FINE SETTIMANA';
+
+  @override
+  String get rfActivitiesTemplateCaps => 'MODELLO ATTIVITÀ';
+
+  @override
+  String get rfSlopedRoofCaps => 'TETTO INCLINATO';
+
+  @override
+  String get rfNotesCaps => 'NOTE';
+
+  @override
+  String get rfPercentWorkDoneCaps => 'PERCENTUALE DI LAVORO SVOLTO';
+
+  @override
+  String get newWeeklyReport => 'Nuovo report settimanale';
+
+  @override
+  String get newWeeklyReportBody =>
+      'Il modulo attuale è stato salvato. Iniziare un nuovo report settimanale?';
+
+  @override
+  String projectWeeklyReport(String project) {
+    return '$project — Report settimanale';
+  }
+
+  @override
+  String get additionalNotesHint => 'Inserisci eventuali note aggiuntive…';
+
+  @override
+  String get enterANumber => 'Inserisci un numero';
+
+  @override
+  String get editColumnHeaders => 'Modifica intestazioni colonne';
+
+  @override
+  String columnN(int n) {
+    return 'Colonna $n';
+  }
+
+  @override
+  String get activityTable => 'Tabella attività';
+
+  @override
+  String get hideRowNumbers => 'Nascondi numeri di riga';
+
+  @override
+  String get showRowNumbers => 'Mostra numeri di riga';
+
+  @override
+  String get headersButton => 'Intestazioni';
+
+  @override
+  String get removeLastRow => 'Rimuovi ultima riga';
+
+  @override
+  String get headersTip =>
+      'Tocca \"Intestazioni\" per rinominare le colonne • Il testo va a capo automaticamente';
+
+  @override
+  String get cropSignature => 'Ritaglia firma';
+
+  @override
+  String get useAction => 'Usa';
+
+  @override
+  String get selectSignaturePhoto => 'Seleziona foto della firma';
+
+  @override
+  String get chooseFromGallery => 'Scegli dalla galleria';
+
+  @override
+  String get takeAPhoto => 'Scatta una foto';
+
+  @override
+  String get couldNotProcessPhoto => 'Impossibile elaborare la foto.';
+
+  @override
+  String get couldNotReadPdf => 'Impossibile leggere il file PDF selezionato.';
+
+  @override
+  String get couldNotShowPdf => 'Impossibile mostrare il PDF.';
+
+  @override
+  String get selectAPage => 'Seleziona una pagina';
+
+  @override
+  String get tapPageWithSignature => 'Tocca la pagina che contiene la firma';
+
+  @override
+  String pageN(int n) {
+    return 'Pagina $n';
+  }
+
+  @override
+  String get monthlyReportSaved => 'Report mensile salvato.';
+
+  @override
+  String get newMonthlyReport => 'Nuovo report mensile';
+
+  @override
+  String get newMonthlyReportBody =>
+      'Il modulo attuale è stato salvato. Iniziare un nuovo report mensile?';
+
+  @override
+  String get nameField => 'Nome';
+
+  @override
+  String get organisationField => 'Organizzazione';
+
+  @override
+  String get signatureColon => 'Firma:';
+
+  @override
+  String get pdfMonthlyFooter =>
+      '© JV Almacis Site Management System - Report mensile';
+
+  @override
+  String get rfMonthlyReportCaps => 'REPORT MENSILE';
+
+  @override
+  String get rfMonthStartCaps => 'INIZIO MESE';
+
+  @override
+  String get rfMonthEndCaps => 'FINE MESE';
+
+  @override
+  String get rfSiteActivitiesCaps => 'ATTIVITÀ DI CANTIERE';
+
+  @override
+  String get rfQualityReportCaps => 'REPORT QUALITÀ';
+
+  @override
+  String get rfSafetyReportCaps => 'REPORT SICUREZZA';
+
+  @override
+  String get rfPlannedActivitiesForCaps => 'ATTIVITÀ PREVISTE PER';
+
+  @override
+  String get rfPlannedActivitiesCaps => 'ATTIVITÀ PREVISTE';
+
+  @override
+  String get rfSignaturesCaps => 'FIRME';
+
+  @override
+  String rfSigneeNCaps(int n) {
+    return 'FIRMATARIO $n';
+  }
+
+  @override
+  String projectMonthlyReport(String project) {
+    return '$project — Report mensile';
+  }
+
+  @override
+  String get siteActivitiesHint => 'Descrivi le attività di cantiere del mese…';
+
+  @override
+  String get qualityHint => 'Inserisci osservazioni e rilievi sulla qualità…';
+
+  @override
+  String get safetyHint => 'Registra incidenti e osservazioni sulla sicurezza…';
+
+  @override
+  String imagesWithCount(int count) {
+    return 'Immagini ($count)';
+  }
+
+  @override
+  String plannedActivitiesHint(String month) {
+    return 'Descrivi le attività previste per $month…';
+  }
+
+  @override
+  String get insertTable => 'Inserisci tabella';
+
+  @override
+  String get tapToInsertTable =>
+      'Tocca ⊞ nella barra degli strumenti per inserire una tabella';
+
+  @override
+  String attachWithCount(int count) {
+    return 'Allega ($count)';
+  }
+
+  @override
+  String get attach => 'Allega';
+
+  @override
+  String get addForm => 'Aggiungi modulo';
+
+  @override
+  String signeeN(int n) {
+    return 'Firmatario $n';
+  }
+
+  @override
+  String get signed => 'Firmato';
+
+  @override
+  String get fullNameHint => 'Nome e cognome…';
+
+  @override
+  String get organisationHint => 'Azienda / organizzazione…';
+
+  @override
+  String get signature => 'Firma';
+
+  @override
+  String get sigDraw => 'Disegna';
+
+  @override
+  String get sigPhoto => 'Foto';
+
+  @override
+  String get sigFromPdf => 'Da PDF';
+
+  @override
+  String get replaceAndCrop => 'Sostituisci e ritaglia';
+
+  @override
+  String get pickPhotoAndCrop => 'Scegli foto e ritaglia';
+
+  @override
+  String get pdfSignatureSteps =>
+      'Scegli un PDF → seleziona la pagina → trascina per ritagliare la firma';
+
+  @override
+  String get replaceFromPdf => 'Sostituisci da PDF';
+
+  @override
+  String get pickPdfAndCrop => 'Scegli PDF e ritaglia';
+
+  @override
+  String get couldNotLoadSignature => 'Impossibile caricare la firma';
+
+  @override
+  String get noSignatureYet => 'Ancora nessuna firma';
+
+  @override
+  String get noSignatureProvided => 'Nessuna firma fornita';
+
+  @override
+  String get addNewColumn => 'Aggiungi nuova colonna';
+
+  @override
+  String get columnName => 'Nome colonna';
+
+  @override
+  String get columnNameHint => 'es. Stato';
+
+  @override
+  String get addColumn => 'Aggiungi colonna';
+
+  @override
+  String get maxColumnsReached => 'Raggiunto il massimo di 10 colonne';
+
+  @override
+  String get addColShort => '+ Col';
+
+  @override
+  String get deleteTable => 'Elimina tabella';
+
+  @override
+  String deleteTableConfirm(String title) {
+    return 'Eliminare \"$title\"?';
+  }
+
+  @override
+  String get tableTip =>
+      '\"Intestazioni\" per rinominare · \"+ Col\" per aggiungere una colonna · il testo va a capo automaticamente';
+
+  @override
+  String get tableDefault => 'Tabella';
+
+  @override
+  String get tableTitle => 'Titolo tabella';
+
+  @override
+  String get tableTitleHint => 'es. Materiali utilizzati';
+
+  @override
+  String get columns => 'Colonne';
+
+  @override
+  String headerN(int n) {
+    return 'Intestazione $n';
+  }
+
+  @override
+  String get initialRows => 'Righe iniziali';
+
+  @override
+  String get showRowNumbersShort => 'Mostra numeri di riga';
+
+  @override
+  String get insert => 'Inserisci';
+
+  @override
+  String get deviceStylus => '✒ Penna';
+
+  @override
+  String get deviceTouch => '👆 Tocco';
+
+  @override
+  String get deviceMouse => '🖱 Mouse';
+
+  @override
+  String get signHere => 'Firma qui';
+
+  @override
+  String get signInputsSupported => 'Dito · Penna · Mouse — tutti supportati';
+
+  @override
+  String get signatureCaptured => 'Firma acquisita';
+
+  @override
+  String get drawSignatureAbove => 'Disegna la tua firma qui sopra';
+
+  @override
+  String get cropHelp =>
+      'Trascina per spostare · usa le maniglie per ridimensionare l\'area';
+
+  @override
+  String get cropping => 'Ritaglio…';
+
+  @override
+  String get useCrop => 'Usa ritaglio';
+
+  @override
+  String get chkHousekeeping => 'Ordine e pulizia';
+
+  @override
+  String get chkPpe => 'Dispositivi di protezione individuale';
+
+  @override
+  String get chkFallProtection => 'Protezione anticaduta';
+
+  @override
+  String get chkScaffolds => 'Ponteggi';
+
+  @override
+  String get chkLadders => 'Scale';
+
+  @override
+  String get chkExcavations => 'Scavi';
+
+  @override
+  String get chkElectrical => 'Impianti elettrici';
+
+  @override
+  String get chkTools => 'Utensili manuali ed elettrici';
+
+  @override
+  String get chkFireProtection => 'Protezione antincendio';
+
+  @override
+  String get chkHazardComm => 'Comunicazione dei rischi';
+
+  @override
+  String get chkCranes => 'Gru e imbracature';
+
+  @override
+  String get chkHeavyEquipment => 'Macchinari pesanti';
+
+  @override
+  String get chkTrafficControl => 'Gestione del traffico';
+
+  @override
+  String get chkOther => 'Altro';
+
+  @override
+  String get newItem => 'Nuova voce';
+
+  @override
+  String get safetyReportSaved => 'Report sicurezza salvato.';
+
+  @override
+  String get noEntries => 'Nessuna voce';
+
+  @override
+  String get noChecklistItems => 'Nessuna voce nella lista di controllo';
+
+  @override
+  String get pdfSafetyFooterFull =>
+      '© JV Almacis Site Management System – Report sicurezza';
+
+  @override
+  String get pdfSafetyTitleWeekly => 'REPORT SICUREZZA — SETTIMANALE';
+
+  @override
+  String get pdfSafetyTitleMonthly => 'REPORT SICUREZZA — MENSILE';
+
+  @override
+  String get rfTimeCaps => 'ORA';
+
+  @override
+  String get rfChecklistItemsCaps => 'VOCI LISTA DI CONTROLLO SICUREZZA';
+
+  @override
+  String get rfObservationsCaps => 'OSSERVAZIONI E COMMENTI';
+
+  @override
+  String get rfActionsTakenCaps => 'AZIONI INTRAPRESE';
+
+  @override
+  String get rfJvAlmaAttendanceCaps => 'PRESENZE JV ALMA CIS';
+
+  @override
+  String get rfSubAttendanceCaps => 'PRESENZE SUBAPPALTATORI';
+
+  @override
+  String get rfSafetyReportShortCaps => 'REPORT SICUREZZA';
+
+  @override
+  String get rfReportTypeCaps => 'TIPO DI REPORT';
+
+  @override
+  String get rfWeeklyCaps => 'SETTIMANALE';
+
+  @override
+  String get rfMonthlyCaps => 'MENSILE';
+
+  @override
+  String projectSafetyReport(String project) {
+    return '$project — Report sicurezza';
+  }
+
+  @override
+  String get weekly => 'Settimanale';
+
+  @override
+  String get monthly => 'Mensile';
+
+  @override
+  String get removeItem => 'Rimuovi voce';
+
+  @override
+  String get addChecklistItem => 'Aggiungi voce alla lista';
+
+  @override
+  String get newColumn => 'Nuova colonna';
+
+  @override
+  String get removeLastColumn => 'Rimuovi ultima colonna';
+
+  @override
+  String get noTableData =>
+      'Nessun dato — usa la barra degli strumenti per aggiungere righe o colonne';
+
+  @override
+  String get tapToSign => 'Tocca per firmare';
+
+  @override
+  String get couldNotOpenImagePicker => 'Impossibile aprire le foto. Riprova.';
+
+  @override
+  String get couldNotCropImage =>
+      'Impossibile ritagliare l\'immagine. Riprova.';
+
+  @override
+  String get couldNotOpenFilePicker =>
+      'Impossibile aprire la selezione file. Riprova.';
+
+  @override
+  String get pdfHasNoPages => 'Questo PDF sembra non avere pagine.';
+
+  @override
+  String get addSignature => 'Aggiungi firma';
+
+  @override
+  String get couldNotReadImage =>
+      'Impossibile leggere questa immagine. Provane un\'altra.';
+
+  @override
+  String get couldNotCrop => 'Impossibile ritagliare l\'immagine.';
+
+  @override
+  String get rotateLeft => 'Ruota a sinistra';
+
+  @override
+  String get rotateRight => 'Ruota a destra';
+
+  @override
+  String get attCompanyName => 'Nome azienda';
+
+  @override
+  String get attName => 'Nome';
+
+  @override
+  String get attTitle => 'Qualifica';
+
+  @override
+  String get attSignature => 'Firma';
 }

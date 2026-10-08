@@ -16,6 +16,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 // ══════════════════════════════════════════════════════════════════
 // ACTIVITY ROW MODEL
 // ══════════════════════════════════════════════════════════════════
@@ -431,7 +433,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       if (widget.existingReport == null) {
         map['uploadedAt'] = Timestamp.now();
         map['name'] =
-            'Weekly Report – ${DateFormat('dd MMM yyyy').format(_weekStart)} → ${DateFormat('dd MMM yyyy').format(_weekEnd)}';
+            l10nNow.reportTitleDated(l10nNow.rptWeeklyReport, '${DateFormat.yMMMd().format(_weekStart)} → ${DateFormat.yMMMd().format(_weekEnd)}');
         await FirebaseFirestore.instance
             .collection('Reports')
             .doc(_reportId)
@@ -447,14 +449,14 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       widget.logger.i('✅ WeeklyForm: report saved id=$_reportId');
       if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Weekly report saved successfully.',
+          content: Text(context.l10n.weeklyReportSaved,
               style: TextStyle()),
           backgroundColor: Colors.green,
         ));
       }
     } catch (e, st) {
       widget.logger.e('❌ WeeklyForm: save failed', error: e, stackTrace: st);
-      if (mounted) _showError('Error saving report: $e');
+      if (mounted) _showError(friendlyError(e, action: context.l10n.couldNotSaveReport));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -481,7 +483,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
     // Header row
     tableRows.add(pw.TableRow(
       decoration: pw.BoxDecoration(color: navyColor),
-      children: ['No.', 'Activity', 'Progress', 'Comment'].map((h) =>
+      children: [l10nNow.colNumber, l10nNow.colActivity, l10nNow.colProgress, l10nNow.colComment].map((h) =>
         pw.Padding(
           padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           child: pw.Text(h, style: headerStyle),
@@ -606,7 +608,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       final currentContext = context;
       if (!currentContext.mounted) return;
       ScaffoldMessenger.of(currentContext).showSnackBar(SnackBar(
-        content: Text('PDF saved to Downloads: $fileName',
+        content: Text(currentContext.l10n.pdfSavedToDownloads(fileName),
             style: TextStyle()),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 4),
@@ -782,14 +784,14 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  '© JV Almacis Site Management System - Weekly Report',
+                  l10nNow.pdfWeeklyFooter,
                   style: pw.TextStyle(
                       font: pw.Font.helvetica(),
                       fontSize: 7,
                       color: PdfColors.grey600),
                 ),
                 pw.Text(
-                  'Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                  l10nNow.pdfPageOf(ctx.pageNumber, ctx.pagesCount),
                   style: pw.TextStyle(
                       font: pw.Font.helvetica(),
                       fontSize: 7,
@@ -820,7 +822,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               padding: const pw.EdgeInsets.symmetric(
                   horizontal: 16, vertical: 4),
               child: pw.Text(
-                'WEEKLY REPORT',
+                l10nNow.rfWeeklyReportCaps,
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   font: pw.Font.helveticaBold(),
@@ -835,7 +837,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               color: navyColor,
               padding: const pw.EdgeInsets.fromLTRB(16, 2, 16, 12),
               child: pw.Text(
-                'Contract No: ${report.contractNumber}',
+                l10nNow.contractNoValue(report.contractNumber),
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   font: pw.Font.helvetica(),
@@ -850,24 +852,24 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 isFilled
-                    ? metaCellFilled('WEEK START',
-                        DateFormat('EEE, MMM d, yyyy').format(report.weekStart))
-                    : metaCellBlank('WEEK START'),
+                    ? metaCellFilled(l10nNow.rfWeekStartCaps,
+                        DateFormat.yMMMEd().format(report.weekStart))
+                    : metaCellBlank(l10nNow.rfWeekStartCaps),
                 pw.SizedBox(width: 4),
                 isFilled
-                    ? metaCellFilled('WEEK END',
-                        DateFormat('EEE, MMM d, yyyy').format(report.weekEnd))
-                    : metaCellBlank('WEEK END'),
+                    ? metaCellFilled(l10nNow.rfWeekEndCaps,
+                        DateFormat.yMMMEd().format(report.weekEnd))
+                    : metaCellBlank(l10nNow.rfWeekEndCaps),
                 pw.SizedBox(width: 4),
                 isFilled
-                    ? metaCellFilled('BUILDING', report.building)
-                    : metaCellBlank('BUILDING'),
+                    ? metaCellFilled(l10nNow.rfBuildingCaps, report.building)
+                    : metaCellBlank(l10nNow.rfBuildingCaps),
               ],
             ),
             pw.SizedBox(height: 6),
             // ══ SUB-CONTRACTOR (multi-row) ════════════════════════
             ...[
-              sectionBar('SUB-CONTRACTOR'),
+              sectionBar(l10nNow.rfSubContractorCaps),
               pw.Container(
                 width: double.infinity,
                 decoration: pw.BoxDecoration(
@@ -923,11 +925,11 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               pw.SizedBox(height: 8),
             ],
             // ══ ACTIVITIES TEMPLATE ═══════════════════════════════
-            sectionBar('ACTIVITIES TEMPLATE'),
+            sectionBar(l10nNow.rfActivitiesTemplateCaps),
             pw.SizedBox(height: 4),
             // SLOPED ROOF table
             _buildPdfTable(
-              'SLOPED ROOF',
+              l10nNow.rfSlopedRoofCaps,
               report.slopedRoofRows,
               tableHeaderStyle,
               cellStyle,
@@ -936,7 +938,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             ),
             pw.SizedBox(height: 8),
             // ══ NOTES ════════════════════════════════════════════
-            sectionBar('NOTES'),
+            sectionBar(l10nNow.rfNotesCaps),
             pw.Container(
               width: double.infinity,
               decoration: pw.BoxDecoration(
@@ -960,7 +962,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                     padding: const pw.EdgeInsets.symmetric(
                         horizontal: 8, vertical: 10),
                     child: pw.Text(
-                      'PERCENTAGE OF WORK DONE',
+                      l10nNow.rfPercentWorkDoneCaps,
                       style: pw.TextStyle(
                         font: pw.Font.helveticaBold(),
                         fontSize: 8.5,
@@ -987,7 +989,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             pw.SizedBox(height: 8),
             // ══ ATTACHED IMAGES ══════════════════════════════════
             if (pdfImages.isNotEmpty) ...[
-              sectionBar('ATTACHED IMAGES'),
+              sectionBar(l10nNow.rfAttachedImagesCaps),
               pw.SizedBox(height: 8),
               ..._buildPdfImageGrid(pdfImages),
             ],
@@ -999,7 +1001,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       widget.logger.i('✅ WeeklyForm: PDF done $fileName');
     } catch (e, st) {
       widget.logger.e('❌ WeeklyForm: PDF failed', error: e, stackTrace: st);
-      if (mounted) _showError('Error generating PDF: $e');
+      if (mounted) _showError(friendlyError(e, action: context.l10n.couldNotCreatePdf));
     } finally {
       if (mounted) setState(() => _isGeneratingPdf = false);
     }
@@ -1015,20 +1017,20 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16)),
-        title: Text('New Weekly Report',
+        title: Text(context.l10n.newWeeklyReport,
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
-            'Current form saved. Start a fresh weekly report?',
+            context.l10n.newWeeklyReportBody,
             style: TextStyle()),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle())),
+              child: Text(context.l10n.cancel, style: TextStyle())),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: _navy, foregroundColor: Colors.white),
-            child: Text('New Form', style: TextStyle()),
+            child: Text(context.l10n.newForm, style: TextStyle()),
           ),
         ],
       ),
@@ -1057,7 +1059,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               backgroundColor: _navy,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_rounded),
-              label: Text('Edit', style: TextStyle(fontWeight: FontWeight.w600)),
+              label: Text(context.l10n.edit, style: TextStyle(fontWeight: FontWeight.w600)),
             )
           : null,
       appBar: AppBar(
@@ -1065,7 +1067,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          '${widget.project.name} — Weekly Report${_isReadOnly ? ' (View)' : ''}',
+          '${context.l10n.projectWeeklyReport(widget.project.name)}${_isReadOnly ? context.l10n.viewSuffix : ''}',
           style:
               TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
@@ -1170,7 +1172,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Contract No: ',
+              Text(context.l10n.contractNoLabel,
                   style: TextStyle(
                       color: Colors.white70, fontSize: 13)),
               SizedBox(
@@ -1182,7 +1184,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   style: TextStyle(
                       color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: 'e.g. CN-2024-001',
+                    hintText: context.l10n.contractNoHint,
                     hintStyle: TextStyle(
                         color: Colors.white38, fontSize: 12),
                     isDense: true,
@@ -1213,7 +1215,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Text(
-          'WEEKLY REPORT',
+          context.l10n.rfWeeklyReportCaps,
           style: TextStyle(
             color: _navy,
             fontSize: 18,
@@ -1288,12 +1290,12 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
     }
     return Row(children: [
       dateCell(
-          label: 'WEEK START',
+          label: context.l10n.rfWeekStartCaps,
           date: _weekStart,
           onTap: _pickWeekStart),
       const SizedBox(width: 8),
       dateCell(
-          label: 'WEEK END',
+          label: context.l10n.rfWeekEndCaps,
           date: _weekEnd,
           onTap: _pickWeekEnd),
     ]);
@@ -1341,7 +1343,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 style: TextStyle(
                     fontSize: 13, color: Colors.black87),
                 decoration: InputDecoration(
-                  hintText: 'Building number, ID, or name…',
+                  hintText: context.l10n.buildingHint,
                   hintStyle: TextStyle(
                       color: Colors.grey[400], fontSize: 12),
                   border: InputBorder.none,
@@ -1428,7 +1430,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   icon: const Icon(
                       Icons.remove_circle_outline_rounded, size: 18),
                   color: Colors.red[400],
-                  tooltip: 'Remove',
+                  tooltip: context.l10n.remove,
                   padding: const EdgeInsets.all(8),
                   constraints: const BoxConstraints(),
                 ),
@@ -1467,7 +1469,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             ),
             child: Row(
               children: [
-                Text('SUB-CONTRACTOR',
+                Text(context.l10n.rfSubContractorCaps,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -1483,7 +1485,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '${_selectedSubContractors.length} selected',
+                      context.l10n.selectedCount(_selectedSubContractors.length),
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -1502,7 +1504,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 // ── No sub-contractors on this project ─────────
                 if (_subcontractorNames.isEmpty)
                   Text(
-                    'No sub-contractors added to this project.',
+                    context.l10n.noSubcontractorsOnProject,
                     style: TextStyle(
                         color: Colors.grey[500], fontSize: valueFs),
                   )
@@ -1511,7 +1513,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   // ── Dropdown — edit mode, un-selected only ──
                   if (canAddMore) ...[
                     Text(
-                      'ADD SUB-CONTRACTOR',
+                      context.l10n.rfAddSubContractorCaps,
                       style: TextStyle(
                           fontSize: labelFs,
                           fontWeight: FontWeight.w600,
@@ -1523,7 +1525,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       // key forces rebuild so hint reappears after each pick
                       key: ValueKey(_selectedSubContractors.length),
                       initialValue: null,
-                      hint: Text('Select sub-contractor…',
+                      hint: Text(context.l10n.selectSubContractor,
                           style: TextStyle(
                               color: Colors.grey[400],
                               fontSize: valueFs)),
@@ -1582,7 +1584,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
-                          'All sub-contractors have been selected.',
+                          context.l10n.allSubcontractorsSelected,
                           style: TextStyle(
                               color: Colors.green[700],
                               fontSize: labelFs,
@@ -1593,8 +1595,8 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                         _selectedSubContractors.isNotEmpty)
                       Text(
                         _isReadOnly
-                            ? 'SUB-CONTRACTORS'
-                            : 'SELECTED SUB-CONTRACTORS',
+                            ? context.l10n.rfSubContractorsCaps
+                            : context.l10n.rfSelectedSubContractorsCaps,
                         style: TextStyle(
                             fontSize: labelFs,
                             fontWeight: FontWeight.w600,
@@ -1611,7 +1613,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'No sub-contractor selected yet.',
+                        context.l10n.noSubcontractorSelected,
                         style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: valueFs),
@@ -1646,14 +1648,14 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Section title
-          _sectionTitleBar('ACTIVITIES TEMPLATE', radius),
+          _sectionTitleBar(context.l10n.rfActivitiesTemplateCaps, radius),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── SLOPED ROOF ──────────────────────────────
-                _buildRoofSubHeader('SLOPED ROOF'),
+                _buildRoofSubHeader(context.l10n.rfSlopedRoofCaps),
                 const SizedBox(height: 8),
                 _WeeklyActivityTableWidget(
                   key: const ValueKey('sloped_activity_table'),
@@ -1699,7 +1701,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionTitleBar('NOTES', radius),
+          _sectionTitleBar(context.l10n.rfNotesCaps, radius),
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextFormField(
@@ -1711,7 +1713,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               style:
                   TextStyle(fontSize: 13, color: Colors.black87),
               decoration: InputDecoration(
-                hintText: 'Enter any additional notes…',
+                hintText: context.l10n.additionalNotesHint,
                 hintStyle: TextStyle(
                     color: Colors.grey[400], fontSize: 12),
                 isDense: true,
@@ -1761,7 +1763,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Text(
-              'PERCENTAGE OF WORK DONE',
+              context.l10n.rfPercentWorkDoneCaps,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -1807,7 +1809,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 ),
                 validator: (v) {
                   final val = double.tryParse(v ?? '');
-                  if (val == null) return 'Enter a number';
+                  if (val == null) return context.l10n.enterANumber;
                   if (val < 0 || val > 100) return '0–100';
                   return null;
                 },
@@ -1853,7 +1855,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               const Icon(Icons.photo_library_rounded,
                   color: Colors.white70, size: 16),
               const SizedBox(width: 8),
-              Text('ATTACHED IMAGES',
+              Text(context.l10n.rfAttachedImagesCaps,
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -1861,7 +1863,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       letterSpacing: 0.8)),
               const Spacer(),
               if (allImages.isNotEmpty)
-                Text('${allImages.length} image(s)',
+                Text(context.l10n.imagesCount(allImages.length),
                     style: TextStyle(
                         color: Colors.white70, fontSize: 11)),
             ]),
@@ -1993,7 +1995,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                     icon: const Icon(
                         Icons.add_photo_alternate_rounded, size: 18),
                     label: Text(
-                      allImages.isEmpty ? 'Attach Image(s)' : 'Add More Images',
+                      allImages.isEmpty ? context.l10n.attachImages : context.l10n.addMoreImages,
                       style: TextStyle(fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
@@ -2056,7 +2058,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
     return Row(children: [
       if (!_isReadOnly) ...[
       btn(
-        label: 'Save Report',
+        label: context.l10n.saveReport,
         icon: Icons.save_rounded,
         color: _navy,
         isLoading: _isSaving,
@@ -2065,7 +2067,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       const SizedBox(width: 10),
       ],
       btn(
-        label: 'Download PDF',
+        label: context.l10n.downloadPdf,
         icon: Icons.picture_as_pdf_rounded,
         color: const Color(0xFF1B5E20),
         isLoading: _isGeneratingPdf,
@@ -2074,7 +2076,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       if (!_isReadOnly) ...[
       const SizedBox(width: 10),
       btn(
-        label: '+ New Form',
+        label: context.l10n.newFormPlus,
         icon: Icons.add_circle_outline_rounded,
         color: const Color(0xFF6A1B9A),
         isLoading: false,
@@ -2135,7 +2137,7 @@ class _WeeklyActivityTableWidgetState
   static const _fieldBorder = Color(0xFFB0BEC5);
 
   // Mutable column headers (user can rename via Edit Headers dialog)
-  final List<String> _headers = ['Activity', 'Progress', 'Comment'];
+  final List<String> _headers = [l10nNow.colActivity, l10nNow.colProgress, l10nNow.colComment];
   bool _showRowNumbers = false;
 
   // Cell controllers indexed [rowIndex][colIndex]
@@ -2249,7 +2251,7 @@ class _WeeklyActivityTableWidgetState
                   const Icon(Icons.drive_file_rename_outline_rounded,
                       color: Colors.white, size: 18),
                   const SizedBox(width: 10),
-                  Text('Edit Column Headers',
+                  Text(context.l10n.editColumnHeaders,
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -2290,7 +2292,7 @@ class _WeeklyActivityTableWidgetState
                                 : TextInputAction.done,
                             decoration: InputDecoration(
                               isDense: true,
-                              hintText: 'Column ${i + 1}',
+                              hintText: context.l10n.columnN(i + 1),
                               hintStyle: TextStyle(
                                   color: Colors.grey[400], fontSize: 11),
                               border: OutlineInputBorder(
@@ -2321,7 +2323,7 @@ class _WeeklyActivityTableWidgetState
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: Text('Cancel',
+                      child: Text(context.l10n.cancel,
                           style: TextStyle(color: _navy, fontSize: 13)),
                     ),
                   ),
@@ -2330,7 +2332,7 @@ class _WeeklyActivityTableWidgetState
                     child: ElevatedButton.icon(
                       onPressed: () => Navigator.pop(ctx, true),
                       icon: const Icon(Icons.check_rounded, size: 16),
-                      label: Text('Apply',
+                      label: Text(context.l10n.apply,
                           style: TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 13)),
                       style: ElevatedButton.styleFrom(
@@ -2424,14 +2426,14 @@ class _WeeklyActivityTableWidgetState
               const Icon(Icons.table_chart_rounded, color: _navy, size: 15),
               const SizedBox(width: 6),
               Expanded(
-                child: Text('Activity Table',
+                child: Text(context.l10n.activityTable,
                     style: TextStyle(
                         color: _navy, fontWeight: FontWeight.w600, fontSize: 12)),
               ),
               // Row-number toggle
               if (!widget.readOnly)
                 Tooltip(
-                  message: _showRowNumbers ? 'Hide Row Numbers' : 'Show Row Numbers',
+                  message: _showRowNumbers ? context.l10n.hideRowNumbers : context.l10n.showRowNumbers,
                   child: InkWell(
                     onTap: _toggleRowNumbers,
                     borderRadius: BorderRadius.circular(14),
@@ -2467,7 +2469,7 @@ class _WeeklyActivityTableWidgetState
                 const SizedBox(width: 6),
                 // Edit Headers button
                 Tooltip(
-                  message: 'Edit Column Headers',
+                  message: context.l10n.editColumnHeaders,
                   child: InkWell(
                     onTap: _showEditHeadersDialog,
                     borderRadius: BorderRadius.circular(14),
@@ -2482,7 +2484,7 @@ class _WeeklyActivityTableWidgetState
                         Icon(Icons.drive_file_rename_outline_rounded,
                             size: 13, color: Colors.grey[600]),
                         const SizedBox(width: 3),
-                        Text('Headers',
+                        Text(context.l10n.headersButton,
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -2494,13 +2496,13 @@ class _WeeklyActivityTableWidgetState
                 const SizedBox(width: 6),
                 _actionBtn(
                     icon: Icons.add_rounded,
-                    tooltip: 'Add Row',
+                    tooltip: context.l10n.addRow,
                     color: Colors.green[700]!,
                     onTap: _addRow),
                 const SizedBox(width: 4),
                 _actionBtn(
                     icon: Icons.remove_rounded,
-                    tooltip: 'Remove Last Row',
+                    tooltip: context.l10n.removeLastRow,
                     color: Colors.orange[700]!,
                     onTap: rowCount > 1 ? _removeLastRow : null),
               ],
@@ -2514,7 +2516,7 @@ class _WeeklyActivityTableWidgetState
             child: Row(children: [
               Icon(Icons.info_outline_rounded, size: 12, color: Colors.grey[450]),
               const SizedBox(width: 4),
-              Text('Tap "Headers" to rename columns • Content wraps automatically',
+              Text(context.l10n.headersTip,
                   style: TextStyle(fontSize: 10, color: Colors.grey[500])),
             ]),
           ),

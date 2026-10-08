@@ -30,6 +30,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 // ══════════════════════════════════════════════════════════════════
 // MONTHLY TABLE DATA MODEL
@@ -337,10 +339,8 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       'monthly_report_draft_${widget.project.id}_$_reportId';
 
   // ── Month names helper ─────────────────────────────────────────
-  static const _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  /// Full month name in the app's language (1 = January).
+  static String _monthName(int month) => DateFormat.MMMM().format(DateTime(2000, month));
 
   // ─────────────────────────────────────────────────────────────
   // LIFECYCLE
@@ -626,7 +626,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         sourcePath: sourcePath,
         uiSettings: [
           AndroidUiSettings(
-            toolbarTitle: 'Crop Signature',
+            toolbarTitle: l10nNow.cropSignature,
             toolbarColor: _navy,
             toolbarWidgetColor: Colors.white,
             statusBarLight: false,
@@ -642,9 +642,9 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             ],
           ),
           IOSUiSettings(
-            title: 'Crop Signature',
-            doneButtonTitle: 'Use',
-            cancelButtonTitle: 'Cancel',
+            title: l10nNow.cropSignature,
+            doneButtonTitle: l10nNow.useAction,
+            cancelButtonTitle: l10nNow.cancel,
             resetAspectRatioEnabled: true,
             aspectRatioPickerButtonHidden: false,
             minimumAspectRatio: 0.2,
@@ -717,7 +717,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                child: Text('Select Signature Photo',
+                child: Text(context.l10n.selectSignaturePhoto,
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
@@ -727,13 +727,13 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               ListTile(
                 leading:
                     const Icon(Icons.photo_library_rounded, color: _navy),
-                title: Text('Choose from Gallery',
+                title: Text(context.l10n.chooseFromGallery,
                     style: TextStyle(fontSize: 13)),
                 onTap: () => Navigator.pop(ctx, ImageSource.gallery),
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt_rounded, color: _navy),
-                title: Text('Take a Photo',
+                title: Text(context.l10n.takeAPhoto,
                     style: TextStyle(fontSize: 13)),
                 onTap: () => Navigator.pop(ctx, ImageSource.camera),
               ),
@@ -771,7 +771,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       widget.logger.w('⚠️ MonthlyForm: pick+crop photo failed – $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not process photo: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotProcessPhoto),
               style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
@@ -804,7 +804,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
     if (pdfBytes == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Could not read the selected PDF file.',
+        content: Text(context.l10n.couldNotReadPdf,
             style: TextStyle()),
         backgroundColor: Colors.red[700],
       ));
@@ -826,7 +826,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       if (mounted) {
         setState(() => _isGeneratingPdf = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not render PDF: $e',
+          content: Text(friendlyError(e, action: context.l10n.couldNotShowPdf),
               style: TextStyle()),
           backgroundColor: Colors.red[700],
         ));
@@ -868,7 +868,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                     const Icon(Icons.picture_as_pdf_rounded,
                         color: Colors.white, size: 18),
                     const SizedBox(width: 10),
-                    Text('Select a Page',
+                    Text(context.l10n.selectAPage,
                         style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -884,7 +884,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                   child: Text(
-                    'Tap the page that contains the signature',
+                    context.l10n.tapPageWithSignature,
                     style: TextStyle(
                         fontSize: 12, color: Colors.grey[600]),
                   ),
@@ -921,7 +921,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text('Page ${i + 1}',
+                        Text(context.l10n.pageN(i + 1),
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -1131,7 +1131,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       if (widget.existingReport == null) {
         map['uploadedAt'] = Timestamp.now();
         map['name'] =
-            'Monthly Report – ${DateFormat('MMMM yyyy').format(_monthStart)}';
+            l10nNow.reportTitleDated(l10nNow.rptMonthlyReport, DateFormat.yMMMM().format(_monthStart));
         await FirebaseFirestore.instance
             .collection('Reports')
             .doc(_reportId)
@@ -1146,14 +1146,14 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       widget.logger.i('✅ MonthlyForm: saved $_reportId');
       if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Monthly report saved!',
+          content: Text(context.l10n.monthlyReportSaved,
               style: TextStyle()),
           backgroundColor: Colors.green[700],
         ));
       }
     } catch (e, st) {
       widget.logger.e('❌ MonthlyForm: save failed', error: e, stackTrace: st);
-      if (!silent && mounted) _showError('Save failed: $e');
+      if (!silent && mounted) _showError(friendlyError(e, action: context.l10n.couldNotSaveReport));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -1202,19 +1202,19 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('New Monthly Report',
+        title: Text(context.l10n.newMonthlyReport,
             style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Current form saved. Start a fresh monthly report?',
+        content: Text(context.l10n.newMonthlyReportBody,
             style: TextStyle()),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle())),
+              child: Text(context.l10n.cancel, style: TextStyle())),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: _navy, foregroundColor: Colors.white),
-            child: Text('New Form', style: TextStyle()),
+            child: Text(context.l10n.newForm, style: TextStyle()),
           ),
         ],
       ),
@@ -1578,10 +1578,10 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   child: pw.Text(label, style: fieldLabelStyle),
                 ),
                 // Name field
-                writeField('Name', name),
+                writeField(l10nNow.nameField, name),
                 pw.Divider(color: PdfColors.blueGrey100, thickness: 0.3),
                 // Organisation field
-                writeField('Organisation', org),
+                writeField(l10nNow.organisationField, org),
                 pw.Divider(color: PdfColors.blueGrey100, thickness: 0.3),
                 // Signature area
                 pw.Padding(
@@ -1589,7 +1589,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('Signature:',
+                      pw.Text(l10nNow.signatureColon,
                           style: pw.TextStyle(
                               font: pw.Font.helveticaBold(),
                               fontSize: 8,
@@ -1647,12 +1647,12 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                    '© JV Almacis Site Management System - Monthly Report',
+                    l10nNow.pdfMonthlyFooter,
                     style: pw.TextStyle(
                         font: pw.Font.helvetica(),
                         fontSize: 7,
                         color: PdfColors.grey600)),
-                pw.Text('Page ${ctx.pageNumber} of ${ctx.pagesCount}',
+                pw.Text(l10nNow.pdfPageOf(ctx.pageNumber, ctx.pagesCount),
                     style: pw.TextStyle(
                         font: pw.Font.helvetica(),
                         fontSize: 7,
@@ -1682,7 +1682,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.center,
                     children: [
-                      pw.Text('Contract No: ',
+                      pw.Text(l10nNow.contractNoLabel,
                           style: pw.TextStyle(
                               font: pw.Font.helvetica(),
                               fontSize: 8.5,
@@ -1706,7 +1706,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             pw.Container(
               width: double.infinity,
               child: pw.Text(
-                'MONTHLY REPORT',
+                l10nNow.rfMonthlyReportCaps,
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                     font: pw.Font.helveticaBold(),
@@ -1720,16 +1720,16 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                dateCell('MONTH START',
-                    DateFormat('EEE, MMM d, yyyy').format(_monthStart)),
+                dateCell(l10nNow.rfMonthStartCaps,
+                    DateFormat.yMMMEd().format(_monthStart)),
                 pw.SizedBox(width: 6),
-                dateCell('MONTH END',
-                    DateFormat('EEE, MMM d, yyyy').format(_monthEnd)),
+                dateCell(l10nNow.rfMonthEndCaps,
+                    DateFormat.yMMMEd().format(_monthEnd)),
               ],
             ),
             pw.SizedBox(height: 10),
             // ══ SECTION A ══════════════════════════════════════
-            sectionBar('A', 'SITE ACTIVITIES'),
+            sectionBar('A', l10nNow.rfSiteActivitiesCaps),
             pw.SizedBox(height: 4),
             // Building — inline label + value row
             pw.Container(
@@ -1744,7 +1744,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                     color: lightBlue,
                     padding: const pw.EdgeInsets.symmetric(
                         horizontal: 8, vertical: 8),
-                    child: pw.Text('BUILDING',
+                    child: pw.Text(l10nNow.rfBuildingCaps,
                         style: fieldLabelStyle),
                   ),
                   pw.SizedBox(width: 8),
@@ -1765,7 +1765,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             ],
             pw.SizedBox(height: 10),
             // ══ SECTION B ══════════════════════════════════════
-            sectionBar('B', 'QUALITY REPORT'),
+            sectionBar('B', l10nNow.rfQualityReportCaps),
             pw.SizedBox(height: 4),
             ...sectionBody(_sectionBCtrl, _sectionBTables),
             if (bImgs.isNotEmpty) ...[
@@ -1774,7 +1774,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             ],
             pw.SizedBox(height: 10),
             // ══ SECTION C ══════════════════════════════════════
-            sectionBar('C', 'SAFETY REPORT'),
+            sectionBar('C', l10nNow.rfSafetyReportCaps),
             pw.SizedBox(height: 4),
             ...sectionBody(_sectionCCtrl, _sectionCTables),
             if (cImgs.isNotEmpty) ...[
@@ -1784,7 +1784,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             pw.SizedBox(height: 10),
             // ══ SECTION D ══════════════════════════════════════
             sectionBar('D',
-                'PLANNED ACTIVITIES FOR ${_monthNames[_plannedMonth - 1].toUpperCase()}'),
+                '${l10nNow.rfPlannedActivitiesForCaps} ${_monthName(_plannedMonth).toUpperCase()}'),
             pw.SizedBox(height: 4),
             ...sectionBody(_sectionDCtrl, _sectionDTables),
             if (dImgs.isNotEmpty) ...[
@@ -1817,7 +1817,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                             color: navyColor)),
                   ),
                   pw.SizedBox(width: 10),
-                  pw.Text('SIGNATURES', style: sectionHeaderStyle),
+                  pw.Text(l10nNow.rfSignaturesCaps, style: sectionHeaderStyle),
                 ],
               ),
             ),
@@ -1825,10 +1825,10 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                signeeBlock('SIGNEE 1', _signee1NameCtrl.text,
+                signeeBlock(l10nNow.rfSigneeNCaps(1), _signee1NameCtrl.text,
                     _signee1OrgCtrl.text, sig1Bytes),
                 pw.SizedBox(width: 8),
-                signeeBlock('SIGNEE 2', _signee2NameCtrl.text,
+                signeeBlock(l10nNow.rfSigneeNCaps(2), _signee2NameCtrl.text,
                     _signee2OrgCtrl.text, sig2Bytes),
               ],
             ),
@@ -1844,7 +1844,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       widget.logger.i('✅ MonthlyForm: PDF complete $fileName');
     } catch (e, st) {
       widget.logger.e('❌ MonthlyForm: PDF failed', error: e, stackTrace: st);
-      if (mounted) _showError('Error generating PDF: $e');
+      if (mounted) _showError(friendlyError(e, action: context.l10n.couldNotCreatePdf));
     } finally {
       if (mounted) setState(() => _isGeneratingPdf = false);
     }
@@ -1890,7 +1890,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       final ctx = context;
       if (!ctx.mounted) return;
       ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-        content: Text('PDF saved: $fileName', style: TextStyle()),
+        content: Text(ctx.l10n.pdfSaved(fileName), style: TextStyle()),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 4),
       ));
@@ -1919,7 +1919,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               backgroundColor: _navy,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.edit_rounded),
-              label: Text('Edit', style: TextStyle(fontWeight: FontWeight.w600)),
+              label: Text(context.l10n.edit, style: TextStyle(fontWeight: FontWeight.w600)),
             )
           : null,
       appBar: AppBar(
@@ -1927,7 +1927,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          '${widget.project.name} — Monthly Report${_isReadOnly ? ' (View)' : ''}',
+          '${context.l10n.projectMonthlyReport(widget.project.name)}${_isReadOnly ? context.l10n.viewSuffix : ''}',
           style: TextStyle(
               fontWeight: FontWeight.w600, fontSize: 16),
         ),
@@ -1986,13 +1986,13 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         // ── SECTION A: SITE ACTIVITIES ────────────
                         _buildSectionCard(
                           letter: 'A',
-                          title: 'SITE ACTIVITIES',
+                          title: context.l10n.rfSiteActivitiesCaps,
                           sectionIndex: 0,
                           ctrl: _sectionACtrl,
                           tables: _sectionATables,
                           localImages: _sectionALocalImages,
                           savedUrls: _sectionASavedUrls,
-                          hint: 'Describe site activities for the month…',
+                          hint: context.l10n.siteActivitiesHint,
                           showBuildingField: true,
                         ),
                         const SizedBox(height: gap + 4),
@@ -2000,13 +2000,13 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         // ── SECTION B: QUALITY REPORT ─────────────
                         _buildSectionCard(
                           letter: 'B',
-                          title: 'QUALITY REPORT',
+                          title: context.l10n.rfQualityReportCaps,
                           sectionIndex: 1,
                           ctrl: _sectionBCtrl,
                           tables: _sectionBTables,
                           localImages: _sectionBLocalImages,
                           savedUrls: _sectionBSavedUrls,
-                          hint: 'Enter quality observations and findings…',
+                          hint: context.l10n.qualityHint,
                           showBuildingField: false,
                         ),
                         const SizedBox(height: gap + 4),
@@ -2014,13 +2014,13 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         // ── SECTION C: SAFETY REPORT ──────────────
                         _buildSectionCard(
                           letter: 'C',
-                          title: 'SAFETY REPORT',
+                          title: context.l10n.rfSafetyReportCaps,
                           sectionIndex: 2,
                           ctrl: _sectionCCtrl,
                           tables: _sectionCTables,
                           localImages: _sectionCLocalImages,
                           savedUrls: _sectionCSavedUrls,
-                          hint: 'Document safety incidents, observations…',
+                          hint: context.l10n.safetyHint,
                           showBuildingField: false,
                         ),
                         const SizedBox(height: gap + 4),
@@ -2078,7 +2078,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Contract No: ',
+              Text(context.l10n.contractNoLabel,
                   style: TextStyle(
                       color: Colors.white70, fontSize: 13)),
               SizedBox(
@@ -2090,7 +2090,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   style: TextStyle(
                       color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: 'e.g. CN-2024-001',
+                    hintText: context.l10n.contractNoHint,
                     hintStyle: TextStyle(
                         color: Colors.white38, fontSize: 12),
                     isDense: true,
@@ -2122,7 +2122,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Text(
-          'MONTHLY REPORT',
+          context.l10n.rfMonthlyReportCaps,
           style: TextStyle(
             color: _navy,
             fontSize: 18,
@@ -2180,7 +2180,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 ]),
                 const SizedBox(height: 3),
                 Text(
-                  DateFormat('EEE, MMM d, yyyy').format(date),
+                  DateFormat.yMMMEd().format(date),
                   style: TextStyle(
                     fontSize: valueFs,
                     fontWeight: FontWeight.w500,
@@ -2197,12 +2197,12 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
 
     return Row(children: [
       dateCell(
-          label: 'MONTH START',
+          label: context.l10n.rfMonthStartCaps,
           date: _monthStart,
           onTap: _pickMonthStart),
       const SizedBox(width: 8),
       dateCell(
-          label: 'MONTH END', date: _monthEnd, onTap: _pickMonthEnd),
+          label: context.l10n.rfMonthEndCaps, date: _monthEnd, onTap: _pickMonthEnd),
     ]);
   }
 
@@ -2249,7 +2249,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 style: TextStyle(
                     fontSize: 13, color: Colors.black87),
                 decoration: InputDecoration(
-                  hintText: 'Building number, ID, or name…',
+                  hintText: context.l10n.buildingHint,
                   hintStyle: TextStyle(
                       color: Colors.grey[400], fontSize: 12),
                   border: InputBorder.none,
@@ -2321,7 +2321,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   // ACTIVITIES rich text editor + inline tables
                   _buildRichEditorWithTables(
                     sectionKey: 'section$letter',
-                    sectionTitle: 'ACTIVITIES',
+                    sectionTitle: context.l10n.rfActivitiesCaps,
                     hint: hint,
                     ctrl: ctrl,
                     tables: tables,
@@ -2345,7 +2345,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                             const Icon(Icons.photo_library_rounded,
                                 size: 14, color: _navy),
                             const SizedBox(width: 6),
-                            Text('Images (${allImages.length})',
+                            Text(context.l10n.imagesWithCount(allImages.length),
                                 style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -2546,7 +2546,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                           fontSize: 14)),
                 ),
                 const SizedBox(width: 10),
-                Text('PLANNED ACTIVITIES FOR',
+                Text(context.l10n.rfPlannedActivitiesForCaps,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -2579,7 +2579,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                           12,
                           (i) => DropdownMenuItem(
                               value: i + 1,
-                              child: Text(_monthNames[i].toUpperCase(),
+                              child: Text(_monthName(i + 1).toUpperCase(),
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
@@ -2604,9 +2604,9 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               children: [
                 _buildRichEditorWithTables(
                   sectionKey: 'sectionD',
-                  sectionTitle: 'PLANNED ACTIVITIES',
+                  sectionTitle: context.l10n.rfPlannedActivitiesCaps,
                   hint:
-                      'Describe planned activities for ${_monthNames[_plannedMonth - 1]}…',
+                      context.l10n.plannedActivitiesHint(_monthName(_plannedMonth)),
                   ctrl: _sectionDCtrl,
                   tables: _sectionDTables,
                 ),
@@ -2752,7 +2752,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 ),
                 // Custom "Insert Table" button
                 Tooltip(
-                  message: 'Insert Table',
+                  message: context.l10n.insertTable,
                   child: InkWell(
                     onTap: () =>
                         _showInsertTableDialog(targetList: tables),
@@ -2856,7 +2856,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       Icon(Icons.table_chart_outlined,
                           color: _navy.withValues(alpha: 0.5), size: 16),
                       const SizedBox(width: 6),
-                      Text('Tap ⊞ in toolbar to insert a table',
+                      Text(context.l10n.tapToInsertTable,
                           style: TextStyle(
                               color: _navy.withValues(alpha: 0.5),
                               fontSize: 11)),
@@ -2889,7 +2889,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             onPressed: () => _pickImages(sectionIndex),
             icon: const Icon(Icons.attach_file_rounded, size: 15),
             label: Text(
-              imageCount > 0 ? 'Attach ($imageCount)' : 'Attach',
+              imageCount > 0 ? context.l10n.attachWithCount(imageCount) : context.l10n.attach,
               style: TextStyle(fontSize: 12),
             ),
             style: OutlinedButton.styleFrom(
@@ -2910,7 +2910,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
           child: ElevatedButton.icon(
             onPressed: _addNewForm,
             icon: const Icon(Icons.add_circle_outline_rounded, size: 15),
-            label: Text('Add Form',
+            label: Text(context.l10n.addForm,
                 style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 12)),
             style: ElevatedButton.styleFrom(
@@ -3038,7 +3038,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
                   color: _navy, borderRadius: BorderRadius.circular(20)),
-              child: Text('Signee $index',
+              child: Text(context.l10n.signeeN(index),
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -3058,7 +3058,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   Icon(Icons.check_circle_rounded,
                       size: 12, color: Colors.green[700]),
                   const SizedBox(width: 4),
-                  Text('Signed',
+                  Text(context.l10n.signed,
                       style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -3071,21 +3071,21 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
           // ── Name ────────────────────────────────────────────────
           _signeeTextField(
               ctrl: nameCtrl,
-              label: 'Name',
-              hint: 'Full name…',
+              label: context.l10n.nameField,
+              hint: context.l10n.fullNameHint,
               icon: Icons.person_outline_rounded),
           const SizedBox(height: 8),
 
           // ── Organisation ────────────────────────────────────────
           _signeeTextField(
               ctrl: orgCtrl,
-              label: 'Organisation',
-              hint: 'Company / organisation…',
+              label: context.l10n.organisationField,
+              hint: context.l10n.organisationHint,
               icon: Icons.business_outlined),
           const SizedBox(height: 12),
 
           // ── Signature label ─────────────────────────────────────
-          Text('Signature',
+          Text(context.l10n.signature,
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -3101,7 +3101,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(children: [
                 _sigModeTab(
-                    label: 'Draw',
+                    label: context.l10n.sigDraw,
                     icon: Icons.draw_rounded,
                     active: mode == 0,
                     onTap: () => setState(() {
@@ -3113,7 +3113,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         })),
                 const SizedBox(width: 6),
                 _sigModeTab(
-                    label: 'Photo',
+                    label: context.l10n.sigPhoto,
                     icon: Icons.photo_camera_rounded,
                     active: mode == 1,
                     onTap: () => setState(() {
@@ -3125,7 +3125,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         })),
                 const SizedBox(width: 6),
                 _sigModeTab(
-                    label: 'From PDF',
+                    label: context.l10n.sigFromPdf,
                     icon: Icons.picture_as_pdf_rounded,
                     active: mode == 2,
                     onTap: () => setState(() {
@@ -3205,7 +3205,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               onPressed: () => _pickAndCropPhoto(signeeIndex),
               icon: const Icon(Icons.photo_camera_rounded, size: 14),
               label: Text(
-                hasImage ? 'Replace & Crop' : 'Pick Photo & Crop',
+                hasImage ? context.l10n.replaceAndCrop : context.l10n.pickPhotoAndCrop,
                 style: TextStyle(fontSize: 11),
               ),
               style: OutlinedButton.styleFrom(
@@ -3251,7 +3251,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                'Pick a PDF → select the page → drag to crop the signature area',
+                context.l10n.pdfSignatureSteps,
                 style: TextStyle(
                     fontSize: 10,
                     color: _navy.withValues(alpha: 0.75)),
@@ -3268,7 +3268,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               onPressed: () => _pickFromPdf(signeeIndex),
               icon: const Icon(Icons.picture_as_pdf_rounded, size: 14),
               label: Text(
-                hasImage ? 'Replace from PDF' : 'Pick PDF & Crop',
+                hasImage ? context.l10n.replaceFromPdf : context.l10n.pickPdfAndCrop,
                 style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 11),
               ),
@@ -3330,7 +3330,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                               Icon(Icons.broken_image_rounded,
                                   color: Colors.grey[400], size: 18),
                               const SizedBox(width: 6),
-                              Text('Could not load signature',
+                              Text(context.l10n.couldNotLoadSignature,
                                   style: TextStyle(
                                       color: Colors.grey[400],
                                       fontSize: 11)),
@@ -3344,7 +3344,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   Icon(Icons.crop_free_rounded,
                       color: Colors.grey[300], size: 28),
                   const SizedBox(height: 6),
-                  Text('No signature yet',
+                  Text(context.l10n.noSignatureYet,
                       style: TextStyle(
                           color: Colors.grey[400], fontSize: 12)),
                 ],
@@ -3370,7 +3370,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       },
       icon: Icon(Icons.delete_outline_rounded,
           size: 14, color: Colors.red[400]),
-      label: Text('Clear',
+      label: Text(context.l10n.clear,
           style: TextStyle(
               fontSize: 11,
               color: Colors.red[400],
@@ -3401,7 +3401,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
           border: Border.all(color: _fieldBorder),
         ),
         child: Center(
-          child: Text('No signature provided',
+          child: Text(context.l10n.noSignatureProvided,
               style: TextStyle(
                   color: Colors.grey[400], fontSize: 12)),
         ),
@@ -3435,7 +3435,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       Icon(Icons.broken_image_rounded,
                           color: Colors.grey[400], size: 18),
                       const SizedBox(width: 6),
-                      Text('Could not load signature',
+                      Text(context.l10n.couldNotLoadSignature,
                           style: TextStyle(
                               color: Colors.grey[400], fontSize: 11)),
                     ],
@@ -3526,7 +3526,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
     return Row(children: [
       if (!_isReadOnly) ...[
       btn(
-        label: 'Save Report',
+        label: context.l10n.saveReport,
         icon: Icons.save_rounded,
         color: _navy,
         isLoading: _isSaving,
@@ -3535,7 +3535,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       const SizedBox(width: 10),
       ],
       btn(
-        label: 'Download PDF',
+        label: context.l10n.downloadPdf,
         icon: Icons.picture_as_pdf_rounded,
         color: _accentGreen,
         isLoading: _isGeneratingPdf,
@@ -3544,7 +3544,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       if (!_isReadOnly) ...[
       const SizedBox(width: 10),
       btn(
-        label: '+ New Form',
+        label: context.l10n.newFormPlus,
         icon: Icons.add_circle_outline_rounded,
         color: _accentPurple,
         isLoading: false,
@@ -3709,7 +3709,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                   const Icon(Icons.drive_file_rename_outline_rounded,
                       color: Colors.white, size: 18),
                   const SizedBox(width: 10),
-                  Text('Edit Column Headers',
+                  Text(context.l10n.editColumnHeaders,
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -3753,7 +3753,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                                 : TextInputAction.done,
                             decoration: InputDecoration(
                               isDense: true,
-                              hintText: 'Column ${i + 1}',
+                              hintText: context.l10n.columnN(i + 1),
                               hintStyle: TextStyle(
                                   color: Colors.grey[400], fontSize: 11),
                               border: OutlineInputBorder(
@@ -3785,7 +3785,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: Text('Cancel',
+                      child: Text(context.l10n.cancel,
                           style: TextStyle(
                               color: _navy, fontSize: 13)),
                     ),
@@ -3795,7 +3795,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                     child: ElevatedButton.icon(
                       onPressed: () => Navigator.pop(ctx, true),
                       icon: const Icon(Icons.check_rounded, size: 16),
-                      label: Text('Apply',
+                      label: Text(context.l10n.apply,
                           style: TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 13)),
                       style: ElevatedButton.styleFrom(
@@ -3878,7 +3878,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                   const Icon(Icons.add_box_outlined,
                       color: Colors.white, size: 18),
                   const SizedBox(width: 10),
-                  Text('Add New Column',
+                  Text(context.l10n.addNewColumn,
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -3900,10 +3900,10 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                   onSubmitted: (_) => Navigator.pop(ctx, true),
                   decoration: InputDecoration(
                     isDense: true,
-                    labelText: 'Column Name',
+                    labelText: context.l10n.columnName,
                     labelStyle:
                         TextStyle(fontSize: 12, color: _navy),
-                    hintText: 'e.g. Status',
+                    hintText: context.l10n.columnNameHint,
                     hintStyle: TextStyle(
                         color: Colors.grey[400], fontSize: 12),
                     border: OutlineInputBorder(
@@ -3929,7 +3929,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: Text('Cancel',
+                      child: Text(context.l10n.cancel,
                           style: TextStyle(
                               color: _navy, fontSize: 13)),
                     ),
@@ -3939,7 +3939,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                     child: ElevatedButton.icon(
                       onPressed: () => Navigator.pop(ctx, true),
                       icon: const Icon(Icons.add_rounded, size: 16),
-                      label: Text('Add Column',
+                      label: Text(context.l10n.addColumn,
                           style: TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 13)),
                       style: ElevatedButton.styleFrom(
@@ -3964,7 +3964,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
 
     // Deduplicate new column name
     String newName = nameCtrl.text.trim().isEmpty
-        ? 'Column ${widget.tableData.columnNames.length + 1}'
+        ? l10nNow.columnN(widget.tableData.columnNames.length + 1)
         : nameCtrl.text.trim();
     int suffix = 2;
     String candidate = newName;
@@ -4165,8 +4165,8 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
               // Row-number toggle pill
               Tooltip(
                 message: widget.tableData.showRowNumbers
-                    ? 'Hide Row Numbers'
-                    : 'Show Row Numbers',
+                    ? context.l10n.hideRowNumbers
+                    : context.l10n.showRowNumbers,
                 child: InkWell(
                   onTap: _toggleRowNumbers,
                   borderRadius: BorderRadius.circular(14),
@@ -4208,7 +4208,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
               const SizedBox(width: 6),
               // Edit column headers
               Tooltip(
-                message: 'Edit Column Headers',
+                message: context.l10n.editColumnHeaders,
                 child: InkWell(
                   onTap: _showEditHeadersDialog,
                   borderRadius: BorderRadius.circular(14),
@@ -4229,7 +4229,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                               size: 13,
                               color: Colors.grey[600]),
                           const SizedBox(width: 3),
-                          Text('Headers',
+                          Text(context.l10n.headersButton,
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -4242,8 +4242,8 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
               // Add new column
               Tooltip(
                 message: colCount < 10
-                    ? 'Add New Column'
-                    : 'Maximum 10 columns reached',
+                    ? context.l10n.addNewColumn
+                    : context.l10n.maxColumnsReached,
                 child: InkWell(
                   onTap: colCount < 10 ? _showAddColumnDialog : null,
                   borderRadius: BorderRadius.circular(14),
@@ -4270,7 +4270,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                                   ? Colors.teal[700]
                                   : Colors.grey[400]),
                           const SizedBox(width: 3),
-                          Text('+ Col',
+                          Text(context.l10n.addColShort,
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -4285,21 +4285,21 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
               // Add row
               _tableBtn(
                   icon: Icons.add_rounded,
-                  tooltip: 'Add Row',
+                  tooltip: context.l10n.addRow,
                   color: Colors.green[700]!,
                   onTap: _addRow),
               const SizedBox(width: 4),
               // Remove last row
               _tableBtn(
                   icon: Icons.remove_rounded,
-                  tooltip: 'Remove Last Row',
+                  tooltip: context.l10n.removeLastRow,
                   color: Colors.orange[700]!,
                   onTap: rowCount > 1 ? _removeLastRow : null),
               const SizedBox(width: 4),
               // Delete table
               _tableBtn(
                   icon: Icons.delete_outline_rounded,
-                  tooltip: 'Delete Table',
+                  tooltip: context.l10n.deleteTable,
                   color: Colors.red[600]!,
                   onTap: () async {
                     final ok = await showDialog<bool>(
@@ -4307,18 +4307,18 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                       builder: (ctx) => AlertDialog(
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
-                        title: Text('Delete Table',
+                        title: Text(context.l10n.deleteTable,
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15)),
                         content: Text(
-                            'Delete "${widget.tableData.title}"?',
+                            context.l10n.deleteTableConfirm(widget.tableData.title),
                             style: TextStyle(fontSize: 13)),
                         actions: [
                           TextButton(
                               onPressed: () =>
                                   Navigator.pop(ctx, false),
-                              child: Text('Cancel',
+                              child: Text(context.l10n.cancel,
                                   style: TextStyle())),
                           ElevatedButton(
                             onPressed: () =>
@@ -4326,7 +4326,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red[600],
                                 foregroundColor: Colors.white),
-                            child: Text('Delete',
+                            child: Text(context.l10n.delete,
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600)),
                           ),
@@ -4349,7 +4349,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                    '"Headers" to rename · "+ Col" to add column · content wraps automatically',
+                    context.l10n.tableTip,
                     style: TextStyle(
                         fontSize: 10, color: Colors.grey[500])),
               ),
@@ -4384,7 +4384,7 @@ class _InsertTableDialog extends StatefulWidget {
 class _InsertTableDialogState extends State<_InsertTableDialog> {
   static const _navy = Color(0xFF0A2E5A);
 
-  final _titleCtrl = TextEditingController(text: 'Table');
+  final _titleCtrl = TextEditingController(text: l10nNow.tableDefault);
   late final List<TextEditingController> _colCtrls;
   int _colCount = 3;
   int _rowCount = 3;
@@ -4395,7 +4395,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
     super.initState();
     // Pre-allocate controllers for max supported columns (10)
     _colCtrls = List.generate(
-        10, (i) => TextEditingController(text: 'Column ${i + 1}'));
+        10, (i) => TextEditingController(text: l10nNow.columnN(i + 1)));
   }
 
   @override
@@ -4413,7 +4413,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
   void _submit() {
     final colNames = List.generate(_colCount, (i) {
       final v = _colCtrls[i].text.trim();
-      return v.isNotEmpty ? v : 'Column ${i + 1}';
+      return v.isNotEmpty ? v : l10nNow.columnN(i + 1);
     });
     // Deduplicate: if two headers are the same, suffix the later ones
     final seen = <String, int>{};
@@ -4424,7 +4424,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
 
     final table = MonthlyTableData(
       id: const Uuid().v4(),
-      title: _titleCtrl.text.trim().isEmpty ? 'Table' : _titleCtrl.text.trim(),
+      title: _titleCtrl.text.trim().isEmpty ? l10nNow.tableDefault : _titleCtrl.text.trim(),
       columnNames: deduped,
       showRowNumbers: _showRowNumbers,
       rows: List.generate(_rowCount, (_) => {for (final c in deduped) c: ''}),
@@ -4480,7 +4480,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                 const Icon(Icons.table_chart_rounded,
                     color: Colors.white, size: 20),
                 const SizedBox(width: 10),
-                Text('Insert Table',
+                Text(context.l10n.insertTable,
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -4501,13 +4501,13 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Table title
-                    _sectionLabel('Table Title'),
+                    _sectionLabel(context.l10n.tableTitle),
                     TextField(
                       controller: _titleCtrl,
                       style: TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         isDense: true,
-                        hintText: 'e.g. Materials Used',
+                        hintText: context.l10n.tableTitleHint,
                         hintStyle: TextStyle(
                             color: Colors.grey[400], fontSize: 12),
                         border: OutlineInputBorder(
@@ -4525,7 +4525,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
 
                     // Column count + Row number toggle (same row)
                     Row(children: [
-                      _sectionLabel('Columns'),
+                      _sectionLabel(context.l10n.columns),
                       const Spacer(),
                       _counterBtn(Icons.remove, _colCount > 1 ? _decCol : null),
                       Padding(
@@ -4572,7 +4572,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                                   : TextInputAction.done,
                               decoration: InputDecoration(
                                 isDense: true,
-                                hintText: 'Header ${i + 1}',
+                                hintText: context.l10n.headerN(i + 1),
                                 hintStyle: TextStyle(
                                     color: Colors.grey[400], fontSize: 11),
                                 border: OutlineInputBorder(
@@ -4595,7 +4595,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
 
                     // Initial rows counter
                     Row(children: [
-                      _sectionLabel('Initial Rows'),
+                      _sectionLabel(context.l10n.initialRows),
                       const Spacer(),
                       _counterBtn(
                           Icons.remove, _rowCount > 1 ? _decRow : null),
@@ -4653,7 +4653,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                                   ? _navy
                                   : Colors.grey[500]),
                           const SizedBox(width: 6),
-                          Text('Show row numbers',
+                          Text(context.l10n.showRowNumbersShort,
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -4682,7 +4682,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: Text('Cancel',
+                    child: Text(context.l10n.cancel,
                         style: TextStyle(
                             color: _navy, fontSize: 13)),
                   ),
@@ -4692,7 +4692,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                   child: ElevatedButton.icon(
                     onPressed: _submit,
                     icon: const Icon(Icons.table_chart_rounded, size: 16),
-                    label: Text('Insert',
+                    label: Text(context.l10n.insert,
                         style: TextStyle(
                             fontWeight: FontWeight.w700, fontSize: 13)),
                     style: ElevatedButton.styleFrom(
@@ -4812,11 +4812,11 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
     switch (kind) {
       case PointerDeviceKind.stylus:
       case PointerDeviceKind.invertedStylus:
-        return '✒ Stylus';
+        return l10nNow.deviceStylus;
       case PointerDeviceKind.touch:
-        return '👆 Touch';
+        return l10nNow.deviceTouch;
       default:
-        return '🖱 Mouse';
+        return l10nNow.deviceMouse;
     }
   }
 
@@ -4919,13 +4919,13 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                               Icon(Icons.draw_outlined,
                                   color: Colors.grey[300], size: 28),
                               const SizedBox(height: 5),
-                              Text('Sign here',
+                              Text(context.l10n.signHere,
                                   style: TextStyle(
                                       color: Colors.grey[350],
                                       fontSize: 12)),
                               const SizedBox(height: 2),
                               Text(
-                                  'Finger · Stylus · Mouse — all supported',
+                                  context.l10n.signInputsSupported,
                                   style: TextStyle(
                                       color: Colors.grey[350],
                                       fontSize: 9.5)),
@@ -4950,7 +4950,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                 Icon(Icons.check_circle_rounded,
                     size: 13, color: Colors.green[700]),
                 const SizedBox(width: 4),
-                Text('Signature captured',
+                Text(context.l10n.signatureCaptured,
                     style: TextStyle(
                         color: Colors.green[700],
                         fontSize: 10,
@@ -4972,7 +4972,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                   ),
                 ],
               ] else
-                Text('Draw your signature above',
+                Text(context.l10n.drawSignatureAbove,
                     style: TextStyle(
                         color: Colors.grey[400], fontSize: 10)),
             ]),
@@ -4981,7 +4981,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                 onPressed: _doReset,
                 icon: Icon(Icons.refresh_rounded,
                     size: 13, color: Colors.red[400]),
-                label: Text('Clear',
+                label: Text(context.l10n.clear,
                     style: TextStyle(
                         color: Colors.red[400],
                         fontSize: 11,
@@ -5342,7 +5342,7 @@ class _CropDialogState extends State<_CropDialog> {
                     color: Colors.white, size: 18),
                 const SizedBox(width: 10),
                 Text(
-                  'Crop Signature',
+                  context.l10n.cropSignature,
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -5364,7 +5364,7 @@ class _CropDialogState extends State<_CropDialog> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Text(
-                'Drag to reposition · Use handles to resize the crop area',
+                context.l10n.cropHelp,
                 style: TextStyle(
                     fontSize: 11, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
@@ -5411,7 +5411,7 @@ class _CropDialogState extends State<_CropDialog> {
                         ? null
                         : () => Navigator.of(context).pop(null),
                     icon: const Icon(Icons.close_rounded, size: 16),
-                    label: Text('Cancel',
+                    label: Text(context.l10n.cancel,
                         style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _navy),
@@ -5436,7 +5436,7 @@ class _CropDialogState extends State<_CropDialog> {
                                 color: Colors.white))
                         : const Icon(Icons.check_rounded, size: 16),
                     label: Text(
-                      _isCropping ? 'Cropping…' : 'Use Crop',
+                      _isCropping ? context.l10n.cropping : context.l10n.useCrop,
                       style: TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 13),
                     ),
