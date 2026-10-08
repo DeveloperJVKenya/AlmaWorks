@@ -4575,5 +4575,357 @@
   "attCompanyName": "Company name",
   "attName": "Name",
   "attTitle": "Title",
-  "attSignature": "Signature"
+  "attSignature": "Signature",
+  "alreadyPendingRequest": "You already have an access request waiting for review.",
+  "couldNotSubmitRequestRetry": "We couldn't send your request. Please try again.",
+  "requestNotFound": "This request no longer exists.",
+  "couldNotApproveRetry": "We couldn't approve the request. Please try again.",
+  "couldNotDenyRetry": "We couldn't deny the request. Please try again.",
+  "couldNotAddProjectsRetry": "We couldn't add the projects. Please try again.",
+  "mainAdminProtectedProjects": "MainAdmin accounts are protected — their project access can't be removed.",
+  "allAccessRevokedReason": "All project access was removed by an admin.",
+  "couldNotRevokeProjectsRetry": "We couldn't remove the projects. Please try again.",
+  "userAccountNotFound": "This user account no longer exists.",
+  "mainAdminProtectedRole": "MainAdmin accounts are protected — their role can't be changed.",
+  "couldNotUpdateRoleRetry": "We couldn't update the role. Please try again.",
+  "couldNotReapproveRetry": "We couldn't approve the request again. Please try again.",
+  "couldNotUpdateDenialRetry": "We couldn't update the denial. Please try again.",
+  "unknownProject": "Unknown project",
+  "couldNotRevokeAccessRetry": "We couldn't remove access. Please try again.",
+  "roleClientDesc": "Read-only access to granted projects",
+  "roleTechnicianDesc": "Full working access to granted projects (like Admin, without Financials)",
+  "roleSubContractorDesc": "Documents only — their own uploads — on granted projects",
+  "roleAdminDesc": "Full system access, not limited to granted projects",
+  "roleSystemAdminDesc": "Full Admin access, plus (with MainAdmin) the only role that can approve checkout requests, record returns and issue materials",
+  "clientAccessRequests": "Client access requests",
+  "tabPendingRequests": "Pending requests",
+  "tabRequestHistory": "Request history",
+  "noPendingRequestsTitle": "No pending requests",
+  "clientRequestsAppearHere": "Client access requests will appear here",
+  "pendingStatus": "Pending",
+  "requestedOn": "Requested: {date}",
+  "@requestedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "deny": "Deny",
+  "noRequestHistory": "No request history",
+  "approvedStatus": "Approved",
+  "deniedStatus": "Denied",
+  "processedOn": "Processed: {date}",
+  "@processedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "byName": "By: {name}",
+  "@byName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "roleColon": "Role: {role}",
+  "@roleColon": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "projectsGranted": "{count, plural, =1{1 project granted} other{{count} projects granted}}",
+  "@projectsGranted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addMoreProjects": "Add more projects",
+  "revokeProjectAccess": "Remove project access",
+  "changeRole": "Change role",
+  "approveNow": "Approve now",
+  "updateDenialReason": "Update denial reason",
+  "addProjects": "Add projects",
+  "revokeAccess": "Remove access",
+  "updateReason": "Update reason",
+  "approveAccessRequest": "Approve access request",
+  "grantAccessToAs": "Give {name} access as:",
+  "@grantAccessToAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "selectProjectsToGrant": "Select the projects to give access to:",
+  "noProjectsAvailable": "No projects available",
+  "denyAccessRequest": "Deny access request",
+  "denyAccessConfirm": "Are you sure you want to deny access for {name}?",
+  "@denyAccessConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "allProjectsAlreadyGranted": "All available projects have already been granted.",
+  "addProjectsFor": "Add projects — {name}",
+  "@addProjectsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "selectAdditionalProjects": "Select additional projects to grant:",
+  "noGrantedProjects": "There are no granted projects to remove.",
+  "revokeAccessFor": "Remove access — {name}",
+  "@revokeAccessFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "selectProjectsToRevoke": "Select the projects to remove access from:",
+  "revokeAllMarksDenied": "Removing all projects will mark this request as denied.",
+  "revoke": "Remove",
+  "mainAdminProtectedTitle": "MainAdmin is protected",
+  "mainAdminProtectedBody": "{name} is a MainAdmin — their role, project access and permissions can't be changed or removed from this screen, by design.",
+  "@mainAdminProtectedBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "changeRoleFor": "Change role — {name}",
+  "@changeRoleFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "currentRole": "Current role: {role}",
+  "@currentRole": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "pmEligible": "Can be a Project Manager",
+  "pmEligibleHint": "Lets them be picked as a project's linked PM account (Edit project), separately from the role above — it doesn't change their base permissions.",
+  "approveRequestFor": "Approve request — {name}",
+  "@approveRequestFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "previouslyDenied": "Previously denied: {reason}",
+  "@previouslyDenied": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "grantAccessAs": "Give access as:",
+  "selectProjectsToGrantShort": "Select projects to grant:",
+  "updateDenialFor": "Update denial — {name}",
+  "@updateDenialFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDenialBody": "Update the denial reason, or confirm the denial with a new message:",
+  "denialReasonOptional": "Denial reason (optional)",
+  "denialReasonHint": "Enter a reason for the denial…",
+  "saveAndRedeny": "Save & deny again",
+  "accessGrantedTo": "Access given to {name}",
+  "@accessGrantedTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "requestDeniedFor": "Request denied for {name}",
+  "@requestDeniedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "projectsAddedFor": "Projects added for {name}",
+  "@projectsAddedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accessRevokedFor": "Access removed for {name}",
+  "@accessRevokedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "roleChangedFor": "{name}'s role changed to {role}",
+  "@roleChangedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "requestApprovedFor": "{name}'s request has been approved",
+  "@requestApprovedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "denialUpdatedFor": "Denial updated for {name}",
+  "@denialUpdatedFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unnamedProject": "Unnamed project",
+  "pastDueDate": "Past the due date",
+  "dueTomorrow": "Due tomorrow",
+  "shouldHaveStarted": "Should have started",
+  "startingTomorrow": "Starting tomorrow",
+  "startsOn": "Starts {date}",
+  "@startsOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "tasksOverview": "Tasks overview",
+  "allOverdue": "All overdue",
+  "allStartingSoon": "All starting soon (≤3 days)",
+  "allOngoing": "All ongoing",
+  "allOtherUpcoming": "All other upcoming",
+  "showLess": "Show less",
+  "viewAllTasksCount": "View all tasks ({count})",
+  "@viewAllTasksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotLoadTasks": "We couldn't load the tasks",
+  "noActiveTasks": "No active tasks",
+  "addTasksFromGantt": "Add tasks from the Gantt chart to track your project",
+  "allTasksOnTrack": "All tasks are on track or completed!",
+  "goToGanttChart": "Go to Gantt chart",
+  "taskProgress": "Task progress",
+  "phaseBreakdown": "Phase breakdown",
+  "phasesCount": "{count, plural, =1{1 phase} other{{count} phases}}",
+  "@phasesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "viewAllTasksTotal": "View all ({count} tasks)",
+  "@viewAllTasksTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "completedOnShort": "Completed {date}",
+  "@completedOnShort": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotLoadTaskProgress": "We couldn't load the task progress",
+  "noActiveTasksYet": "No active tasks yet",
+  "tasksAppearHere": "Ongoing and completed tasks\nwill appear here",
+  "oneMinAgo": "1 min ago",
+  "minsAgo": "{count} mins ago",
+  "@minsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgoShort": "{count}h ago",
+  "@hoursAgoShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weatherReport": "Weather report",
+  "refreshWeather": "Refresh weather",
+  "noInternetTitle": "No internet connection",
+  "weatherOfflineHint": "Weather isn't available while you're offline.\nIt will refresh automatically when you reconnect.",
+  "fetchingWeather": "Getting the weather…",
+  "noLocationsSet": "No locations set",
+  "noLocationsHint": "Add a location to your project to see the weather here.",
+  "unstableConnection": "Unstable connection",
+  "weatherSlowHint": "The weather couldn't load because the connection is slow.\nPlease check your connection and tap refresh.",
+  "someLocationsSlow": "Some locations couldn't be reached because the connection is slow.",
+  "viewAllSites": "View all sites ({count})",
+  "@viewAllSites": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nowTemp": "Now  •  {temp}",
+  "@nowTemp": {
+    "placeholders": {
+      "temp": {
+        "type": "String"
+      }
+    }
+  },
+  "next3h": "Next ~3 h",
+  "connectionTooSlow": "Connection too slow to load",
+  "locationNotFound": "Location not found",
+  "weatherUpdated": "Updated {ago}  •  refreshes every 30 min",
+  "@weatherUpdated": {
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -11724,6 +11724,756 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Signature'**
   String get attSignature;
+
+  /// No description provided for @alreadyPendingRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have an access request waiting for review.'**
+  String get alreadyPendingRequest;
+
+  /// No description provided for @couldNotSubmitRequestRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send your request. Please try again.'**
+  String get couldNotSubmitRequestRetry;
+
+  /// No description provided for @requestNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This request no longer exists.'**
+  String get requestNotFound;
+
+  /// No description provided for @couldNotApproveRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t approve the request. Please try again.'**
+  String get couldNotApproveRetry;
+
+  /// No description provided for @couldNotDenyRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t deny the request. Please try again.'**
+  String get couldNotDenyRetry;
+
+  /// No description provided for @couldNotAddProjectsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t add the projects. Please try again.'**
+  String get couldNotAddProjectsRetry;
+
+  /// No description provided for @mainAdminProtectedProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'MainAdmin accounts are protected — their project access can\'t be removed.'**
+  String get mainAdminProtectedProjects;
+
+  /// No description provided for @allAccessRevokedReason.
+  ///
+  /// In en, this message translates to:
+  /// **'All project access was removed by an admin.'**
+  String get allAccessRevokedReason;
+
+  /// No description provided for @couldNotRevokeProjectsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t remove the projects. Please try again.'**
+  String get couldNotRevokeProjectsRetry;
+
+  /// No description provided for @userAccountNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This user account no longer exists.'**
+  String get userAccountNotFound;
+
+  /// No description provided for @mainAdminProtectedRole.
+  ///
+  /// In en, this message translates to:
+  /// **'MainAdmin accounts are protected — their role can\'t be changed.'**
+  String get mainAdminProtectedRole;
+
+  /// No description provided for @couldNotUpdateRoleRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t update the role. Please try again.'**
+  String get couldNotUpdateRoleRetry;
+
+  /// No description provided for @couldNotReapproveRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t approve the request again. Please try again.'**
+  String get couldNotReapproveRetry;
+
+  /// No description provided for @couldNotUpdateDenialRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t update the denial. Please try again.'**
+  String get couldNotUpdateDenialRetry;
+
+  /// No description provided for @unknownProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown project'**
+  String get unknownProject;
+
+  /// No description provided for @couldNotRevokeAccessRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t remove access. Please try again.'**
+  String get couldNotRevokeAccessRetry;
+
+  /// No description provided for @roleClientDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only access to granted projects'**
+  String get roleClientDesc;
+
+  /// No description provided for @roleTechnicianDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Full working access to granted projects (like Admin, without Financials)'**
+  String get roleTechnicianDesc;
+
+  /// No description provided for @roleSubContractorDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents only — their own uploads — on granted projects'**
+  String get roleSubContractorDesc;
+
+  /// No description provided for @roleAdminDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Full system access, not limited to granted projects'**
+  String get roleAdminDesc;
+
+  /// No description provided for @roleSystemAdminDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Admin access, plus (with MainAdmin) the only role that can approve checkout requests, record returns and issue materials'**
+  String get roleSystemAdminDesc;
+
+  /// No description provided for @clientAccessRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Client access requests'**
+  String get clientAccessRequests;
+
+  /// No description provided for @tabPendingRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending requests'**
+  String get tabPendingRequests;
+
+  /// No description provided for @tabRequestHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Request history'**
+  String get tabRequestHistory;
+
+  /// No description provided for @noPendingRequestsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending requests'**
+  String get noPendingRequestsTitle;
+
+  /// No description provided for @clientRequestsAppearHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Client access requests will appear here'**
+  String get clientRequestsAppearHere;
+
+  /// No description provided for @pendingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pendingStatus;
+
+  /// No description provided for @requestedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested: {date}'**
+  String requestedOn(String date);
+
+  /// No description provided for @deny.
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get deny;
+
+  /// No description provided for @noRequestHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No request history'**
+  String get noRequestHistory;
+
+  /// No description provided for @approvedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get approvedStatus;
+
+  /// No description provided for @deniedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Denied'**
+  String get deniedStatus;
+
+  /// No description provided for @processedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed: {date}'**
+  String processedOn(String date);
+
+  /// No description provided for @byName.
+  ///
+  /// In en, this message translates to:
+  /// **'By: {name}'**
+  String byName(String name);
+
+  /// No description provided for @roleColon.
+  ///
+  /// In en, this message translates to:
+  /// **'Role: {role}'**
+  String roleColon(String role);
+
+  /// No description provided for @projectsGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 project granted} other{{count} projects granted}}'**
+  String projectsGranted(int count);
+
+  /// No description provided for @addMoreProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Add more projects'**
+  String get addMoreProjects;
+
+  /// No description provided for @revokeProjectAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove project access'**
+  String get revokeProjectAccess;
+
+  /// No description provided for @changeRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Change role'**
+  String get changeRole;
+
+  /// No description provided for @approveNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve now'**
+  String get approveNow;
+
+  /// No description provided for @updateDenialReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Update denial reason'**
+  String get updateDenialReason;
+
+  /// No description provided for @addProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Add projects'**
+  String get addProjects;
+
+  /// No description provided for @revokeAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove access'**
+  String get revokeAccess;
+
+  /// No description provided for @updateReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Update reason'**
+  String get updateReason;
+
+  /// No description provided for @approveAccessRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve access request'**
+  String get approveAccessRequest;
+
+  /// No description provided for @grantAccessToAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Give {name} access as:'**
+  String grantAccessToAs(String name);
+
+  /// No description provided for @selectProjectsToGrant.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the projects to give access to:'**
+  String get selectProjectsToGrant;
+
+  /// No description provided for @noProjectsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects available'**
+  String get noProjectsAvailable;
+
+  /// No description provided for @denyAccessRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Deny access request'**
+  String get denyAccessRequest;
+
+  /// No description provided for @denyAccessConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to deny access for {name}?'**
+  String denyAccessConfirm(String name);
+
+  /// No description provided for @allProjectsAlreadyGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'All available projects have already been granted.'**
+  String get allProjectsAlreadyGranted;
+
+  /// No description provided for @addProjectsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Add projects — {name}'**
+  String addProjectsFor(String name);
+
+  /// No description provided for @selectAdditionalProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Select additional projects to grant:'**
+  String get selectAdditionalProjects;
+
+  /// No description provided for @noGrantedProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no granted projects to remove.'**
+  String get noGrantedProjects;
+
+  /// No description provided for @revokeAccessFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove access — {name}'**
+  String revokeAccessFor(String name);
+
+  /// No description provided for @selectProjectsToRevoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the projects to remove access from:'**
+  String get selectProjectsToRevoke;
+
+  /// No description provided for @revokeAllMarksDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing all projects will mark this request as denied.'**
+  String get revokeAllMarksDenied;
+
+  /// No description provided for @revoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get revoke;
+
+  /// No description provided for @mainAdminProtectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MainAdmin is protected'**
+  String get mainAdminProtectedTitle;
+
+  /// No description provided for @mainAdminProtectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is a MainAdmin — their role, project access and permissions can\'t be changed or removed from this screen, by design.'**
+  String mainAdminProtectedBody(String name);
+
+  /// No description provided for @changeRoleFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Change role — {name}'**
+  String changeRoleFor(String name);
+
+  /// No description provided for @currentRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Current role: {role}'**
+  String currentRole(String role);
+
+  /// No description provided for @pmEligible.
+  ///
+  /// In en, this message translates to:
+  /// **'Can be a Project Manager'**
+  String get pmEligible;
+
+  /// No description provided for @pmEligibleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets them be picked as a project\'s linked PM account (Edit project), separately from the role above — it doesn\'t change their base permissions.'**
+  String get pmEligibleHint;
+
+  /// No description provided for @approveRequestFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve request — {name}'**
+  String approveRequestFor(String name);
+
+  /// No description provided for @previouslyDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously denied: {reason}'**
+  String previouslyDenied(String reason);
+
+  /// No description provided for @grantAccessAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Give access as:'**
+  String get grantAccessAs;
+
+  /// No description provided for @selectProjectsToGrantShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Select projects to grant:'**
+  String get selectProjectsToGrantShort;
+
+  /// No description provided for @updateDenialFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Update denial — {name}'**
+  String updateDenialFor(String name);
+
+  /// No description provided for @updateDenialBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the denial reason, or confirm the denial with a new message:'**
+  String get updateDenialBody;
+
+  /// No description provided for @denialReasonOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Denial reason (optional)'**
+  String get denialReasonOptional;
+
+  /// No description provided for @denialReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a reason for the denial…'**
+  String get denialReasonHint;
+
+  /// No description provided for @saveAndRedeny.
+  ///
+  /// In en, this message translates to:
+  /// **'Save & deny again'**
+  String get saveAndRedeny;
+
+  /// No description provided for @accessGrantedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Access given to {name}'**
+  String accessGrantedTo(String name);
+
+  /// No description provided for @requestDeniedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Request denied for {name}'**
+  String requestDeniedFor(String name);
+
+  /// No description provided for @projectsAddedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects added for {name}'**
+  String projectsAddedFor(String name);
+
+  /// No description provided for @accessRevokedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Access removed for {name}'**
+  String accessRevokedFor(String name);
+
+  /// No description provided for @roleChangedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s role changed to {role}'**
+  String roleChangedFor(String name, String role);
+
+  /// No description provided for @requestApprovedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s request has been approved'**
+  String requestApprovedFor(String name);
+
+  /// No description provided for @denialUpdatedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Denial updated for {name}'**
+  String denialUpdatedFor(String name);
+
+  /// No description provided for @unnamedProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed project'**
+  String get unnamedProject;
+
+  /// No description provided for @pastDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Past the due date'**
+  String get pastDueDate;
+
+  /// No description provided for @dueTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Due tomorrow'**
+  String get dueTomorrow;
+
+  /// No description provided for @shouldHaveStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Should have started'**
+  String get shouldHaveStarted;
+
+  /// No description provided for @startingTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting tomorrow'**
+  String get startingTomorrow;
+
+  /// No description provided for @startsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts {date}'**
+  String startsOn(String date);
+
+  /// No description provided for @tasksOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks overview'**
+  String get tasksOverview;
+
+  /// No description provided for @allOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'All overdue'**
+  String get allOverdue;
+
+  /// No description provided for @allStartingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'All starting soon (≤3 days)'**
+  String get allStartingSoon;
+
+  /// No description provided for @allOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'All ongoing'**
+  String get allOngoing;
+
+  /// No description provided for @allOtherUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'All other upcoming'**
+  String get allOtherUpcoming;
+
+  /// No description provided for @showLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get showLess;
+
+  /// No description provided for @viewAllTasksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'View all tasks ({count})'**
+  String viewAllTasksCount(int count);
+
+  /// No description provided for @couldNotLoadTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the tasks'**
+  String get couldNotLoadTasks;
+
+  /// No description provided for @noActiveTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No active tasks'**
+  String get noActiveTasks;
+
+  /// No description provided for @addTasksFromGantt.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tasks from the Gantt chart to track your project'**
+  String get addTasksFromGantt;
+
+  /// No description provided for @allTasksOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'All tasks are on track or completed!'**
+  String get allTasksOnTrack;
+
+  /// No description provided for @goToGanttChart.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Gantt chart'**
+  String get goToGanttChart;
+
+  /// No description provided for @taskProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Task progress'**
+  String get taskProgress;
+
+  /// No description provided for @phaseBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase breakdown'**
+  String get phaseBreakdown;
+
+  /// No description provided for @phasesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 phase} other{{count} phases}}'**
+  String phasesCount(int count);
+
+  /// No description provided for @viewAllTasksTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'View all ({count} tasks)'**
+  String viewAllTasksTotal(int count);
+
+  /// No description provided for @completedOnShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed {date}'**
+  String completedOnShort(String date);
+
+  /// No description provided for @couldNotLoadTaskProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the task progress'**
+  String get couldNotLoadTaskProgress;
+
+  /// No description provided for @noActiveTasksYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No active tasks yet'**
+  String get noActiveTasksYet;
+
+  /// No description provided for @tasksAppearHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing and completed tasks\nwill appear here'**
+  String get tasksAppearHere;
+
+  /// No description provided for @oneMinAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'1 min ago'**
+  String get oneMinAgo;
+
+  /// No description provided for @minsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} mins ago'**
+  String minsAgo(int count);
+
+  /// No description provided for @hoursAgoShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String hoursAgoShort(int count);
+
+  /// No description provided for @weatherReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather report'**
+  String get weatherReport;
+
+  /// No description provided for @refreshWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh weather'**
+  String get refreshWeather;
+
+  /// No description provided for @noInternetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get noInternetTitle;
+
+  /// No description provided for @weatherOfflineHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather isn\'t available while you\'re offline.\nIt will refresh automatically when you reconnect.'**
+  String get weatherOfflineHint;
+
+  /// No description provided for @fetchingWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting the weather…'**
+  String get fetchingWeather;
+
+  /// No description provided for @noLocationsSet.
+  ///
+  /// In en, this message translates to:
+  /// **'No locations set'**
+  String get noLocationsSet;
+
+  /// No description provided for @noLocationsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a location to your project to see the weather here.'**
+  String get noLocationsHint;
+
+  /// No description provided for @unstableConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstable connection'**
+  String get unstableConnection;
+
+  /// No description provided for @weatherSlowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The weather couldn\'t load because the connection is slow.\nPlease check your connection and tap refresh.'**
+  String get weatherSlowHint;
+
+  /// No description provided for @someLocationsSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Some locations couldn\'t be reached because the connection is slow.'**
+  String get someLocationsSlow;
+
+  /// No description provided for @viewAllSites.
+  ///
+  /// In en, this message translates to:
+  /// **'View all sites ({count})'**
+  String viewAllSites(int count);
+
+  /// No description provided for @nowTemp.
+  ///
+  /// In en, this message translates to:
+  /// **'Now  •  {temp}'**
+  String nowTemp(String temp);
+
+  /// No description provided for @next3h.
+  ///
+  /// In en, this message translates to:
+  /// **'Next ~3 h'**
+  String get next3h;
+
+  /// No description provided for @connectionTooSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection too slow to load'**
+  String get connectionTooSlow;
+
+  /// No description provided for @locationNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Location not found'**
+  String get locationNotFound;
+
+  /// No description provided for @weatherUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {ago}  •  refreshes every 30 min'**
+  String weatherUpdated(String ago);
 }
 
 class _AppLocalizationsDelegate

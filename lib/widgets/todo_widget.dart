@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 class TodoWidget extends StatefulWidget {
   final String? projectId;
@@ -28,7 +29,7 @@ class TodoWidget extends StatefulWidget {
 
 class _TodoWidgetState extends State<TodoWidget> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final DateFormat _dateFormat = DateFormat('MMM dd, yyyy');
+  DateFormat get _dateFormat => DateFormat.yMMMd();
   bool _isExpanded = false;
 
   /// Normalizes a DateTime to midnight in the device's local timezone
@@ -51,7 +52,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
   Stream<List<ScheduleMonitorData>> _getTasksStream() {
     widget.logger?.d('📡 TodoWidget: Getting tasks stream, showAllProjects: ${widget.showAllProjects}, projectId: ${widget.projectId}, projectIds count: ${widget.projectIds.length}');
-    
+
     // Case 1: Specific project view (single project selected)
     if (widget.projectId != null && widget.projectId!.isNotEmpty) {
       widget.logger?.d('📡 TodoWidget: Fetching tasks for projectId: ${widget.projectId}');
@@ -76,13 +77,13 @@ class _TodoWidgetState extends State<TodoWidget> {
         return tasks;
       });
     }
-    
+
     // Case 2: Dashboard view with filtering (clients with granted projects OR admins with all)
     if (widget.showAllProjects) {
       // If projectIds is NOT empty, filter by those IDs (client view)
       if (widget.projectIds.isNotEmpty) {
         widget.logger?.d('📡 TodoWidget: Fetching tasks for filtered projects: ${widget.projectIds.length} projects');
-        
+
         // Firestore limitation: whereIn supports max 10 items
         if (widget.projectIds.length <= 10) {
           return _firestore
@@ -120,7 +121,7 @@ class _TodoWidgetState extends State<TodoWidget> {
               final data = doc.data();
               try {
                 final task = ScheduleMonitorData.fromFirestore(doc.id, data);
-                
+
                 // Filter by granted project IDs
                 if (widget.projectIds.contains(task.projectId)) {
                   tasks.add(task);
@@ -135,7 +136,7 @@ class _TodoWidgetState extends State<TodoWidget> {
           });
         }
       }
-      
+
       // If projectIds IS empty, show all projects (admin view)
       else {
         widget.logger?.d('📡 TodoWidget: Fetching all projects tasks');
@@ -157,7 +158,7 @@ class _TodoWidgetState extends State<TodoWidget> {
         });
       }
     }
-    
+
     // Case 3: No project selected
     widget.logger?.w('⚠️ TodoWidget: No valid configuration, returning empty stream');
     return Stream.value([]);
@@ -214,32 +215,32 @@ class _TodoWidgetState extends State<TodoWidget> {
     if (status == MonitorStatus.overdue) {
       // Show how overdue it is based on start date
       final overdueByDays = _calculateDaysBetween(startDate, now).abs();
-      return overdueByDays == 0 ? 'Overdue today!' : 'Overdue by $overdueByDays day${overdueByDays == 1 ? '' : 's'}';
+      return overdueByDays == 0 ? l10nNow.overdueToday : l10nNow.overdueByDays(overdueByDays);
     }
 
     if (status == MonitorStatus.ongoing) {
       if (daysUntilEnd < 0) {
-        return 'Past due date';
+        return l10nNow.pastDueDate;
       } else if (daysUntilEnd == 0) {
-        return 'Due today';
+        return l10nNow.dueToday;
       } else if (daysUntilEnd == 1) {
-        return 'Due tomorrow';
+        return l10nNow.dueTomorrow;
       }
-      return 'Due in $daysUntilEnd day${daysUntilEnd == 1 ? '' : 's'}';
+      return l10nNow.dueInDays(daysUntilEnd);
     }
 
     // Upcoming tasks - show when starting
     if (daysUntilStart < 0) {
-      return 'Should have started'; // Edge case
+      return l10nNow.shouldHaveStarted; // Edge case
     } else if (daysUntilStart == 0) {
-      return 'Starting today';
+      return l10nNow.startingToday;
     } else if (daysUntilStart == 1) {
-      return 'Starting tomorrow';
+      return l10nNow.startingTomorrow;
     } else if (daysUntilStart <= 7) {
-      return 'Starts in $daysUntilStart days';
+      return l10nNow.taskStartsInDays(daysUntilStart);
     }
 
-    return 'Starts ${_dateFormat.format(startDate)}';
+    return l10nNow.startsOn(_dateFormat.format(startDate));
   }
 
   @override
@@ -299,7 +300,7 @@ class _TodoWidgetState extends State<TodoWidget> {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            'Tasks Overview', // Always use "Tasks Overview" for unified interface
+            context.l10n.tasksOverview, // Always use "Tasks Overview" for unified interface
             style: TextStyle(
               fontSize: isMobile ? 16 : 18,
               fontWeight: FontWeight.bold,
@@ -374,7 +375,7 @@ class _TodoWidgetState extends State<TodoWidget> {
     // Build priority items with headers
     if (overdueToShow > 0) {
       priorityItems.add(_buildCategoryHeader(
-        'Overdue',
+        context.l10n.monitorOverdue,
         overdueToShow,
         Colors.red.shade700,
         isMobile,
@@ -386,7 +387,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
     if (startingSoonToShow > 0) {
       priorityItems.add(_buildCategoryHeader(
-        'Starting Soon (≤3 days)',
+        context.l10n.startingSoonSection,
         startingSoonToShow,
         Colors.orange.shade700,
         isMobile,
@@ -398,7 +399,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
     if (ongoingToShow > 0) {
       priorityItems.add(_buildCategoryHeader(
-        'Ongoing',
+        context.l10n.monitorOngoing,
         ongoingToShow,
         Colors.blue.shade600,
         isMobile,
@@ -410,7 +411,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
     if (otherUpcomingToShow > 0) {
       priorityItems.add(_buildCategoryHeader(
-        'Other Upcoming',
+        context.l10n.otherUpcoming,
         otherUpcomingToShow,
         Colors.grey.shade700,
         isMobile,
@@ -425,7 +426,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
     if (_overdueTasks.isNotEmpty) {
       expandedItems.add(_buildCategoryHeader(
-        'All Overdue',
+        context.l10n.allOverdue,
         _overdueTasks.length,
         Colors.red.shade700,
         isMobile,
@@ -437,7 +438,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
     if (_startingSoonTasks.isNotEmpty) {
       expandedItems.add(_buildCategoryHeader(
-        'All Starting Soon (≤3 days)',
+        context.l10n.allStartingSoon,
         _startingSoonTasks.length,
         Colors.orange.shade700,
         isMobile,
@@ -449,7 +450,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
     if (_ongoingTasks.isNotEmpty) {
       expandedItems.add(_buildCategoryHeader(
-        'All Ongoing',
+        context.l10n.allOngoing,
         _ongoingTasks.length,
         Colors.blue.shade600,
         isMobile,
@@ -461,7 +462,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
     if (_otherUpcomingTasks.isNotEmpty) {
       expandedItems.add(_buildCategoryHeader(
-        'All Other Upcoming',
+        context.l10n.allOtherUpcoming,
         _otherUpcomingTasks.length,
         Colors.grey.shade700,
         isMobile,
@@ -503,8 +504,8 @@ class _TodoWidgetState extends State<TodoWidget> {
                 ),
                 label: Text(
                   _isExpanded
-                      ? 'Show Less'
-                      : 'View All Tasks ($totalTasks)',
+                      ? context.l10n.showLess
+                      : context.l10n.viewAllTasksCount(totalTasks),
                   style: TextStyle(fontSize: isMobile ? 12 : 14),
                 ),
               ),
@@ -595,7 +596,7 @@ class _TodoWidgetState extends State<TodoWidget> {
             Expanded(
               child: Center(
                 child: Text(
-                  'Error loading tasks',
+                  context.l10n.couldNotLoadTasks,
                   style: TextStyle(
                     color: Colors.red[600],
                     fontSize: isMobile ? 12 : 14,
@@ -611,8 +612,8 @@ class _TodoWidgetState extends State<TodoWidget> {
 
   Widget _buildEmptyState(bool isMobile) {
     // Check if we're viewing a specific project (not dashboard)
-    final bool isSpecificProjectView = widget.project != null && 
-                                      widget.projectId != null && 
+    final bool isSpecificProjectView = widget.project != null &&
+                                      widget.projectId != null &&
                                       widget.projectId!.isNotEmpty;
 
     return Center(
@@ -626,7 +627,7 @@ class _TodoWidgetState extends State<TodoWidget> {
           ),
           const SizedBox(height: 8),
           Text(
-            'No active tasks',
+            context.l10n.noActiveTasks,
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: isMobile ? 12 : 14,
@@ -639,8 +640,8 @@ class _TodoWidgetState extends State<TodoWidget> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
               isSpecificProjectView
-                  ? 'Add tasks from the Gantt Chart to track your project'
-                  : 'All tasks are on track or completed!',
+                  ? context.l10n.addTasksFromGantt
+                  : context.l10n.allTasksOnTrack,
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: isMobile ? 10 : 12,
@@ -657,7 +658,7 @@ class _TodoWidgetState extends State<TodoWidget> {
               },
               icon: Icon(Icons.timeline, size: isMobile ? 16 : 18),
               label: Text(
-                'Go to Gantt Chart',
+                context.l10n.goToGanttChart,
                 style: TextStyle(fontSize: isMobile ? 12 : 13),
               ),
               style: ElevatedButton.styleFrom(
@@ -682,7 +683,7 @@ class _TodoWidgetState extends State<TodoWidget> {
     }
 
     widget.logger?.i('🧭 TodoWidget: Navigating to Gantt Chart for project: ${widget.project!.name}');
-    
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ScheduleScreen(
@@ -697,7 +698,7 @@ class _TodoWidgetState extends State<TodoWidget> {
     final statusColor = _getStatusColor(task.status);
     final deadlineText = _getDeadlineText(task.startDate, task.endDate, task.status);
     final now = DateTime.now();
-    final bool isUrgent = task.isOverdue || 
+    final bool isUrgent = task.isOverdue ||
         (task.isUpcoming && _calculateDaysBetween(now, task.startDate) <= 3);
 
     return Container(
@@ -815,7 +816,7 @@ class _TodoWidgetState extends State<TodoWidget> {
           ),
           ...[
               const SizedBox(width: 8),
-              Container(  
+              Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.15),

@@ -4,6 +4,9 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+
 /// A file the user picked, with its bytes already loaded and ready to
 /// upload — on both web and native.
 class PickedUploadFile {
@@ -18,12 +21,9 @@ class PickedUploadFile {
 /// Thrown when the platform file picker returned a file but its bytes
 /// couldn't be read — the one failure mode this helper exists to prevent
 /// from ever reaching an unguarded `!` again.
-class FileBytesUnavailableException implements Exception {
+class FileBytesUnavailableException extends UserFacingException {
   final String fileName;
-  const FileBytesUnavailableException(this.fileName);
-
-  @override
-  String toString() => 'Could not read file data for "$fileName".';
+  FileBytesUnavailableException(this.fileName) : super(l10nNow.couldNotReadFile);
 }
 
 /// Single entry point for "let the user pick one file and hand me its

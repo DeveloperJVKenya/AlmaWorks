@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class ClientAccessRequestsScreen extends StatefulWidget {
   final Logger logger;
@@ -46,31 +48,31 @@ class _ClientAccessRequestsScreenState
   /// only). Shared by every grant/re-approve/edit-role dialog below so the
   /// three don't drift out of sync with each other.
   List<({String value, String label, String subtitle})> _grantableRoleOptions() {
-    const client = (
+    final l = context.l10n;
+    final client = (
       value: 'Client',
-      label: 'Client',
-      subtitle: 'Read-only access to granted projects',
+      label: roleLabel('Client'),
+      subtitle: l.roleClientDesc,
     );
-    const technician = (
+    final technician = (
       value: 'Technician',
-      label: 'Technician',
-      subtitle: 'Full working access to granted projects (like Admin, minus Financials)',
+      label: roleLabel('Technician'),
+      subtitle: l.roleTechnicianDesc,
     );
-    const subContractor = (
+    final subContractor = (
       value: 'SubContractor',
-      label: 'Sub-contractor',
-      subtitle: 'Documents only, for their own uploads, on granted projects (more permissions defined later)',
+      label: roleLabel('SubContractor'),
+      subtitle: l.roleSubContractorDesc,
     );
-    const admin = (
+    final admin = (
       value: 'Admin',
-      label: 'Admin',
-      subtitle: 'Full system access, not limited to granted projects',
+      label: roleLabel('Admin'),
+      subtitle: l.roleAdminDesc,
     );
-    const systemAdmin = (
+    final systemAdmin = (
       value: 'SystemAdmin',
-      label: 'System Admin',
-      subtitle: 'Full Admin access, plus the only role (with MainAdmin) that can '
-          'approve checkout requests, record returns, and issue materials',
+      label: roleLabel('SystemAdmin'),
+      subtitle: l.roleSystemAdminDesc,
     );
 
     if (_currentUserRole == 'MainAdmin' || _currentUserRole == 'SystemAdmin') {
@@ -98,7 +100,7 @@ class _ClientAccessRequestsScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Client Access Requests',
+          context.l10n.clientAccessRequests,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -111,9 +113,9 @@ class _ClientAccessRequestsScreenState
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(text: 'Pending Requests', icon: Icon(Icons.pending_actions)),
-            Tab(text: 'Request History', icon: Icon(Icons.history)),
+          tabs: [
+            Tab(text: context.l10n.tabPendingRequests, icon: const Icon(Icons.pending_actions)),
+            Tab(text: context.l10n.tabRequestHistory, icon: const Icon(Icons.history)),
           ],
         ),
       ),
@@ -150,11 +152,11 @@ class _ClientAccessRequestsScreenState
               children: [
                 const Icon(Icons.error, size: 64, color: Colors.red),
                 const SizedBox(height: 16),
-                Text('Error loading requests',
+                Text(context.l10n.couldNotLoadRequests,
                     style: TextStyle(fontSize: 18)),
                 const SizedBox(height: 8),
                 Text(
-                  snapshot.error.toString(),
+                  friendlyError(snapshot.error!),
                   style: TextStyle(color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
@@ -173,7 +175,7 @@ class _ClientAccessRequestsScreenState
                 Icon(Icons.inbox, size: 100, color: Colors.grey[300]),
                 const SizedBox(height: 16),
                 Text(
-                  'No Pending Requests',
+                  context.l10n.noPendingRequestsTitle,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -182,7 +184,7 @@ class _ClientAccessRequestsScreenState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Client access requests will appear here',
+                  context.l10n.clientRequestsAppearHere,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
@@ -254,7 +256,7 @@ class _ClientAccessRequestsScreenState
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Pending',
+                    context.l10n.pendingStatus,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -270,7 +272,7 @@ class _ClientAccessRequestsScreenState
                 Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
                 const SizedBox(width: 4),
                 Text(
-                  'Requested: ${DateFormat('MMM dd, yyyy HH:mm').format(request.requestDate)}',
+                  context.l10n.requestedOn(DateFormat.yMMMd().add_Hm().format(request.requestDate)),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
@@ -285,7 +287,7 @@ class _ClientAccessRequestsScreenState
                   child: ElevatedButton.icon(
                     onPressed: () => _showApprovalDialog(request),
                     icon: const Icon(Icons.check_circle, size: 18),
-                    label: const Text('Approve'),
+                    label: Text(context.l10n.approve),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
@@ -301,7 +303,7 @@ class _ClientAccessRequestsScreenState
                   child: ElevatedButton.icon(
                     onPressed: () => _showDenialDialog(request),
                     icon: const Icon(Icons.cancel, size: 18),
-                    label: const Text('Deny'),
+                    label: Text(context.l10n.deny),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
@@ -339,7 +341,7 @@ class _ClientAccessRequestsScreenState
         if (snapshot.hasError) {
           return Center(
             child: Text(
-              'Error loading history',
+              context.l10n.couldNotLoadHistoryShort,
               style: TextStyle(),
             ),
           );
@@ -357,7 +359,7 @@ class _ClientAccessRequestsScreenState
                 Icon(Icons.history, size: 100, color: Colors.grey[300]),
                 const SizedBox(height: 16),
                 Text(
-                  'No Request History',
+                  context.l10n.noRequestHistory,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -437,7 +439,7 @@ class _ClientAccessRequestsScreenState
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isApproved ? 'Approved' : 'Denied',
+                    isApproved ? context.l10n.approvedStatus : context.l10n.deniedStatus,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -456,27 +458,27 @@ class _ClientAccessRequestsScreenState
             // ── Metadata rows ──────────────────────────────────────────────
             _buildInfoRow(
               Icons.calendar_today,
-              'Requested: ${DateFormat('MMM dd, yyyy').format(request.requestDate)}',
+              context.l10n.requestedOn(DateFormat.yMMMd().format(request.requestDate)),
             ),
             if (request.approvalDate != null)
               _buildInfoRow(
                 Icons.event_available,
-                'Processed: ${DateFormat('MMM dd, yyyy').format(request.approvalDate!)}',
+                context.l10n.processedOn(DateFormat.yMMMd().format(request.approvalDate!)),
               ),
             if (request.approvedBy != null)
               _buildInfoRow(
                 Icons.person,
-                'By: ${request.approvedBy}',
+                context.l10n.byName('${request.approvedBy}'),
               ),
             if (isApproved)
               _buildInfoRow(
                 Icons.badge_outlined,
-                'Role: ${request.grantedRole}',
+                context.l10n.roleColon(roleLabel(request.grantedRole)),
               ),
             if (isApproved && request.grantedProjects.isNotEmpty)
               _buildInfoRow(
                 Icons.folder_open,
-                '${request.grantedProjects.length} project(s) granted',
+                context.l10n.projectsGranted(request.grantedProjects.length),
               ),
             if (!isApproved && request.denialReason != null)
               Padding(
@@ -494,7 +496,7 @@ class _ClientAccessRequestsScreenState
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Reason: ${request.denialReason}',
+                          context.l10n.reasonColon(denialReasonLabel(request.denialReason!)),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.red[900],
@@ -548,7 +550,7 @@ class _ClientAccessRequestsScreenState
                 value: 'add_projects',
                 child: _popupItem(
                   Icons.add_circle_outline,
-                  'Add More Projects',
+                  context.l10n.addMoreProjects,
                   Colors.green,
                 ),
               ),
@@ -556,7 +558,7 @@ class _ClientAccessRequestsScreenState
                 value: 'revoke_projects',
                 child: _popupItem(
                   Icons.remove_circle_outline,
-                  'Revoke Project Access',
+                  context.l10n.revokeProjectAccess,
                   Colors.orange,
                 ),
               ),
@@ -564,7 +566,7 @@ class _ClientAccessRequestsScreenState
                 value: 'edit_role',
                 child: _popupItem(
                   Icons.manage_accounts_outlined,
-                  'Change Role',
+                  context.l10n.changeRole,
                   Colors.blue,
                 ),
               ),
@@ -574,7 +576,7 @@ class _ClientAccessRequestsScreenState
                 value: 're_approve',
                 child: _popupItem(
                   Icons.check_circle_outline,
-                  'Approve Now',
+                  context.l10n.approveNow,
                   Colors.green,
                 ),
               ),
@@ -582,7 +584,7 @@ class _ClientAccessRequestsScreenState
                 value: 're_deny',
                 child: _popupItem(
                   Icons.edit_note,
-                  'Update Denial Reason',
+                  context.l10n.updateDenialReason,
                   Colors.red,
                 ),
               ),
@@ -608,7 +610,7 @@ class _ClientAccessRequestsScreenState
           child: OutlinedButton.icon(
             onPressed: () => _showAddProjectsDialog(request),
             icon: const Icon(Icons.add, size: 16),
-            label: Text('Add Projects',
+            label: Text(context.l10n.addProjects,
                 style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.green[700],
@@ -624,7 +626,7 @@ class _ClientAccessRequestsScreenState
           child: OutlinedButton.icon(
             onPressed: () => _showRevokeProjectsDialog(request),
             icon: const Icon(Icons.remove, size: 16),
-            label: Text('Revoke Access',
+            label: Text(context.l10n.revokeAccess,
                 style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.orange[700],
@@ -647,7 +649,7 @@ class _ClientAccessRequestsScreenState
           child: OutlinedButton.icon(
             onPressed: () => _showReApproveDialog(request),
             icon: const Icon(Icons.check_circle_outline, size: 16),
-            label: Text('Approve Now',
+            label: Text(context.l10n.approveNow,
                 style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.green[700],
@@ -663,7 +665,7 @@ class _ClientAccessRequestsScreenState
           child: OutlinedButton.icon(
             onPressed: () => _showReDenyDialog(request),
             icon: const Icon(Icons.edit_note, size: 16),
-            label: Text('Update Reason',
+            label: Text(context.l10n.updateReason,
                 style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red[700],
@@ -720,7 +722,7 @@ class _ClientAccessRequestsScreenState
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: Text(
-            'Approve Access Request',
+            context.l10n.approveAccessRequest,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: SizedBox(
@@ -730,7 +732,7 @@ class _ClientAccessRequestsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Grant access to ${request.clientUsername} as:',
+                  context.l10n.grantAccessToAs(request.clientUsername),
                   style: TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 4),
@@ -753,12 +755,12 @@ class _ClientAccessRequestsScreenState
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Select projects to grant access to:',
+                  context.l10n.selectProjectsToGrant,
                   style: TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 16),
                 if (projects.isEmpty)
-                  Text('No projects available',
+                  Text(context.l10n.noProjectsAvailable,
                       style: TextStyle(
                           color: Colors.grey[600], fontSize: 14))
                 else
@@ -795,7 +797,7 @@ class _ClientAccessRequestsScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel',
+              child: Text(context.l10n.cancel,
                   style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
@@ -804,7 +806,7 @@ class _ClientAccessRequestsScreenState
                   : () => _approveRequest(request, selectedProjects, grantedRole),
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0A2E5A)),
-              child: Text('Approve',
+              child: Text(context.l10n.approve,
                   style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -819,20 +821,20 @@ class _ClientAccessRequestsScreenState
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Deny Access Request',
+        title: Text(context.l10n.denyAccessRequest,
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Are you sure you want to deny access for ${request.clientUsername}?',
+              context.l10n.denyAccessConfirm(request.clientUsername),
               style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
               decoration: InputDecoration(
-                labelText: 'Reason (optional)',
+                labelText: context.l10n.reasonOptional,
                 labelStyle: TextStyle(),
                 border: const OutlineInputBorder(),
               ),
@@ -843,7 +845,7 @@ class _ClientAccessRequestsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
+            child: Text(context.l10n.cancel,
                 style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
@@ -851,7 +853,7 @@ class _ClientAccessRequestsScreenState
                 _denyRequest(request, reasonController.text),
             style:
                 ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Deny',
+            child: Text(context.l10n.deny,
                 style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -877,7 +879,7 @@ class _ClientAccessRequestsScreenState
 
     if (available.isEmpty) {
       _showSnack(
-          'All available projects have already been granted.', Colors.blue);
+          context.l10n.allProjectsAlreadyGranted, Colors.blue);
       return;
     }
 
@@ -892,7 +894,7 @@ class _ClientAccessRequestsScreenState
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Add Projects — ${request.clientUsername}',
+                  context.l10n.addProjectsFor(request.clientUsername),
                   style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                 ),
@@ -906,7 +908,7 @@ class _ClientAccessRequestsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Select additional projects to grant:',
+                  context.l10n.selectAdditionalProjects,
                   style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 12),
@@ -940,7 +942,7 @@ class _ClientAccessRequestsScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel',
+              child: Text(context.l10n.cancel,
                   style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton.icon(
@@ -948,7 +950,7 @@ class _ClientAccessRequestsScreenState
                   ? null
                   : () => _addProjects(request, selectedProjects),
               icon: const Icon(Icons.add, size: 16),
-              label: Text('Add',
+              label: Text(context.l10n.add,
                   style: TextStyle(color: Colors.white)),
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.green),
@@ -962,7 +964,7 @@ class _ClientAccessRequestsScreenState
   /// Dialog: revoke specific projects from an already-approved request.
   Future<void> _showRevokeProjectsDialog(ClientRequest request) async {
     if (request.grantedProjects.isEmpty) {
-      _showSnack('No granted projects to revoke.', Colors.blue);
+      _showSnack(context.l10n.noGrantedProjects, Colors.blue);
       return;
     }
 
@@ -985,7 +987,7 @@ class _ClientAccessRequestsScreenState
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Revoke Access — ${request.clientUsername}',
+                  context.l10n.revokeAccessFor(request.clientUsername),
                   style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                 ),
@@ -999,7 +1001,7 @@ class _ClientAccessRequestsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Select projects to revoke access from:',
+                  context.l10n.selectProjectsToRevoke,
                   style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 8),
@@ -1016,7 +1018,7 @@ class _ClientAccessRequestsScreenState
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Revoking all projects will mark this request as denied.',
+                          context.l10n.revokeAllMarksDenied,
                           style: TextStyle(
                               fontSize: 11, color: Colors.orange[800]),
                         ),
@@ -1056,7 +1058,7 @@ class _ClientAccessRequestsScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel',
+              child: Text(context.l10n.cancel,
                   style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton.icon(
@@ -1064,7 +1066,7 @@ class _ClientAccessRequestsScreenState
                   ? null
                   : () => _revokeProjects(request, selectedToRevoke),
               icon: const Icon(Icons.remove, size: 16),
-              label: Text('Revoke',
+              label: Text(context.l10n.revoke,
                   style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange[700]),
@@ -1089,10 +1091,9 @@ class _ClientAccessRequestsScreenState
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('MainAdmin is protected', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(context.l10n.mainAdminProtectedTitle, style: TextStyle(fontWeight: FontWeight.bold)),
           content: Text(
-            '${request.clientUsername} is a MainAdmin — their role, project access, and permissions can\'t be '
-            'changed or revoked from this screen, by design.',
+            context.l10n.mainAdminProtectedBody(request.clientUsername),
             style: TextStyle(fontSize: 13),
           ),
           actions: [
@@ -1141,7 +1142,7 @@ class _ClientAccessRequestsScreenState
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Change Role — ${request.clientUsername}',
+                  context.l10n.changeRoleFor(request.clientUsername),
                   style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                 ),
@@ -1155,7 +1156,7 @@ class _ClientAccessRequestsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Current role: ${request.grantedRole}',
+                  context.l10n.currentRole(roleLabel(request.grantedRole)),
                   style: TextStyle(
                       fontSize: 12, color: Colors.grey[600]),
                 ),
@@ -1184,11 +1185,10 @@ class _ClientAccessRequestsScreenState
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     controlAffinity: ListTileControlAffinity.leading,
-                    title: Text('Project Manager eligible',
+                    title: Text(context.l10n.pmEligible,
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     subtitle: Text(
-                        'Makes them pickable as a project\'s Linked PM Account (Edit Project), independent '
-                        'of the role above — doesn\'t change their base permissions.',
+                        context.l10n.pmEligibleHint,
                         style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                     value: isProjectManager,
                     activeColor: const Color(0xFF0A2E5A),
@@ -1201,7 +1201,7 @@ class _ClientAccessRequestsScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel',
+              child: Text(context.l10n.cancel,
                   style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
@@ -1214,7 +1214,7 @@ class _ClientAccessRequestsScreenState
                       ),
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0A2E5A)),
-              child: Text('Save',
+              child: Text(context.l10n.save,
                   style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -1247,7 +1247,7 @@ class _ClientAccessRequestsScreenState
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Approve Request — ${request.clientUsername}',
+                  context.l10n.approveRequestFor(request.clientUsername),
                   style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15),
                 ),
@@ -1276,7 +1276,7 @@ class _ClientAccessRequestsScreenState
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'Previously denied: ${request.denialReason}',
+                            context.l10n.previouslyDenied(denialReasonLabel(request.denialReason!)),
                             style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.red[800]),
@@ -1286,7 +1286,7 @@ class _ClientAccessRequestsScreenState
                     ),
                   ),
                 Text(
-                  'Grant access as:',
+                  context.l10n.grantAccessAs,
                   style: TextStyle(fontSize: 13),
                 ),
                 RadioGroup<String>(
@@ -1306,12 +1306,12 @@ class _ClientAccessRequestsScreenState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Select projects to grant:',
+                  context.l10n.selectProjectsToGrantShort,
                   style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 if (projects.isEmpty)
-                  Text('No projects available',
+                  Text(context.l10n.noProjectsAvailable,
                       style: TextStyle(
                           color: Colors.grey[600], fontSize: 13))
                 else
@@ -1346,7 +1346,7 @@ class _ClientAccessRequestsScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel',
+              child: Text(context.l10n.cancel,
                   style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton.icon(
@@ -1354,7 +1354,7 @@ class _ClientAccessRequestsScreenState
                   ? null
                   : () => _reApproveRequest(request, selectedProjects, grantedRole),
               icon: const Icon(Icons.check, size: 16),
-              label: Text('Approve',
+              label: Text(context.l10n.approve,
                   style: TextStyle(color: Colors.white)),
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.green),
@@ -1379,7 +1379,7 @@ class _ClientAccessRequestsScreenState
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Update Denial — ${request.clientUsername}',
+                context.l10n.updateDenialFor(request.clientUsername),
                 style: TextStyle(
                     fontWeight: FontWeight.bold, fontSize: 15),
               ),
@@ -1391,17 +1391,17 @@ class _ClientAccessRequestsScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Update the denial reason or confirm denial with a new message:',
+              context.l10n.updateDenialBody,
               style: TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
               decoration: InputDecoration(
-                labelText: 'Denial reason (optional)',
+                labelText: context.l10n.denialReasonOptional,
                 labelStyle: TextStyle(fontSize: 13),
                 border: const OutlineInputBorder(),
-                hintText: 'Enter a reason for the denial...',
+                hintText: context.l10n.denialReasonHint,
                 hintStyle:
                     TextStyle(fontSize: 12, color: Colors.grey),
               ),
@@ -1412,14 +1412,14 @@ class _ClientAccessRequestsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
+            child: Text(context.l10n.cancel,
                 style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton.icon(
             onPressed: () =>
                 _reDenyRequest(request, reasonController.text),
             icon: const Icon(Icons.save, size: 16),
-            label: Text('Save & Re-deny',
+            label: Text(context.l10n.saveAndRedeny,
                 style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
           ),
@@ -1451,7 +1451,7 @@ class _ClientAccessRequestsScreenState
     if (error != null) {
       _showSnack(error, Colors.red);
     } else {
-      _showSnack('Access granted to ${request.clientUsername}', Colors.green);
+      _showSnack(context.l10n.accessGrantedTo(request.clientUsername), Colors.green);
     }
   }
 
@@ -1473,7 +1473,7 @@ class _ClientAccessRequestsScreenState
       _showSnack(error, Colors.red);
     } else {
       _showSnack(
-          'Request denied for ${request.clientUsername}', Colors.orange);
+          context.l10n.requestDeniedFor(request.clientUsername), Colors.orange);
     }
   }
 
@@ -1502,7 +1502,7 @@ class _ClientAccessRequestsScreenState
       _showSnack(error, Colors.red);
     } else {
       _showSnack(
-          'Projects added for ${request.clientUsername}', Colors.green);
+          context.l10n.projectsAddedFor(request.clientUsername), Colors.green);
     }
   }
 
@@ -1527,7 +1527,7 @@ class _ClientAccessRequestsScreenState
       _showSnack(error, Colors.red);
     } else {
       _showSnack(
-          'Access revoked for ${request.clientUsername}', Colors.orange);
+          context.l10n.accessRevokedFor(request.clientUsername), Colors.orange);
     }
   }
 
@@ -1551,7 +1551,7 @@ class _ClientAccessRequestsScreenState
       _showSnack(error, Colors.red);
     } else {
       _showSnack(
-          '${request.clientUsername}\'s role changed to $newRole', Colors.green);
+          context.l10n.roleChangedFor(request.clientUsername, roleLabel(newRole)), Colors.green);
     }
   }
 
@@ -1575,7 +1575,7 @@ class _ClientAccessRequestsScreenState
       _showSnack(error, Colors.red);
     } else {
       _showSnack(
-          '${request.clientUsername}\'s request has been approved',
+          context.l10n.requestApprovedFor(request.clientUsername),
           Colors.green);
     }
   }
@@ -1598,7 +1598,7 @@ class _ClientAccessRequestsScreenState
     if (error != null) {
       _showSnack(error, Colors.red);
     } else {
-      _showSnack('Denial updated for ${request.clientUsername}', Colors.orange);
+      _showSnack(context.l10n.denialUpdatedFor(request.clientUsername), Colors.orange);
     }
   }
 
@@ -1624,7 +1624,7 @@ class _ClientAccessRequestsScreenState
           .i('✅ Found ${snapshot.docs.length} projects');
       return snapshot.docs.map((doc) {
         final data = doc.data();
-        return {'id': doc.id, 'name': data['name'] ?? 'Unnamed Project'};
+        return {'id': doc.id, 'name': data['name'] ?? l10nNow.unnamedProject};
       }).toList();
     } catch (e) {
       widget.logger.e('❌ Error fetching projects: $e');
@@ -1646,8 +1646,8 @@ class _ClientAccessRequestsScreenState
         results.add({
           'id': id,
           'name': doc.exists
-              ? (doc.data()?['name'] ?? 'Unknown Project')
-              : 'Unknown Project',
+              ? (doc.data()?['name'] ?? l10nNow.unknownProject)
+              : l10nNow.unknownProject,
         });
       }
       return results;

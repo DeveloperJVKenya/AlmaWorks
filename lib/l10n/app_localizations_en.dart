@@ -6926,4 +6926,483 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attSignature => 'Signature';
+
+  @override
+  String get alreadyPendingRequest =>
+      'You already have an access request waiting for review.';
+
+  @override
+  String get couldNotSubmitRequestRetry =>
+      'We couldn\'t send your request. Please try again.';
+
+  @override
+  String get requestNotFound => 'This request no longer exists.';
+
+  @override
+  String get couldNotApproveRetry =>
+      'We couldn\'t approve the request. Please try again.';
+
+  @override
+  String get couldNotDenyRetry =>
+      'We couldn\'t deny the request. Please try again.';
+
+  @override
+  String get couldNotAddProjectsRetry =>
+      'We couldn\'t add the projects. Please try again.';
+
+  @override
+  String get mainAdminProtectedProjects =>
+      'MainAdmin accounts are protected — their project access can\'t be removed.';
+
+  @override
+  String get allAccessRevokedReason =>
+      'All project access was removed by an admin.';
+
+  @override
+  String get couldNotRevokeProjectsRetry =>
+      'We couldn\'t remove the projects. Please try again.';
+
+  @override
+  String get userAccountNotFound => 'This user account no longer exists.';
+
+  @override
+  String get mainAdminProtectedRole =>
+      'MainAdmin accounts are protected — their role can\'t be changed.';
+
+  @override
+  String get couldNotUpdateRoleRetry =>
+      'We couldn\'t update the role. Please try again.';
+
+  @override
+  String get couldNotReapproveRetry =>
+      'We couldn\'t approve the request again. Please try again.';
+
+  @override
+  String get couldNotUpdateDenialRetry =>
+      'We couldn\'t update the denial. Please try again.';
+
+  @override
+  String get unknownProject => 'Unknown project';
+
+  @override
+  String get couldNotRevokeAccessRetry =>
+      'We couldn\'t remove access. Please try again.';
+
+  @override
+  String get roleClientDesc => 'Read-only access to granted projects';
+
+  @override
+  String get roleTechnicianDesc =>
+      'Full working access to granted projects (like Admin, without Financials)';
+
+  @override
+  String get roleSubContractorDesc =>
+      'Documents only — their own uploads — on granted projects';
+
+  @override
+  String get roleAdminDesc =>
+      'Full system access, not limited to granted projects';
+
+  @override
+  String get roleSystemAdminDesc =>
+      'Full Admin access, plus (with MainAdmin) the only role that can approve checkout requests, record returns and issue materials';
+
+  @override
+  String get clientAccessRequests => 'Client access requests';
+
+  @override
+  String get tabPendingRequests => 'Pending requests';
+
+  @override
+  String get tabRequestHistory => 'Request history';
+
+  @override
+  String get noPendingRequestsTitle => 'No pending requests';
+
+  @override
+  String get clientRequestsAppearHere =>
+      'Client access requests will appear here';
+
+  @override
+  String get pendingStatus => 'Pending';
+
+  @override
+  String requestedOn(String date) {
+    return 'Requested: $date';
+  }
+
+  @override
+  String get deny => 'Deny';
+
+  @override
+  String get noRequestHistory => 'No request history';
+
+  @override
+  String get approvedStatus => 'Approved';
+
+  @override
+  String get deniedStatus => 'Denied';
+
+  @override
+  String processedOn(String date) {
+    return 'Processed: $date';
+  }
+
+  @override
+  String byName(String name) {
+    return 'By: $name';
+  }
+
+  @override
+  String roleColon(String role) {
+    return 'Role: $role';
+  }
+
+  @override
+  String projectsGranted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count projects granted',
+      one: '1 project granted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addMoreProjects => 'Add more projects';
+
+  @override
+  String get revokeProjectAccess => 'Remove project access';
+
+  @override
+  String get changeRole => 'Change role';
+
+  @override
+  String get approveNow => 'Approve now';
+
+  @override
+  String get updateDenialReason => 'Update denial reason';
+
+  @override
+  String get addProjects => 'Add projects';
+
+  @override
+  String get revokeAccess => 'Remove access';
+
+  @override
+  String get updateReason => 'Update reason';
+
+  @override
+  String get approveAccessRequest => 'Approve access request';
+
+  @override
+  String grantAccessToAs(String name) {
+    return 'Give $name access as:';
+  }
+
+  @override
+  String get selectProjectsToGrant => 'Select the projects to give access to:';
+
+  @override
+  String get noProjectsAvailable => 'No projects available';
+
+  @override
+  String get denyAccessRequest => 'Deny access request';
+
+  @override
+  String denyAccessConfirm(String name) {
+    return 'Are you sure you want to deny access for $name?';
+  }
+
+  @override
+  String get allProjectsAlreadyGranted =>
+      'All available projects have already been granted.';
+
+  @override
+  String addProjectsFor(String name) {
+    return 'Add projects — $name';
+  }
+
+  @override
+  String get selectAdditionalProjects => 'Select additional projects to grant:';
+
+  @override
+  String get noGrantedProjects => 'There are no granted projects to remove.';
+
+  @override
+  String revokeAccessFor(String name) {
+    return 'Remove access — $name';
+  }
+
+  @override
+  String get selectProjectsToRevoke =>
+      'Select the projects to remove access from:';
+
+  @override
+  String get revokeAllMarksDenied =>
+      'Removing all projects will mark this request as denied.';
+
+  @override
+  String get revoke => 'Remove';
+
+  @override
+  String get mainAdminProtectedTitle => 'MainAdmin is protected';
+
+  @override
+  String mainAdminProtectedBody(String name) {
+    return '$name is a MainAdmin — their role, project access and permissions can\'t be changed or removed from this screen, by design.';
+  }
+
+  @override
+  String changeRoleFor(String name) {
+    return 'Change role — $name';
+  }
+
+  @override
+  String currentRole(String role) {
+    return 'Current role: $role';
+  }
+
+  @override
+  String get pmEligible => 'Can be a Project Manager';
+
+  @override
+  String get pmEligibleHint =>
+      'Lets them be picked as a project\'s linked PM account (Edit project), separately from the role above — it doesn\'t change their base permissions.';
+
+  @override
+  String approveRequestFor(String name) {
+    return 'Approve request — $name';
+  }
+
+  @override
+  String previouslyDenied(String reason) {
+    return 'Previously denied: $reason';
+  }
+
+  @override
+  String get grantAccessAs => 'Give access as:';
+
+  @override
+  String get selectProjectsToGrantShort => 'Select projects to grant:';
+
+  @override
+  String updateDenialFor(String name) {
+    return 'Update denial — $name';
+  }
+
+  @override
+  String get updateDenialBody =>
+      'Update the denial reason, or confirm the denial with a new message:';
+
+  @override
+  String get denialReasonOptional => 'Denial reason (optional)';
+
+  @override
+  String get denialReasonHint => 'Enter a reason for the denial…';
+
+  @override
+  String get saveAndRedeny => 'Save & deny again';
+
+  @override
+  String accessGrantedTo(String name) {
+    return 'Access given to $name';
+  }
+
+  @override
+  String requestDeniedFor(String name) {
+    return 'Request denied for $name';
+  }
+
+  @override
+  String projectsAddedFor(String name) {
+    return 'Projects added for $name';
+  }
+
+  @override
+  String accessRevokedFor(String name) {
+    return 'Access removed for $name';
+  }
+
+  @override
+  String roleChangedFor(String name, String role) {
+    return '$name\'s role changed to $role';
+  }
+
+  @override
+  String requestApprovedFor(String name) {
+    return '$name\'s request has been approved';
+  }
+
+  @override
+  String denialUpdatedFor(String name) {
+    return 'Denial updated for $name';
+  }
+
+  @override
+  String get unnamedProject => 'Unnamed project';
+
+  @override
+  String get pastDueDate => 'Past the due date';
+
+  @override
+  String get dueTomorrow => 'Due tomorrow';
+
+  @override
+  String get shouldHaveStarted => 'Should have started';
+
+  @override
+  String get startingTomorrow => 'Starting tomorrow';
+
+  @override
+  String startsOn(String date) {
+    return 'Starts $date';
+  }
+
+  @override
+  String get tasksOverview => 'Tasks overview';
+
+  @override
+  String get allOverdue => 'All overdue';
+
+  @override
+  String get allStartingSoon => 'All starting soon (≤3 days)';
+
+  @override
+  String get allOngoing => 'All ongoing';
+
+  @override
+  String get allOtherUpcoming => 'All other upcoming';
+
+  @override
+  String get showLess => 'Show less';
+
+  @override
+  String viewAllTasksCount(int count) {
+    return 'View all tasks ($count)';
+  }
+
+  @override
+  String get couldNotLoadTasks => 'We couldn\'t load the tasks';
+
+  @override
+  String get noActiveTasks => 'No active tasks';
+
+  @override
+  String get addTasksFromGantt =>
+      'Add tasks from the Gantt chart to track your project';
+
+  @override
+  String get allTasksOnTrack => 'All tasks are on track or completed!';
+
+  @override
+  String get goToGanttChart => 'Go to Gantt chart';
+
+  @override
+  String get taskProgress => 'Task progress';
+
+  @override
+  String get phaseBreakdown => 'Phase breakdown';
+
+  @override
+  String phasesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count phases',
+      one: '1 phase',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String viewAllTasksTotal(int count) {
+    return 'View all ($count tasks)';
+  }
+
+  @override
+  String completedOnShort(String date) {
+    return 'Completed $date';
+  }
+
+  @override
+  String get couldNotLoadTaskProgress => 'We couldn\'t load the task progress';
+
+  @override
+  String get noActiveTasksYet => 'No active tasks yet';
+
+  @override
+  String get tasksAppearHere => 'Ongoing and completed tasks\nwill appear here';
+
+  @override
+  String get oneMinAgo => '1 min ago';
+
+  @override
+  String minsAgo(int count) {
+    return '$count mins ago';
+  }
+
+  @override
+  String hoursAgoShort(int count) {
+    return '${count}h ago';
+  }
+
+  @override
+  String get weatherReport => 'Weather report';
+
+  @override
+  String get refreshWeather => 'Refresh weather';
+
+  @override
+  String get noInternetTitle => 'No internet connection';
+
+  @override
+  String get weatherOfflineHint =>
+      'Weather isn\'t available while you\'re offline.\nIt will refresh automatically when you reconnect.';
+
+  @override
+  String get fetchingWeather => 'Getting the weather…';
+
+  @override
+  String get noLocationsSet => 'No locations set';
+
+  @override
+  String get noLocationsHint =>
+      'Add a location to your project to see the weather here.';
+
+  @override
+  String get unstableConnection => 'Unstable connection';
+
+  @override
+  String get weatherSlowHint =>
+      'The weather couldn\'t load because the connection is slow.\nPlease check your connection and tap refresh.';
+
+  @override
+  String get someLocationsSlow =>
+      'Some locations couldn\'t be reached because the connection is slow.';
+
+  @override
+  String viewAllSites(int count) {
+    return 'View all sites ($count)';
+  }
+
+  @override
+  String nowTemp(String temp) {
+    return 'Now  •  $temp';
+  }
+
+  @override
+  String get next3h => 'Next ~3 h';
+
+  @override
+  String get connectionTooSlow => 'Connection too slow to load';
+
+  @override
+  String get locationNotFound => 'Location not found';
+
+  @override
+  String weatherUpdated(String ago) {
+    return 'Updated $ago  •  refreshes every 30 min';
+  }
 }

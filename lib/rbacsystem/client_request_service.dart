@@ -3,6 +3,7 @@ import 'package:almaworks/rbacsystem/client_request_model.dart';
 import 'package:almaworks/rbacsystem/notification_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 class ClientRequestService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -29,7 +30,7 @@ class ClientRequestService {
 
       if (existingRequest.docs.isNotEmpty) {
         _logger.w('⚠️ User already has a pending request');
-        return 'You already have a pending access request.';
+        return l10nNow.alreadyPendingRequest;
       }
 
       final request = ClientRequest(
@@ -55,7 +56,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error submitting client request: $e');
-      return 'Failed to submit request. Please try again.';
+      return l10nNow.couldNotSubmitRequestRetry;
     }
   }
 
@@ -116,7 +117,7 @@ class ClientRequestService {
           .collection('ClientRequests')
           .doc(requestId)
           .get();
-      if (!requestDoc.exists) return 'Request not found';
+      if (!requestDoc.exists) return l10nNow.requestNotFound;
 
       final request = ClientRequest.fromFirestore(requestDoc);
 
@@ -147,7 +148,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error approving request: $e');
-      return 'Failed to approve request. Please try again.';
+      return l10nNow.couldNotApproveRetry;
     }
   }
 
@@ -168,7 +169,7 @@ class ClientRequestService {
           .collection('ClientRequests')
           .doc(requestId)
           .get();
-      if (!requestDoc.exists) return 'Request not found';
+      if (!requestDoc.exists) return l10nNow.requestNotFound;
 
       final request = ClientRequest.fromFirestore(requestDoc);
 
@@ -191,7 +192,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error denying request: $e');
-      return 'Failed to deny request. Please try again.';
+      return l10nNow.couldNotDenyRetry;
     }
   }
 
@@ -216,7 +217,7 @@ class ClientRequestService {
           .collection('ClientRequests')
           .doc(requestId)
           .get();
-      if (!requestDoc.exists) return 'Request not found';
+      if (!requestDoc.exists) return l10nNow.requestNotFound;
 
       final request = ClientRequest.fromFirestore(requestDoc);
       final current = List<String>.from(request.grantedProjects);
@@ -247,7 +248,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error adding projects: $e');
-      return 'Failed to add projects. Please try again.';
+      return l10nNow.couldNotAddProjectsRetry;
     }
   }
 
@@ -268,7 +269,7 @@ class ClientRequestService {
           .collection('ClientRequests')
           .doc(requestId)
           .get();
-      if (!requestDoc.exists) return 'Request not found';
+      if (!requestDoc.exists) return l10nNow.requestNotFound;
 
       // MainAdmin immunity — see the matching check in updateGrantedRole.
       // In practice a MainAdmin account never goes through this
@@ -281,7 +282,7 @@ class ClientRequestService {
           .limit(1)
           .get();
       if (userQuery.docs.isNotEmpty && userQuery.docs.first.data()['role'] == 'MainAdmin') {
-        return 'MainAdmin accounts are protected and cannot have project access revoked.';
+        return l10nNow.mainAdminProtectedProjects;
       }
 
       final request = ClientRequest.fromFirestore(requestDoc);
@@ -297,7 +298,7 @@ class ClientRequestService {
         // If all projects revoked, mark as denied.
         if (updated.isEmpty) 'status': 'denied',
         if (updated.isEmpty)
-          'denialReason': 'All project access has been revoked by admin.',
+          'denialReason': kAllAccessRevokedReason,
       });
 
       // Sync user access — revoke from user document.
@@ -318,7 +319,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error revoking projects: $e');
-      return 'Failed to revoke projects. Please try again.';
+      return l10nNow.couldNotRevokeProjectsRetry;
     }
   }
 
@@ -344,14 +345,14 @@ class ClientRequestService {
           .collection('ClientRequests')
           .doc(requestId)
           .get();
-      if (!requestDoc.exists) return 'Request not found';
+      if (!requestDoc.exists) return l10nNow.requestNotFound;
 
       final userQuery = await _firestore
           .collection('Users')
           .where('uid', isEqualTo: clientUid)
           .limit(1)
           .get();
-      if (userQuery.docs.isEmpty) return 'User account not found';
+      if (userQuery.docs.isEmpty) return l10nNow.userAccountNotFound;
 
       // MainAdmin immunity: once an account is MainAdmin, nothing written
       // through this screen may change its role or revoke it — checked
@@ -362,7 +363,7 @@ class ClientRequestService {
       // instead of a bare permission-denied exception.
       final currentRole = userQuery.docs.first.data()['role'] as String?;
       if (currentRole == 'MainAdmin') {
-        return 'MainAdmin accounts are protected and cannot have their role changed.';
+        return l10nNow.mainAdminProtectedRole;
       }
 
       await _firestore.collection('ClientRequests').doc(requestId).update({
@@ -381,7 +382,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error updating granted role: $e');
-      return 'Failed to update role. Please try again.';
+      return l10nNow.couldNotUpdateRoleRetry;
     }
   }
 
@@ -404,7 +405,7 @@ class ClientRequestService {
           .collection('ClientRequests')
           .doc(requestId)
           .get();
-      if (!requestDoc.exists) return 'Request not found';
+      if (!requestDoc.exists) return l10nNow.requestNotFound;
 
       final request = ClientRequest.fromFirestore(requestDoc);
 
@@ -435,7 +436,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error re-approving request: $e');
-      return 'Failed to re-approve request. Please try again.';
+      return l10nNow.couldNotReapproveRetry;
     }
   }
 
@@ -453,7 +454,7 @@ class ClientRequestService {
           .collection('ClientRequests')
           .doc(requestId)
           .get();
-      if (!requestDoc.exists) return 'Request not found';
+      if (!requestDoc.exists) return l10nNow.requestNotFound;
 
       final request = ClientRequest.fromFirestore(requestDoc);
 
@@ -476,7 +477,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error re-denying request: $e');
-      return 'Failed to update denial. Please try again.';
+      return l10nNow.couldNotUpdateDenialRetry;
     }
   }
 
@@ -526,7 +527,7 @@ class ClientRequestService {
         final doc =
             await _firestore.collection('projects').doc(id).get();
         if (doc.exists) {
-          names.add(doc.data()?['name'] ?? 'Unknown Project');
+          names.add(doc.data()?['name'] ?? l10nNow.unknownProject);
         }
       }
       return names;
@@ -548,7 +549,7 @@ class ClientRequestService {
           .where('uid', isEqualTo: clientUid)
           .limit(1)
           .get();
-      if (userQuery.docs.isEmpty) return 'User not found';
+      if (userQuery.docs.isEmpty) return l10nNow.userAccountNotFound;
 
       final userDoc = userQuery.docs.first;
       final current = List<String>.from(
@@ -566,7 +567,7 @@ class ClientRequestService {
       return null;
     } catch (e) {
       _logger.e('❌ Error revoking client access: $e');
-      return 'Failed to revoke access. Please try again.';
+      return l10nNow.couldNotRevokeAccessRetry;
     }
   }
 
@@ -587,3 +588,12 @@ class ClientRequestService {
     }
   }
 }
+
+/// Stored denialReason written when an admin removes a client's last
+/// project. Kept in English in Firestore; [denialReasonLabel] translates it.
+const kAllAccessRevokedReason = 'All project access has been revoked by admin.';
+
+/// What to show for a stored denialReason: the system-written one is
+/// translated, anything an admin typed is shown as written.
+String denialReasonLabel(String reason) =>
+    reason == kAllAccessRevokedReason ? l10nNow.allAccessRevokedReason : reason;

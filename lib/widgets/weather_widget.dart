@@ -3,6 +3,7 @@ import 'package:almaworks/config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:weather/weather.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal model holding current + next-slot weather for one location
@@ -60,7 +61,9 @@ class _WeatherWidgetState extends State<WeatherWidget> {
   @override
   void initState() {
     super.initState();
-    _wf = WeatherFactory(Config.weatherApiKey, language: Language.ENGLISH);
+    // Descriptions ("light rain") come back in the app's language.
+    _wf = WeatherFactory(Config.weatherApiKey,
+        language: currentLanguage == AppLanguage.italian ? Language.ITALIAN : Language.ENGLISH);
     _connectivity = Connectivity();
     _listenToConnectivity();
     _fetchAll();
@@ -244,10 +247,11 @@ class _WeatherWidgetState extends State<WeatherWidget> {
   String _fetchedAgo() {
     if (_lastFetched == null) return '';
     final diff = DateTime.now().difference(_lastFetched!);
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inMinutes == 1) return '1 min ago';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} mins ago';
-    return '${diff.inHours}h ago';
+    final l = l10nNow;
+    if (diff.inMinutes < 1) return l.justNow;
+    if (diff.inMinutes == 1) return l.oneMinAgo;
+    if (diff.inMinutes < 60) return l.minsAgo(diff.inMinutes);
+    return l.hoursAgoShort(diff.inHours);
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -286,7 +290,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Weather Report',
+                context.l10n.weatherReport,
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 18,
                   fontWeight: FontWeight.bold,
@@ -316,7 +320,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
           onPressed: _isLoading ? null : _fetchAll,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
-          tooltip: 'Refresh weather',
+          tooltip: context.l10n.refreshWeather,
         ),
       ],
     );
@@ -328,9 +332,9 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       return _buildStatusMessage(
         icon: Icons.wifi_off,
         color: Colors.grey[700]!,
-        title: 'No Internet Connection',
+        title: context.l10n.noInternetTitle,
         subtitle:
-            'Weather data is unavailable while offline.\nWe\'ll refresh automatically once you reconnect.',
+            context.l10n.weatherOfflineHint,
         isMobile: isMobile,
       );
     }
@@ -344,7 +348,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             const CircularProgressIndicator(),
             const SizedBox(height: 12),
             Text(
-              'Fetching weather data…',
+              context.l10n.fetchingWeather,
               style: TextStyle(color: Colors.grey[600], fontSize: isMobile ? 12 : 13),
             ),
           ],
@@ -357,8 +361,8 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       return _buildStatusMessage(
         icon: Icons.location_off,
         color: Colors.grey,
-        title: 'No Locations Set',
-        subtitle: 'Add a location to your project to see weather data here.',
+        title: context.l10n.noLocationsSet,
+        subtitle: context.l10n.noLocationsHint,
         isMobile: isMobile,
       );
     }
@@ -368,14 +372,14 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       return _buildStatusMessage(
         icon: Icons.signal_wifi_statusbar_connected_no_internet_4,
         color: Colors.orange,
-        title: 'Unstable Connection',
+        title: context.l10n.unstableConnection,
         subtitle:
-            'Weather data could not load due to a weak or slow network.\nPlease check your connection and tap refresh.',
+            context.l10n.weatherSlowHint,
         isMobile: isMobile,
         action: TextButton.icon(
           onPressed: _fetchAll,
           icon: const Icon(Icons.refresh, size: 16),
-          label: const Text('Retry'),
+          label: Text(context.l10n.retry),
         ),
       );
     }
@@ -407,7 +411,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Some locations could not be reached due to a slow connection.',
+                    context.l10n.someLocationsSlow,
                     style: TextStyle(
                       color: Colors.orange[800],
                       fontSize: isMobile ? 10 : 11,
@@ -433,8 +437,8 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             onPressed: () => setState(() => _isExpanded = !_isExpanded),
             child: Text(
               _isExpanded
-                  ? 'Show Less'
-                  : 'View All Sites (${_data.length})',
+                  ? context.l10n.showLess
+                  : context.l10n.viewAllSites(_data.length),
             ),
           ),
       ],
@@ -484,7 +488,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Now  •  ${_tempStr(cur.temperature)}',
+                      context.l10n.nowTemp(_tempStr(cur.temperature)),
                       style: TextStyle(
                         fontSize: isMobile ? 18 : 22,
                         fontWeight: FontWeight.bold,
@@ -523,7 +527,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                 Icon(Icons.schedule, size: 13, color: Colors.grey[500]),
                 const SizedBox(width: 4),
                 Text(
-                  'Next ~3 h',
+                  context.l10n.next3h,
                   style: TextStyle(
                     fontSize: isMobile ? 11 : 12,
                     color: Colors.grey[500],
@@ -706,8 +710,8 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                 ),
                 Text(
                   isTimeout
-                      ? 'Connection too slow to load'
-                      : 'Location not found',
+                      ? context.l10n.connectionTooSlow
+                      : context.l10n.locationNotFound,
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: isMobile ? 10 : 11,
@@ -778,7 +782,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Updated ${_fetchedAgo()}  •  auto-refresh every 30 min',
+              context.l10n.weatherUpdated(_fetchedAgo()),
               style: TextStyle(
                 color: Colors.blue[700],
                 fontSize: isMobile ? 9 : 10,

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 // ══════════════════════════════════════════════════════════════════
 // INTERNAL PARSE HELPERS
@@ -519,7 +520,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            'Task Progress',
+            context.l10n.taskProgress,
             style: TextStyle(
               fontSize: isMobile ? 16 : 18,
               fontWeight: FontWeight.bold,
@@ -603,7 +604,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                         size: isMobile ? 14 : 15, color: _navy),
                     const SizedBox(width: 6),
                     Text(
-                      'Phase Breakdown',
+                      context.l10n.phaseBreakdown,
                       style: TextStyle(
                         fontSize: isMobile ? 11 : 12,
                         fontWeight: FontWeight.w700,
@@ -612,7 +613,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                     ),
                     const Spacer(),
                     Text(
-                      '${phases.length} phase${phases.length == 1 ? '' : 's'}',
+                      context.l10n.phasesCount(phases.length),
                       style: TextStyle(
                         fontSize: isMobile ? 9 : 10,
                         color: Colors.grey[600],
@@ -732,7 +733,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                     ),
                   ),
                   Text(
-                    '${projectPhases.length} phase${projectPhases.length == 1 ? '' : 's'}',
+                    context.l10n.phasesCount(projectPhases.length),
                     style: TextStyle(
                       fontSize: isMobile ? 8 : 9,
                       color: Colors.grey[500],
@@ -863,7 +864,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
 
     if (visibleOngoing.isNotEmpty) {
       items.add(_sectionHeader(
-          'Ongoing', visibleOngoing.length, ongoing.length, _ongoingColor, isMobile));
+          context.l10n.monitorOngoing, visibleOngoing.length, ongoing.length, _ongoingColor, isMobile));
       for (final t in visibleOngoing) {
         items.add(_buildTaskItem(t, isMobile));
       }
@@ -871,7 +872,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
 
     if (visibleCompleted.isNotEmpty) {
       items.add(_sectionHeader(
-          'Completed', visibleCompleted.length, completed.length, _completedColor, isMobile));
+          context.l10n.taskCompleted, visibleCompleted.length, completed.length, _completedColor, isMobile));
       for (final t in visibleCompleted) {
         items.add(_buildTaskItem(t, isMobile));
       }
@@ -896,7 +897,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                   size: isMobile ? 18 : 20,
                 ),
                 label: Text(
-                  _isExpanded ? 'Show Less' : 'View All  ($total tasks)',
+                  _isExpanded ? context.l10n.showLess : context.l10n.viewAllTasksTotal(total),
                   style: TextStyle(
                     fontSize: isMobile ? 12 : 13,
                     fontWeight: FontWeight.w600,
@@ -965,9 +966,9 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
     // Ongoing: plain label only. Completed: show the completion date.
     final subtitleText = isCompleted
         ? task.completedDate != null
-            ? 'Completed ${DateFormat('d MMM yyyy').format(task.completedDate!)}'
-            : 'Completed'
-        : 'Ongoing';
+            ? l10nNow.completedOnShort(DateFormat.yMMMd().format(task.completedDate!))
+            : l10nNow.taskCompleted
+        : l10nNow.monitorOngoing;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 7),
@@ -1161,7 +1162,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
 
   Widget _buildError(bool isMobile) => Center(
         child: Text(
-          'Error loading task progress',
+          context.l10n.couldNotLoadTaskProgress,
           style: TextStyle(
               color: Colors.red[600], fontSize: isMobile ? 12 : 14),
         ),
@@ -1181,7 +1182,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                       size: isMobile ? 40 : 48, color: Colors.grey[350]),
                   const SizedBox(height: 8),
                   Text(
-                    'No active tasks yet',
+                    context.l10n.noActiveTasksYet,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: isMobile ? 12 : 14,
@@ -1192,7 +1193,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Text(
-                      'Ongoing and Completed tasks \nwill appear here',
+                      context.l10n.tasksAppearHere,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.grey[500],

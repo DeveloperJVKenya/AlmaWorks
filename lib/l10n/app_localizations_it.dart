@@ -6974,4 +6974,487 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get attSignature => 'Firma';
+
+  @override
+  String get alreadyPendingRequest =>
+      'Hai già una richiesta di accesso in attesa di revisione.';
+
+  @override
+  String get couldNotSubmitRequestRetry =>
+      'Impossibile inviare la richiesta. Riprova.';
+
+  @override
+  String get requestNotFound => 'Questa richiesta non esiste più.';
+
+  @override
+  String get couldNotApproveRetry =>
+      'Impossibile approvare la richiesta. Riprova.';
+
+  @override
+  String get couldNotDenyRetry =>
+      'Impossibile rifiutare la richiesta. Riprova.';
+
+  @override
+  String get couldNotAddProjectsRetry =>
+      'Impossibile aggiungere i progetti. Riprova.';
+
+  @override
+  String get mainAdminProtectedProjects =>
+      'Gli account MainAdmin sono protetti: il loro accesso ai progetti non può essere rimosso.';
+
+  @override
+  String get allAccessRevokedReason =>
+      'Tutto l\'accesso ai progetti è stato rimosso da un amministratore.';
+
+  @override
+  String get couldNotRevokeProjectsRetry =>
+      'Impossibile rimuovere i progetti. Riprova.';
+
+  @override
+  String get userAccountNotFound => 'Questo account utente non esiste più.';
+
+  @override
+  String get mainAdminProtectedRole =>
+      'Gli account MainAdmin sono protetti: il loro ruolo non può essere cambiato.';
+
+  @override
+  String get couldNotUpdateRoleRetry =>
+      'Impossibile aggiornare il ruolo. Riprova.';
+
+  @override
+  String get couldNotReapproveRetry =>
+      'Impossibile riapprovare la richiesta. Riprova.';
+
+  @override
+  String get couldNotUpdateDenialRetry =>
+      'Impossibile aggiornare il rifiuto. Riprova.';
+
+  @override
+  String get unknownProject => 'Progetto sconosciuto';
+
+  @override
+  String get couldNotRevokeAccessRetry =>
+      'Impossibile rimuovere l\'accesso. Riprova.';
+
+  @override
+  String get roleClientDesc => 'Accesso in sola lettura ai progetti concessi';
+
+  @override
+  String get roleTechnicianDesc =>
+      'Accesso operativo completo ai progetti concessi (come Admin, senza Finanze)';
+
+  @override
+  String get roleSubContractorDesc =>
+      'Solo documenti — i propri caricamenti — nei progetti concessi';
+
+  @override
+  String get roleAdminDesc =>
+      'Accesso completo al sistema, non limitato ai progetti concessi';
+
+  @override
+  String get roleSystemAdminDesc =>
+      'Accesso Admin completo, ed è l\'unico ruolo (con MainAdmin) che può approvare richieste di prelievo, registrare resi ed emettere materiali';
+
+  @override
+  String get clientAccessRequests => 'Richieste di accesso clienti';
+
+  @override
+  String get tabPendingRequests => 'Richieste in attesa';
+
+  @override
+  String get tabRequestHistory => 'Cronologia richieste';
+
+  @override
+  String get noPendingRequestsTitle => 'Nessuna richiesta in attesa';
+
+  @override
+  String get clientRequestsAppearHere =>
+      'Le richieste di accesso dei clienti appariranno qui';
+
+  @override
+  String get pendingStatus => 'In attesa';
+
+  @override
+  String requestedOn(String date) {
+    return 'Richiesta: $date';
+  }
+
+  @override
+  String get deny => 'Rifiuta';
+
+  @override
+  String get noRequestHistory => 'Nessuna cronologia richieste';
+
+  @override
+  String get approvedStatus => 'Approvata';
+
+  @override
+  String get deniedStatus => 'Rifiutata';
+
+  @override
+  String processedOn(String date) {
+    return 'Elaborata: $date';
+  }
+
+  @override
+  String byName(String name) {
+    return 'Da: $name';
+  }
+
+  @override
+  String roleColon(String role) {
+    return 'Ruolo: $role';
+  }
+
+  @override
+  String projectsGranted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count progetti concessi',
+      one: '1 progetto concesso',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addMoreProjects => 'Aggiungi altri progetti';
+
+  @override
+  String get revokeProjectAccess => 'Rimuovi accesso ai progetti';
+
+  @override
+  String get changeRole => 'Cambia ruolo';
+
+  @override
+  String get approveNow => 'Approva ora';
+
+  @override
+  String get updateDenialReason => 'Aggiorna motivo del rifiuto';
+
+  @override
+  String get addProjects => 'Aggiungi progetti';
+
+  @override
+  String get revokeAccess => 'Rimuovi accesso';
+
+  @override
+  String get updateReason => 'Aggiorna motivo';
+
+  @override
+  String get approveAccessRequest => 'Approva richiesta di accesso';
+
+  @override
+  String grantAccessToAs(String name) {
+    return 'Concedi accesso a $name come:';
+  }
+
+  @override
+  String get selectProjectsToGrant =>
+      'Seleziona i progetti a cui concedere accesso:';
+
+  @override
+  String get noProjectsAvailable => 'Nessun progetto disponibile';
+
+  @override
+  String get denyAccessRequest => 'Rifiuta richiesta di accesso';
+
+  @override
+  String denyAccessConfirm(String name) {
+    return 'Vuoi davvero rifiutare l\'accesso a $name?';
+  }
+
+  @override
+  String get allProjectsAlreadyGranted =>
+      'Tutti i progetti disponibili sono già stati concessi.';
+
+  @override
+  String addProjectsFor(String name) {
+    return 'Aggiungi progetti — $name';
+  }
+
+  @override
+  String get selectAdditionalProjects =>
+      'Seleziona altri progetti da concedere:';
+
+  @override
+  String get noGrantedProjects => 'Non ci sono progetti concessi da rimuovere.';
+
+  @override
+  String revokeAccessFor(String name) {
+    return 'Rimuovi accesso — $name';
+  }
+
+  @override
+  String get selectProjectsToRevoke =>
+      'Seleziona i progetti da cui rimuovere l\'accesso:';
+
+  @override
+  String get revokeAllMarksDenied =>
+      'Rimuovere tutti i progetti segnerà questa richiesta come rifiutata.';
+
+  @override
+  String get revoke => 'Rimuovi';
+
+  @override
+  String get mainAdminProtectedTitle => 'MainAdmin è protetto';
+
+  @override
+  String mainAdminProtectedBody(String name) {
+    return '$name è un MainAdmin: ruolo, accesso ai progetti e permessi non possono essere modificati o rimossi da questa schermata, per scelta.';
+  }
+
+  @override
+  String changeRoleFor(String name) {
+    return 'Cambia ruolo — $name';
+  }
+
+  @override
+  String currentRole(String role) {
+    return 'Ruolo attuale: $role';
+  }
+
+  @override
+  String get pmEligible => 'Può essere Project Manager';
+
+  @override
+  String get pmEligibleHint =>
+      'Permette di selezionarlo come account PM collegato di un progetto (Modifica progetto), indipendentemente dal ruolo sopra: non cambia i permessi di base.';
+
+  @override
+  String approveRequestFor(String name) {
+    return 'Approva richiesta — $name';
+  }
+
+  @override
+  String previouslyDenied(String reason) {
+    return 'Rifiutata in precedenza: $reason';
+  }
+
+  @override
+  String get grantAccessAs => 'Concedi accesso come:';
+
+  @override
+  String get selectProjectsToGrantShort => 'Seleziona i progetti da concedere:';
+
+  @override
+  String updateDenialFor(String name) {
+    return 'Aggiorna rifiuto — $name';
+  }
+
+  @override
+  String get updateDenialBody =>
+      'Aggiorna il motivo del rifiuto oppure conferma il rifiuto con un nuovo messaggio:';
+
+  @override
+  String get denialReasonOptional => 'Motivo del rifiuto (facoltativo)';
+
+  @override
+  String get denialReasonHint => 'Inserisci un motivo per il rifiuto…';
+
+  @override
+  String get saveAndRedeny => 'Salva e rifiuta di nuovo';
+
+  @override
+  String accessGrantedTo(String name) {
+    return 'Accesso concesso a $name';
+  }
+
+  @override
+  String requestDeniedFor(String name) {
+    return 'Richiesta rifiutata per $name';
+  }
+
+  @override
+  String projectsAddedFor(String name) {
+    return 'Progetti aggiunti per $name';
+  }
+
+  @override
+  String accessRevokedFor(String name) {
+    return 'Accesso rimosso per $name';
+  }
+
+  @override
+  String roleChangedFor(String name, String role) {
+    return 'Il ruolo di $name è ora $role';
+  }
+
+  @override
+  String requestApprovedFor(String name) {
+    return 'La richiesta di $name è stata approvata';
+  }
+
+  @override
+  String denialUpdatedFor(String name) {
+    return 'Rifiuto aggiornato per $name';
+  }
+
+  @override
+  String get unnamedProject => 'Progetto senza nome';
+
+  @override
+  String get pastDueDate => 'Scadenza superata';
+
+  @override
+  String get dueTomorrow => 'Scade domani';
+
+  @override
+  String get shouldHaveStarted => 'Doveva già iniziare';
+
+  @override
+  String get startingTomorrow => 'Inizia domani';
+
+  @override
+  String startsOn(String date) {
+    return 'Inizia il $date';
+  }
+
+  @override
+  String get tasksOverview => 'Panoramica attività';
+
+  @override
+  String get allOverdue => 'Tutte in ritardo';
+
+  @override
+  String get allStartingSoon => 'Tutte in partenza a breve (≤3 giorni)';
+
+  @override
+  String get allOngoing => 'Tutte in corso';
+
+  @override
+  String get allOtherUpcoming => 'Tutte le altre in arrivo';
+
+  @override
+  String get showLess => 'Mostra meno';
+
+  @override
+  String viewAllTasksCount(int count) {
+    return 'Vedi tutte le attività ($count)';
+  }
+
+  @override
+  String get couldNotLoadTasks => 'Impossibile caricare le attività';
+
+  @override
+  String get noActiveTasks => 'Nessuna attività attiva';
+
+  @override
+  String get addTasksFromGantt =>
+      'Aggiungi attività dal diagramma di Gantt per seguire il progetto';
+
+  @override
+  String get allTasksOnTrack => 'Tutte le attività sono in linea o completate!';
+
+  @override
+  String get goToGanttChart => 'Vai al diagramma di Gantt';
+
+  @override
+  String get taskProgress => 'Avanzamento attività';
+
+  @override
+  String get phaseBreakdown => 'Ripartizione per fasi';
+
+  @override
+  String phasesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fasi',
+      one: '1 fase',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String viewAllTasksTotal(int count) {
+    return 'Vedi tutte ($count attività)';
+  }
+
+  @override
+  String completedOnShort(String date) {
+    return 'Completata il $date';
+  }
+
+  @override
+  String get couldNotLoadTaskProgress =>
+      'Impossibile caricare l\'avanzamento delle attività';
+
+  @override
+  String get noActiveTasksYet => 'Ancora nessuna attività attiva';
+
+  @override
+  String get tasksAppearHere =>
+      'Le attività in corso e completate\nappariranno qui';
+
+  @override
+  String get oneMinAgo => '1 min fa';
+
+  @override
+  String minsAgo(int count) {
+    return '$count min fa';
+  }
+
+  @override
+  String hoursAgoShort(int count) {
+    return '$count h fa';
+  }
+
+  @override
+  String get weatherReport => 'Meteo';
+
+  @override
+  String get refreshWeather => 'Aggiorna meteo';
+
+  @override
+  String get noInternetTitle => 'Nessuna connessione a Internet';
+
+  @override
+  String get weatherOfflineHint =>
+      'Il meteo non è disponibile offline.\nSi aggiornerà automaticamente quando tornerai online.';
+
+  @override
+  String get fetchingWeather => 'Recupero del meteo…';
+
+  @override
+  String get noLocationsSet => 'Nessuna località impostata';
+
+  @override
+  String get noLocationsHint =>
+      'Aggiungi una località al progetto per vedere qui il meteo.';
+
+  @override
+  String get unstableConnection => 'Connessione instabile';
+
+  @override
+  String get weatherSlowHint =>
+      'Impossibile caricare il meteo perché la connessione è lenta.\nControlla la connessione e tocca aggiorna.';
+
+  @override
+  String get someLocationsSlow =>
+      'Alcune località non sono raggiungibili perché la connessione è lenta.';
+
+  @override
+  String viewAllSites(int count) {
+    return 'Vedi tutti i cantieri ($count)';
+  }
+
+  @override
+  String nowTemp(String temp) {
+    return 'Ora  •  $temp';
+  }
+
+  @override
+  String get next3h => 'Prossime ~3 h';
+
+  @override
+  String get connectionTooSlow => 'Connessione troppo lenta per caricare';
+
+  @override
+  String get locationNotFound => 'Località non trovata';
+
+  @override
+  String weatherUpdated(String ago) {
+    return 'Aggiornato $ago  •  si aggiorna ogni 30 min';
+  }
 }
