@@ -1815,8 +1815,8 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         flex: 3,
         child: card(
           icon: Icons.calendar_today_rounded,
-          label: 'DATE',
-          value: DateFormat('EEE, MMM d, yyyy').format(_reportDate),
+          label: context.l10n.rfDateCaps,
+          value: DateFormat.yMMMEd().format(_reportDate),
           onTap: _pickDate,
         ),
       ),
@@ -1825,7 +1825,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
         flex: 2,
         child: card(
           icon: Icons.access_time_rounded,
-          label: 'TIME',
+          label: context.l10n.rfTimeCaps,
           value: DateFormat('HH:mm').format(_reportDate),
           onTap: _pickTime,
         ),
@@ -1855,7 +1855,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                 bottomLeft: Radius.circular(6),
               ),
             ),
-            child: Text('BUILDING',
+            child: Text(context.l10n.rfBuildingCaps,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -2429,9 +2429,12 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(
                             Colors.white)))
                 : Icon(icon, size: 16),
-            label: Text(label,
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label, maxLines: 1,
                 style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 13)),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor: Colors.white,

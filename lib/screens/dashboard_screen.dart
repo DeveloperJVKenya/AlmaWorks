@@ -645,7 +645,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           SizedBox(width: 280, child: _buildSideNav(projectProvider)),
           const VerticalDivider(width: 1),
-          Expanded(child: _getSelectedScreen(projectProvider)),
+          Expanded(child: ContentWidthScope(child: _getSelectedScreen(projectProvider))),
         ],
       ),
     );
@@ -679,7 +679,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           SizedBox(width: 300, child: _buildSideNav(projectProvider)),
           const VerticalDivider(width: 1),
-          Expanded(child: _getSelectedScreen(projectProvider)),
+          Expanded(child: ContentWidthScope(child: _getSelectedScreen(projectProvider))),
         ],
       ),
     );

@@ -19,6 +19,7 @@ import 'package:almaworks/screens/schedule/schedule_screen.dart';
 import 'package:almaworks/screens/schedule/task_progress_monitor_screen.dart';
 import 'package:almaworks/screens/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:almaworks/widgets/responsive_layout.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -89,7 +90,7 @@ class _BaseLayoutState extends State<BaseLayout> {
       // button or by tapping Overview) always surfaces the section menu
       // immediately, mirroring the persistent side panel larger screens
       // already show for free.
-      if (mounted && widget.selectedMenuItem == 'Overview' && MediaQuery.of(context).size.width < 600) {
+      if (mounted && widget.selectedMenuItem == 'Overview' && MediaQuery.of(context).size.width < kSidebarBreakpoint) {
         _scaffoldKey.currentState?.openDrawer();
       }
     });
@@ -206,8 +207,10 @@ class _BaseLayoutState extends State<BaseLayout> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
-    final isTablet = screenWidth >= 600 && screenWidth < 1200;
+    // Below kSidebarBreakpoint the section menu is a drawer; a permanent
+    // sidebar there would leave the screen itself too little room.
+    final isMobile = screenWidth < kSidebarBreakpoint;
+    final isTablet = screenWidth >= kSidebarBreakpoint && screenWidth < 1200;
 
     if (_isLoadingUserData) {
       return Scaffold(
@@ -226,7 +229,7 @@ class _BaseLayoutState extends State<BaseLayout> {
       body: Row(
         children: [
           if (!isMobile) _buildSidebar(context, isTablet),
-          Expanded(child: widget.child),
+          Expanded(child: ContentWidthScope(child: widget.child)),
         ],
       ),
       floatingActionButton: widget.floatingActionButton,
@@ -237,6 +240,8 @@ class _BaseLayoutState extends State<BaseLayout> {
     return AppBar(
       title: Text(
         widget.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontWeight: FontWeight.bold,
           color: Colors.white,
@@ -268,7 +273,7 @@ class _BaseLayoutState extends State<BaseLayout> {
 
   Widget _buildSidebar(BuildContext context, bool isTablet) {
     return Container(
-      width: isTablet ? 280 : 300,
+      width: isTablet ? 260 : 300,
       decoration: BoxDecoration(
         color: AppColors.surface,
         boxShadow: [
@@ -285,7 +290,8 @@ class _BaseLayoutState extends State<BaseLayout> {
 
   Widget _buildSidebarContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
+    // true while the menu is the drawer (taps close it)
+    final isMobile = screenWidth < kSidebarBreakpoint;
     final bool isClient = _userRole == 'Client';
     // Technician sees the same section set Admin does (everything except
     // Financials — Inventory stays visible since Technicians can read +
@@ -723,3 +729,4 @@ class _BaseLayoutState extends State<BaseLayout> {
     );
   }
 }
+

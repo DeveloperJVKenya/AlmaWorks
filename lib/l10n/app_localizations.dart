@@ -12474,6 +12474,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Updated {ago}  •  refreshes every 30 min'**
   String weatherUpdated(String ago);
+
+  /// No description provided for @daysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get daysHint;
+
+  /// No description provided for @rfPhaseCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'PHASE'**
+  String get rfPhaseCaps;
+
+  /// No description provided for @badgeProject.
+  ///
+  /// In en, this message translates to:
+  /// **'PRJ'**
+  String get badgeProject;
+
+  /// No description provided for @badgeGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'GRP'**
+  String get badgeGroup;
 }
 
 class _AppLocalizationsDelegate

@@ -110,6 +110,9 @@ class _ClientAccessRequestsScreenState
         backgroundColor: const Color(0xFF0A2E5A),
         foregroundColor: Colors.white,
         bottom: TabBar(
+          // swipeable on phones so longer labels (e.g. Italian) never get cut off
+          isScrollable: MediaQuery.sizeOf(context).width < 600,
+          tabAlignment: MediaQuery.sizeOf(context).width < 600 ? TabAlignment.start : TabAlignment.fill,
           controller: _tabController,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
@@ -1098,7 +1101,7 @@ class _ClientAccessRequestsScreenState
             style: TextStyle(fontSize: 13),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: TextStyle())),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.ok, style: TextStyle())),
           ],
         ),
       );

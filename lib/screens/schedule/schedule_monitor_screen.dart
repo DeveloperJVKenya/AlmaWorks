@@ -1028,6 +1028,9 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                 ),
                 // Tabs
                 TabBar(
+                  // swipeable on phones so longer labels (e.g. Italian) never get cut off
+                  isScrollable: MediaQuery.sizeOf(context).width < 600,
+                  tabAlignment: MediaQuery.sizeOf(context).width < 600 ? TabAlignment.start : TabAlignment.fill,
                   tabs: [
                     Tab(text: context.l10n.tabWithCount(context.l10n.monitorOverdue, filteredOverdue.length)),
                     Tab(text: context.l10n.tabWithCount(context.l10n.monitorOngoing, filteredOngoing.length)),

@@ -137,6 +137,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> with SingleTi
               boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: const Offset(0, 2))],
             ),
             child: TabBar(
+              // swipeable on phones so longer labels (e.g. Italian) never get cut off
+              isScrollable: MediaQuery.sizeOf(context).width < 600,
+              tabAlignment: MediaQuery.sizeOf(context).width < 600 ? TabAlignment.start : TabAlignment.fill,
               controller: _tabController,
               labelColor: AppColors.brandInk,
               unselectedLabelColor: AppColors.inkMuted,

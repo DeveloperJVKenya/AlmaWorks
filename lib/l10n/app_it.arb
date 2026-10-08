@@ -2056,5 +2056,9 @@
   "next3h": "Prossime ~3 h",
   "connectionTooSlow": "Connessione troppo lenta per caricare",
   "locationNotFound": "Località non trovata",
-  "weatherUpdated": "Aggiornato {ago}  •  si aggiorna ogni 30 min"
+  "weatherUpdated": "Aggiornato {ago}  •  si aggiorna ogni 30 min",
+  "daysHint": "giorni",
+  "rfPhaseCaps": "FASE",
+  "badgeProject": "PRG",
+  "badgeGroup": "GRP"
 }

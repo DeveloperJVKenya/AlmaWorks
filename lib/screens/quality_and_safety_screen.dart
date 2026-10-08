@@ -121,6 +121,9 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                           ],
                         ),
                         child: TabBar(
+                          // swipeable on phones so longer labels (e.g. Italian) never get cut off
+                          isScrollable: MediaQuery.sizeOf(context).width < 600,
+                          tabAlignment: MediaQuery.sizeOf(context).width < 600 ? TabAlignment.start : TabAlignment.fill,
                           controller: _tabController,
                           labelColor: AppColors.brandInk,
                           unselectedLabelColor: Colors.grey[600],
@@ -510,7 +513,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                   );
                 }
               },
-              child: Text('OK', style: TextStyle()),
+              child: Text(context.l10n.ok, style: TextStyle()),
             ),
           ],
         );

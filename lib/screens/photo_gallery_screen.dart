@@ -718,7 +718,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: Text('OK', style: TextStyle()),
+                          child: Text(context.l10n.ok, style: TextStyle()),
                         ),
                       ],
                     ),
@@ -1273,7 +1273,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0A2E5A)),
-            child: Text('OK',
+            child: Text(context.l10n.ok,
                 style: TextStyle(color: Colors.white)),
           ),
         ],

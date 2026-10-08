@@ -2520,10 +2520,14 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                         valueColor:
                             AlwaysStoppedAnimation<Color>(Colors.white)))
                 : Icon(icon, size: 16),
-            label: Text(
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
               label,
+              maxLines: 1,
               style: TextStyle(
                   fontWeight: FontWeight.w600, fontSize: 13),
+            ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,

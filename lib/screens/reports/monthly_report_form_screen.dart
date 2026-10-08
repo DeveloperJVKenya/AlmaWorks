@@ -2230,7 +2230,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 bottomLeft: Radius.circular(6),
               ),
             ),
-            child: Text('BUILDING',
+            child: Text(context.l10n.rfBuildingCaps,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -2964,7 +2964,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
             child: Row(children: [
               const Icon(Icons.draw_rounded, color: Colors.white, size: 18),
               const SizedBox(width: 8),
-              Text('SIGNATURES',
+              Text(context.l10n.rfSignaturesCaps,
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -3509,9 +3509,12 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation(Colors.white)))
                 : Icon(icon, size: 16),
-            label: Text(label,
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label, maxLines: 1,
                 style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 13)),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor: Colors.white,

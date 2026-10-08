@@ -2458,7 +2458,7 @@ class _TaskProgressMonitorScreenState
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(3),
                       ),
-                      child: Text('PHASE',
+                      child: Text(context.l10n.rfPhaseCaps,
                           style: TextStyle(
                               color: Colors.white70,
                               fontSize: 7,
@@ -2726,7 +2726,7 @@ class _TaskProgressMonitorScreenState
                 decoration: BoxDecoration(
                     color: const Color(0xFF1565C0),
                     borderRadius: BorderRadius.circular(3)),
-                child: Text('PRJ',
+                child: Text(context.l10n.badgeProject,
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 7,
@@ -2741,7 +2741,7 @@ class _TaskProgressMonitorScreenState
                 decoration: BoxDecoration(
                     color: const Color(0xFF37474F),
                     borderRadius: BorderRadius.circular(3)),
-                child: Text('GRP',
+                child: Text(context.l10n.badgeGroup,
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 7,

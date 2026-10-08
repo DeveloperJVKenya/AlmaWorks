@@ -1324,7 +1324,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 bottomLeft: Radius.circular(6),
               ),
             ),
-            child: Text('BUILDING',
+            child: Text(context.l10n.rfBuildingCaps,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -2039,9 +2039,12 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(
                             Colors.white)))
                 : Icon(icon, size: 16),
-            label: Text(label,
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label, maxLines: 1,
                 style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 13)),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor: Colors.white,

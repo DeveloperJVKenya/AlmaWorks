@@ -4927,5 +4927,9 @@
         "type": "String"
       }
     }
-  }
+  },
+  "daysHint": "days",
+  "rfPhaseCaps": "PHASE",
+  "badgeProject": "PRJ",
+  "badgeGroup": "GRP"
 }

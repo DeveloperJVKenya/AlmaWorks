@@ -3039,7 +3039,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 keyboardType: TextInputType.number,
                 style: TextStyle(fontSize: 11),
                 decoration: InputDecoration(
-                  hintText: 'days',
+                  hintText: context.l10n.daysHint,
                   hintStyle: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade400,

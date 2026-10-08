@@ -7457,4 +7457,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String weatherUpdated(String ago) {
     return 'Aggiornato $ago  •  si aggiorna ogni 30 min';
   }
+
+  @override
+  String get daysHint => 'giorni';
+
+  @override
+  String get rfPhaseCaps => 'FASE';
+
+  @override
+  String get badgeProject => 'PRG';
+
+  @override
+  String get badgeGroup => 'GRP';
 }

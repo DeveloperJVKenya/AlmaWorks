@@ -169,7 +169,11 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Padding(
+              Center(
+                child: ConstrainedBox(
+                  // keeps the form readable on wide screens
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
@@ -182,6 +186,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                     _buildTeamMembersCard(false),
                     const SizedBox(height: 96),
                   ],
+                ),
+              ),
                 ),
               ),
               _buildFooter(context, false),
