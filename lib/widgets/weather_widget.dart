@@ -414,7 +414,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                   child: Text(
                     context.l10n.someLocationsSlow,
                     style: TextStyle(
-                      color: Colors.orange[800],
+                      color: AppColors.warning,
                       fontSize: isMobile ? 10 : 11,
                     ),
                   ),

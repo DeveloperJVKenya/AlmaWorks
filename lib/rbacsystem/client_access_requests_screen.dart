@@ -261,7 +261,7 @@ class _ClientAccessRequestsScreenState
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.orange[900],
+                      color: AppColors.warning,
                     ),
                   ),
                 ),
@@ -500,7 +500,7 @@ class _ClientAccessRequestsScreenState
                           context.l10n.reasonColon(denialReasonLabel(request.denialReason!)),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.red[900],
+                            color: AppColors.danger,
                           ),
                         ),
                       ),
@@ -614,7 +614,7 @@ class _ClientAccessRequestsScreenState
             label: Text(context.l10n.addProjects,
                 style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.green[700],
+              foregroundColor: AppColors.success,
               side: BorderSide(color: Colors.green[300]!),
               padding: const EdgeInsets.symmetric(vertical: 8),
               shape: RoundedRectangleBorder(
@@ -630,7 +630,7 @@ class _ClientAccessRequestsScreenState
             label: Text(context.l10n.revokeAccess,
                 style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.orange[700],
+              foregroundColor: AppColors.warning,
               side: BorderSide(color: Colors.orange[300]!),
               padding: const EdgeInsets.symmetric(vertical: 8),
               shape: RoundedRectangleBorder(
@@ -653,7 +653,7 @@ class _ClientAccessRequestsScreenState
             label: Text(context.l10n.approveNow,
                 style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.green[700],
+              foregroundColor: AppColors.success,
               side: BorderSide(color: Colors.green[300]!),
               padding: const EdgeInsets.symmetric(vertical: 8),
               shape: RoundedRectangleBorder(
@@ -669,7 +669,7 @@ class _ClientAccessRequestsScreenState
             label: Text(context.l10n.updateReason,
                 style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red[700],
+              foregroundColor: AppColors.danger,
               side: BorderSide(color: Colors.red[300]!),
               padding: const EdgeInsets.symmetric(vertical: 8),
               shape: RoundedRectangleBorder(
@@ -1015,13 +1015,13 @@ class _ClientAccessRequestsScreenState
                   child: Row(
                     children: [
                       Icon(Icons.warning_amber_rounded,
-                          size: 16, color: Colors.orange[700]),
+                          size: 16, color: AppColors.warning),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           context.l10n.revokeAllMarksDenied,
                           style: TextStyle(
-                              fontSize: 11, color: Colors.orange[800]),
+                              fontSize: 11, color: AppColors.warning),
                         ),
                       ),
                     ],
@@ -1280,7 +1280,7 @@ class _ClientAccessRequestsScreenState
                             context.l10n.previouslyDenied(denialReasonLabel(request.denialReason!)),
                             style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.red[800]),
+                                color: AppColors.danger),
                           ),
                         ),
                       ],

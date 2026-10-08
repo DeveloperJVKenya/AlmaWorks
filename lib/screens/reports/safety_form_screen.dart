@@ -1,3 +1,4 @@
+import 'package:almaworks/core/theme/app_theme.dart';
 import 'dart:convert';
 import 'dart:io' show Directory, File, Platform;
 import 'dart:math' show pi, min, max;
@@ -505,7 +506,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: pickerColorScheme(
               primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
@@ -526,7 +527,7 @@ class _SafetyFormScreenState extends State<SafetyFormScreen> {
       initialTime: TimeOfDay.fromDateTime(_reportDate),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: pickerColorScheme(
               primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
@@ -4372,11 +4373,11 @@ class _SDrawPadWidgetState extends State<_SDrawPadWidget> {
             Row(children: [
               if (_hasSignature) ...[
                 Icon(Icons.check_circle_rounded,
-                    size: 13, color: Colors.green[700]),
+                    size: 13, color: AppColors.success),
                 const SizedBox(width: 4),
                 Text(context.l10n.signatureCaptured,
                     style: TextStyle(
-                        color: Colors.green[700],
+                        color: AppColors.success,
                         fontSize: 10,
                         fontWeight: FontWeight.w600)),
                 if (_inputLabel.isNotEmpty) ...[
@@ -5033,7 +5034,7 @@ class _InAppCropperDialogState
                             padding: const EdgeInsets.all(24),
                             child: Text(_error!,
                                 style: TextStyle(
-                                    color: Colors.red[700])),
+                                    color: AppColors.danger)),
                           ))
                       : LayoutBuilder(
                           builder: (_, cst) {

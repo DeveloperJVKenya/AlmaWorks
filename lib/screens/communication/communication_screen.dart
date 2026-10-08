@@ -937,7 +937,7 @@ class _DraftTile extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.orange[700],
+                            color: AppColors.warning,
                           ),
                         ),
                       ),

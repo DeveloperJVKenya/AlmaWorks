@@ -1,3 +1,4 @@
+import 'package:almaworks/core/theme/app_theme.dart';
 import 'dart:convert';
 import 'dart:io' show Directory, File, Platform;
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
@@ -393,7 +394,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme:
-              const ColorScheme.light(primary: _navy, onPrimary: Colors.white),
+              pickerColorScheme(primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
       ),
@@ -415,7 +416,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme:
-              const ColorScheme.light(primary: _navy, onPrimary: Colors.white),
+              pickerColorScheme(primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
       ),
@@ -1871,7 +1872,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           child: Text(
             '⚠ ${context.l10n.rfSectionError}',
             style: TextStyle(
-                color: Colors.red[800], fontSize: 11),
+                color: AppColors.danger, fontSize: 11),
           ),
         );
       }
@@ -1927,7 +1928,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           child: Text(
             '⚠ ${context.l10n.rfSectionError}',
             style: TextStyle(
-                color: Colors.red[800], fontSize: 11),
+                color: AppColors.danger, fontSize: 11),
           ),
         );
       }
@@ -1988,7 +1989,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         ),
         child: Text(
           '⚠ ${context.l10n.rfSectionError}',
-          style: TextStyle(color: Colors.red[800], fontSize: 11),
+          style: TextStyle(color: AppColors.danger, fontSize: 11),
         ),
       );
     }
@@ -2230,7 +2231,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                         child: Text(
                           context.l10n.allSubcontractorsSelected,
                           style: TextStyle(
-                              color: Colors.green[700],
+                              color: AppColors.success,
                               fontSize: labelFs,
                               fontWeight: FontWeight.w500),
                         ),

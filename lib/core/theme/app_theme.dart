@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 /// Builds the light and dark themes from the Settings choices (font, high
 /// contrast, reduced motion). Colors match [AppColors] so widgets that read
@@ -199,4 +200,19 @@ class _NoTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) => child;
+}
+
+/// Color scheme for date/time pickers opened with a `Theme(...)` override.
+/// Keeps the brand accent but follows light/dark mode, so a picker opened
+/// in dark mode isn't a bright white sheet. The arguments are accepted for
+/// call-site compatibility; the brand color always wins.
+ColorScheme pickerColorScheme({Color? primary, Color? onPrimary}) {
+  final dark = AppColors.isDark;
+  final base = dark ? const ColorScheme.dark() : const ColorScheme.light();
+  return base.copyWith(
+    primary: dark ? AppColors.brand : AppColors.navy,
+    onPrimary: Colors.white,
+    surface: AppColors.surface,
+    onSurface: AppColors.ink,
+  );
 }

@@ -1353,7 +1353,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                title: Text(context.l10n.newCategoryDrawing, style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green[800])),
+                title: Text(context.l10n.newCategoryDrawing, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.success)),
                 subtitle: Text(context.l10n.newCategoryDrawingHint, style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                 leading: const Icon(Icons.add, color: Colors.green),
                 onTap: () => Navigator.pop(context, 'new'),

@@ -1,3 +1,4 @@
+import 'package:almaworks/core/theme/app_theme.dart';
 import 'package:almaworks/models/gantt_row_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/models/purchase_resource_model.dart';
@@ -3530,7 +3531,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: pickerColorScheme(
               primary: Colors.blue.shade600,
               onPrimary: Colors.white,
             ),
@@ -3656,7 +3657,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: pickerColorScheme(
               primary: Colors.blue.shade600,
               onPrimary: Colors.white,
             ),
@@ -4177,7 +4178,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           builder: (context, child) {
             return Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.light(
+                colorScheme: pickerColorScheme(
                   primary: Colors.blue.shade600,
                   onPrimary: Colors.white,
                 ),
@@ -4255,7 +4256,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                         context.l10n.offlineMode,
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.orange.shade700,
+                          color: AppColors.warning,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -4270,12 +4271,12 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               child: Icon(
                 Icons.wifi_off,
                 size: 16,
-                color: Colors.orange.shade700,
+                color: AppColors.warning,
               ),
             ),
           IconButton(
             onPressed: _addNewRow,
-            icon: Icon(Icons.add_circle_outline, color: Colors.green.shade700),
+            icon: Icon(Icons.add_circle_outline, color: AppColors.success),
             tooltip: context.l10n.addRow,
           ),
           IconButton(
@@ -4590,7 +4591,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         return TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: Colors.green.shade700,
+          color: AppColors.success,
         );
       case TaskType.task:
         return TextStyle(fontSize: 11);

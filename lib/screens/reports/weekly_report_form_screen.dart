@@ -1,3 +1,4 @@
+import 'package:almaworks/core/theme/app_theme.dart';
 import 'dart:convert';
 import 'dart:io' show Directory, File, Platform;
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
@@ -322,7 +323,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: pickerColorScheme(
               primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
@@ -348,7 +349,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
       lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: pickerColorScheme(
               primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
@@ -1587,7 +1588,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                         child: Text(
                           context.l10n.allSubcontractorsSelected,
                           style: TextStyle(
-                              color: Colors.green[700],
+                              color: AppColors.success,
                               fontSize: labelFs,
                               fontWeight: FontWeight.w500),
                         ),

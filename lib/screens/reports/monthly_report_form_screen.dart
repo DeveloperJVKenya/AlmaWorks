@@ -1,3 +1,4 @@
+import 'package:almaworks/core/theme/app_theme.dart';
 import 'dart:convert';
 import 'dart:io' show Directory, File, Platform;
 import 'dart:ui' as ui;
@@ -555,7 +556,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: pickerColorScheme(
               primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
@@ -580,7 +581,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
+          colorScheme: pickerColorScheme(
               primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
@@ -3057,13 +3058,13 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.check_circle_rounded,
-                      size: 12, color: Colors.green[700]),
+                      size: 12, color: AppColors.success),
                   const SizedBox(width: 4),
                   Text(context.l10n.signed,
                       style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: Colors.green[700])),
+                          color: AppColors.success)),
                 ]),
               ),
           ]),
@@ -4949,11 +4950,11 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
             Row(children: [
               if (_hasSignature) ...[
                 Icon(Icons.check_circle_rounded,
-                    size: 13, color: Colors.green[700]),
+                    size: 13, color: AppColors.success),
                 const SizedBox(width: 4),
                 Text(context.l10n.signatureCaptured,
                     style: TextStyle(
-                        color: Colors.green[700],
+                        color: AppColors.success,
                         fontSize: 10,
                         fontWeight: FontWeight.w600)),
                 if (_inputLabel.isNotEmpty) ...[

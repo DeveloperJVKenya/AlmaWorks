@@ -1,3 +1,4 @@
+import 'package:almaworks/core/theme/app_theme.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -1680,7 +1681,7 @@ class _TaskProgressMonitorScreenState
               ),
               if (status == current)
                 Icon(Icons.check_circle_rounded,
-                    color: Colors.green[700], size: 18),
+                    color: AppColors.success, size: 18),
             ],
           ),
         ),
@@ -2913,7 +2914,7 @@ class _TaskProgressMonitorScreenState
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme:
-              const ColorScheme.light(primary: _navy, onPrimary: Colors.white),
+              pickerColorScheme(primary: _navy, onPrimary: Colors.white),
         ),
         child: child!,
       ),
@@ -2962,7 +2963,7 @@ class _TaskProgressMonitorScreenState
       lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(primary: _navy, onPrimary: Colors.white)),
+            colorScheme: pickerColorScheme(primary: _navy, onPrimary: Colors.white)),
         child: child!,
       ),
     );
@@ -3028,7 +3029,7 @@ class _TaskProgressMonitorScreenState
               lastDate: DateTime(2100),
               builder: (c, child) => Theme(
                 data: Theme.of(c).copyWith(
-                    colorScheme: const ColorScheme.light(primary: _navy, onPrimary: Colors.white)),
+                    colorScheme: pickerColorScheme(primary: _navy, onPrimary: Colors.white)),
                 child: child!,
               ),
             );
@@ -3403,7 +3404,7 @@ class _TaskProgressMonitorScreenState
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () => setDialogState(() => showRejectField = true),
-                              style: OutlinedButton.styleFrom(foregroundColor: Colors.red[700]),
+                              style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
                               child: Text(context.l10n.reject, style: TextStyle(fontSize: 12)),
                             ),
                           ),

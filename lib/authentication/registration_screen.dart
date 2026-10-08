@@ -67,6 +67,8 @@ class RegistrationScreenState extends State<RegistrationScreen> {
         'email': _emailController.text.trim(),
         'uid': user.uid,
         'role': 'Client', // Default to lowest role
+        // Push notifications are sent in this language (see LanguageSync)
+        'language': currentLanguage.code,
       };
 
       await FirebaseFirestore.instance.collection('Users').doc(username).set(userData);
