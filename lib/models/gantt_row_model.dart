@@ -1,6 +1,7 @@
 // Updated GanttRowData model
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 enum TaskType { mainTask, subTask, task }
 
@@ -10,7 +11,7 @@ enum TaskStatus { overdue, ongoing, upcoming, started, completed }
 // NEW: Only for user-controllable states stored in Firestore
 enum TaskExecutionStatus { started, completed }
 
-class GanttRowData {  
+class GanttRowData {
   final String id;
   String? firestoreId;
   String? taskName;
@@ -20,11 +21,11 @@ class GanttRowData {
   TaskType taskType;
   bool isUnsaved;
   String? resourceQuantity;
-  
+
   // Project information fields
   String? projectId;
   String? projectName;
-  
+
   String? parentId;
   int hierarchyLevel;
   int displayOrder;
@@ -211,10 +212,10 @@ class GanttRowData {
       'resourceQuantity': resourceQuantity,
       'actualStartDate': actualStartDate != null ? Timestamp.fromDate(actualStartDate!) : null,
       'actualEndDate': actualEndDate != null ? Timestamp.fromDate(actualEndDate!) : null,
-      
+
       // EXISTING: Keep old status field for backward compatibility
       if (status != null) 'status': status!.toString().split('.').last.toUpperCase(),
-      
+
       // NEW: Save taskStatus field (only Started/Completed)
       if (taskStatus != null) 'taskStatus': taskStatus!.toString().split('.').last.toUpperCase(),
     };
@@ -310,11 +311,11 @@ class GanttRowData {
   String get taskTypeDisplayText {
     switch (taskType) {
       case TaskType.mainTask:
-        return 'Main Task';
+        return l10nNow.taskTypeMain;
       case TaskType.subTask:
-        return 'Subtask';
+        return l10nNow.taskTypeSub;
       case TaskType.task:
-        return 'Task';
+        return l10nNow.taskTypeTask;
     }
   }
 
@@ -333,18 +334,18 @@ class GanttRowData {
       return '... - ${DateFormat('MM/dd/yy').format(actualEndDate!)}';
     }
   }
-  
+
   // Check if row can have actual dates (only regular tasks)
   bool get canHaveActualDates => taskType == TaskType.task;
 
   // NEW: Helper to get display text for taskStatus
   String get taskStatusDisplayText {
-    if (taskStatus == null) return 'Not Started';
+    if (taskStatus == null) return l10nNow.taskNotStarted;
     switch (taskStatus!) {
       case TaskExecutionStatus.started:
-        return 'Started';
+        return l10nNow.taskStarted;
       case TaskExecutionStatus.completed:
-        return 'Completed';
+        return l10nNow.taskCompleted;
     }
   }
 

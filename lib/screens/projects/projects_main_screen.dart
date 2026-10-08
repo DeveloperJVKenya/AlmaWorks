@@ -9,12 +9,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:logger/logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class ProjectsMainScreen extends StatefulWidget {
   final Logger logger;
   final int initialTabIndex;
   final List<String>? clientProjectIds;
-  
+
   const ProjectsMainScreen({
     super.key,
     required this.logger,
@@ -31,14 +34,14 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
   late TabController _tabController;
   late final ProjectService _projectService;
   late final Logger _logger;
-  
+
   String _statusFilter = 'All';
   bool _isLoading = true;
-  
+
   int _allCount = 0;
   int _activeCount = 0;
   int _completedCount = 0;
-  
+
   List<QueryDocumentSnapshot> _allProjects = [];
 
   bool get _isClientView => widget.clientProjectIds != null;
@@ -56,7 +59,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
       initialIndex: widget.initialTabIndex,
     );
     _projectService = ProjectService();
-    
+
     switch (widget.initialTabIndex) {
       case 0:
         _statusFilter = 'All';
@@ -68,7 +71,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
         _statusFilter = 'completed';
         break;
     }
-    
+
     _logger.i('🏗️ ProjectsMainScreen: Initialized - isClientView: $_isClientView, clientProjects: ${widget.clientProjectIds?.length ?? 0}');
   }
 
@@ -76,18 +79,18 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
   Widget build(BuildContext context) {
     super.build(context);
     _logger.d('🎨 ProjectsMainScreen: Building UI, isLoading: $_isLoading');
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _isClientView ? 'My Projects' : 'Projects',
+          _isClientView ? context.l10n.navMyProjects : context.l10n.navProjects,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFF0A2E5A),
+        backgroundColor: AppColors.navy,
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -109,12 +112,13 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                     builder: (context) => AddProjectScreen(logger: _logger),
                   ),
                 );
-                
+
                 if (result == true) {
                   _logger.d('🔄 ProjectsMainScreen: Project added successfully');
                 }
               },
-              backgroundColor: const Color(0xFF0A2E5A),
+              backgroundColor: AppColors.brand,
+              tooltip: context.l10n.addProject,
               child: const Icon(Icons.add, color: Colors.white),
             ),
     );
@@ -123,10 +127,10 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
   Widget _buildNavigationTabBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha:0.1),
+            color: AppColors.shadow,
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -143,9 +147,9 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
         // scroll if the bar as a whole doesn't fit.
         isScrollable: true,
         tabAlignment: TabAlignment.start,
-        labelColor: Theme.of(context).primaryColor,
-        unselectedLabelColor: Colors.grey[600],
-        indicatorColor: Theme.of(context).primaryColor,
+        labelColor: AppColors.brandInk,
+        unselectedLabelColor: AppColors.inkMuted,
+        indicatorColor: AppColors.brandInk,
         indicatorWeight: 3,
         labelStyle: const TextStyle(
           fontWeight: FontWeight.w600,
@@ -176,7 +180,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('All Projects'),
+                Text(context.l10n.allProjects),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -200,7 +204,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Active'),
+                Text(context.l10n.active),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -224,7 +228,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Completed'),
+                Text(context.l10n.completed),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -264,7 +268,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
             ),
           );
         }
-        
+
         if (snapshot.hasError) {
           _logger.e('Firestore error: ${snapshot.error}');
           return _buildContentWithFooter(
@@ -281,19 +285,20 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Error loading projects',
+                      context.l10n.couldNotLoadProjectsTitle,
                       style: TextStyle(
                         fontSize: 18,
-                        color: Colors.red[600],
+                        color: AppColors.danger,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Please check your connection and try again',
+                      friendlyError(snapshot.error!),
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: AppColors.inkMuted,
                       ),
                     ),
                   ],
@@ -302,7 +307,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
             ),
           );
         }
-        
+
         if (!snapshot.hasData) {
           return _buildContentWithFooter(
             child: const Center(
@@ -313,31 +318,30 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
             ),
           );
         }
-        
+
         // Apply client project filtering if needed
         _allProjects = _isClientView
             ? snapshot.data!.docs.where((doc) {
                 return widget.clientProjectIds!.contains(doc.id);
               }).toList()
             : snapshot.data!.docs;
-        
+
         _isLoading = false;
-        
+
         _logger.d('📊 ProjectsMainScreen: Filtered projects count: ${_allProjects.length}');
-        
+
         _updateStatusCounts(_allProjects);
-        
+
         final filteredProjects = _getFilteredProjects();
-        
+
         if (filteredProjects.isEmpty) {
-          final filterText = _statusFilter == 'All'
-              ? (_isClientView 
-                  ? 'No projects assigned to you yet' 
-                  : 'No projects found')
-              : (_isClientView
-                  ? 'No $_statusFilter projects assigned to you'
-                  : 'No $_statusFilter projects');
-          
+          final l = context.l10n;
+          final filterText = switch (_statusFilter) {
+            'active' => _isClientView ? l.noActiveProjectsAssigned : l.noActiveProjects,
+            'completed' => _isClientView ? l.noCompletedProjectsAssigned : l.noCompletedProjects,
+            _ => _isClientView ? l.noProjectsAssigned : l.noProjectsFound,
+          };
+
           return _buildContentWithFooter(
             child: Center(
               child: Padding(
@@ -348,14 +352,14 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                     Icon(
                       Icons.folder_open,
                       size: 64,
-                      color: Colors.grey[400],
+                      color: AppColors.inkFaint,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       filterText,
                       style: TextStyle(
                         fontSize: 18,
-                        color: Colors.grey[600],
+                        color: AppColors.inkMuted,
                         fontWeight: FontWeight.w500,
                       ),
                       textAlign: TextAlign.center,
@@ -363,10 +367,11 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                     if (!_isClientView) ...[
                       const SizedBox(height: 8),
                       Text(
-                        'Tap the + button to create your first project',
+                        context.l10n.tapPlusToCreateProject,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[500],
+                          color: AppColors.inkFaint,
                         ),
                       ),
                     ],
@@ -376,7 +381,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
             ),
           );
         }
-        
+
         return RefreshIndicator(
           onRefresh: () async {
             _logger.i('🔄 ProjectsMainScreen: Pull to refresh triggered');
@@ -398,7 +403,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                 try {
                   final project = ProjectModel.fromFirestore(filteredProjects[index]);
                   _logger.d('🏗️ ProjectsMainScreen: Building list item for project: ${project.name}');
-                  
+
                   return _buildProjectCard(project, context);
                 } catch (e) {
                   _logger.e('❌ ProjectsMainScreen: Error building project card at index $index: $e');
@@ -428,9 +433,9 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(isMobile ? 12 : 16),
-                  color: const Color(0xFF0A2E5A),
+                  color: AppColors.navy,
                   child: Text(
-                    '© 2026 JV Alma C.I.S Site Management System',
+                    context.l10n.copyrightFooter,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: isMobile ? 12 : 14,
@@ -451,11 +456,11 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
     final newAllCount = allDocs.length;
     int newActiveCount = 0;
     int newCompletedCount = 0;
-    
+
     for (var doc in allDocs) {
       final data = doc.data() as Map<String, dynamic>;
       final status = data['status'];
-      
+
       switch (status) {
         case 'active':
           newActiveCount++;
@@ -465,11 +470,11 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
           break;
       }
     }
-    
+
     if (_allCount != newAllCount ||
         _activeCount != newActiveCount ||
         _completedCount != newCompletedCount) {
-      
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {
@@ -535,16 +540,17 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                       children: [
                         Text(
                           project.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            color: AppColors.ink,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           project.location,
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: AppColors.inkMuted,
                             fontSize: 13,
                           ),
                         ),
@@ -560,7 +566,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Colors.grey[700],
+                  color: AppColors.inkMuted,
                   fontSize: 13,
                 ),
               ),
@@ -575,19 +581,19 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
                 runSpacing: 4,
                 children: [
                   if (project.budget != null) ...[
-                    Icon(Icons.attach_money, size: 14, color: Colors.grey[600]),
+                    Icon(Icons.attach_money, size: 14, color: AppColors.inkMuted),
                     Text(
                       '\$${_formatBudget(project.budget!)}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 11),
                     ),
                     const SizedBox(width: 8),
                   ],
-                  Icon(Icons.person, size: 14, color: Colors.grey[600]),
+                  Icon(Icons.person, size: 14, color: AppColors.inkMuted),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 160),
                     child: Text(
                       project.projectManager,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 11),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -635,14 +641,14 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
   Widget _buildStatusChip(String? status) {
     if (status == null) {
       return Chip(
-        label: const Text('Untracked'),
+        label: Text(context.l10n.projectStatusUntracked),
         backgroundColor: Colors.grey.withValues(alpha:0.1),
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
       );
     }
-    
+
     return Chip(
       label: Text(_getStatusText(status)),
       backgroundColor: _getStatusColor(status).withValues(alpha:0.1),
@@ -657,14 +663,14 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
 
   void _navigateToProjectSummary(ProjectModel project, BuildContext context) {
     _logger.i('🧭 ProjectsMainScreen: Navigating to project summary: ${project.name}');
-    
+
     try {
       final provider = Provider.of<SelectedProjectProvider>(context, listen: false);
       provider.selectProject(project);
     } catch (e) {
       _logger.w('⚠️ ProjectsMainScreen: Provider not found in current context');
     }
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -684,12 +690,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error opening project: ${error.toString()}'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            showErrorSnack(context, error, action: context.l10n.couldNotOpenProjectAction);
           }
         });
       }
@@ -698,7 +699,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
 
   void _showProjectOptions(BuildContext context, ProjectModel project) {
     _logger.i('📋 ProjectsMainScreen: Showing project options for: ${project.name}');
-    
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -708,7 +709,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
             children: [
               ListTile(
                 leading: const Icon(Icons.visibility),
-                title: const Text('View Details'),
+                title: Text(context.l10n.viewDetails),
                 onTap: () {
                   Navigator.pop(context);
                   _navigateToProjectSummary(project, context);
@@ -716,15 +717,15 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
               ),
               ListTile(
                 leading: const Icon(Icons.edit),
-                title: const Text('Edit Project'),
+                title: Text(context.l10n.editProject),
                 onTap: () {
                   Navigator.pop(context);
                   _navigateToEditProject(project, context);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Delete Project', style: TextStyle(color: Colors.red)),
+                leading: Icon(Icons.delete, color: AppColors.danger),
+                title: Text(context.l10n.deleteProject, style: TextStyle(color: AppColors.danger)),
                 onTap: () {
                   Navigator.pop(context);
                   _confirmDeleteProject(context, project);
@@ -756,59 +757,58 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
 
   void _confirmDeleteProject(BuildContext context, ProjectModel project) {
     _logger.i('❓ ProjectsMainScreen: Confirming delete for project: ${project.name}');
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Delete Project'),
-          content: Text(
-            'Are you sure you want to delete "${project.name}"? This action cannot be undone.',
-          ),
+          title: Text(context.l10n.deleteProject),
+          content: Text(context.l10n.deleteProjectConfirm(project.name)),
           actions: [
             TextButton(
               onPressed: () {
                 _logger.i('❌ ProjectsMainScreen: Delete cancelled');
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
                 _logger.i('✅ ProjectsMainScreen: Delete confirmed for: ${project.name}');
-                
+
                 final scaffoldMessenger = ScaffoldMessenger.of(context);
                 final navigator = Navigator.of(context);
-                
+                final l = context.l10n;
+
                 navigator.pop();
-                
+
                 try {
                   await _projectService.deleteProject(project.id);
                   _logger.i('✅ ProjectsMainScreen: Project deleted successfully');
-                  
+
                   if (mounted) {
                     scaffoldMessenger.showSnackBar(
                       SnackBar(
-                        content: Text('Project "${project.name}" deleted successfully'),
-                        backgroundColor: Colors.green,
+                        content: Text(l.projectDeleted(project.name)),
+                        backgroundColor: AppColors.success,
                       ),
                     );
                   }
                 } catch (e) {
                   _logger.e('❌ ProjectsMainScreen: Error deleting project: $e');
-                  
+
                   if (mounted) {
                     scaffoldMessenger.showSnackBar(
                       SnackBar(
-                        content: Text('Error deleting project: ${e.toString()}'),
-                        backgroundColor: Colors.red,
+                        content: Text(friendlyError(e, action: l.couldNotDeleteProject)),
+                        backgroundColor: AppColors.danger,
                       ),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Delete', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+              child: Text(context.l10n.delete, style: const TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -837,16 +837,7 @@ class _ProjectsMainScreenState extends State<ProjectsMainScreen>
     }
   }
 
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'active':
-        return 'Active';
-      case 'completed':
-        return 'Completed';
-      default:
-        return 'Untracked';
-    }
-  }
+  String _getStatusText(String status) => projectStatusLabel(status);
 
   // ── TaskProgressMonitor helpers (mirrors TaskProgressMonitorScreen) ─────────
 

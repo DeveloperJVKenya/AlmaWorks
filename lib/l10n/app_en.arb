@@ -2666,5 +2666,266 @@
   "pdfDispatchedBy": "Dispatched by",
   "pdfDriverTransporter": "Driver / transporter",
   "pdfRecipient": "Recipient",
-  "pdfRecipientReceipt": "3. Recipient — receipt confirmation (on site)"
+  "pdfRecipientReceipt": "3. Recipient — receipt confirmation (on site)",
+  "projectStatusActive": "Active",
+  "projectStatusCompleted": "Completed",
+  "projectStatusUntracked": "Untracked",
+  "allProjects": "All projects",
+  "active": "Active",
+  "couldNotLoadProjectsTitle": "Couldn't load the projects",
+  "noProjectsAssigned": "No projects assigned to you yet",
+  "noProjectsFound": "No projects found",
+  "noActiveProjectsAssigned": "No active projects assigned to you",
+  "noCompletedProjectsAssigned": "No completed projects assigned to you",
+  "noActiveProjects": "No active projects",
+  "noCompletedProjects": "No completed projects",
+  "tapPlusToCreateProject": "Tap the + button to create your first project",
+  "couldNotOpenProjectAction": "Couldn't open the project.",
+  "editProject": "Edit project",
+  "deleteProject": "Delete project",
+  "deleteProjectConfirm": "Are you sure you want to delete \"{name}\"? This can't be undone.",
+  "@deleteProjectConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "projectDeleted": "Project \"{name}\" deleted.",
+  "@projectDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotDeleteProject": "Couldn't delete the project.",
+  "addProject": "Add project",
+  "addNewProject": "Add new project",
+  "sectionComingSoon": "{section} is coming soon.",
+  "@sectionComingSoon": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "basicInformation": "Basic information",
+  "projectName": "Project name",
+  "enterProjectName": "Please enter a project name",
+  "descriptionOptionalCap": "Description (optional)",
+  "contractNumberOptional": "Contract number (optional)",
+  "location": "Location",
+  "enterProjectLocation": "Please enter the project location",
+  "projectDetails": "Project details",
+  "budgetUsd": "Budget (USD)",
+  "statusOptional": "Status (optional)",
+  "projectManager": "Project manager",
+  "enterProjectManager": "Please enter the project manager",
+  "timeline": "Timeline",
+  "startDate": "Start date",
+  "endDateOptional": "End date (optional)",
+  "notSet": "Not set",
+  "teamMembers": "Team members",
+  "role": "Role",
+  "teamRoleSubcontractor": "Subcontractor",
+  "teamRoleSupplier": "Supplier",
+  "teamRoleTechnician": "Technician",
+  "teamRoleManager": "Manager",
+  "defineNew": "Define new",
+  "defineRoleName": "Role name *",
+  "defineRoleHint": "e.g. Site foreman, Safety officer",
+  "teamMemberName": "Team member name",
+  "categoryOptional": "Category (optional)",
+  "teamMembersColon": "Team members:",
+  "noTeamMembersYet": "No team members added yet",
+  "creatingProject": "Creating project…",
+  "createProject": "Create project",
+  "selectRole": "Please choose a role.",
+  "enterCustomRole": "Please enter a name for the new role.",
+  "enterTeamMemberName": "Please enter a team member name.",
+  "teamMemberExists": "This team member is already on the list.",
+  "projectCreated": "Project \"{name}\" created.",
+  "@projectCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotCreateProject": "Couldn't create the project.",
+  "editProjectName": "Edit {name}",
+  "@editProjectName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "updating": "Updating…",
+  "updateProject": "Update project",
+  "linkedPmAccount": "Linked project manager account (optional)",
+  "linkedPmHelper": "Lets this person receive and approve task date-change requests",
+  "loadingAccounts": "Loading accounts…",
+  "noLinkedAccount": "No linked account",
+  "teamMemberNameRequired": "Team member name *",
+  "roleRequired": "Role *",
+  "projectManagerRequired": "Project manager *",
+  "projectUpdated": "Project \"{name}\" updated.",
+  "@projectUpdated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotUpdateProject": "Couldn't update the project.",
+  "healthCompleted": "Completed",
+  "healthOnTrack": "On track",
+  "healthInProgress": "In progress",
+  "healthEarlyStage": "Early stage",
+  "healthOverdue": "Overdue",
+  "healthAhead": "Ahead of schedule",
+  "healthSlightDelay": "Slight delay",
+  "healthAtRisk": "At risk",
+  "projectUpdatedShort": "Project updated.",
+  "projectOverview": "Project overview",
+  "progress": "Progress",
+  "progressLive": "Progress (live)",
+  "teamSize": "Team size",
+  "membersCount": "{count, plural, =1{1 member} other{{count} members}}",
+  "@membersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endDate": "End date",
+  "tbd": "TBD",
+  "daysRemaining": "Days remaining",
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dueToday": "Due today",
+  "daysOverdueShort": "{count}d overdue",
+  "@daysOverdueShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overallProgress": "Overall progress",
+  "healthStatus": "Health",
+  "pmShort": "PM",
+  "taskTypeMain": "Main task",
+  "taskTypeSub": "Subtask",
+  "taskTypeTask": "Task",
+  "taskNotStarted": "Not started",
+  "taskStarted": "Started",
+  "taskCompleted": "Completed",
+  "monitorOverdue": "Overdue",
+  "monitorOngoing": "Ongoing",
+  "monitorUpcoming": "Upcoming",
+  "healthExcellent": "Excellent",
+  "healthGood": "Good",
+  "healthFair": "Fair",
+  "healthBehind": "Behind schedule",
+  "storagePermissionDenied": "Storage access is turned off. Please allow it in your device settings and try again.",
+  "downloadStartedWeb": "Download started. Check your browser downloads.",
+  "downloadFailed": "We couldn't download the file. Please try again.",
+  "fileTooLarge100": "This file is larger than 100 MB. Please choose a smaller file.",
+  "drawingNotFound": "This drawing no longer exists. It may have been deleted.",
+  "typeEmailOrName": "Type email or name…",
+  "addRecipientTo": "Please add at least one recipient in the To field.",
+  "enterSubject": "Please enter a subject.",
+  "messageSent": "Message sent!",
+  "couldNotSendMessage": "We couldn't send your message. Please try again.",
+  "draftSaved": "Draft saved.",
+  "discardMessageTitle": "Discard message?",
+  "discardMessageBody": "This message will not be saved.",
+  "discard": "Discard",
+  "reply": "Reply",
+  "replyAll": "Reply all",
+  "forward": "Forward",
+  "forwarded": "Forwarded",
+  "newMessage": "New message",
+  "msgTo": "To",
+  "msgFrom": "From",
+  "msgCc": "Cc",
+  "subject": "Subject",
+  "writeMessageHere": "Write your message here…",
+  "send": "Send",
+  "attachFiles": "Attach files",
+  "saveDraft": "Save draft",
+  "moveToTrashTitle": "Move to Trash?",
+  "moveToTrashBody": "This message will be moved to your Trash.",
+  "moveToTrash": "Move to Trash",
+  "attachmentsCount": "{count, plural, =1{1 attachment} other{{count} attachments}}",
+  "@attachmentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repliesInThread": "{count, plural, =1{1 reply in this thread} other{{count} replies in this thread}}",
+  "@repliesInThread": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noContent": "(no content)",
+  "noSubject": "(No subject)",
+  "newMessageFrom": "New message from {name}",
+  "@newMessageFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communication": "Communication",
+  "compose": "Compose",
+  "inbox": "Inbox",
+  "sentFolder": "Sent",
+  "drafts": "Drafts",
+  "trash": "Trash",
+  "searchMessages": "Search messages…",
+  "inboxEmpty": "Your inbox is empty",
+  "noSentMessages": "No sent messages",
+  "trashEmpty": "Trash is empty",
+  "couldNotLoadMessages": "We couldn't load your messages",
+  "noDraftsSaved": "No drafts saved",
+  "restore": "Restore",
+  "noRecipients": "No recipients",
+  "toRecipient": "To: {name}",
+  "@toRecipient": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toRecipientMore": "To: {name} +{count}",
+  "@toRecipientMore": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "draft": "Draft",
+  "deleteDraft": "Delete draft"
 }

@@ -3862,4 +3862,546 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pdfRecipientReceipt =>
       '3. Recipient — receipt confirmation (on site)';
+
+  @override
+  String get projectStatusActive => 'Active';
+
+  @override
+  String get projectStatusCompleted => 'Completed';
+
+  @override
+  String get projectStatusUntracked => 'Untracked';
+
+  @override
+  String get allProjects => 'All projects';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get couldNotLoadProjectsTitle => 'Couldn\'t load the projects';
+
+  @override
+  String get noProjectsAssigned => 'No projects assigned to you yet';
+
+  @override
+  String get noProjectsFound => 'No projects found';
+
+  @override
+  String get noActiveProjectsAssigned => 'No active projects assigned to you';
+
+  @override
+  String get noCompletedProjectsAssigned =>
+      'No completed projects assigned to you';
+
+  @override
+  String get noActiveProjects => 'No active projects';
+
+  @override
+  String get noCompletedProjects => 'No completed projects';
+
+  @override
+  String get tapPlusToCreateProject =>
+      'Tap the + button to create your first project';
+
+  @override
+  String get couldNotOpenProjectAction => 'Couldn\'t open the project.';
+
+  @override
+  String get editProject => 'Edit project';
+
+  @override
+  String get deleteProject => 'Delete project';
+
+  @override
+  String deleteProjectConfirm(String name) {
+    return 'Are you sure you want to delete \"$name\"? This can\'t be undone.';
+  }
+
+  @override
+  String projectDeleted(String name) {
+    return 'Project \"$name\" deleted.';
+  }
+
+  @override
+  String get couldNotDeleteProject => 'Couldn\'t delete the project.';
+
+  @override
+  String get addProject => 'Add project';
+
+  @override
+  String get addNewProject => 'Add new project';
+
+  @override
+  String sectionComingSoon(String section) {
+    return '$section is coming soon.';
+  }
+
+  @override
+  String get basicInformation => 'Basic information';
+
+  @override
+  String get projectName => 'Project name';
+
+  @override
+  String get enterProjectName => 'Please enter a project name';
+
+  @override
+  String get descriptionOptionalCap => 'Description (optional)';
+
+  @override
+  String get contractNumberOptional => 'Contract number (optional)';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get enterProjectLocation => 'Please enter the project location';
+
+  @override
+  String get projectDetails => 'Project details';
+
+  @override
+  String get budgetUsd => 'Budget (USD)';
+
+  @override
+  String get statusOptional => 'Status (optional)';
+
+  @override
+  String get projectManager => 'Project manager';
+
+  @override
+  String get enterProjectManager => 'Please enter the project manager';
+
+  @override
+  String get timeline => 'Timeline';
+
+  @override
+  String get startDate => 'Start date';
+
+  @override
+  String get endDateOptional => 'End date (optional)';
+
+  @override
+  String get notSet => 'Not set';
+
+  @override
+  String get teamMembers => 'Team members';
+
+  @override
+  String get role => 'Role';
+
+  @override
+  String get teamRoleSubcontractor => 'Subcontractor';
+
+  @override
+  String get teamRoleSupplier => 'Supplier';
+
+  @override
+  String get teamRoleTechnician => 'Technician';
+
+  @override
+  String get teamRoleManager => 'Manager';
+
+  @override
+  String get defineNew => 'Define new';
+
+  @override
+  String get defineRoleName => 'Role name *';
+
+  @override
+  String get defineRoleHint => 'e.g. Site foreman, Safety officer';
+
+  @override
+  String get teamMemberName => 'Team member name';
+
+  @override
+  String get categoryOptional => 'Category (optional)';
+
+  @override
+  String get teamMembersColon => 'Team members:';
+
+  @override
+  String get noTeamMembersYet => 'No team members added yet';
+
+  @override
+  String get creatingProject => 'Creating project…';
+
+  @override
+  String get createProject => 'Create project';
+
+  @override
+  String get selectRole => 'Please choose a role.';
+
+  @override
+  String get enterCustomRole => 'Please enter a name for the new role.';
+
+  @override
+  String get enterTeamMemberName => 'Please enter a team member name.';
+
+  @override
+  String get teamMemberExists => 'This team member is already on the list.';
+
+  @override
+  String projectCreated(String name) {
+    return 'Project \"$name\" created.';
+  }
+
+  @override
+  String get couldNotCreateProject => 'Couldn\'t create the project.';
+
+  @override
+  String editProjectName(String name) {
+    return 'Edit $name';
+  }
+
+  @override
+  String get updating => 'Updating…';
+
+  @override
+  String get updateProject => 'Update project';
+
+  @override
+  String get linkedPmAccount => 'Linked project manager account (optional)';
+
+  @override
+  String get linkedPmHelper =>
+      'Lets this person receive and approve task date-change requests';
+
+  @override
+  String get loadingAccounts => 'Loading accounts…';
+
+  @override
+  String get noLinkedAccount => 'No linked account';
+
+  @override
+  String get teamMemberNameRequired => 'Team member name *';
+
+  @override
+  String get roleRequired => 'Role *';
+
+  @override
+  String get projectManagerRequired => 'Project manager *';
+
+  @override
+  String projectUpdated(String name) {
+    return 'Project \"$name\" updated.';
+  }
+
+  @override
+  String get couldNotUpdateProject => 'Couldn\'t update the project.';
+
+  @override
+  String get healthCompleted => 'Completed';
+
+  @override
+  String get healthOnTrack => 'On track';
+
+  @override
+  String get healthInProgress => 'In progress';
+
+  @override
+  String get healthEarlyStage => 'Early stage';
+
+  @override
+  String get healthOverdue => 'Overdue';
+
+  @override
+  String get healthAhead => 'Ahead of schedule';
+
+  @override
+  String get healthSlightDelay => 'Slight delay';
+
+  @override
+  String get healthAtRisk => 'At risk';
+
+  @override
+  String get projectUpdatedShort => 'Project updated.';
+
+  @override
+  String get projectOverview => 'Project overview';
+
+  @override
+  String get progress => 'Progress';
+
+  @override
+  String get progressLive => 'Progress (live)';
+
+  @override
+  String get teamSize => 'Team size';
+
+  @override
+  String membersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get endDate => 'End date';
+
+  @override
+  String get tbd => 'TBD';
+
+  @override
+  String get daysRemaining => 'Days remaining';
+
+  @override
+  String daysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dueToday => 'Due today';
+
+  @override
+  String daysOverdueShort(int count) {
+    return '${count}d overdue';
+  }
+
+  @override
+  String get overallProgress => 'Overall progress';
+
+  @override
+  String get healthStatus => 'Health';
+
+  @override
+  String get pmShort => 'PM';
+
+  @override
+  String get taskTypeMain => 'Main task';
+
+  @override
+  String get taskTypeSub => 'Subtask';
+
+  @override
+  String get taskTypeTask => 'Task';
+
+  @override
+  String get taskNotStarted => 'Not started';
+
+  @override
+  String get taskStarted => 'Started';
+
+  @override
+  String get taskCompleted => 'Completed';
+
+  @override
+  String get monitorOverdue => 'Overdue';
+
+  @override
+  String get monitorOngoing => 'Ongoing';
+
+  @override
+  String get monitorUpcoming => 'Upcoming';
+
+  @override
+  String get healthExcellent => 'Excellent';
+
+  @override
+  String get healthGood => 'Good';
+
+  @override
+  String get healthFair => 'Fair';
+
+  @override
+  String get healthBehind => 'Behind schedule';
+
+  @override
+  String get storagePermissionDenied =>
+      'Storage access is turned off. Please allow it in your device settings and try again.';
+
+  @override
+  String get downloadStartedWeb =>
+      'Download started. Check your browser downloads.';
+
+  @override
+  String get downloadFailed =>
+      'We couldn\'t download the file. Please try again.';
+
+  @override
+  String get fileTooLarge100 =>
+      'This file is larger than 100 MB. Please choose a smaller file.';
+
+  @override
+  String get drawingNotFound =>
+      'This drawing no longer exists. It may have been deleted.';
+
+  @override
+  String get typeEmailOrName => 'Type email or name…';
+
+  @override
+  String get addRecipientTo =>
+      'Please add at least one recipient in the To field.';
+
+  @override
+  String get enterSubject => 'Please enter a subject.';
+
+  @override
+  String get messageSent => 'Message sent!';
+
+  @override
+  String get couldNotSendMessage =>
+      'We couldn\'t send your message. Please try again.';
+
+  @override
+  String get draftSaved => 'Draft saved.';
+
+  @override
+  String get discardMessageTitle => 'Discard message?';
+
+  @override
+  String get discardMessageBody => 'This message will not be saved.';
+
+  @override
+  String get discard => 'Discard';
+
+  @override
+  String get reply => 'Reply';
+
+  @override
+  String get replyAll => 'Reply all';
+
+  @override
+  String get forward => 'Forward';
+
+  @override
+  String get forwarded => 'Forwarded';
+
+  @override
+  String get newMessage => 'New message';
+
+  @override
+  String get msgTo => 'To';
+
+  @override
+  String get msgFrom => 'From';
+
+  @override
+  String get msgCc => 'Cc';
+
+  @override
+  String get subject => 'Subject';
+
+  @override
+  String get writeMessageHere => 'Write your message here…';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get attachFiles => 'Attach files';
+
+  @override
+  String get saveDraft => 'Save draft';
+
+  @override
+  String get moveToTrashTitle => 'Move to Trash?';
+
+  @override
+  String get moveToTrashBody => 'This message will be moved to your Trash.';
+
+  @override
+  String get moveToTrash => 'Move to Trash';
+
+  @override
+  String attachmentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count attachments',
+      one: '1 attachment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String repliesInThread(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count replies in this thread',
+      one: '1 reply in this thread',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noContent => '(no content)';
+
+  @override
+  String get noSubject => '(No subject)';
+
+  @override
+  String newMessageFrom(String name) {
+    return 'New message from $name';
+  }
+
+  @override
+  String get communication => 'Communication';
+
+  @override
+  String get compose => 'Compose';
+
+  @override
+  String get inbox => 'Inbox';
+
+  @override
+  String get sentFolder => 'Sent';
+
+  @override
+  String get drafts => 'Drafts';
+
+  @override
+  String get trash => 'Trash';
+
+  @override
+  String get searchMessages => 'Search messages…';
+
+  @override
+  String get inboxEmpty => 'Your inbox is empty';
+
+  @override
+  String get noSentMessages => 'No sent messages';
+
+  @override
+  String get trashEmpty => 'Trash is empty';
+
+  @override
+  String get couldNotLoadMessages => 'We couldn\'t load your messages';
+
+  @override
+  String get noDraftsSaved => 'No drafts saved';
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String get noRecipients => 'No recipients';
+
+  @override
+  String toRecipient(String name) {
+    return 'To: $name';
+  }
+
+  @override
+  String toRecipientMore(String name, int count) {
+    return 'To: $name +$count';
+  }
+
+  @override
+  String get draft => 'Draft';
+
+  @override
+  String get deleteDraft => 'Delete draft';
 }

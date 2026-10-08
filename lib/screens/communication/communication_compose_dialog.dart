@@ -10,6 +10,8 @@ import 'package:uuid/uuid.dart';
 
 import 'communication_models.dart';
 import 'communication_service.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 // ─── Module-level logger (mirrors the pattern used in BaseLayout) ─────────────
 final _log = Logger(
@@ -312,7 +314,7 @@ class _RecipientFieldState extends State<_RecipientField> {
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: widget.selected.isEmpty
-                            ? 'Type email or name…'
+                            ? context.l10n.typeEmailOrName
                             : '',
                         hintStyle: TextStyle(
                             fontSize: 13, color: Colors.grey[400]),
@@ -538,12 +540,12 @@ class _CommunicationComposeDialogState
 
     if (_toList.isEmpty) {
       _log.w('🚀 ComposeDialog._send: BLOCKED — _toList is empty');
-      _snack('Please add at least one recipient in the To field.');
+      _snack(context.l10n.addRecipientTo);
       return;
     }
     if (_subjectCtrl.text.trim().isEmpty) {
       _log.w('🚀 ComposeDialog._send: BLOCKED — subject is empty');
-      _snack('Please enter a subject.');
+      _snack(context.l10n.enterSubject);
       return;
     }
 
@@ -605,17 +607,17 @@ class _CommunicationComposeDialogState
           Navigator.of(context).pop();
           widget.onSent?.call();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Message sent!', style: TextStyle()),
+            content: Text(context.l10n.messageSent, style: TextStyle()),
             backgroundColor: const Color(0xFF0A2E5A),
           ));
         }
       } else {
         _log.e('❌ ComposeDialog._send: sendMessage returned null — Firestore write may have failed');
-        _snack('Failed to send. Please try again.');
+        if (mounted) _snack(context.l10n.couldNotSendMessage);
       }
     } catch (e, stack) {
       _log.e('❌ ComposeDialog._send: exception', error: e, stackTrace: stack);
-      _snack('Error: $e');
+      if (mounted) showErrorSnack(context, e, action: context.l10n.couldNotSendMessage);
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -640,7 +642,7 @@ class _CommunicationComposeDialogState
     if (mounted) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Draft saved.', style: TextStyle()),
+        content: Text(context.l10n.draftSaved, style: TextStyle()),
         backgroundColor: Colors.grey[700],
       ));
     }
@@ -652,16 +654,16 @@ class _CommunicationComposeDialogState
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Discard message?', style: TextStyle()),
+        title: Text(context.l10n.discardMessageTitle, style: TextStyle()),
         content:
-            Text('This message will not be saved.', style: TextStyle()),
+            Text(context.l10n.discardMessageBody, style: TextStyle()),
         actions: [
           TextButton(
             onPressed: () {
               _log.i('🗑️ ComposeDialog: discard cancelled');
               Navigator.pop(context);
             },
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           TextButton(
             onPressed: () {
@@ -670,7 +672,7 @@ class _CommunicationComposeDialogState
               Navigator.pop(context);
             },
             child:
-                Text('Discard', style: TextStyle(color: Colors.red)),
+                Text(context.l10n.discard, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -743,7 +745,7 @@ class _CommunicationComposeDialogState
           IconButton(
             icon: const Icon(Icons.close, color: Colors.white, size: 20),
             onPressed: _discard,
-            tooltip: 'Discard',
+            tooltip: context.l10n.discard,
           ),
         ],
       ),
@@ -753,13 +755,13 @@ class _CommunicationComposeDialogState
   String _composeTitle() {
     switch (widget.messageType) {
       case MessageType.reply:
-        return 'Reply';
+        return context.l10n.reply;
       case MessageType.replyAll:
-        return 'Reply All';
+        return context.l10n.replyAll;
       case MessageType.forward:
-        return 'Forward';
+        return context.l10n.forward;
       default:
-        return 'New Message';
+        return context.l10n.newMessage;
     }
   }
 
@@ -769,7 +771,7 @@ class _CommunicationComposeDialogState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _RecipientField(
-            label: 'To',
+            label: context.l10n.msgTo,
             selected: _toList,
             suggestions: widget.projectUsers,
             onChanged: _onToChanged,
@@ -782,14 +784,14 @@ class _CommunicationComposeDialogState
                   _log.i('📝 ComposeDialog: Cc field shown');
                   setState(() => _showCcField = true);
                 },
-                child: Text('Cc',
+                child: Text(context.l10n.msgCc,
                     style: TextStyle(
                         color: Colors.grey[600], fontSize: 13)),
               ),
             )
           else
             _RecipientField(
-              label: 'Cc',
+              label: context.l10n.msgCc,
               selected: _ccList,
               suggestions: widget.projectUsers,
               onChanged: _onCcChanged,
@@ -803,7 +805,7 @@ class _CommunicationComposeDialogState
               children: [
                 SizedBox(
                   width: 60,
-                  child: Text('Subject',
+                  child: Text(context.l10n.subject,
                       style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey[600],
@@ -815,7 +817,7 @@ class _CommunicationComposeDialogState
                     style: TextStyle(fontSize: 13),
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: 'Subject',
+                      hintText: context.l10n.subject,
                       hintStyle: TextStyle(
                           fontSize: 13, color: Colors.grey[400]),
                       isDense: true,
@@ -854,7 +856,7 @@ class _CommunicationComposeDialogState
               focusNode: _quillFocus,
               scrollController: _quillScroll,
               config: quill.QuillEditorConfig(
-                placeholder: 'Write your message here…',
+                placeholder: context.l10n.writeMessageHere,
                 scrollable: true,
                 expands: false,
                 padding: EdgeInsets.zero,
@@ -941,7 +943,7 @@ class _CommunicationComposeDialogState
                         strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.send, size: 16),
             label: Text(
-              _isSending ? 'Sending…' : 'Send',
+              _isSending ? context.l10n.sending : context.l10n.send,
               style: TextStyle(
                   fontWeight: FontWeight.w600, fontSize: 13),
             ),
@@ -957,18 +959,18 @@ class _CommunicationComposeDialogState
           const SizedBox(width: 8),
           _ToolbarAction(
             icon: Icons.attach_file,
-            tooltip: 'Attach files',
+            tooltip: context.l10n.attachFiles,
             onTap: _pickAttachment,
           ),
           const Spacer(),
           _ToolbarAction(
             icon: Icons.save_outlined,
-            tooltip: 'Save draft',
+            tooltip: context.l10n.saveDraft,
             onTap: _saveDraftAndClose,
           ),
           _ToolbarAction(
             icon: Icons.delete_outline,
-            tooltip: 'Discard',
+            tooltip: context.l10n.discard,
             onTap: _discard,
             color: Colors.red[400]!,
           ),

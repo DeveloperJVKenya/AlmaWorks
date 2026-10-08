@@ -71,6 +71,17 @@ String roleLabel(String role, [AppLocalizations? l]) {
   };
 }
 
+/// Display name for a stored project status ('active' / 'completed' /
+/// anything else = untracked).
+String projectStatusLabel(String? status, [AppLocalizations? l]) {
+  final t = l ?? l10nNow;
+  return switch (status) {
+    'active' => t.projectStatusActive,
+    'completed' => t.projectStatusCompleted,
+    _ => t.projectStatusUntracked,
+  };
+}
+
 // ── Text stored in Firestore for other people to read ─────────────────────────
 //
 // Notifications are written by one person's device and read by someone

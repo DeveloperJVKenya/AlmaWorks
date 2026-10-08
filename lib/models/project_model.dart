@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 class TeamMember {
   final String name;
@@ -60,7 +61,7 @@ class ProjectModel {
   final String location;
   final String? contractNumber;
   final double? budget;
-  final String? status; 
+  final String? status;
   final DateTime startDate;
   final DateTime? endDate;
   final String projectManager;
@@ -202,22 +203,22 @@ class ProjectModel {
   double get progress {
     if (status == 'completed') return 100.0;
     if (status != 'active') return 0.0;
-    
+
     final now = DateTime.now();
     if (now.isBefore(startDate)) return 0.0;
-    
+
     if (endDate == null) {
       // If no end date, calculate based on time elapsed (rough estimate)
       final daysSinceStart = now.difference(startDate).inDays;
       // Assume 1% progress per week for active projects without end date
       return (daysSinceStart / 7).clamp(0.0, 90.0);
     }
-    
+
     final totalDays = endDate!.difference(startDate).inDays;
     final elapsedDays = now.difference(startDate).inDays;
-    
+
     if (totalDays <= 0) return 0.0;
-    
+
     return ((elapsedDays / totalDays) * 100).clamp(0.0, 100.0);
   }
 
@@ -237,28 +238,29 @@ class ProjectModel {
 
   // Get project health status based on progress and timeline
   String get healthStatus {
-    if (status != 'active') return 'N/A';
-    
+    final l = l10nNow;
+    if (status != 'active') return l.notAvailable;
+
     final progressValue = progress;
     final now = DateTime.now();
-    
+
     if (endDate != null && now.isAfter(endDate!)) {
-      return progressValue >= 100 ? 'Completed' : 'Overdue';
+      return progressValue >= 100 ? l.healthCompleted : l.healthOverdue;
     }
-    
-    if (progressValue >= 90) return 'Excellent';
-    if (progressValue >= 70) return 'Good';
-    if (progressValue >= 50) return 'Fair';
-    return 'Behind Schedule';
+
+    if (progressValue >= 90) return l.healthExcellent;
+    if (progressValue >= 70) return l.healthGood;
+    if (progressValue >= 50) return l.healthFair;
+    return l.healthBehind;
   }
 
   // Get days remaining (if applicable)
   int? get daysRemaining {
     if (endDate == null || status != 'active') return null;
-    
+
     final now = DateTime.now();
     if (now.isAfter(endDate!)) return 0;
-    
+
     return endDate!.difference(now).inDays;
   }
 

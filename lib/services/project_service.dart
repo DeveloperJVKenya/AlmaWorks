@@ -297,7 +297,7 @@ class ProjectService {
     } catch (e, stackTrace) {
       _logger.e('❌ ProjectService: Failed to add project',
         error: e, stackTrace: stackTrace);
-      throw Exception('Failed to add project: $e');
+      rethrow;
     }
   }
 
@@ -318,7 +318,7 @@ class ProjectService {
     } catch (e, stackTrace) {
       _logger.e('❌ ProjectService: Failed to update project',
         error: e, stackTrace: stackTrace);
-      throw Exception('Failed to update project: $e');
+      rethrow;
     }
   }
 
@@ -336,7 +336,7 @@ class ProjectService {
     } catch (e, stackTrace) {
       _logger.e('❌ ProjectService: Failed to delete project',
         error: e, stackTrace: stackTrace);
-      throw Exception('Failed to delete project: $e');
+      rethrow;
     }
   }
 
@@ -360,7 +360,7 @@ class ProjectService {
     } catch (e, stackTrace) {
       _logger.e('❌ ProjectService: Failed to get project by ID',
         error: e, stackTrace: stackTrace);
-      throw Exception('Failed to get project: $e');
+      rethrow;
     }
   }
 

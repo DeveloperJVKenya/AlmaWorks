@@ -1,6 +1,7 @@
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/screens/documents_screen.dart';
 import 'package:almaworks/screens/drawings_screen.dart';
+import 'package:almaworks/screens/projects/add_project_screen.dart' show teamRoleLabel;
 import 'package:almaworks/screens/projects/edit_project_screen.dart';
 import 'package:almaworks/screens/projects/projects_main_screen.dart';
 import 'package:almaworks/widgets/task_progress_widget.dart';
@@ -10,6 +11,9 @@ import 'package:almaworks/widgets/base_layout.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class ProjectSummaryScreen extends StatefulWidget {
   final ProjectModel project;
@@ -150,22 +154,23 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
     required DateTime? start,
     required DateTime? end,
   }) {
-    if (progress >= 1.0) return (label: 'Completed',         color: Colors.green);
+    final l = l10nNow;
+    if (progress >= 1.0) return (label: l.healthCompleted, color: Colors.green);
     if (start == null || end == null) {
-      if (progress >= 0.75) return (label: 'On Track',        color: Colors.green);
-      if (progress >= 0.40) return (label: 'In Progress',     color: Colors.blue);
-      return                        (label: 'Early Stage',     color: Colors.purple);
+      if (progress >= 0.75) return (label: l.healthOnTrack, color: Colors.green);
+      if (progress >= 0.40) return (label: l.healthInProgress, color: Colors.blue);
+      return (label: l.healthEarlyStage, color: Colors.purple);
     }
     final now = DateTime.now();
-    if (now.isAfter(end)) return   (label: 'Overdue',          color: Colors.red);
+    if (now.isAfter(end)) return (label: l.healthOverdue, color: Colors.red);
     final total   = end.difference(start).inDays;
     final elapsed = now.difference(start).inDays.clamp(0, total);
     final expected = total == 0 ? 1.0 : elapsed / total;
     final delta   = progress - expected;
-    if (delta >=  0.10) return     (label: 'Ahead of Schedule', color: Colors.blue);
-    if (delta >= -0.05) return     (label: 'On Track',           color: Colors.green);
-    if (delta >= -0.15) return     (label: 'Slight Delay',       color: Colors.orange);
-    return                         (label: 'At Risk',             color: Colors.red);
+    if (delta >= 0.10) return (label: l.healthAhead, color: Colors.blue);
+    if (delta >= -0.05) return (label: l.healthOnTrack, color: Colors.green);
+    if (delta >= -0.15) return (label: l.healthSlightDelay, color: Colors.orange);
+    return (label: l.healthAtRisk, color: Colors.red);
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -199,6 +204,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.edit),
+          tooltip: context.l10n.editProject,
           onPressed: () {
             widget.logger.i('✏️ Edit pressed');
             _navigateToEditProject();
@@ -238,10 +244,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       case 'Documents': _navigateToDocuments(); break;
       case 'Drawings':  _navigateToDrawings();  break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('$menuItem section coming soon',
-              style: TextStyle()),
-        ));
+        showInfoSnack(context, context.l10n.sectionComingSoon(menuItem));
     }
   }
 
@@ -262,10 +265,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
           });
         }
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Project updated successfully'),
-            backgroundColor: Colors.green,
-          ));
+          showSuccessSnack(context, context.l10n.projectUpdatedShort);
         }
       }
     });
@@ -299,10 +299,11 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
         Padding(
           padding: EdgeInsets.all(isMobile ? 12 : 16),
           child: Text(
-            'Project Overview',
+            context.l10n.projectOverview,
             style: TextStyle(
               fontSize: isMobile ? 20 : 24,
               fontWeight: FontWeight.bold,
+              color: AppColors.ink,
             ),
           ),
         ),
@@ -338,7 +339,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return DashboardCard(
-                    title: 'Progress',
+                    title: context.l10n.progress,
                     value: '…',
                     icon: Icons.trending_up,
                     color: Colors.blue.withValues(alpha: 0.4),
@@ -366,7 +367,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                     : Colors.grey;
 
                 return DashboardCard(
-                  title: isLive ? 'Progress (Live)' : 'Progress',
+                  title: isLive ? context.l10n.progressLive : context.l10n.progress,
                   value: '$pct%',
                   icon: Icons.trending_up,
                   color: color,
@@ -379,7 +380,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: DashboardCard(
-              title: 'Team Members',
+              title: context.l10n.teamMembers,
               value: '${_currentProject.teamMembers.length}',
               icon: Icons.people,
               color: Colors.purple,
@@ -448,11 +449,10 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
           // ── Card ────────────────────────────────────────────
           return Card(
             elevation: 1,
-            shadowColor: const Color(0xFF0A2E5A).withValues(alpha: 0.10),
+            shadowColor: AppColors.shadow,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
-              side: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.12), width: 1),
+              side: BorderSide(color: AppColors.border, width: 1),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -496,13 +496,13 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                           children: [
                             Icon(Icons.location_on_outlined,
                                 size: 13,
-                                color: Colors.grey[500]),
+                                color: AppColors.inkFaint),
                             const SizedBox(width: 3),
                             Expanded(
                               child: Text(
                                 _currentProject.location,
                                 style: TextStyle(
-                                  color: Colors.grey[600],
+                                  color: AppColors.inkMuted,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -523,7 +523,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                     Text(
                       _currentProject.description,
                       style: TextStyle(
-                        color: Colors.grey[700],
+                        color: AppColors.inkMuted,
                         fontSize: 13,
                         height: 1.55,
                       ),
@@ -531,19 +531,18 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                   ],
 
                   const SizedBox(height: 14),
-                  Divider(height: 1,
-                      color: Colors.grey.withValues(alpha: 0.15)),
+                  Divider(height: 1, color: AppColors.divider),
                   const SizedBox(height: 14),
 
                   // ── Project Manager | Team Size ───────────────
                   Row(
                     children: [
                       Expanded(child: _buildInfoItem(
-                          'Project Manager',
+                          context.l10n.projectManager,
                           _currentProject.projectManager)),
                       Expanded(child: _buildInfoItem(
-                          'Team Size',
-                          '${_currentProject.teamMembers.length} members')),
+                          context.l10n.teamSize,
+                          context.l10n.membersCount(_currentProject.teamMembers.length))),
                     ],
                   ),
 
@@ -553,13 +552,13 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                   Row(
                     children: [
                       Expanded(child: _buildInfoItem(
-                          'Start Date',
+                          context.l10n.startDate,
                           _formatDate(tpmStart))),
                       Expanded(child: _buildInfoItem(
-                          'End Date',
+                          context.l10n.endDate,
                           tpmEnd != null
                               ? _formatDate(tpmEnd)
-                              : 'TBD')),
+                              : context.l10n.tbd)),
                     ],
                   ),
 
@@ -569,13 +568,13 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                   Row(
                     children: [
                       Expanded(child: _buildInfoItem(
-                          'Days Remaining',
+                          context.l10n.daysRemaining,
                           daysRemaining != null
                               ? daysRemaining > 0
-                                  ? '$daysRemaining days'
+                                  ? context.l10n.daysCount(daysRemaining)
                                   : daysRemaining == 0
-                                      ? 'Due today'
-                                      : '${daysRemaining.abs()}d overdue'
+                                      ? context.l10n.dueToday
+                                      : context.l10n.daysOverdueShort(daysRemaining.abs())
                               : '—')),
                       Expanded(child: _buildHealthItem(health)),
                     ],
@@ -583,15 +582,14 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
 
                   // ── Slim overall progress bar ─────────────────
                   const SizedBox(height: 14),
-                  Divider(height: 1,
-                      color: Colors.grey.withValues(alpha: 0.15)),
+                  Divider(height: 1, color: AppColors.divider),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Text('Overall Progress',
+                      Text(context.l10n.overallProgress,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey[600],
+                            color: AppColors.inkMuted,
                             fontWeight: FontWeight.w500,
                           )),
                       const Spacer(),
@@ -599,7 +597,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0A2E5A),
+                            color: AppColors.brandInk,
                           )),
                     ],
                   ),
@@ -609,8 +607,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                     child: LinearProgressIndicator(
                       value: progress.clamp(0.0, 1.0),
                       minHeight: 7,
-                      backgroundColor:
-                          const Color(0xFF0A2E5A).withValues(alpha: 0.09),
+                      backgroundColor: AppColors.brandTint,
                       valueColor: AlwaysStoppedAnimation(
                         progress >= 1.0
                             ? Colors.green[600]!
@@ -640,7 +637,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
         border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
       ),
       child: Text(
-        _getStatusText(status ?? ''),
+        projectStatusLabel(status),
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
@@ -657,7 +654,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
         Text(label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[600],
+              color: AppColors.inkMuted,
               fontWeight: FontWeight.w500,
             )),
         const SizedBox(height: 2),
@@ -665,7 +662,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1A2744),
+              color: AppColors.ink,
             )),
       ],
     );
@@ -675,10 +672,10 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Health Status',
+        Text(context.l10n.healthStatus,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[600],
+              color: AppColors.inkMuted,
               fontWeight: FontWeight.w500,
             )),
         const SizedBox(height: 3),
@@ -719,9 +716,9 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
           minChildSize: 0.35,
           maxChildSize: 0.90,
           builder: (_, sc) => Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
             ),
             child: Column(
               children: [
@@ -731,7 +728,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                   child: Container(
                     width: 38, height: 4,
                     decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: AppColors.border,
                         borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
@@ -739,13 +736,13 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
-                  color: const Color(0xFF0A2E5A),
+                  color: AppColors.navy,
                   child: Row(
                     children: [
                       const Icon(Icons.group_rounded,
                           color: Colors.white70, size: 20),
                       const SizedBox(width: 10),
-                      Text('Team Members',
+                      Text(context.l10n.teamMembers,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -808,13 +805,13 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                             horizontal: 14, vertical: 11),
                         decoration: BoxDecoration(
                           color: isManager
-                              ? const Color(0xFFFFF8E1)
-                              : const Color(0xFFF8FAFD),
+                              ? AppColors.warningTint
+                              : AppColors.surfaceAlt,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isManager
                                 ? const Color(0xFFFFD54F)
-                                : const Color(0xFFE8ECF0),
+                                : AppColors.border,
                             width: isManager ? 1.5 : 1,
                           ),
                         ),
@@ -851,7 +848,7 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                                             style: TextStyle(
                                               fontWeight: FontWeight.w700,
                                               fontSize: 13,
-                                              color: const Color(0xFF1A2744),
+                                              color: AppColors.ink,
                                             )),
                                       ),
                                       if (isManager) ...[
@@ -859,12 +856,11 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                                             size: 13,
                                             color: Color(0xFFFFB300)),
                                         const SizedBox(width: 2),
-                                        Text('PM',
+                                        Text(context.l10n.pmShort,
                                             style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w700,
-                                              color:
-                                                  const Color(0xFF795548),
+                                              color: AppColors.warning,
                                             )),
                                       ],
                                     ],
@@ -874,15 +870,14 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                                     spacing: 6,
                                     children: [
                                       _rolePill(
-                                          StringExtension(member.role)
-                                              .capitalize(),
-                                          const Color(0xFF0A2E5A),
-                                          const Color(0xFFE8EEF6)),
+                                          teamRoleLabel(member.role),
+                                          AppColors.brandInk,
+                                          AppColors.brandTint),
                                       if (member.category != null)
                                         _rolePill(
                                             member.category!,
-                                            const Color(0xFF6A1B9A),
-                                            const Color(0xFFF3E5F5)),
+                                            AppColors.isDark ? const Color(0xFFCE93D8) : const Color(0xFF6A1B9A),
+                                            AppColors.isDark ? const Color(0xFF2E1A35) : const Color(0xFFF3E5F5)),
                                     ],
                                   ),
                                 ],
@@ -983,7 +978,9 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                       curve: Curves.easeInOutCubic,
                     ),
                     mini: true,
-                    backgroundColor: const Color(0xFF0A2E5A),
+                    heroTag: null,
+                    tooltip: context.l10n.previous,
+                    backgroundColor: AppColors.navy,
                     child: const Icon(Icons.arrow_left,
                         color: Colors.white, size: 30, weight: 800),
                   )
@@ -998,7 +995,9 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                       curve: Curves.easeInOutCubic,
                     ),
                     mini: true,
-                    backgroundColor: const Color(0xFF0A2E5A),
+                    heroTag: null,
+                    tooltip: context.l10n.next,
+                    backgroundColor: AppColors.navy,
                     child: const Icon(Icons.arrow_right,
                         color: Colors.white, size: 30, weight: 800),
                   )
@@ -1016,8 +1015,8 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentPage == i
-                        ? const Color(0xFF0A2E5A)
-                        : Colors.grey.withValues(alpha: 0.4),
+                        ? AppColors.brandInk
+                        : AppColors.inkFaint.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -1037,9 +1036,9 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isMobile ? 12 : 16),
-      color: const Color(0xFF0A2E5A),
+      color: AppColors.navy,
       child: Text(
-        '© 2025 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
@@ -1059,14 +1058,6 @@ class _ProjectSummaryScreenState extends State<ProjectSummaryScreen> {
       case 'active':    return Colors.green;
       case 'completed': return Colors.orange;
       default:          return Colors.grey;
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'active':    return 'Active';
-      case 'completed': return 'Completed';
-      default:          return 'Untracked';
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'communication_models.dart';
 import 'communication_service.dart';
 import 'communication_compose_dialog.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 class CommunicationMessageDetailScreen extends StatefulWidget {
   final CommunicationMessage message;
@@ -179,19 +180,19 @@ class _CommunicationMessageDetailScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Move to Trash?', style: TextStyle()),
+        title: Text(context.l10n.moveToTrashTitle, style: TextStyle()),
         content: Text(
-          'This message will be moved to your Trash.',
+          context.l10n.moveToTrashBody,
           style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Move to Trash',
+            child: Text(context.l10n.moveToTrash,
                 style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -227,12 +228,12 @@ class _CommunicationMessageDetailScreenState
         actions: [
           IconButton(
             icon: const Icon(Icons.mark_email_unread_outlined),
-            tooltip: 'Mark as unread',
+            tooltip: context.l10n.markAsUnread,
             onPressed: _markUnread,
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            tooltip: 'Delete',
+            tooltip: context.l10n.delete,
             onPressed: _delete,
           ),
           PopupMenuButton<String>(
@@ -246,16 +247,16 @@ class _CommunicationMessageDetailScreenState
               PopupMenuItem(
                 value: 'reply',
                 child:
-                    Text('Reply', style: TextStyle()),
+                    Text(context.l10n.reply, style: TextStyle()),
               ),
               PopupMenuItem(
                 value: 'reply_all',
-                child: Text('Reply All',
+                child: Text(context.l10n.replyAll,
                     style: TextStyle()),
               ),
               PopupMenuItem(
                 value: 'forward',
-                child: Text('Forward',
+                child: Text(context.l10n.forward,
                     style: TextStyle()),
               ),
             ],
@@ -305,20 +306,20 @@ class _CommunicationMessageDetailScreenState
 
             // Sender row
             _buildParticipantRow(
-              label: 'From',
+              label: context.l10n.msgFrom,
               participants: [widget.message.from],
               isMobile: isMobile,
             ),
             const SizedBox(height: 8),
             _buildParticipantRow(
-              label: 'To',
+              label: context.l10n.msgTo,
               participants: widget.message.to,
               isMobile: isMobile,
             ),
             if (widget.message.cc.isNotEmpty) ...[
               const SizedBox(height: 8),
               _buildParticipantRow(
-                label: 'Cc',
+                label: context.l10n.msgCc,
                 participants: widget.message.cc,
                 isMobile: isMobile,
               ),
@@ -429,9 +430,9 @@ class _CommunicationMessageDetailScreenState
       return const SizedBox.shrink();
     }
     final labels = {
-      MessageType.reply: 'Reply',
-      MessageType.replyAll: 'Reply All',
-      MessageType.forward: 'Forwarded',
+      MessageType.reply: context.l10n.reply,
+      MessageType.replyAll: context.l10n.replyAll,
+      MessageType.forward: context.l10n.forwarded,
     };
     return Container(
       padding:
@@ -483,7 +484,7 @@ class _CommunicationMessageDetailScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${widget.message.attachments.length} Attachment(s)',
+          context.l10n.attachmentsCount(widget.message.attachments.length),
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
@@ -553,19 +554,19 @@ class _CommunicationMessageDetailScreenState
       children: [
         _ActionButton(
           icon: Icons.reply,
-          label: 'Reply',
+          label: context.l10n.reply,
           onTap: _reply,
         ),
         const SizedBox(width: 8),
         _ActionButton(
           icon: Icons.reply_all,
-          label: 'Reply All',
+          label: context.l10n.replyAll,
           onTap: _replyAll,
         ),
         const SizedBox(width: 8),
         _ActionButton(
           icon: Icons.forward,
-          label: 'Forward',
+          label: context.l10n.forward,
           onTap: _forward,
         ),
       ],
@@ -592,7 +593,7 @@ class _CommunicationMessageDetailScreenState
               ),
               const SizedBox(width: 6),
               Text(
-                '${replies.length} reply(ies) in this thread',
+                context.l10n.repliesInThread(replies.length),
                 style: TextStyle(
                   fontSize: 13,
                   color: const Color(0xFF0A2E5A),
@@ -694,7 +695,7 @@ class _ThreadMessageTile extends StatelessWidget {
           Text(
             message.bodyPlainText.isNotEmpty
                 ? message.bodyPlainText
-                : '(no content)',
+                : context.l10n.noContent,
             style: TextStyle(
                 fontSize: 13, color: Colors.grey[700]),
           ),

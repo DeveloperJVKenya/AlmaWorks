@@ -1,15 +1,19 @@
 import 'package:almaworks/models/project_model.dart';
+import 'package:almaworks/screens/projects/add_project_screen.dart' show requiredFieldLabel, teamRoleLabel;
 import 'package:almaworks/services/project_service.dart';
 import 'package:almaworks/widgets/base_layout.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class EditProjectScreen extends StatefulWidget {
   final ProjectModel project;
   final Logger logger;
-  
+
   const EditProjectScreen({
     super.key,
     required this.project,
@@ -28,7 +32,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   final _contractNumberController = TextEditingController();
   final _budgetController = TextEditingController();
   final _projectManagerController = TextEditingController();
-  
+
   String? _selectedStatus;
   DateTime _startDate = DateTime.now();
   DateTime? _endDate;
@@ -45,7 +49,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   final TextEditingController _customRoleController = TextEditingController();
   String? _selectedRole;
   bool _isDefiningCustomRole = false;
-  
+
   late final ProjectService _projectService;
   late final Logger _logger;
   bool _isLoading = false;
@@ -137,16 +141,16 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   @override
   Widget build(BuildContext context) {
     _logger.d('🎨 EditProjectScreen: Building UI');
-    
+
     return BaseLayout(
-      title: 'Edit ${widget.project.name}',
+      title: context.l10n.editProjectName(widget.project.name),
       project: widget.project,
       selectedMenuItem: 'Edit Project', // No specific menu item selected
       logger: _logger,
       onMenuItemSelected: _handleMenuNavigation,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _isLoading ? null : _updateProject,
-        backgroundColor: const Color(0xFF0A2E5A),
+        backgroundColor: AppColors.brand,
         foregroundColor: Colors.white,
         icon: _isLoading
             ? const SizedBox(
@@ -158,7 +162,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                 ),
               )
             : const Icon(Icons.save),
-        label: Text(_isLoading ? 'Updating...' : 'Update Project'),
+        label: Text(_isLoading ? context.l10n.updating : context.l10n.updateProject),
       ),
       child: Form(
         key: _formKey,
@@ -203,13 +207,12 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
         Navigator.pushReplacementNamed(context, '/drawings');
         break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$menuItem section coming soon')),
-        );
+        showInfoSnack(context, context.l10n.sectionComingSoon(menuItem));
     }
   }
 
   Widget _buildBasicInformationCard(bool isMobile) {
+    final l = context.l10n;
     return Card(
       elevation: 2,
       child: Padding(
@@ -217,8 +220,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Basic Information',
+            Text(
+              l.basicInformation,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -226,27 +229,13 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             TextFormField(
               controller: _nameController,
               decoration: InputDecoration(
-                label: RichText(
-                  text: const TextSpan(
-                    text: 'Project Name ',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
-                    children: [
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                label: requiredFieldLabel(l.projectName),
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.business, color: Colors.indigo),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a project name';
+                  return l.enterProjectName;
                 }
                 return null;
               },
@@ -255,10 +244,10 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             // Description — optional
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description (Optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.description, color: Colors.teal),
+              decoration: InputDecoration(
+                labelText: l.descriptionOptionalCap,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.description, color: Colors.teal),
               ),
               maxLines: 3,
             ),
@@ -266,10 +255,10 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             // Contract Number — optional
             TextFormField(
               controller: _contractNumberController,
-              decoration: const InputDecoration(
-                labelText: 'Contract Number (Optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.tag, color: Colors.orange),
+              decoration: InputDecoration(
+                labelText: l.contractNumberOptional,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.tag, color: Colors.orange),
               ),
             ),
             const SizedBox(height: 16),
@@ -277,27 +266,13 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             TextFormField(
               controller: _locationController,
               decoration: InputDecoration(
-                label: RichText(
-                  text: const TextSpan(
-                    text: 'Location ',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
-                    children: [
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                label: requiredFieldLabel(l.location),
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.location_on, color: Colors.red),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a project location';
+                  return l.enterProjectLocation;
                 }
                 return null;
               },
@@ -309,6 +284,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   }
 
   Widget _buildProjectDetailsCard(bool isMobile) {
+    final l = context.l10n;
     return Card(
       elevation: 2,
       child: Padding(
@@ -317,7 +293,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Project Details',
+              l.projectDetails,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold
@@ -326,10 +302,10 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _budgetController,
-              decoration: const InputDecoration(
-                labelText: 'Budget (USD)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.attach_money, color: Colors.green),
+              decoration: InputDecoration(
+                labelText: l.budgetUsd,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
                 prefixText: '\$ ',
               ),
               keyboardType: TextInputType.number,
@@ -340,23 +316,23 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
               initialValue: _selectedStatus,
-              decoration: const InputDecoration(
-                labelText: 'Status (Optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.flag, color: Color(0xFFFFB300)),
+              decoration: InputDecoration(
+                labelText: l.statusOptional,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.flag, color: Color(0xFFFFB300)),
               ),
-              items: const [
+              items: [
                 DropdownMenuItem<String?>(
                   value: null,
-                  child: Text('Untracked'),
+                  child: Text(l.projectStatusUntracked),
                 ),
                 DropdownMenuItem<String?>(
                   value: 'active',
-                  child: Text('Active'),
+                  child: Text(l.projectStatusActive),
                 ),
                 DropdownMenuItem<String?>(
                   value: 'completed',
-                  child: Text('Completed'),
+                  child: Text(l.projectStatusCompleted),
                 ),
               ],
               onChanged: (value) {
@@ -369,14 +345,14 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _projectManagerController,
-              decoration: const InputDecoration(
-                labelText: 'Project Manager *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person, color: Colors.blue),
+              decoration: InputDecoration(
+                labelText: l.projectManagerRequired,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.person, color: Colors.blue),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a project manager';
+                  return l.enterProjectManager;
                 }
                 return null;
               },
@@ -384,15 +360,16 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
               initialValue: _selectedPmUid,
-              decoration: const InputDecoration(
-                labelText: 'Linked PM Account (optional)',
-                helperText: 'Enables this person to receive and approve task date-extension requests',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.verified_user_outlined, color: Colors.blue),
+              decoration: InputDecoration(
+                labelText: l.linkedPmAccount,
+                helperText: l.linkedPmHelper,
+                helperMaxLines: 2,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.verified_user_outlined, color: Colors.blue),
               ),
-              hint: Text(_pmCandidatesLoading ? 'Loading accounts…' : 'No linked account'),
+              hint: Text(_pmCandidatesLoading ? l.loadingAccounts : l.noLinkedAccount),
               items: [
-                const DropdownMenuItem<String?>(value: null, child: Text('No linked account')),
+                DropdownMenuItem<String?>(value: null, child: Text(l.noLinkedAccount)),
                 ..._pmCandidates.map((c) => DropdownMenuItem<String?>(value: c.uid, child: Text(c.name))),
               ],
               onChanged: _pmCandidatesLoading
@@ -413,6 +390,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   }
 
   Widget _buildTimelineCard(bool isMobile) {
+    final l = context.l10n;
     return Card(
       elevation: 2,
       child: Padding(
@@ -421,7 +399,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Timeline',
+              l.timeline,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold
@@ -430,12 +408,12 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[400]!),
+                border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ListTile(
-                leading: const Icon(Icons.calendar_today, color: Color(0xFF0A2E5A)),
-                title: const Text('Start Date'),
+                leading: Icon(Icons.calendar_today, color: AppColors.brandInk),
+                title: Text(l.startDate),
                 subtitle: Text(_formatDate(_startDate)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _selectStartDate(),
@@ -444,13 +422,13 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[400]!),
+                border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ListTile(
-                leading: const Icon(Icons.event, color: Color(0xFF0A2E5A)),
-                title: const Text('End Date (Optional)'),
-                subtitle: Text(_endDate != null ? _formatDate(_endDate!) : 'Not set'),
+                leading: Icon(Icons.event, color: AppColors.brandInk),
+                title: Text(l.endDateOptional),
+                subtitle: Text(_endDate != null ? _formatDate(_endDate!) : l.notSet),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _selectEndDate(),
               ),
@@ -462,6 +440,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   }
 
   Widget _buildTeamMembersCard(bool isMobile) {
+    final l = context.l10n;
     return Card(
       elevation: 2,
       child: Padding(
@@ -470,7 +449,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Team Members',
+              l.teamMembers,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold
@@ -479,34 +458,24 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _selectedRole,
-              decoration: const InputDecoration(
-                labelText: 'Role *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.work, color: Colors.purple),
+              decoration: InputDecoration(
+                labelText: l.roleRequired,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.work, color: Colors.purple),
               ),
-              items: const [
-                DropdownMenuItem<String>(
-                  value: 'subcontractor',
-                  child: Text('Subcontractor'),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'supplier',
-                  child: Text('Supplier'),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'technician',
-                  child: Text('Technician'),
-                ),
+              items: [
+                for (final r in const ['subcontractor', 'supplier', 'technician'])
+                  DropdownMenuItem<String>(value: r, child: Text(teamRoleLabel(r))),
                 DropdownMenuItem<String>(
                   value: '__define_new__',
                   child: Row(
                     children: [
-                      Icon(Icons.add_circle_outline,
+                      const Icon(Icons.add_circle_outline,
                           size: 18, color: Colors.deepPurple),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'Define New',
-                        style: TextStyle(
+                        l.defineNew,
+                        style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w600,
                         ),
@@ -529,11 +498,11 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _customRoleController,
-                decoration: const InputDecoration(
-                  labelText: 'Define Role Name *',
-                  hintText: 'e.g., Site Foreman, Safety Officer',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.edit_note, color: Colors.deepPurple),
+                decoration: InputDecoration(
+                  labelText: l.defineRoleName,
+                  hintText: l.defineRoleHint,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.edit_note, color: Colors.deepPurple),
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
@@ -541,36 +510,36 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _teamMemberController,
-              decoration: const InputDecoration(
-                labelText: 'Team Member Name *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person_add, color: Colors.teal),
+              decoration: InputDecoration(
+                labelText: l.teamMemberNameRequired,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.person_add, color: Colors.teal),
               ),
               onFieldSubmitted: (_) => _addTeamMember(),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _categoryController,
-              decoration: const InputDecoration(
-                labelText: 'Category (Optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category, color: Colors.orange),
+              decoration: InputDecoration(
+                labelText: l.categoryOptional,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.category, color: Colors.orange),
               ),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _addTeamMember,
               icon: const Icon(Icons.add),
-              label: const Text('Add'),
+              label: Text(l.add),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0A2E5A),
+                backgroundColor: AppColors.brand,
                 foregroundColor: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
             if (_teamMembers.isNotEmpty) ...[
-              const Text(
-                'Team Members:',
+              Text(
+                l.teamMembersColon,
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
@@ -590,7 +559,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                         ),
                       ),
                     ),
-                    label: Text('${member.name} (${member.role.capitalize()}${member.category != null ? ' - ${member.category}' : ''})'),
+                    label: Text('${member.name} (${teamRoleLabel(member.role)}${member.category != null ? ' - ${member.category}' : ''})'),
                     onDeleted: () => _removeTeamMember(member),
                     deleteIcon: const Icon(Icons.close, size: 18),
                   );
@@ -601,21 +570,21 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   children: [
                     Icon(Icons.people_outline,
                        size: 48,
-                       color: Colors.grey[400]
+                       color: AppColors.inkFaint
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'No team members added yet',
+                      l.noTeamMembersYet,
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: AppColors.inkMuted,
                         fontSize: 14,
                       ),
                     ),
@@ -633,9 +602,9 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      color: const Color(0xFF0A2E5A),
+      color: AppColors.navy,
       child: Text(
-        '© 2025 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: 14,
@@ -705,9 +674,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
 
   void _addTeamMember() {
     if (_selectedRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a role')),
-      );
+      showWarningSnack(context, context.l10n.selectRole);
       return;
     }
     // Resolve the actual role string
@@ -715,9 +682,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     if (_isDefiningCustomRole) {
       final customRole = _customRoleController.text.trim();
       if (customRole.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a custom role name')),
-        );
+        showWarningSnack(context, context.l10n.enterCustomRole);
         return;
       }
       resolvedRole = customRole;
@@ -725,20 +690,13 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
       resolvedRole = _selectedRole!;
     }
     if (_teamMemberController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a team member name')),
-      );
+      showWarningSnack(context, context.l10n.enterTeamMemberName);
       return;
     }
     final name = _teamMemberController.text.trim();
     final category = _categoryController.text.trim().isNotEmpty ? _categoryController.text.trim() : null;
     if (_teamMembers.any((m) => m.name == name)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Team member already exists'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      showWarningSnack(context, context.l10n.teamMemberExists);
       return;
     }
     setState(() {
@@ -808,34 +766,20 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
         _logger.d('📤 EditProjectScreen: Updating in Firestore...');
 
         await _projectService.updateProject(updatedProject);
-        
+
         _logger.i('✅ EditProjectScreen: Project updated successfully');
 
         if (mounted) {
           final navigator = Navigator.of(context);
-          final scaffoldMessenger = ScaffoldMessenger.of(context);
-          
+          showSuccessSnack(context, context.l10n.projectUpdated(updatedProject.name));
           navigator.pop(true);
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('Project "${updatedProject.name}" updated successfully!'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-            ),
-          );
         }
       } catch (e, stackTrace) {
         _logger.e('❌ EditProjectScreen: Error updating project',
           error: e, stackTrace: stackTrace);
-        
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error updating project: ${e.toString()}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
-          );
+          showErrorSnack(context, e, action: context.l10n.couldNotUpdateProject);
         }
       } finally {
         if (mounted) {

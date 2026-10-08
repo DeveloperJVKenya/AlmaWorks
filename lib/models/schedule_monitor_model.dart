@@ -1,6 +1,7 @@
 // ScheduleMonitor Model - Dynamic categorization collection
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 // Status types for ScheduleMonitor collection (dynamically computed)
 enum MonitorStatus { overdue, ongoing, upcoming, completed }
@@ -14,29 +15,29 @@ class ScheduleMonitorData {
   final String projectId;
   final String projectName;
   final String taskName;
-  
+
   // Date fields (copied from Schedule collection)
   final DateTime startDate;
   final DateTime endDate;
   final DateTime? actualStartDate;
   final DateTime? actualEndDate;
-  
+
   // User-controlled status from Schedule collection
   final String? taskStatus; // 'STARTED' or 'COMPLETED' from Schedule.taskStatus
-  
+
   // Dynamically computed status (stored for querying efficiency)
   MonitorStatus status;
-  
+
   // Sub-category for upcoming tasks
   UpcomingCategory? upcomingCategory;
-  
+
   // Duration (computed)
   final int duration;
-  
+
   // Resource info (optional display fields)
   final String? resourceId;
   final String? resourceQuantity;
-  
+
   // Metadata
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -72,23 +73,23 @@ class ScheduleMonitorData {
     String? taskStatus,
   }) {
     final DateTime now = DateTime.now();
-    
+
     // Priority 1: Check if completed (user marked as completed OR has actualEndDate)
     if (taskStatus == 'COMPLETED' || actualEndDate != null) {
       return MonitorStatus.completed;
     }
-    
+
     // Priority 2: Check if started (user marked as started OR has actualStartDate)
     // This is "Ongoing" status
     if (taskStatus == 'STARTED' || actualStartDate != null) {
       return MonitorStatus.ongoing;
     }
-    
+
     // Priority 3: Check if overdue (start date passed but not started)
     if (startDate.isBefore(now)) {
       return MonitorStatus.overdue;
     }
-    
+
     // Priority 4: Default to upcoming (future start date, not started)
     return MonitorStatus.upcoming;
   }
@@ -97,13 +98,13 @@ class ScheduleMonitorData {
   static UpcomingCategory? computeUpcomingCategory(DateTime startDate) {
     final DateTime now = DateTime.now();
     final int daysUntilStart = startDate.difference(now).inDays;
-    
+
     if (daysUntilStart <= 3 && daysUntilStart > 0) {
       return UpcomingCategory.startingSoon;
     } else if (daysUntilStart > 3) {
       return UpcomingCategory.otherUpcoming;
     }
-    
+
     return null;
   }
 
@@ -117,7 +118,7 @@ class ScheduleMonitorData {
     final actualStartDate = (data['actualStartDate'] as Timestamp?)?.toDate();
     final actualEndDate = (data['actualEndDate'] as Timestamp?)?.toDate();
     final taskStatus = data['taskStatus'] as String?;
-    
+
     // Compute status dynamically
     final status = computeStatus(
       startDate: startDate,
@@ -126,7 +127,7 @@ class ScheduleMonitorData {
       actualEndDate: actualEndDate,
       taskStatus: taskStatus,
     );
-    
+
     // Compute upcoming category if status is upcoming
     UpcomingCategory? upcomingCategory;
     if (status == MonitorStatus.upcoming) {
@@ -166,7 +167,7 @@ class ScheduleMonitorData {
     final actualEndDate = (scheduleData['actualEndDate'] as Timestamp?)?.toDate();
     final taskStatus = scheduleData['taskStatus'] as String?;
     final now = DateTime.now();
-    
+
     // Compute status
     final status = computeStatus(
       startDate: startDate,
@@ -175,13 +176,13 @@ class ScheduleMonitorData {
       actualEndDate: actualEndDate,
       taskStatus: taskStatus,
     );
-    
+
     // Compute upcoming category
     UpcomingCategory? upcomingCategory;
     if (status == MonitorStatus.upcoming) {
       upcomingCategory = computeUpcomingCategory(startDate);
     }
-    
+
     // Compute duration
     final duration = endDate.difference(startDate).inDays + 1;
 
@@ -277,18 +278,18 @@ class ScheduleMonitorData {
   String get statusDisplayText {
     switch (status) {
       case MonitorStatus.overdue:
-        return 'Overdue';
+        return l10nNow.monitorOverdue;
       case MonitorStatus.ongoing:
-        return 'Ongoing';
+        return l10nNow.monitorOngoing;
       case MonitorStatus.upcoming:
-        return 'Upcoming';
+        return l10nNow.monitorUpcoming;
       case MonitorStatus.completed:
-        return 'Completed';
+        return l10nNow.taskCompleted;
     }
   }
 
   String get formattedDateRange {
-    final formatter = DateFormat('MMM dd, yyyy');
+    final formatter = DateFormat.yMMMd();
     return '${formatter.format(startDate)} - ${formatter.format(endDate)}';
   }
 

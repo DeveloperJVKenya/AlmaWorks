@@ -6571,6 +6571,966 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'3. Recipient — receipt confirmation (on site)'**
   String get pdfRecipientReceipt;
+
+  /// No description provided for @projectStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get projectStatusActive;
+
+  /// No description provided for @projectStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get projectStatusCompleted;
+
+  /// No description provided for @projectStatusUntracked.
+  ///
+  /// In en, this message translates to:
+  /// **'Untracked'**
+  String get projectStatusUntracked;
+
+  /// No description provided for @allProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'All projects'**
+  String get allProjects;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @couldNotLoadProjectsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the projects'**
+  String get couldNotLoadProjectsTitle;
+
+  /// No description provided for @noProjectsAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects assigned to you yet'**
+  String get noProjectsAssigned;
+
+  /// No description provided for @noProjectsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects found'**
+  String get noProjectsFound;
+
+  /// No description provided for @noActiveProjectsAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No active projects assigned to you'**
+  String get noActiveProjectsAssigned;
+
+  /// No description provided for @noCompletedProjectsAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No completed projects assigned to you'**
+  String get noCompletedProjectsAssigned;
+
+  /// No description provided for @noActiveProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'No active projects'**
+  String get noActiveProjects;
+
+  /// No description provided for @noCompletedProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'No completed projects'**
+  String get noCompletedProjects;
+
+  /// No description provided for @tapPlusToCreateProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the + button to create your first project'**
+  String get tapPlusToCreateProject;
+
+  /// No description provided for @couldNotOpenProjectAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the project.'**
+  String get couldNotOpenProjectAction;
+
+  /// No description provided for @editProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit project'**
+  String get editProject;
+
+  /// No description provided for @deleteProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete project'**
+  String get deleteProject;
+
+  /// No description provided for @deleteProjectConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"? This can\'t be undone.'**
+  String deleteProjectConfirm(String name);
+
+  /// No description provided for @projectDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Project \"{name}\" deleted.'**
+  String projectDeleted(String name);
+
+  /// No description provided for @couldNotDeleteProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the project.'**
+  String get couldNotDeleteProject;
+
+  /// No description provided for @addProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Add project'**
+  String get addProject;
+
+  /// No description provided for @addNewProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new project'**
+  String get addNewProject;
+
+  /// No description provided for @sectionComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'{section} is coming soon.'**
+  String sectionComingSoon(String section);
+
+  /// No description provided for @basicInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic information'**
+  String get basicInformation;
+
+  /// No description provided for @projectName.
+  ///
+  /// In en, this message translates to:
+  /// **'Project name'**
+  String get projectName;
+
+  /// No description provided for @enterProjectName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a project name'**
+  String get enterProjectName;
+
+  /// No description provided for @descriptionOptionalCap.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get descriptionOptionalCap;
+
+  /// No description provided for @contractNumberOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract number (optional)'**
+  String get contractNumberOptional;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// No description provided for @enterProjectLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the project location'**
+  String get enterProjectLocation;
+
+  /// No description provided for @projectDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Project details'**
+  String get projectDetails;
+
+  /// No description provided for @budgetUsd.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget (USD)'**
+  String get budgetUsd;
+
+  /// No description provided for @statusOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Status (optional)'**
+  String get statusOptional;
+
+  /// No description provided for @projectManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Project manager'**
+  String get projectManager;
+
+  /// No description provided for @enterProjectManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the project manager'**
+  String get enterProjectManager;
+
+  /// No description provided for @timeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get timeline;
+
+  /// No description provided for @startDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get startDate;
+
+  /// No description provided for @endDateOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'End date (optional)'**
+  String get endDateOptional;
+
+  /// No description provided for @notSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get notSet;
+
+  /// No description provided for @teamMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Team members'**
+  String get teamMembers;
+
+  /// No description provided for @role.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get role;
+
+  /// No description provided for @teamRoleSubcontractor.
+  ///
+  /// In en, this message translates to:
+  /// **'Subcontractor'**
+  String get teamRoleSubcontractor;
+
+  /// No description provided for @teamRoleSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get teamRoleSupplier;
+
+  /// No description provided for @teamRoleTechnician.
+  ///
+  /// In en, this message translates to:
+  /// **'Technician'**
+  String get teamRoleTechnician;
+
+  /// No description provided for @teamRoleManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager'**
+  String get teamRoleManager;
+
+  /// No description provided for @defineNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Define new'**
+  String get defineNew;
+
+  /// No description provided for @defineRoleName.
+  ///
+  /// In en, this message translates to:
+  /// **'Role name *'**
+  String get defineRoleName;
+
+  /// No description provided for @defineRoleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Site foreman, Safety officer'**
+  String get defineRoleHint;
+
+  /// No description provided for @teamMemberName.
+  ///
+  /// In en, this message translates to:
+  /// **'Team member name'**
+  String get teamMemberName;
+
+  /// No description provided for @categoryOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Category (optional)'**
+  String get categoryOptional;
+
+  /// No description provided for @teamMembersColon.
+  ///
+  /// In en, this message translates to:
+  /// **'Team members:'**
+  String get teamMembersColon;
+
+  /// No description provided for @noTeamMembersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No team members added yet'**
+  String get noTeamMembersYet;
+
+  /// No description provided for @creatingProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating project…'**
+  String get creatingProject;
+
+  /// No description provided for @createProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Create project'**
+  String get createProject;
+
+  /// No description provided for @selectRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a role.'**
+  String get selectRole;
+
+  /// No description provided for @enterCustomRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a name for the new role.'**
+  String get enterCustomRole;
+
+  /// No description provided for @enterTeamMemberName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a team member name.'**
+  String get enterTeamMemberName;
+
+  /// No description provided for @teamMemberExists.
+  ///
+  /// In en, this message translates to:
+  /// **'This team member is already on the list.'**
+  String get teamMemberExists;
+
+  /// No description provided for @projectCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Project \"{name}\" created.'**
+  String projectCreated(String name);
+
+  /// No description provided for @couldNotCreateProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the project.'**
+  String get couldNotCreateProject;
+
+  /// No description provided for @editProjectName.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {name}'**
+  String editProjectName(String name);
+
+  /// No description provided for @updating.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating…'**
+  String get updating;
+
+  /// No description provided for @updateProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Update project'**
+  String get updateProject;
+
+  /// No description provided for @linkedPmAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked project manager account (optional)'**
+  String get linkedPmAccount;
+
+  /// No description provided for @linkedPmHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets this person receive and approve task date-change requests'**
+  String get linkedPmHelper;
+
+  /// No description provided for @loadingAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading accounts…'**
+  String get loadingAccounts;
+
+  /// No description provided for @noLinkedAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'No linked account'**
+  String get noLinkedAccount;
+
+  /// No description provided for @teamMemberNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Team member name *'**
+  String get teamMemberNameRequired;
+
+  /// No description provided for @roleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Role *'**
+  String get roleRequired;
+
+  /// No description provided for @projectManagerRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Project manager *'**
+  String get projectManagerRequired;
+
+  /// No description provided for @projectUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Project \"{name}\" updated.'**
+  String projectUpdated(String name);
+
+  /// No description provided for @couldNotUpdateProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update the project.'**
+  String get couldNotUpdateProject;
+
+  /// No description provided for @healthCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get healthCompleted;
+
+  /// No description provided for @healthOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'On track'**
+  String get healthOnTrack;
+
+  /// No description provided for @healthInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get healthInProgress;
+
+  /// No description provided for @healthEarlyStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Early stage'**
+  String get healthEarlyStage;
+
+  /// No description provided for @healthOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get healthOverdue;
+
+  /// No description provided for @healthAhead.
+  ///
+  /// In en, this message translates to:
+  /// **'Ahead of schedule'**
+  String get healthAhead;
+
+  /// No description provided for @healthSlightDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Slight delay'**
+  String get healthSlightDelay;
+
+  /// No description provided for @healthAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'At risk'**
+  String get healthAtRisk;
+
+  /// No description provided for @projectUpdatedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Project updated.'**
+  String get projectUpdatedShort;
+
+  /// No description provided for @projectOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Project overview'**
+  String get projectOverview;
+
+  /// No description provided for @progress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get progress;
+
+  /// No description provided for @progressLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress (live)'**
+  String get progressLive;
+
+  /// No description provided for @teamSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Team size'**
+  String get teamSize;
+
+  /// No description provided for @membersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 member} other{{count} members}}'**
+  String membersCount(int count);
+
+  /// No description provided for @endDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get endDate;
+
+  /// No description provided for @tbd.
+  ///
+  /// In en, this message translates to:
+  /// **'TBD'**
+  String get tbd;
+
+  /// No description provided for @daysRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Days remaining'**
+  String get daysRemaining;
+
+  /// No description provided for @daysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String daysCount(int count);
+
+  /// No description provided for @dueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get dueToday;
+
+  /// No description provided for @daysOverdueShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d overdue'**
+  String daysOverdueShort(int count);
+
+  /// No description provided for @overallProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall progress'**
+  String get overallProgress;
+
+  /// No description provided for @healthStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get healthStatus;
+
+  /// No description provided for @pmShort.
+  ///
+  /// In en, this message translates to:
+  /// **'PM'**
+  String get pmShort;
+
+  /// No description provided for @taskTypeMain.
+  ///
+  /// In en, this message translates to:
+  /// **'Main task'**
+  String get taskTypeMain;
+
+  /// No description provided for @taskTypeSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtask'**
+  String get taskTypeSub;
+
+  /// No description provided for @taskTypeTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get taskTypeTask;
+
+  /// No description provided for @taskNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started'**
+  String get taskNotStarted;
+
+  /// No description provided for @taskStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Started'**
+  String get taskStarted;
+
+  /// No description provided for @taskCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get taskCompleted;
+
+  /// No description provided for @monitorOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get monitorOverdue;
+
+  /// No description provided for @monitorOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get monitorOngoing;
+
+  /// No description provided for @monitorUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get monitorUpcoming;
+
+  /// No description provided for @healthExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent'**
+  String get healthExcellent;
+
+  /// No description provided for @healthGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get healthGood;
+
+  /// No description provided for @healthFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get healthFair;
+
+  /// No description provided for @healthBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'Behind schedule'**
+  String get healthBehind;
+
+  /// No description provided for @storagePermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage access is turned off. Please allow it in your device settings and try again.'**
+  String get storagePermissionDenied;
+
+  /// No description provided for @downloadStartedWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Download started. Check your browser downloads.'**
+  String get downloadStartedWeb;
+
+  /// No description provided for @downloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t download the file. Please try again.'**
+  String get downloadFailed;
+
+  /// No description provided for @fileTooLarge100.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is larger than 100 MB. Please choose a smaller file.'**
+  String get fileTooLarge100;
+
+  /// No description provided for @drawingNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This drawing no longer exists. It may have been deleted.'**
+  String get drawingNotFound;
+
+  /// No description provided for @typeEmailOrName.
+  ///
+  /// In en, this message translates to:
+  /// **'Type email or name…'**
+  String get typeEmailOrName;
+
+  /// No description provided for @addRecipientTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add at least one recipient in the To field.'**
+  String get addRecipientTo;
+
+  /// No description provided for @enterSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a subject.'**
+  String get enterSubject;
+
+  /// No description provided for @messageSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Message sent!'**
+  String get messageSent;
+
+  /// No description provided for @couldNotSendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send your message. Please try again.'**
+  String get couldNotSendMessage;
+
+  /// No description provided for @draftSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved.'**
+  String get draftSaved;
+
+  /// No description provided for @discardMessageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard message?'**
+  String get discardMessageTitle;
+
+  /// No description provided for @discardMessageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This message will not be saved.'**
+  String get discardMessageBody;
+
+  /// No description provided for @discard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
+
+  /// No description provided for @reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get reply;
+
+  /// No description provided for @replyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply all'**
+  String get replyAll;
+
+  /// No description provided for @forward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get forward;
+
+  /// No description provided for @forwarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarded'**
+  String get forwarded;
+
+  /// No description provided for @newMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'New message'**
+  String get newMessage;
+
+  /// No description provided for @msgTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get msgTo;
+
+  /// No description provided for @msgFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get msgFrom;
+
+  /// No description provided for @msgCc.
+  ///
+  /// In en, this message translates to:
+  /// **'Cc'**
+  String get msgCc;
+
+  /// No description provided for @subject.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get subject;
+
+  /// No description provided for @writeMessageHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Write your message here…'**
+  String get writeMessageHere;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @attachFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach files'**
+  String get attachFiles;
+
+  /// No description provided for @saveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get saveDraft;
+
+  /// No description provided for @moveToTrashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash?'**
+  String get moveToTrashTitle;
+
+  /// No description provided for @moveToTrashBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This message will be moved to your Trash.'**
+  String get moveToTrashBody;
+
+  /// No description provided for @moveToTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash'**
+  String get moveToTrash;
+
+  /// No description provided for @attachmentsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 attachment} other{{count} attachments}}'**
+  String attachmentsCount(int count);
+
+  /// No description provided for @repliesInThread.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reply in this thread} other{{count} replies in this thread}}'**
+  String repliesInThread(int count);
+
+  /// No description provided for @noContent.
+  ///
+  /// In en, this message translates to:
+  /// **'(no content)'**
+  String get noContent;
+
+  /// No description provided for @noSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'(No subject)'**
+  String get noSubject;
+
+  /// No description provided for @newMessageFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'New message from {name}'**
+  String newMessageFrom(String name);
+
+  /// No description provided for @communication.
+  ///
+  /// In en, this message translates to:
+  /// **'Communication'**
+  String get communication;
+
+  /// No description provided for @compose.
+  ///
+  /// In en, this message translates to:
+  /// **'Compose'**
+  String get compose;
+
+  /// No description provided for @inbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get inbox;
+
+  /// No description provided for @sentFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get sentFolder;
+
+  /// No description provided for @drafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafts'**
+  String get drafts;
+
+  /// No description provided for @trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash'**
+  String get trash;
+
+  /// No description provided for @searchMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Search messages…'**
+  String get searchMessages;
+
+  /// No description provided for @inboxEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your inbox is empty'**
+  String get inboxEmpty;
+
+  /// No description provided for @noSentMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No sent messages'**
+  String get noSentMessages;
+
+  /// No description provided for @trashEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash is empty'**
+  String get trashEmpty;
+
+  /// No description provided for @couldNotLoadMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your messages'**
+  String get couldNotLoadMessages;
+
+  /// No description provided for @noDraftsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'No drafts saved'**
+  String get noDraftsSaved;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @noRecipients.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipients'**
+  String get noRecipients;
+
+  /// No description provided for @toRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'To: {name}'**
+  String toRecipient(String name);
+
+  /// No description provided for @toRecipientMore.
+  ///
+  /// In en, this message translates to:
+  /// **'To: {name} +{count}'**
+  String toRecipientMore(String name, int count);
+
+  /// No description provided for @draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get draft;
+
+  /// No description provided for @deleteDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete draft'**
+  String get deleteDraft;
 }
 
 class _AppLocalizationsDelegate

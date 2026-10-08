@@ -4,10 +4,13 @@ import 'package:almaworks/widgets/base_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class AddProjectScreen extends StatefulWidget {
   final Logger logger;
-  
+
   const AddProjectScreen({super.key, required this.logger});
 
   @override
@@ -22,7 +25,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   final _contractNumberController = TextEditingController();
   final _budgetController = TextEditingController();
   final _projectManagerController = TextEditingController();
-  
+
   String? _selectedStatus;
   DateTime _startDate = DateTime.now();
   DateTime? _endDate;
@@ -32,7 +35,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   final TextEditingController _customRoleController = TextEditingController();
   String? _selectedRole;
   bool _isDefiningCustomRole = false;
-  
+
   late final ProjectService _projectService;
   late final Logger _logger;
   bool _isLoading = false;
@@ -48,9 +51,9 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   @override
   Widget build(BuildContext context) {
     _logger.d('🎨 AddProjectScreen: Building UI');
-    
+
     return BaseLayout(
-      title: 'Add New Project',
+      title: context.l10n.addNewProject,
       selectedMenuItem: 'Add Project', // No specific menu item selected
       logger: _logger,
       onMenuItemSelected: _handleMenuNavigation,
@@ -99,13 +102,12 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         Navigator.pushReplacementNamed(context, '/drawings');
         break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$menuItem section coming soon')),
-        );
+        showInfoSnack(context, context.l10n.sectionComingSoon(menuItem));
     }
   }
 
   Widget _buildBasicInformationCard(bool isMobile) {
+    final l = context.l10n;
     return Card(
       elevation: 2,
       child: Padding(
@@ -114,7 +116,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Basic Information',
+              l.basicInformation,
               style: TextStyle(
                 fontSize: isMobile ? 16 : 18,
                 fontWeight: FontWeight.bold,
@@ -125,27 +127,13 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             TextFormField(
               controller: _nameController,
               decoration: InputDecoration(
-                label: RichText(
-                  text: const TextSpan(
-                    text: 'Project Name ',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
-                    children: [
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                label: requiredFieldLabel(l.projectName),
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.business, color: Colors.indigo),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a project name';
+                  return l.enterProjectName;
                 }
                 return null;
               },
@@ -154,10 +142,10 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             // Description — optional
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description (Optional)',
+              decoration: InputDecoration(
+                labelText: l.descriptionOptionalCap,
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.description, color: Colors.teal),
+                prefixIcon: const Icon(Icons.description, color: Colors.teal),
               ),
               maxLines: 3,
             ),
@@ -165,10 +153,10 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             // Contract Number — optional
             TextFormField(
               controller: _contractNumberController,
-              decoration: const InputDecoration(
-                labelText: 'Contract Number (Optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.tag, color: Colors.orange),
+              decoration: InputDecoration(
+                labelText: l.contractNumberOptional,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.tag, color: Colors.orange),
               ),
             ),
             SizedBox(height: isMobile ? 12 : 16),
@@ -176,27 +164,13 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             TextFormField(
               controller: _locationController,
               decoration: InputDecoration(
-                label: RichText(
-                  text: const TextSpan(
-                    text: 'Location ',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
-                    children: [
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                label: requiredFieldLabel(l.location),
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.location_on, color: Colors.red),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a project location';
+                  return l.enterProjectLocation;
                 }
                 return null;
               },
@@ -208,6 +182,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   }
 
   Widget _buildProjectDetailsCard(bool isMobile) {
+    final l = context.l10n;
     return Card(
       elevation: 2,
       child: Padding(
@@ -216,7 +191,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Project Details',
+              l.projectDetails,
               style: TextStyle(
                 fontSize: isMobile ? 16 : 18,
                 fontWeight: FontWeight.bold,
@@ -225,10 +200,10 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             SizedBox(height: isMobile ? 12 : 16),
             TextFormField(
               controller: _budgetController,
-              decoration: const InputDecoration(
-                labelText: 'Budget (USD)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.attach_money, color: Colors.green),
+              decoration: InputDecoration(
+                labelText: l.budgetUsd,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
                 prefixText: '\$ ',
               ),
               keyboardType: TextInputType.number,
@@ -239,23 +214,23 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             SizedBox(height: isMobile ? 12 : 16),
             DropdownButtonFormField<String?>(
               initialValue: _selectedStatus,
-              decoration: const InputDecoration(
-                labelText: 'Status (Optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.flag, color: Color(0xFFFFB300)),
+              decoration: InputDecoration(
+                labelText: l.statusOptional,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.flag, color: Color(0xFFFFB300)),
               ),
-              items: const [
+              items: [
                 DropdownMenuItem<String?>(
                   value: null,
-                  child: Text('Untracked'),
+                  child: Text(l.projectStatusUntracked),
                 ),
                 DropdownMenuItem<String?>(
                   value: 'active',
-                  child: Text('Active'),
+                  child: Text(l.projectStatusActive),
                 ),
                 DropdownMenuItem<String?>(
                   value: 'completed',
-                  child: Text('Completed'),
+                  child: Text(l.projectStatusCompleted),
                 ),
               ],
               onChanged: (value) {
@@ -270,27 +245,13 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             TextFormField(
               controller: _projectManagerController,
               decoration: InputDecoration(
-                label: RichText(
-                  text: const TextSpan(
-                    text: 'Project Manager ',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
-                    children: [
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                label: requiredFieldLabel(l.projectManager),
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.person, color: Colors.blue),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a project manager';
+                  return l.enterProjectManager;
                 }
                 return null;
               },
@@ -302,6 +263,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   }
 
   Widget _buildTimelineCard(bool isMobile) {
+    final l = context.l10n;
     return Card(
       elevation: 2,
       child: Padding(
@@ -310,7 +272,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Timeline',
+              l.timeline,
               style: TextStyle(
                 fontSize: isMobile ? 16 : 18,
                 fontWeight: FontWeight.bold
@@ -319,12 +281,12 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             SizedBox(height: isMobile ? 12 : 16),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[400]!),
+                border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ListTile(
-                leading: const Icon(Icons.calendar_today, color: Color(0xFF0A2E5A)),
-                title: const Text('Start Date'),
+                leading: Icon(Icons.calendar_today, color: AppColors.brandInk),
+                title: Text(l.startDate),
                 subtitle: Text(_formatDate(_startDate)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _selectStartDate(),
@@ -333,13 +295,13 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             SizedBox(height: isMobile ? 12 : 16),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[400]!),
+                border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ListTile(
-                leading: const Icon(Icons.event, color: Color(0xFF0A2E5A)),
-                title: const Text('End Date (Optional)'),
-                subtitle: Text(_endDate != null ? _formatDate(_endDate!) : 'Not set'),
+                leading: Icon(Icons.event, color: AppColors.brandInk),
+                title: Text(l.endDateOptional),
+                subtitle: Text(_endDate != null ? _formatDate(_endDate!) : l.notSet),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _selectEndDate(),
               ),
@@ -351,6 +313,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   }
 
   Widget _buildTeamMembersCard(bool isMobile) {
+    final l = context.l10n;
     return Card(
       elevation: 2,
       child: Padding(
@@ -359,7 +322,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Team Members',
+              l.teamMembers,
               style: TextStyle(
                 fontSize: isMobile ? 16 : 18,
                 fontWeight: FontWeight.bold,
@@ -370,51 +333,23 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             DropdownButtonFormField<String>(
               initialValue: _selectedRole,
               decoration: InputDecoration(
-                label: RichText(
-                  text: const TextSpan(
-                    text: 'Role ',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
-                    children: [
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                label: requiredFieldLabel(l.role),
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.work, color: Colors.purple),
               ),
-              items: const [
-                DropdownMenuItem<String>(
-                  value: 'subcontractor',
-                  child: Text('Subcontractor'),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'supplier',
-                  child: Text('Supplier'),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'technician',
-                  child: Text('Technician'),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'manager',
-                  child: Text('Manager'),
-                ),
+              items: [
+                for (final r in const ['subcontractor', 'supplier', 'technician', 'manager'])
+                  DropdownMenuItem<String>(value: r, child: Text(teamRoleLabel(r))),
                 DropdownMenuItem<String>(
                   value: '__define_new__',
                   child: Row(
                     children: [
-                      Icon(Icons.add_circle_outline,
+                      const Icon(Icons.add_circle_outline,
                           size: 18, color: Colors.deepPurple),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'Define New',
-                        style: TextStyle(
+                        l.defineNew,
+                        style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w600,
                         ),
@@ -437,12 +372,12 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
               SizedBox(height: isMobile ? 12 : 16),
               TextFormField(
                 controller: _customRoleController,
-                decoration: const InputDecoration(
-                  labelText: 'Define Role Name *',
-                  hintText: 'e.g., Site Foreman, Safety Officer',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l.defineRoleName,
+                  hintText: l.defineRoleHint,
+                  border: const OutlineInputBorder(),
                   prefixIcon:
-                      Icon(Icons.edit_note, color: Colors.deepPurple),
+                      const Icon(Icons.edit_note, color: Colors.deepPurple),
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
@@ -450,36 +385,36 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             SizedBox(height: isMobile ? 12 : 16),
             TextFormField(
               controller: _teamMemberController,
-              decoration: const InputDecoration(
-                labelText: 'Team Member Name',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person_add, color: Colors.teal),
+              decoration: InputDecoration(
+                labelText: l.teamMemberName,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.person_add, color: Colors.teal),
               ),
               onFieldSubmitted: (_) => _addTeamMember(),
             ),
             SizedBox(height: isMobile ? 12 : 16),
             TextFormField(
               controller: _categoryController,
-              decoration: const InputDecoration(
-                labelText: 'Category (Optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category, color: Colors.orange),
+              decoration: InputDecoration(
+                labelText: l.categoryOptional,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.category, color: Colors.orange),
               ),
             ),
             SizedBox(height: isMobile ? 12 : 16),
             ElevatedButton.icon(
               onPressed: _addTeamMember,
               icon: const Icon(Icons.add),
-              label: const Text('Add'),
+              label: Text(l.add),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0A2E5A),
+                backgroundColor: AppColors.brand,
                 foregroundColor: Colors.white,
               ),
             ),
             SizedBox(height: isMobile ? 12 : 16),
             if (_teamMembers.isNotEmpty) ...[
-              const Text(
-                'Team Members:',
+              Text(
+                l.teamMembersColon,
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
@@ -500,7 +435,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                       ),
                     ),
                     label: Text(
-                        '${member.name} (${member.role.capitalize()}${member.category != null ? ' - ${member.category}' : ''})'),
+                        '${member.name} (${teamRoleLabel(member.role)}${member.category != null ? ' - ${member.category}' : ''})'),
                     onDeleted: () => _removeTeamMember(member),
                     deleteIcon: const Icon(Icons.close, size: 18),
                   );
@@ -511,19 +446,19 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   children: [
                     Icon(Icons.people_outline,
-                        size: 48, color: Colors.grey[400]),
+                        size: 48, color: AppColors.inkFaint),
                     const SizedBox(height: 8),
                     Text(
-                      'No team members added yet',
+                      l.noTeamMembersYet,
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: AppColors.inkMuted,
                         fontSize: 14,
                       ),
                     ),
@@ -544,7 +479,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _saveProject,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0A2E5A),
+          backgroundColor: AppColors.brand,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -552,10 +487,10 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
           ),
         ),
         child: _isLoading
-            ? const Row(
+            ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
@@ -563,13 +498,13 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
-                  SizedBox(width: 12),
-                  Text('Creating Project...', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 12),
+                  Text(context.l10n.creatingProject, style: const TextStyle(fontSize: 16)),
                 ],
               )
-            : const Text(
-                'Create Project',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            : Text(
+                context.l10n.createProject,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
       ),
     );
@@ -579,9 +514,9 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isMobile ? 12 : 16),
-      color: const Color(0xFF0A2E5A),
+      color: AppColors.navy,
       child: Text(
-        '© 2025 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
@@ -630,9 +565,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
 
   void _addTeamMember() {
     if (_selectedRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a role')),
-      );
+      showWarningSnack(context, context.l10n.selectRole);
       return;
     }
     // Resolve the actual role string
@@ -640,9 +573,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     if (_isDefiningCustomRole) {
       final customRole = _customRoleController.text.trim();
       if (customRole.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a custom role name')),
-        );
+        showWarningSnack(context, context.l10n.enterCustomRole);
         return;
       }
       resolvedRole = customRole;
@@ -650,20 +581,13 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
       resolvedRole = _selectedRole!;
     }
     if (_teamMemberController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a team member name')),
-      );
+      showWarningSnack(context, context.l10n.enterTeamMemberName);
       return;
     }
     final name = _teamMemberController.text.trim();
     final category = _categoryController.text.trim().isNotEmpty ? _categoryController.text.trim() : null;
     if (_teamMembers.any((m) => m.name == name)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Team member already exists'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      showWarningSnack(context, context.l10n.teamMemberExists);
       return;
     }
     setState(() {
@@ -686,14 +610,14 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
 
   void _saveProject() async {
     _logger.i('💾 AddProjectScreen: Save project initiated');
-    
+
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
       try {
         _logger.d('🏗️ AddProjectScreen: Creating project model');
-        
+
         final newProject = ProjectModel(
           id: '',
           name: _nameController.text.trim(),
@@ -718,34 +642,21 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         _logger.d('📤 AddProjectScreen: Saving to Firestore...');
 
         final projectId = await _projectService.addProject(newProject);
-        
+
         _logger.i('✅ AddProjectScreen: Project saved successfully with ID: $projectId');
 
         if (mounted) {
           final navigator = Navigator.of(context);
-          final scaffoldMessenger = ScaffoldMessenger.of(context);
-          
+          final message = context.l10n.projectCreated(newProject.name);
+          showSuccessSnack(context, message);
           navigator.pop(true);
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('Project "${newProject.name}" created successfully!'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-            ),
-          );
         }
       } catch (e, stackTrace) {
         _logger.e('❌ AddProjectScreen: Error saving project',
           error: e, stackTrace: stackTrace);
-        
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error creating project: ${e.toString()}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
-          );
+          showErrorSnack(context, e, action: context.l10n.couldNotCreateProject);
         }
       } finally {
         if (mounted) {
@@ -773,6 +684,33 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     _customRoleController.dispose();
     super.dispose();
   }
+}
+
+/// A form-field label with a red "required" star; follows the theme's text
+/// color (so it stays readable in dark mode).
+Widget requiredFieldLabel(String text) => Text.rich(
+  TextSpan(
+    text: '$text ',
+    children: const [
+      TextSpan(
+        text: '*',
+        style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+      ),
+    ],
+  ),
+);
+
+/// Display name for a stored team-member role ('subcontractor', …); custom
+/// roles typed by a user are shown as written.
+String teamRoleLabel(String role) {
+  final l = l10nNow;
+  return switch (role) {
+    'subcontractor' => l.teamRoleSubcontractor,
+    'supplier' => l.teamRoleSupplier,
+    'technician' => l.teamRoleTechnician,
+    'manager' => l.teamRoleManager,
+    _ => role.isEmpty ? role : role.capitalize(),
+  };
 }
 
 extension StringExtension on String {

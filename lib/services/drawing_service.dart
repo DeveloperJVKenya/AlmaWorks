@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:logger/logger.dart';
 import 'dart:typed_data';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class DrawingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -74,7 +76,7 @@ class DrawingService {
   List<DrawingGroup> groupDrawingsByTitle(List<DrawingModel> drawings) {
     _logger.d('📋 DrawingService: Grouping ${drawings.length} drawings by title');
     final Map<String, List<DrawingModel>> groupedDrawings = {};
-    
+
     for (final drawing in drawings) {
       if (!groupedDrawings.containsKey(drawing.title)) {
         groupedDrawings[drawing.title] = [];
@@ -135,7 +137,7 @@ class DrawingService {
       const maxSizeBytes = 100 * 1024 * 1024; // 100MB
       if (fileBytes.length > maxSizeBytes) {
         _logger.e('❌ DrawingService: File size exceeds limit (${fileBytes.length} bytes > $maxSizeBytes bytes)');
-        throw Exception('File size exceeds 100MB limit');
+        throw UserFacingException(l10nNow.fileTooLarge100);
       }
 
       // Upload to Firebase Storage
@@ -210,7 +212,7 @@ class DrawingService {
       const maxSizeBytes = 100 * 1024 * 1024; // 100MB
       if (fileBytes.length > maxSizeBytes) {
         _logger.e('❌ DrawingService: File size exceeds limit (${fileBytes.length} bytes > $maxSizeBytes bytes)');
-        throw Exception('File size exceeds 100MB limit');
+        throw UserFacingException(l10nNow.fileTooLarge100);
       }
 
       // Upload to Firebase Storage
@@ -280,7 +282,7 @@ class DrawingService {
 
       if (!drawingDoc.exists) {
         _logger.e('❌ DrawingService: Drawing not found: $drawingId');
-        throw Exception('Drawing not found');
+        throw UserFacingException(l10nNow.drawingNotFound);
       }
 
       final drawing = DrawingModel.fromFirestore(drawingDoc);
@@ -336,7 +338,7 @@ class DrawingService {
 
       if (!drawingDoc.exists) {
         _logger.e('❌ DrawingService: Drawing not found: $drawingId');
-        throw Exception('Drawing not found');
+        throw UserFacingException(l10nNow.drawingNotFound);
       }
 
       final drawing = DrawingModel.fromFirestore(drawingDoc);
@@ -390,7 +392,7 @@ class DrawingService {
       const maxSizeBytes = 100 * 1024 * 1024; // 100MB
       if (fileBytes.length > maxSizeBytes) {
         _logger.e('❌ DrawingService: File size exceeds limit (${fileBytes.length} bytes > $maxSizeBytes bytes)');
-        throw Exception('File size exceeds 100MB limit');
+        throw UserFacingException(l10nNow.fileTooLarge100);
       }
 
       // Upload to Firebase Storage

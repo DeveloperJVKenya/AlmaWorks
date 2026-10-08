@@ -2,6 +2,7 @@
 import 'dart:convert';                             // ← required for parseDeltaJson
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:flutter/material.dart';            // ← moved to top (was line 91)
 
 // ─── Participant (sender / recipient) ────────────────────────────────────────
@@ -215,7 +216,7 @@ class CommunicationMessage {
       projectId: m['projectId'] as String? ?? '',
       threadId: m['threadId'] as String? ?? doc.id,
       parentId: m['parentId'] as String?,
-      subject: m['subject'] as String? ?? '(no subject)',
+      subject: m['subject'] as String? ?? l10nNow.noSubject,
       bodyDelta: m['bodyDelta'] as String? ?? '',
       bodyPlainText: m['bodyPlainText'] as String? ?? '',
       from: MessageParticipant.fromMap(

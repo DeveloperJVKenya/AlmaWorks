@@ -22,6 +22,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 /// Firebase Console → Project Settings → Cloud Messaging → Web Push
 /// certificates (for project almaworks-b9a2e) → "Key pair" value.
@@ -60,7 +61,7 @@ class CommunicationNotificationService {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       final data = message.data;
       _showLocalNotification(
-        title: message.notification?.title ?? 'New Message',
+        title: message.notification?.title ?? l10nNow.newMessage,
         body: message.notification?.body ?? '',
         payload: data.map((k, v) => MapEntry(k, v.toString())),
       );
@@ -85,7 +86,7 @@ class CommunicationNotificationService {
     String? projectId,
   }) async {
     await _showLocalNotification(
-      title: 'New message from $fromName',
+      title: l10nNow.newMessageFrom(fromName),
       body: '$subject — $preview',
       payload: {
         'type': 'communication',

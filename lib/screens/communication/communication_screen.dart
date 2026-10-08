@@ -10,6 +10,7 @@ import 'communication_compose_dialog.dart';
 import 'communication_message_detail_screen.dart';
 import 'communication_models.dart';
 import 'communication_service.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
 
 // ─── Folder / View types ──────────────────────────────────────────────────────
 enum _Folder { inbox, sent, drafts, trash }
@@ -129,7 +130,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
     final isMobile = screenWidth < 600;
 
     return BaseLayout(
-      title: 'Communication',
+      title: context.l10n.communication,
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Communication',
@@ -181,7 +182,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                 onPressed: _openCompose,
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 label: Text(
-                  'Compose',
+                  context.l10n.compose,
                   style: TextStyle(fontSize: 13),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -199,23 +200,23 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
 
             _folderTile(
               icon: Icons.inbox_outlined,
-              label: 'Inbox',
+              label: context.l10n.inbox,
               folder: _Folder.inbox,
               badge: _unreadStream,
             ),
             _folderTile(
               icon: Icons.send_outlined,
-              label: 'Sent',
+              label: context.l10n.sentFolder,
               folder: _Folder.sent,
             ),
             _folderTile(
               icon: Icons.drafts_outlined,
-              label: 'Drafts',
+              label: context.l10n.drafts,
               folder: _Folder.drafts,
             ),
             _folderTile(
               icon: Icons.delete_outline,
-              label: 'Trash',
+              label: context.l10n.trash,
               folder: _Folder.trash,
             ),
 
@@ -389,7 +390,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         controller: _searchCtrl,
         style: TextStyle(fontSize: 13),
         decoration: InputDecoration(
-          hintText: 'Search messages…',
+          hintText: context.l10n.searchMessages,
           hintStyle: TextStyle(fontSize: 13, color: Colors.grey[400]),
           prefixIcon: const Icon(Icons.search, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
@@ -438,7 +439,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
             onDelete: () => _service.softDelete(msg.id),
           ),
           filter: _matchSearch,
-          emptyLabel: 'Your inbox is empty',
+          emptyLabel: context.l10n.inboxEmpty,
           emptyIcon: Icons.inbox_outlined,
         );
       case _Folder.sent:
@@ -452,7 +453,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
             isSent: true,
           ),
           filter: _matchSearch,
-          emptyLabel: 'No sent messages',
+          emptyLabel: context.l10n.noSentMessages,
           emptyIcon: Icons.send_outlined,
         );
       case _Folder.drafts:
@@ -469,7 +470,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
             isTrash: true,
           ),
           filter: _matchSearch,
-          emptyLabel: 'Trash is empty',
+          emptyLabel: context.l10n.trashEmpty,
           emptyIcon: Icons.delete_outline,
         );
     }
@@ -542,7 +543,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
             Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
             const SizedBox(height: 12),
             Text(
-              'Could not load messages',
+              context.l10n.couldNotLoadMessages,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -580,7 +581,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         }
         final drafts = snap.data ?? [];
         if (drafts.isEmpty) {
-          return _emptyState('No drafts saved', Icons.drafts_outlined);
+          return _emptyState(context.l10n.noDraftsSaved, Icons.drafts_outlined);
         }
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 4),
@@ -633,19 +634,19 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
       selectedItemColor: const Color(0xFF0A2E5A),
       unselectedItemColor: Colors.grey[500],
       type: BottomNavigationBarType.fixed,
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.inbox_outlined),
-          label: 'Inbox',
+          icon: const Icon(Icons.inbox_outlined),
+          label: context.l10n.inbox,
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.send_outlined), label: 'Sent'),
+        BottomNavigationBarItem(icon: const Icon(Icons.send_outlined), label: context.l10n.sentFolder),
         BottomNavigationBarItem(
-          icon: Icon(Icons.drafts_outlined),
-          label: 'Drafts',
+          icon: const Icon(Icons.drafts_outlined),
+          label: context.l10n.drafts,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.delete_outline),
-          label: 'Trash',
+          icon: const Icon(Icons.delete_outline),
+          label: context.l10n.trash,
         ),
       ],
     );
@@ -658,7 +659,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
       backgroundColor: const Color(0xFF0A2E5A),
       foregroundColor: Colors.white,
       icon: const Icon(Icons.edit_outlined),
-      label: Text('Compose', style: TextStyle()),
+      label: Text(context.l10n.compose, style: TextStyle()),
     );
   }
 }
@@ -794,7 +795,7 @@ class _MessageTile extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'Cc',
+                              context.l10n.msgCc,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -845,7 +846,7 @@ class _MessageTile extends StatelessWidget {
                   icon: const Icon(Icons.restore_from_trash_outlined, size: 18),
                   color: Colors.grey[500],
                   onPressed: onRestore,
-                  tooltip: 'Restore',
+                  tooltip: context.l10n.restore,
                 ),
             ],
           ),
@@ -862,9 +863,9 @@ class _MessageTile extends StatelessWidget {
     final names = message.to
         .map((p) => p.username.isNotEmpty ? p.username : p.email)
         .toList();
-    if (names.isEmpty) return 'No recipients';
-    if (names.length == 1) return 'To: ${names.first}';
-    return 'To: ${names.first} +${names.length - 1}';
+    if (names.isEmpty) return l10nNow.noRecipients;
+    if (names.length == 1) return l10nNow.toRecipient(names.first);
+    return l10nNow.toRecipientMore(names.first, names.length - 1);
   }
 
   Color _avatarColor() {
@@ -908,7 +909,7 @@ class _DraftTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final toLabel = draft.to.isEmpty
-        ? '(No recipients)'
+        ? '(${context.l10n.noRecipients})'
         : draft.to.map((p) => p.email).join(', ');
 
     return InkWell(
@@ -931,7 +932,7 @@ class _DraftTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Draft',
+                          context.l10n.draft,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -949,7 +950,7 @@ class _DraftTile extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    draft.subject.isNotEmpty ? draft.subject : '(No subject)',
+                    draft.subject.isNotEmpty ? draft.subject : context.l10n.noSubject,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey[700],
@@ -957,7 +958,7 @@ class _DraftTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'To: $toLabel',
+                    context.l10n.toRecipient(toLabel),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[500],
@@ -974,7 +975,7 @@ class _DraftTile extends StatelessWidget {
                 color: Colors.grey[400],
               ),
               onPressed: onDelete,
-              tooltip: 'Delete draft',
+              tooltip: context.l10n.deleteDraft,
             ),
           ],
         ),
