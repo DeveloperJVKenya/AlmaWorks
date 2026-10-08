@@ -4436,4 +4436,683 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get deleteDraft => 'Elimina bozza';
+
+  @override
+  String downloadedTo(String path) {
+    return 'Scaricato in $path';
+  }
+
+  @override
+  String get couldNotDownload => 'Impossibile scaricare il file.';
+
+  @override
+  String projectSectionTitle(String project, String section) {
+    return '$project - $section';
+  }
+
+  @override
+  String get documents => 'Documenti';
+
+  @override
+  String get docActivityHistory => 'Cronologia attività documenti';
+
+  @override
+  String selectRoleFirst(String role) {
+    return 'Seleziona prima un elemento: $role';
+  }
+
+  @override
+  String get noDocsAskAdminSub =>
+      'Nessun documento — chiedi all\'amministratore del progetto di aggiungerti come subappaltatore nel team.';
+
+  @override
+  String get switchRole => 'Cambia ruolo';
+
+  @override
+  String docsForMember(String name) {
+    return 'Documenti di $name';
+  }
+
+  @override
+  String noMembersOfRoleYet(String role) {
+    return 'Nessun membro \"$role\" aggiunto al progetto';
+  }
+
+  @override
+  String get addMembersViaEdit =>
+      'Aggiungi i membri del team dalla sezione Modifica progetto.';
+
+  @override
+  String get goToEditProject => 'Vai a Modifica progetto';
+
+  @override
+  String get couldNotLoadDocuments => 'Impossibile caricare i documenti';
+
+  @override
+  String get noDocumentsInSection => 'Nessun documento in questa sezione';
+
+  @override
+  String fileUploadedOn(String file, String date) {
+    return '$file - Caricato: $date';
+  }
+
+  @override
+  String get documentActivity => 'Attività documenti';
+
+  @override
+  String get couldNotLoadActivity => 'Impossibile caricare l\'attività';
+
+  @override
+  String get noActivityYet => 'Nessuna attività registrata';
+
+  @override
+  String auditUploaded(String name, String role, String title) {
+    return '$name ($role) ha caricato \"$title\"';
+  }
+
+  @override
+  String auditDeleted(String name, String role, String title) {
+    return '$name ($role) ha eliminato \"$title\"';
+  }
+
+  @override
+  String get couldNotReadFile => 'Impossibile leggere il file. Riprova.';
+
+  @override
+  String documentAdded(String title) {
+    return 'Documento \"$title\" aggiunto';
+  }
+
+  @override
+  String get uploadCancelled => 'Caricamento annullato';
+
+  @override
+  String get couldNotAddDocument => 'Impossibile aggiungere il documento.';
+
+  @override
+  String get enterDocumentTitle => 'Inserisci il titolo del documento';
+
+  @override
+  String get documentTitleHint => 'Titolo (es. RFI, documento di chiusura)';
+
+  @override
+  String get pleaseEnterTitle => 'Inserisci un titolo';
+
+  @override
+  String get couldNotOpenViewer =>
+      'Impossibile aprire il visualizzatore di documenti';
+
+  @override
+  String get couldNotOpenThisFile =>
+      'Impossibile aprire questo file sul dispositivo';
+
+  @override
+  String get downloadInstead => 'Scarica invece';
+
+  @override
+  String get offlineNoCopy =>
+      'Sei offline e questo file non è ancora salvato sul dispositivo';
+
+  @override
+  String get couldNotOpenDocument => 'Impossibile aprire il documento.';
+
+  @override
+  String get documentDeleted => 'Documento eliminato';
+
+  @override
+  String get couldNotDeleteDocument => 'Impossibile eliminare il documento.';
+
+  @override
+  String get preparing => 'Preparazione…';
+
+  @override
+  String get finalising => 'Completamento…';
+
+  @override
+  String get uploading => 'Caricamento…';
+
+  @override
+  String get uploadingDocument => 'Caricamento documento';
+
+  @override
+  String get docSectionContract => 'Contratto';
+
+  @override
+  String get docSectionAccessRequests => 'Richieste di accesso';
+
+  @override
+  String get subcontractorsPlural => 'subappaltatori';
+
+  @override
+  String get suppliersPlural => 'fornitori';
+
+  @override
+  String get drawings => 'Disegni';
+
+  @override
+  String get tabContractDrawing => 'Disegno contrattuale';
+
+  @override
+  String get tabRevisions => 'Revisioni';
+
+  @override
+  String get tabAsBuilt => 'As built';
+
+  @override
+  String get couldNotLoadContractDrawings =>
+      'Impossibile caricare i disegni contrattuali';
+
+  @override
+  String get noContractDrawings => 'Nessun disegno contrattuale caricato';
+
+  @override
+  String get tapUploadContractDrawings =>
+      'Tocca il pulsante di caricamento per aggiungere disegni contrattuali';
+
+  @override
+  String fileUploadedDot(String file, String date) {
+    return '$file • Caricato il $date';
+  }
+
+  @override
+  String get enterDrawingTitle => 'Inserisci il titolo del disegno';
+
+  @override
+  String get enterContractDrawingTitle =>
+      'Inserisci un titolo per questo disegno contrattuale:';
+
+  @override
+  String get contractDrawingHint => 'es. Disegno contrattuale principale';
+
+  @override
+  String get uploadingContractDrawing => 'Caricamento disegno contrattuale';
+
+  @override
+  String uploadingFile(String file) {
+    return 'Caricamento di $file…';
+  }
+
+  @override
+  String contractDrawingUploaded(String title) {
+    return 'Disegno contrattuale \"$title\" caricato';
+  }
+
+  @override
+  String get couldNotUpload => 'Impossibile caricare il file.';
+
+  @override
+  String get couldNotLoadDrawings => 'Impossibile caricare i disegni';
+
+  @override
+  String get noDrawingsYet => 'Nessun disegno caricato';
+
+  @override
+  String get tapUploadFirstDrawing =>
+      'Tocca il pulsante di caricamento per aggiungere il primo disegno';
+
+  @override
+  String get couldNotLoadAsBuilt => 'Impossibile caricare i disegni as built';
+
+  @override
+  String get noAsBuiltYet => 'Nessun disegno as built';
+
+  @override
+  String get tapUploadAsBuilt =>
+      'Tocca il pulsante di caricamento per aggiungere disegni as built';
+
+  @override
+  String latestRevisionSummary(String file, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count revisioni',
+      one: '1 revisione',
+    );
+    return '$file (ultima) • $_temp0';
+  }
+
+  @override
+  String revShort(String number) {
+    return 'Rev$number';
+  }
+
+  @override
+  String uploadedOn(String date) {
+    return 'Caricato il $date';
+  }
+
+  @override
+  String get latest => 'Ultima';
+
+  @override
+  String get finalLabel => 'Finale';
+
+  @override
+  String get enterAsBuiltTitle => 'Inserisci il titolo del disegno as built';
+
+  @override
+  String get enterAsBuiltTitleBody =>
+      'Inserisci un titolo per questo disegno as built:';
+
+  @override
+  String get asBuiltHint => 'es. Disegno costruttivo finale';
+
+  @override
+  String get uploadingAsBuilt => 'Caricamento disegno as built';
+
+  @override
+  String asBuiltUploaded(String title) {
+    return 'Disegno as built \"$title\" caricato';
+  }
+
+  @override
+  String get deleteAsBuiltTitle => 'Elimina disegno as built';
+
+  @override
+  String deleteItemConfirm(String name) {
+    return 'Vuoi davvero eliminare \"$name\"? L\'operazione non può essere annullata.';
+  }
+
+  @override
+  String get asBuiltDeleted => 'Disegno as built eliminato';
+
+  @override
+  String get couldNotDelete => 'Impossibile eliminarlo.';
+
+  @override
+  String get enterDrawingCategory => 'Inserisci la categoria del disegno';
+
+  @override
+  String get enterDrawingCategoryBody =>
+      'Inserisci un nome per la nuova categoria di disegni:';
+
+  @override
+  String get drawingCategoryHint => 'es. Pianta piano 1';
+
+  @override
+  String get noCategoriesCreateNew =>
+      'Non ci sono ancora categorie. Creane una nuova.';
+
+  @override
+  String get enterDrawingTitleBody => 'Inserisci un titolo per questo disegno:';
+
+  @override
+  String get drawingTitleHint => 'es. Pianta piano 1 - Rev 1';
+
+  @override
+  String get uploadingDrawing => 'Caricamento disegno';
+
+  @override
+  String drawingUploaded(String title) {
+    return 'Disegno \"$title\" caricato';
+  }
+
+  @override
+  String get uploadType => 'Tipo di caricamento';
+
+  @override
+  String get chooseUploadType => 'Scegli come caricare il disegno:';
+
+  @override
+  String get newCategoryDrawing => 'Disegno di nuova categoria';
+
+  @override
+  String get newCategoryDrawingHint =>
+      'Crea una nuova categoria di disegni e carica la prima revisione.';
+
+  @override
+  String get revisionDrawing => 'Revisione di disegno';
+
+  @override
+  String get revisionDrawingHint =>
+      'Aggiungi una revisione a una categoria esistente.';
+
+  @override
+  String get selectDrawingCategory => 'Seleziona la categoria del disegno';
+
+  @override
+  String fileLabel(String name) {
+    return 'File: $name';
+  }
+
+  @override
+  String get deleteDrawingTitle => 'Elimina disegno';
+
+  @override
+  String get drawingDeleted => 'Disegno eliminato';
+
+  @override
+  String get couldNotOpenDrawingViewer =>
+      'Impossibile aprire il visualizzatore di disegni';
+
+  @override
+  String get couldNotOpenDrawing => 'Impossibile aprire il disegno.';
+
+  @override
+  String get photoGallery => 'Galleria foto';
+
+  @override
+  String get viewPhotos => 'Vedi foto';
+
+  @override
+  String get uploadPhoto => 'Carica foto';
+
+  @override
+  String selectedCount(int count) {
+    return '$count selezionati';
+  }
+
+  @override
+  String get moveToPhotos => 'Sposta in Foto';
+
+  @override
+  String get couldNotLoadPhotos => 'Impossibile caricare le foto';
+
+  @override
+  String get noPhotosAddSome => 'Ancora nessuna foto. Aggiungine qualcuna!';
+
+  @override
+  String get deactivateSelection => 'Disattiva selezione';
+
+  @override
+  String get activateSelection => 'Selezione multipla';
+
+  @override
+  String get movingPhotos => 'Spostamento foto';
+
+  @override
+  String photosProcessed(int done, int total) {
+    return '$done di $total foto elaborate…';
+  }
+
+  @override
+  String photosMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count foto spostate in Foto.',
+      one: '1 foto spostata in Foto.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosAlreadyExisted(int count) {
+    return '$count già presenti.';
+  }
+
+  @override
+  String photosFailedCount(int count) {
+    return '$count non riuscite.';
+  }
+
+  @override
+  String get noPhotosMoved => 'Nessuna foto è stata spostata.';
+
+  @override
+  String get moveResults => 'Risultato dello spostamento';
+
+  @override
+  String moveResultsBody(int moved, int existing, int failed) {
+    return 'Spostate: $moved\nGià presenti: $existing\nNon riuscite: $failed\n\nLe foto \"già presenti\" sono già nella raccolta Foto e non sono state copiate di nuovo.';
+  }
+
+  @override
+  String get shareNotOnWeb =>
+      'La condivisione di file non è disponibile nel browser. Usa l\'app mobile.';
+
+  @override
+  String preparingPhotosToShare(int count) {
+    return 'Preparazione di $count foto per la condivisione…';
+  }
+
+  @override
+  String get couldNotPreparePhotos =>
+      'Impossibile preparare le foto per la condivisione.';
+
+  @override
+  String get couldNotShare => 'Impossibile condividere.';
+
+  @override
+  String get deletePhotosTitle => 'Elimina foto';
+
+  @override
+  String deletePhotosConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Eliminare le $count foto selezionate?\n\nL\'operazione non può essere annullata.',
+      one:
+          'Eliminare la foto selezionata?\n\nL\'operazione non può essere annullata.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count foto eliminate.',
+      one: '1 foto eliminata.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosDeletedSomeFailed(int deleted, int failed) {
+    return '$deleted eliminate, $failed non riuscite.';
+  }
+
+  @override
+  String get cannotDisplayImage => 'Impossibile mostrare questa immagine';
+
+  @override
+  String get editPhotoDetails => 'Modifica dettagli foto';
+
+  @override
+  String get titleLabel => 'Titolo';
+
+  @override
+  String get phase => 'Fase';
+
+  @override
+  String get noChangesMade => 'Nessuna modifica apportata.';
+
+  @override
+  String get photoDetailsUpdated => 'Dettagli foto aggiornati.';
+
+  @override
+  String get couldNotUpdate => 'Impossibile salvare le modifiche.';
+
+  @override
+  String get preparingPhotoToShare =>
+      'Preparazione della foto per la condivisione…';
+
+  @override
+  String get deletePhotoTitle => 'Elimina foto';
+
+  @override
+  String get deletePhotoConfirm =>
+      'Eliminare questa foto? L\'operazione non può essere annullata.';
+
+  @override
+  String get photoDeleted => 'Foto eliminata.';
+
+  @override
+  String get uploadPhotos => 'Carica foto';
+
+  @override
+  String get selectUploadType => 'Scegli cosa caricare';
+
+  @override
+  String get singlePhoto => 'Una foto';
+
+  @override
+  String get multiplePhotos => 'Più foto';
+
+  @override
+  String get confirmUpload => 'Conferma caricamento';
+
+  @override
+  String uploadPhotosConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Caricare $count foto?',
+      one: 'Caricare 1 foto?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get photoDetails => 'Dettagli foto';
+
+  @override
+  String titleForPhotoN(int n) {
+    return 'Titolo della foto $n (facoltativo)';
+  }
+
+  @override
+  String get titleOptional => 'Titolo (facoltativo)';
+
+  @override
+  String get categoryOptionalField => 'Categoria (facoltativa)';
+
+  @override
+  String get phaseOptional => 'Fase (facoltativa)';
+
+  @override
+  String get uploadingTitle => 'Caricamento';
+
+  @override
+  String uploadProgressPhotos(String percent, int done, int total) {
+    return '$percent%  ($done di $total foto)';
+  }
+
+  @override
+  String photosUploaded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count foto caricate.',
+      one: '1 foto caricata.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosUploadedSomeFailed(int uploaded, int failed) {
+    return '$uploaded caricate, $failed non riuscite.';
+  }
+
+  @override
+  String get couldNotUploadPhotos => 'Impossibile caricare le foto.';
+
+  @override
+  String get unavailable => 'Non disponibile';
+
+  @override
+  String get noPhotosAvailable => 'Ancora nessuna foto disponibile.';
+
+  @override
+  String get photosPromotedHint =>
+      'Le foto condivise dal team di progetto appariranno qui.';
+
+  @override
+  String get financials => 'Finanze';
+
+  @override
+  String financialDocsForMember(String name) {
+    return 'Documenti finanziari di $name';
+  }
+
+  @override
+  String get indexBeingCreated => 'Questo elenco è ancora in preparazione';
+
+  @override
+  String get indexBeingCreatedHint =>
+      'Di solito richiede qualche minuto. Riprova tra poco.';
+
+  @override
+  String get couldNotLoadFinancialDocs =>
+      'Impossibile caricare i documenti finanziari';
+
+  @override
+  String get noFinancialDocsInSection =>
+      'Nessun documento finanziario in questa sezione';
+
+  @override
+  String get selectSubcontractorFirst => 'Seleziona prima un subappaltatore';
+
+  @override
+  String get selectSupplierFirst => 'Seleziona prima un fornitore';
+
+  @override
+  String uploadFileConfirm(String file) {
+    return 'Caricare $file?';
+  }
+
+  @override
+  String fileSizeMb(String size) {
+    return 'Dimensione: $size MB';
+  }
+
+  @override
+  String uploadingNamed(String file) {
+    return 'Caricamento di $file';
+  }
+
+  @override
+  String get startingUpload => 'Avvio del caricamento…';
+
+  @override
+  String financialDocAdded(String title) {
+    return 'Documento finanziario \"$title\" aggiunto';
+  }
+
+  @override
+  String get financialTitleHint => 'Titolo (es. fattura, ricevuta, pagamento)';
+
+  @override
+  String get deleteDocumentTitle => 'Elimina documento';
+
+  @override
+  String get deleteFinancialDocConfirm =>
+      'Vuoi davvero eliminare questo documento finanziario? L\'operazione non può essere annullata.';
+
+  @override
+  String get financialDocDeleted => 'Documento finanziario eliminato';
+
+  @override
+  String get qualitySafety => 'Qualità e sicurezza';
+
+  @override
+  String get quality => 'Qualità';
+
+  @override
+  String get safety => 'Sicurezza';
+
+  @override
+  String get noDocumentsYet => 'Nessun documento aggiunto';
+
+  @override
+  String get qualityDocuments => 'Documenti di qualità';
+
+  @override
+  String get safetyDocuments => 'Documenti di sicurezza';
+
+  @override
+  String uploadedColon(String date) {
+    return 'Caricato: $date';
+  }
+
+  @override
+  String get documentUploaded => 'Documento caricato';
+
+  @override
+  String deleteNamedConfirm(String name) {
+    return 'Vuoi davvero eliminare \"$name\"?';
+  }
 }

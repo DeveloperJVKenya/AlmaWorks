@@ -13,18 +13,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:connectivity_plus/connectivity_plus.dart'; 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:open_file/open_file.dart';
 import 'package:almaworks/helpers/download_helper.dart';
+import 'package:almaworks/helpers/download_feedback.dart';
+import 'package:almaworks/screens/projects/add_project_screen.dart' show teamRoleLabel;
+import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class DocumentsScreen extends StatefulWidget {
   final ProjectModel project;
   final Logger logger;
-  
+
   const DocumentsScreen({
     super.key,
     required this.project,
@@ -96,16 +100,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
   void initState() {
     super.initState();
     _currentProject = widget.project;
-    
+
     // Initialize tab controllers immediately with default values
     _mainTabController = TabController(length: _mainTabs.length, vsync: this);
     // Client gets 3 sub-tabs; sub-contractor and supplier keep 2.
     _clientSubTabController = TabController(length: _clientSubSections.length, vsync: this);
     _subContractorSubTabController = TabController(length: _subSections.length, vsync: this);
     _supplierSubTabController = TabController(length: _subSections.length, vsync: this);
-    
+
     widget.logger.i('📂 DocumentsScreen: Initialized for project: ${_currentProject.name}');
-    
+
     // Fetch user role asynchronously
     _fetchUserRole();
   }
@@ -166,7 +170,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     // Show loading indicator while fetching user data
     if (_isLoadingUserData) {
       return BaseLayout(
-        title: '${_currentProject.name} - Documents',
+        title: context.l10n.projectSectionTitle(_currentProject.name, context.l10n.documents),
         project: _currentProject,
         logger: widget.logger,
         selectedMenuItem: 'Documents',
@@ -193,7 +197,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     final bool showSingleSection = isClient || isSubContractorAccount;
 
     return BaseLayout(
-      title: '${_currentProject.name} - Documents',
+      title: context.l10n.projectSectionTitle(_currentProject.name, context.l10n.documents),
       project: _currentProject,
       logger: widget.logger,
       selectedMenuItem: 'Documents',
@@ -202,7 +206,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         if (_canManageDocuments)
           IconButton(
             icon: const Icon(Icons.history),
-            tooltip: 'Document activity history',
+            tooltip: context.l10n.docActivityHistory,
             onPressed: _showAuditHistory,
           ),
       ],
@@ -241,7 +245,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 if (role != 'Client' && memberName == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Please select a $role first', style: TextStyle()),
+                      content: Text(context.l10n.selectRoleFirst(docTabLabel(role).toLowerCase()), style: TextStyle()),
                     ),
                   );
                   return;
@@ -276,8 +280,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                         TabBar(
                           controller: _mainTabController,
                           tabs: [
-                            const Tab(text: 'Client'),
-                            const Tab(text: 'Sub-Contractor'),
+                            Tab(text: docTabLabel('Client')),
+                            Tab(text: docTabLabel('Sub-Contractor')),
                             Tab(child: _buildSupplierTabLabel()),
                           ],
                           labelColor: const Color(0xFF0A2E5A),
@@ -300,8 +304,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                                         child: Padding(
                                           padding: const EdgeInsets.all(32.0),
                                           child: Text(
-                                            'No documents yet — ask your project admin to add you as a '
-                                            'Sub-Contractor team member first.',
+                                            context.l10n.noDocsAskAdminSub,
                                             textAlign: TextAlign.center,
                                             style: TextStyle(color: Colors.grey[600]),
                                           ),
@@ -337,7 +340,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       color: const Color(0xFF0A2E5A),
       child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
@@ -374,7 +377,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                   ? TabAlignment.start
                   : TabAlignment.center,
               tabs: tabSections
-                  .map((section) => Tab(text: section))
+                  .map((section) => Tab(text: docTabLabel(section)))
                   .toList(),
               labelColor: const Color(0xFF0A2E5A),
               unselectedLabelColor: Colors.grey,
@@ -403,7 +406,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     final subs = _currentProject.teamMembers.where((m) => m.role == 'subcontractor').toList();
     if (subs.isEmpty) {
       return Center(
-        child: _buildEmptyMemberSection('Subcontractors', _navigateToEditProject),
+        child: _buildEmptyMemberSection(context.l10n.subcontractorsPlural, _navigateToEditProject),
       );
     }
     if (_selectedSubcontractor == null) {
@@ -431,12 +434,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
 
   Widget _buildSupplierTabLabel() {
     final otherRoles = _otherRoles;
-    final label = _selectedOtherRole == null ? 'Supplier' : _selectedOtherRole!.capitalize();
+    final label = docTabLabel(_selectedOtherRole ?? 'Supplier');
     if (otherRoles.isEmpty) {
       return Text(label);
     }
     return PopupMenuButton<String>(
-      tooltip: 'Switch role',
+      tooltip: context.l10n.switchRole,
       onSelected: (value) {
         setState(() {
           _selectedOtherRole = value == _supplierSentinel ? null : value;
@@ -444,9 +447,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         });
       },
       itemBuilder: (context) => [
-        const PopupMenuItem<String>(value: _supplierSentinel, child: Text('Supplier')),
+        PopupMenuItem<String>(value: _supplierSentinel, child: Text(docTabLabel('Supplier'))),
         ...otherRoles.map(
-          (role) => PopupMenuItem<String>(value: role, child: Text(role.capitalize())),
+          (role) => PopupMenuItem<String>(value: role, child: Text(docTabLabel(role))),
         ),
       ],
       child: Row(
@@ -466,7 +469,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     final suppliers = _currentProject.teamMembers.where((m) => m.role == 'supplier').toList();
     if (suppliers.isEmpty) {
       return Center(
-        child: _buildEmptyMemberSection('Suppliers', _navigateToEditProject),
+        child: _buildEmptyMemberSection(context.l10n.suppliersPlural, _navigateToEditProject),
       );
     }
     if (_selectedSupplier == null) {
@@ -491,7 +494,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         .toList();
     if (members.isEmpty) {
       return Center(
-        child: _buildEmptyMemberSection(role.capitalize(), _navigateToEditProject),
+        child: _buildEmptyMemberSection(docTabLabel(role), _navigateToEditProject),
       );
     }
     if (_selectedOtherRoleMember == null) {
@@ -522,7 +525,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           ),
           title: Text(member.name, style: TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(
-            '${member.role.capitalize()}${member.category != null ? ' - ${member.category}' : ''}',
+            '${teamRoleLabel(member.role)}${member.category != null ? ' - ${member.category}' : ''}',
             style: TextStyle(color: Colors.grey[600]),
           ),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -546,7 +549,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               ),
               Expanded(
                 child: Text(
-                  'Documents for $memberName',
+                  context.l10n.docsForMember(memberName),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -569,13 +572,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No $title added to this project yet',
+            context.l10n.noMembersOfRoleYet(title),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Add team members via the Edit Project section.',
+            context.l10n.addMembersViaEdit,
             style: TextStyle(color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
@@ -583,7 +586,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           ElevatedButton.icon(
             onPressed: onEdit,
             icon: const Icon(Icons.edit),
-            label: Text('Go to Edit Project'),
+            label: Text(context.l10n.goToEditProject),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0A2E5A),
               foregroundColor: Colors.white,
@@ -611,7 +614,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           widget.logger.e('Firestore error: ${snapshot.error}');
           return Center(
             child: Text(
-              'Error loading documents',
+              context.l10n.couldNotLoadDocuments,
               style: TextStyle(color: Colors.red[600]),
             ),
           );
@@ -627,7 +630,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
                   child: Text(
-                    'No documents in this section',
+                    context.l10n.noDocumentsInSection,
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -644,7 +647,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                   leading: Icon(_getDocumentIcon(type), color: _getFileIconColor(type)),
                   title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(
-                    '$fileName - Uploaded: ${_formatDate(docData['uploadedAt'] as Timestamp)}',
+                    context.l10n.fileUploadedOn(fileName, _formatDate(docData['uploadedAt'] as Timestamp)),
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   trailing: PopupMenuButton<String>(
@@ -671,7 +674,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                           children: [
                             Icon(Icons.visibility, color: Colors.blue[600]),
                             const SizedBox(width: 8),
-                            Text('View', style: TextStyle()),
+                            Text(context.l10n.view, style: TextStyle()),
                           ],
                         ),
                       ),
@@ -682,7 +685,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                             children: [
                               Icon(Icons.download, color: Colors.green[600]),
                               const SizedBox(width: 8),
-                              Text('Download', style: TextStyle()),
+                              Text(context.l10n.download, style: TextStyle()),
                             ],
                           ),
                         ),
@@ -693,7 +696,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                             children: [
                               Icon(Icons.delete, color: Colors.red[600]),
                               const SizedBox(width: 8),
-                              Text('Delete', style: TextStyle()),
+                              Text(context.l10n.delete, style: TextStyle()),
                             ],
                           ),
                         ),
@@ -746,7 +749,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           children: [
             const Icon(Icons.history, color: Color(0xFF0A2E5A)),
             const SizedBox(width: 10),
-            Text('Document Activity', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(context.l10n.documentActivity, style: TextStyle(fontWeight: FontWeight.w600)),
           ],
         ),
         content: SizedBox(
@@ -762,7 +765,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
-                  child: Text('Error loading activity', style: TextStyle(color: Colors.red[600])),
+                  child: Text(context.l10n.couldNotLoadActivity, style: TextStyle(color: Colors.red[600])),
                 );
               }
               if (!snapshot.hasData) {
@@ -773,7 +776,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                   .toList();
               if (entries.isEmpty) {
                 return Center(
-                  child: Text('No activity recorded yet', style: TextStyle(color: Colors.grey[600])),
+                  child: Text(context.l10n.noActivityYet, style: TextStyle(color: Colors.grey[600])),
                 );
               }
               return ListView.separated(
@@ -782,8 +785,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 itemBuilder: (context, index) {
                   final e = entries[index];
                   final scope = e.teamMemberName.isNotEmpty
-                      ? '${e.mainTab.capitalize()} · ${e.teamMemberName} · ${e.section}'
-                      : '${e.mainTab.capitalize()} · ${e.section}';
+                      ? '${docTabLabel(e.mainTab)} · ${e.teamMemberName} · ${docTabLabel(e.section)}'
+                      : '${docTabLabel(e.mainTab)} · ${docTabLabel(e.section)}';
                   return ListTile(
                     dense: true,
                     leading: Icon(
@@ -791,7 +794,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                       color: e.isUpload ? Colors.green[600] : Colors.red[600],
                     ),
                     title: Text(
-                      '${e.actorName} (${e.actorRole}) ${e.isUpload ? 'uploaded' : 'deleted'} "${e.documentTitle}"',
+                      e.isUpload
+                          ? context.l10n.auditUploaded(e.actorName, roleLabel(e.actorRole), e.documentTitle)
+                          : context.l10n.auditDeleted(e.actorName, roleLabel(e.actorRole), e.documentTitle),
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(
@@ -808,7 +813,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close', style: TextStyle()),
+            child: Text(context.l10n.close, style: TextStyle()),
           ),
         ],
       ),
@@ -816,9 +821,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
   }
 
   String _formatDateTime(DateTime date) {
-    final h = date.hour.toString().padLeft(2, '0');
-    final m = date.minute.toString().padLeft(2, '0');
-    return '${date.day}/${date.month}/${date.year} $h:$m';
+    return DateFormat.yMd().add_Hm().format(date);
   }
 
   Future<void> _fetchUserRole() async {
@@ -917,7 +920,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Could not read file data. Please try again.',
+                  context.l10n.couldNotReadFile,
                   style: TextStyle(),
                 ),
               ),
@@ -933,7 +936,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Could not access file path. Please try again.',
+                  context.l10n.couldNotReadFile,
                   style: TextStyle(),
                 ),
               ),
@@ -1015,7 +1018,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Document "$title" added successfully!', style: TextStyle()),
+              content: Text(context.l10n.documentAdded(title), style: TextStyle()),
             ),
           );
           widget.logger.i('✅ DocumentsScreen: Document uploaded successfully: $fileName with title $title');
@@ -1026,7 +1029,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Upload cancelled', style: TextStyle()),
+                content: Text(context.l10n.uploadCancelled, style: TextStyle()),
               ),
             );
           }
@@ -1036,7 +1039,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error adding document: ${e.message}', style: TextStyle()),
+                content: Text(friendlyError(e, action: context.l10n.couldNotAddDocument), style: TextStyle()),
               ),
             );
           }
@@ -1047,7 +1050,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error adding document: ${e.toString()}', style: TextStyle()),
+              content: Text(friendlyError(e, action: context.l10n.couldNotAddDocument), style: TextStyle()),
             ),
           );
         }
@@ -1113,12 +1116,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('Enter Document Title', style: TextStyle()),
+          title: Text(context.l10n.enterDocumentTitle, style: TextStyle()),
           content: TextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: 'Title (e.g., RFI, Close Out doc)',
+              labelText: context.l10n.documentTitleHint,
               border: const OutlineInputBorder(),
               labelStyle: TextStyle(),
             ),
@@ -1128,7 +1131,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle()),
+              child: Text(context.l10n.cancel, style: TextStyle()),
             ),
             TextButton(
               onPressed: () {
@@ -1137,11 +1140,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 } else {
                   if (!mounted) return;
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('Please enter a title', style: TextStyle())),
+                    SnackBar(content: Text(context.l10n.pleaseEnterTitle, style: TextStyle())),
                   );
                 }
               },
-              child: Text('OK', style: TextStyle()),
+              child: Text(context.l10n.ok, style: TextStyle()),
             ),
           ],
         );
@@ -1208,7 +1211,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Close', style: TextStyle()),
+                    child: Text(context.l10n.close, style: TextStyle()),
                   ),
                 ],
               ),
@@ -1225,7 +1228,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               widget.logger.e('Could not launch $viewerUrl');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Could not open document viewer', style: TextStyle()),
+                  content: Text(context.l10n.couldNotOpenViewer, style: TextStyle()),
                 ),
               );
             }
@@ -1236,9 +1239,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: ${result.message}', style: TextStyle()),
+                content: Text(context.l10n.couldNotOpenThisFile, style: TextStyle()),
                 action: SnackBarAction(
-                  label: 'Download instead',
+                  label: context.l10n.downloadInstead,
                   onPressed: () => _downloadDocument(url, name),
                 ),
               ),
@@ -1249,7 +1252,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('No internet and no cache available', style: TextStyle()),
+              content: Text(context.l10n.offlineNoCopy, style: TextStyle()),
             ),
           );
         }
@@ -1259,7 +1262,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error viewing document: $e', style: TextStyle()),
+            content: Text(friendlyError(e, action: context.l10n.couldNotOpenDocument), style: TextStyle()),
           ),
         );
       }
@@ -1283,27 +1286,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
 
       if (result != null) {
         // Success: result is either a path (mobile) or message (web)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              kIsWeb 
-                ? result  // Web: "Download started. Check your browser downloads."
-                : 'Downloaded successfully!\nLocation: $result',  // Mobile: Full path
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () async {
-                if (!kIsWeb) {
-                  await OpenFile.open(result);
-                }
-              },
-            ),
-          ),
-        );
+        showDownloadSuccess(context, result);
       } else {
         // User cancelled (shouldn't happen with new implementation)
         widget.logger.d('Download cancelled by user');
@@ -1311,25 +1294,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
     } catch (e) {
       widget.logger.e('❌ Error downloading', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString().contains('permission')
-                ? 'Storage permission denied. Please enable it in Settings.'
-                : 'Error downloading: $e',
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-            action: e.toString().contains('permission')
-              ? SnackBarAction(
-                  label: 'Settings',
-                  textColor: Colors.white,
-                  onPressed: () => openAppSettings(),
-                )
-              : null,
-          ),
-        );
+        showDownloadError(context, e);
       }
     }
   }
@@ -1366,7 +1331,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         widget.logger.i('✅ DocumentsScreen: Document deleted successfully');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Document deleted successfully', style: TextStyle()),
+            content: Text(context.l10n.documentDeleted, style: TextStyle()),
           ),
         );
       }
@@ -1375,7 +1340,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting: $e', style: TextStyle()),
+            content: Text(friendlyError(e, action: context.l10n.couldNotDeleteDocument), style: TextStyle()),
           ),
         );
       }
@@ -1383,8 +1348,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
   }
 
   String _formatDate(Timestamp timestamp) {
-    final date = timestamp.toDate();
-    return '${date.day}/${date.month}/${date.year}';
+    return DateFormat.yMd().format(timestamp.toDate());
   }
 }
 
@@ -1395,6 +1359,22 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
 // its own setState — completely independent of the parent screen's state.
 // This is the only reliable pattern for live progress inside showDialog.
 // ---------------------------------------------------------------------------
+
+/// Display name for a Documents tab / section value. The stored values
+/// ('Client', 'Sub-Contractor', 'Contract', …) are Firestore query keys and
+/// never change; only what the user sees is translated.
+String docTabLabel(String value) {
+  final l = l10nNow;
+  return switch (value) {
+    'Client' => l.roleClient,
+    'Sub-Contractor' => l.teamRoleSubcontractor,
+    'Supplier' => l.teamRoleSupplier,
+    'Contract' => l.docSectionContract,
+    'Communication' => l.communication,
+    'Access Requests' => l.docSectionAccessRequests,
+    _ => teamRoleLabel(value.toLowerCase()),
+  };
+}
 
 class _UploadProgressDialog extends StatefulWidget {
   final UploadTask uploadTask;
@@ -1414,7 +1394,7 @@ class _UploadProgressDialog extends StatefulWidget {
 class _UploadProgressDialogState extends State<_UploadProgressDialog> {
   double _progress = 0.0;
   String _bytesLabel = '';
-  String _statusLabel = 'Preparing…';
+  String _statusLabel = l10nNow.preparing;
   StreamSubscription<TaskSnapshot>? _sub;
 
   @override
@@ -1430,7 +1410,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
           final tMB = (transferred / 1048576).toStringAsFixed(1);
           final totalMB = (total / 1048576).toStringAsFixed(1);
           _bytesLabel = '$tMB MB / $totalMB MB';
-          _statusLabel = _progress >= 1.0 ? 'Finalising…' : 'Uploading…';
+          _statusLabel = _progress >= 1.0 ? context.l10n.finalising : context.l10n.uploading;
         });
       },
       onError: (_) {/* parent handles errors */},
@@ -1458,7 +1438,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
           const Icon(Icons.cloud_upload_outlined, color: Color(0xFF0A2E5A), size: 22),
           const SizedBox(width: 10),
           Text(
-            'Uploading Document',
+            context.l10n.uploadingDocument,
             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
           ),
         ],
@@ -1546,7 +1526,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
       actions: [
         TextButton(
           onPressed: widget.onCancel,
-          child: Text('Cancel', style: TextStyle(color: Colors.red[600])),
+          child: Text(context.l10n.cancel, style: TextStyle(color: Colors.red[600])),
         ),
       ],
     );

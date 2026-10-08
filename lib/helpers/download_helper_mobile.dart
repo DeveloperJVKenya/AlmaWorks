@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// Mobile/Desktop implementation for file downloads
@@ -14,7 +13,7 @@ Future<String?> downloadFile(Uint8List bytes, String fileName) async {
     final hasPermission = await _requestStoragePermission();
 
     if (!hasPermission) {
-      throw UserFacingException(l10nNow.storagePermissionDenied);
+      throw StoragePermissionException();
     }
 
     // Get the appropriate download directory
@@ -29,10 +28,8 @@ Future<String?> downloadFile(Uint8List bytes, String fileName) async {
 
     // Return the full path where file was saved
     return savePath;
-  } on UserFacingException {
+  } catch (_) {
     rethrow;
-  } catch (e) {
-    throw UserFacingException(l10nNow.downloadFailed);
   }
 }
 

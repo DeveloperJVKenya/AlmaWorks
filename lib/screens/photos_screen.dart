@@ -13,6 +13,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PhotosScreen
@@ -203,7 +205,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
       listenable: _selection,
       builder: (context, _) {
         return BaseLayout(
-          title: '${widget.project.name} - Photos',
+          title: context.l10n.projectSectionTitle(widget.project.name, context.l10n.navPhotos),
           project: widget.project,
           logger: widget.logger,
           selectedMenuItem: 'Photos',
@@ -239,7 +241,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '${_selection.count} selected',
+            context.l10n.selectedCount(_selection.count),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -253,7 +255,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
             },
             icon: const Icon(Icons.close, color: Color(0xFF0A2E5A)),
             label: Text(
-              'Cancel',
+              context.l10n.cancel,
               style: TextStyle(color: const Color(0xFF0A2E5A)),
             ),
           ),
@@ -283,13 +285,13 @@ class _PhotosScreenState extends State<PhotosScreen> {
             children: [
               _buildActionButton(
                 icon: Icons.share,
-                label: 'Share',
+                label: context.l10n.share,
                 onPressed: hasSelection ? _handleMultiShare : null,
               ),
               if (_userRole != 'Client')
                 _buildActionButton(
                   icon: Icons.delete,
-                  label: 'Delete',
+                  label: context.l10n.delete,
                   onPressed: hasSelection ? _handleMultiDelete : null,
                 ),
             ],
@@ -334,7 +336,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       color: const Color(0xFF0A2E5A),
       child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
@@ -368,13 +370,13 @@ class _PhotosScreenState extends State<PhotosScreen> {
                   Icon(Icons.cloud_off, size: 48, color: Colors.red[300]),
                   const SizedBox(height: 12),
                   Text(
-                    'Error loading photos',
+                    context.l10n.couldNotLoadPhotos,
                     style: TextStyle(
                         color: Colors.red[600], fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${snapshot.error}',
+                    friendlyError(snapshot.error!),
                     style:
                         TextStyle(color: Colors.grey, fontSize: 12),
                     textAlign: TextAlign.center,
@@ -383,7 +385,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
                   ElevatedButton.icon(
                     onPressed: () => setState(() {}),
                     icon: const Icon(Icons.refresh),
-                    label: Text('Retry', style: TextStyle()),
+                    label: Text(context.l10n.retry, style: TextStyle()),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0A2E5A),
                       foregroundColor: Colors.white,
@@ -420,13 +422,13 @@ class _PhotosScreenState extends State<PhotosScreen> {
                       size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
-                    'No photos available yet.',
+                    context.l10n.noPhotosAvailable,
                     style: TextStyle(
                         color: Colors.grey[600], fontSize: 16),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Photos promoted by your project team will appear here.',
+                    context.l10n.photosPromotedHint,
                     style: TextStyle(
                         color: Colors.grey[500], fontSize: 13),
                     textAlign: TextAlign.center,
@@ -565,8 +567,8 @@ class _PhotosScreenState extends State<PhotosScreen> {
             ),
             title: Text(
               _selection.multiSelectMode
-                  ? 'Deactivate Selection'
-                  : 'Activate Selection',
+                  ? context.l10n.deactivateSelection
+                  : context.l10n.activateSelection,
               style: TextStyle(fontSize: 14),
             ),
             contentPadding: EdgeInsets.zero,
@@ -581,7 +583,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
             child: ListTile(
               leading:
                   const Icon(Icons.visibility, color: Color(0xFF0A2E5A)),
-              title: Text('View', style: TextStyle(fontSize: 14)),
+              title: Text(context.l10n.view, style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -591,7 +593,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
                 .addPostFrameCallback((_) => _editPhotoDetails(photo)),
             child: ListTile(
               leading: const Icon(Icons.edit, color: Color(0xFF0A2E5A)),
-              title: Text('Edit', style: TextStyle(fontSize: 14)),
+              title: Text(context.l10n.edit, style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -601,7 +603,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
                 .addPostFrameCallback((_) => _sharePhoto(photo)),
             child: ListTile(
               leading: const Icon(Icons.share, color: Color(0xFF0A2E5A)),
-              title: Text('Share', style: TextStyle(fontSize: 14)),
+              title: Text(context.l10n.share, style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -612,7 +614,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
                   .addPostFrameCallback((_) => _deletePhoto(photo)),
               child: ListTile(
                 leading: const Icon(Icons.delete, color: Colors.red),
-                title: Text('Delete',
+                title: Text(context.l10n.delete,
                     style:
                         TextStyle(fontSize: 14, color: Colors.red)),
                 contentPadding: EdgeInsets.zero,
@@ -632,8 +634,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
 
     if (kIsWeb) {
       _showSnackBar(
-        '⚠️ File sharing is not supported in the browser. '
-        'Please use the mobile app.',
+        '⚠️ ${context.l10n.shareNotOnWeb}',
         backgroundColor: Colors.orange[800]!,
         duration: const Duration(seconds: 5),
       );
@@ -641,7 +642,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
     }
 
     _showSnackBar(
-      'Preparing ${idsToShare.length} photos for sharing…',
+      context.l10n.preparingPhotosToShare(idsToShare.length),
       backgroundColor: const Color(0xFF0A2E5A),
       duration: const Duration(seconds: 30),
     );
@@ -674,7 +675,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
 
     if (files.isEmpty) {
       _showSnackBar(
-        '❌ Could not prepare any photos for sharing.',
+        '❌ ${context.l10n.couldNotPreparePhotos}',
         backgroundColor: Colors.red[700]!,
       );
       return;
@@ -686,7 +687,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
     } catch (e) {
       widget.logger.e('📤 PhotosScreen: Share failed: $e');
       if (!mounted) return;
-      _showSnackBar('❌ Share failed: $e', backgroundColor: Colors.red[700]!);
+      _showSnackBar('❌ ${friendlyError(e, action: context.l10n.couldNotShare)}', backgroundColor: Colors.red[700]!);
     }
   }
 
@@ -705,24 +706,22 @@ class _PhotosScreenState extends State<PhotosScreen> {
           children: [
             const Icon(Icons.delete_forever, color: Colors.red),
             const SizedBox(width: 8),
-            Text('Delete Photos', style: TextStyle()),
+            Text(context.l10n.deletePhotosTitle, style: TextStyle()),
           ],
         ),
         content: Text(
-          'Are you sure you want to delete ${idsToDelete.length} '
-          'selected photo${idsToDelete.length > 1 ? 's' : ''}?\n\n'
-          'This action cannot be undone.',
+          context.l10n.deletePhotosConfirm(idsToDelete.length),
           style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Delete',
+            child: Text(context.l10n.delete,
                 style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -752,8 +751,8 @@ class _PhotosScreenState extends State<PhotosScreen> {
     if (!mounted) return;
     _showSnackBar(
       failed == 0
-          ? '🗑️ $deleted photo${deleted > 1 ? 's' : ''} deleted.'
-          : '🗑️ $deleted deleted, $failed failed.',
+          ? '🗑️ ${context.l10n.photosDeleted(deleted)}'
+          : '🗑️ ${context.l10n.photosDeletedSomeFailed(deleted, failed)}',
       backgroundColor: failed > 0 ? Colors.orange[800]! : Colors.grey[700]!,
     );
   }
@@ -773,18 +772,18 @@ class _PhotosScreenState extends State<PhotosScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.edit),
-                tooltip: 'Edit',
+                tooltip: context.l10n.edit,
                 onPressed: () => _editPhotoDetails(photo),
               ),
               IconButton(
                 icon: const Icon(Icons.share),
-                tooltip: 'Share',
+                tooltip: context.l10n.share,
                 onPressed: () => _sharePhoto(photo),
               ),
               if (_userRole != 'Client')
                 IconButton(
                   icon: const Icon(Icons.delete),
-                  tooltip: 'Delete',
+                  tooltip: context.l10n.delete,
                   onPressed: () => _deletePhoto(photo),
                 ),
             ],
@@ -801,7 +800,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
                   const Icon(Icons.broken_image,
                       color: Colors.white54, size: 64),
                   const SizedBox(height: 12),
-                  Text('Cannot display image',
+                  Text(context.l10n.cannotDisplayImage,
                       style: TextStyle(color: Colors.white54)),
                 ],
               ),
@@ -826,39 +825,39 @@ class _PhotosScreenState extends State<PhotosScreen> {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text('Edit Photo Details', style: TextStyle()),
+        title: Text(context.l10n.editPhotoDetails, style: TextStyle()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleCtrl,
-              decoration: const InputDecoration(
-                  labelText: 'Title', border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                  labelText: context.l10n.titleLabel, border: const OutlineInputBorder()),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: categoryCtrl,
-              decoration: const InputDecoration(
-                  labelText: 'Category', border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                  labelText: context.l10n.category, border: const OutlineInputBorder()),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: phaseCtrl,
-              decoration: const InputDecoration(
-                  labelText: 'Phase', border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                  labelText: context.l10n.phase, border: const OutlineInputBorder()),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0A2E5A)),
-            child: Text('Save',
+            child: Text(context.l10n.save,
                 style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -876,7 +875,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
       if (newPhase.isNotEmpty) updates['phase'] = newPhase;
 
       if (updates.isEmpty) {
-        _showSnackBar('No changes made.', backgroundColor: Colors.grey[700]!);
+        _showSnackBar(context.l10n.noChangesMade, backgroundColor: Colors.grey[700]!);
         return;
       }
 
@@ -887,12 +886,12 @@ class _PhotosScreenState extends State<PhotosScreen> {
             .update(updates);
         widget.logger.i('✏️ PhotosScreen: Updated ${photo.id}');
         if (!mounted) return;
-        _showSnackBar('✅ Photo details updated.',
+        _showSnackBar('✅ ${context.l10n.photoDetailsUpdated}',
             backgroundColor: Colors.green[700]!);
       } catch (e) {
         widget.logger.e('✏️ PhotosScreen: Update failed: $e');
         if (!mounted) return;
-        _showSnackBar('❌ Update failed: $e',
+        _showSnackBar('❌ ${friendlyError(e, action: context.l10n.couldNotUpdate)}',
             backgroundColor: Colors.red[700]!);
       }
     }
@@ -904,7 +903,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
 
     if (kIsWeb) {
       _showSnackBar(
-        '⚠️ File sharing is not supported in the browser.',
+        '⚠️ ${context.l10n.shareNotOnWeb}',
         backgroundColor: Colors.orange[800]!,
       );
       return;
@@ -917,7 +916,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
       messenger.clearSnackBars();
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Preparing photo for sharing…',
+          content: Text(context.l10n.preparingPhotoToShare,
               style: TextStyle(color: Colors.white)),
           backgroundColor: const Color(0xFF0A2E5A),
           duration: const Duration(seconds: 30),
@@ -943,7 +942,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
       widget.logger.e('📤 PhotosScreen: Share error: $e', stackTrace: st);
       messenger.clearSnackBars();
       if (!mounted) return;
-      _showSnackBar('❌ Share failed: $e', backgroundColor: Colors.red[700]!);
+      _showSnackBar('❌ ${friendlyError(e, action: context.l10n.couldNotShare)}', backgroundColor: Colors.red[700]!);
     }
   }
 
@@ -960,20 +959,20 @@ class _PhotosScreenState extends State<PhotosScreen> {
           children: [
             const Icon(Icons.delete, color: Colors.red),
             const SizedBox(width: 8),
-            Text('Delete Photo', style: TextStyle()),
+            Text(context.l10n.deletePhotoTitle, style: TextStyle()),
           ],
         ),
-        content: Text('Delete this photo? This cannot be undone.',
+        content: Text(context.l10n.deletePhotoConfirm,
             style: TextStyle()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Delete',
+            child: Text(context.l10n.delete,
                 style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -990,12 +989,12 @@ class _PhotosScreenState extends State<PhotosScreen> {
 
         if (!mounted) return;
         if (Navigator.canPop(context)) Navigator.pop(context);
-        _showSnackBar('🗑️ Photo deleted.',
+        _showSnackBar('🗑️ ${context.l10n.photoDeleted}',
             backgroundColor: Colors.grey[700]!);
       } catch (e) {
         widget.logger.e('🗑️ PhotosScreen: Delete failed: $e');
         if (!mounted) return;
-        _showSnackBar('❌ Delete failed: $e',
+        _showSnackBar('❌ ${friendlyError(e, action: context.l10n.couldNotDelete)}',
             backgroundColor: Colors.red[700]!);
       }
     }
@@ -1198,7 +1197,7 @@ class _PhotoTileState extends State<_PhotoTile> {
           Icon(Icons.broken_image, color: Colors.grey[500], size: 28),
           const SizedBox(height: 4),
           Text(
-            'Unavailable',
+            l10nNow.unavailable,
             style: TextStyle(color: Colors.grey[600], fontSize: 10),
             textAlign: TextAlign.center,
           ),

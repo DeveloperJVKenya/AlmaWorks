@@ -2,7 +2,6 @@ import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:web/web.dart' as web;
 import 'package:almaworks/core/l10n/l10n.dart';
-import 'package:almaworks/core/errors/friendly_error.dart';
 
 /// Web-specific implementation for file downloads
 /// This uses the browser's Blob API to trigger downloads
@@ -28,7 +27,7 @@ Future<String?> downloadFile(Uint8List bytes, String fileName) async {
 
     // Return success message for web
     return l10nNow.downloadStartedWeb;
-  } catch (e) {
-    throw UserFacingException(l10nNow.downloadFailed);
+  } catch (_) {
+    rethrow;
   }
 }

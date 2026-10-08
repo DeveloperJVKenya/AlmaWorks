@@ -7531,6 +7531,1074 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete draft'**
   String get deleteDraft;
+
+  /// No description provided for @downloadedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded to {path}'**
+  String downloadedTo(String path);
+
+  /// No description provided for @couldNotDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t download the file.'**
+  String get couldNotDownload;
+
+  /// No description provided for @projectSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{project} - {section}'**
+  String projectSectionTitle(String project, String section);
+
+  /// No description provided for @documents.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get documents;
+
+  /// No description provided for @docActivityHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Document activity history'**
+  String get docActivityHistory;
+
+  /// No description provided for @selectRoleFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a {role} first'**
+  String selectRoleFirst(String role);
+
+  /// No description provided for @noDocsAskAdminSub.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents yet — ask your project admin to add you as a Sub-Contractor team member first.'**
+  String get noDocsAskAdminSub;
+
+  /// No description provided for @switchRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch role'**
+  String get switchRole;
+
+  /// No description provided for @docsForMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents for {name}'**
+  String docsForMember(String name);
+
+  /// No description provided for @noMembersOfRoleYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No {role} added to this project yet'**
+  String noMembersOfRoleYet(String role);
+
+  /// No description provided for @addMembersViaEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Add team members via the Edit Project section.'**
+  String get addMembersViaEdit;
+
+  /// No description provided for @goToEditProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Edit Project'**
+  String get goToEditProject;
+
+  /// No description provided for @couldNotLoadDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the documents'**
+  String get couldNotLoadDocuments;
+
+  /// No description provided for @noDocumentsInSection.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents in this section'**
+  String get noDocumentsInSection;
+
+  /// No description provided for @fileUploadedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'{file} - Uploaded: {date}'**
+  String fileUploadedOn(String file, String date);
+
+  /// No description provided for @documentActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Document activity'**
+  String get documentActivity;
+
+  /// No description provided for @couldNotLoadActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the activity'**
+  String get couldNotLoadActivity;
+
+  /// No description provided for @noActivityYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity recorded yet'**
+  String get noActivityYet;
+
+  /// No description provided for @auditUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({role}) uploaded \"{title}\"'**
+  String auditUploaded(String name, String role, String title);
+
+  /// No description provided for @auditDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({role}) deleted \"{title}\"'**
+  String auditDeleted(String name, String role, String title);
+
+  /// No description provided for @couldNotReadFile.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t read the file. Please try again.'**
+  String get couldNotReadFile;
+
+  /// No description provided for @documentAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Document \"{title}\" added'**
+  String documentAdded(String title);
+
+  /// No description provided for @uploadCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload cancelled'**
+  String get uploadCancelled;
+
+  /// No description provided for @couldNotAddDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add the document.'**
+  String get couldNotAddDocument;
+
+  /// No description provided for @enterDocumentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter document title'**
+  String get enterDocumentTitle;
+
+  /// No description provided for @documentTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (e.g. RFI, close-out document)'**
+  String get documentTitleHint;
+
+  /// No description provided for @pleaseEnterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a title'**
+  String get pleaseEnterTitle;
+
+  /// No description provided for @couldNotOpenViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t open the document viewer'**
+  String get couldNotOpenViewer;
+
+  /// No description provided for @couldNotOpenThisFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This file couldn\'t be opened on your device'**
+  String get couldNotOpenThisFile;
+
+  /// No description provided for @downloadInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Download instead'**
+  String get downloadInstead;
+
+  /// No description provided for @offlineNoCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline and this file hasn\'t been saved on this device yet'**
+  String get offlineNoCopy;
+
+  /// No description provided for @couldNotOpenDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the document.'**
+  String get couldNotOpenDocument;
+
+  /// No description provided for @documentDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Document deleted'**
+  String get documentDeleted;
+
+  /// No description provided for @couldNotDeleteDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the document.'**
+  String get couldNotDeleteDocument;
+
+  /// No description provided for @preparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing…'**
+  String get preparing;
+
+  /// No description provided for @finalising.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalising…'**
+  String get finalising;
+
+  /// No description provided for @uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading…'**
+  String get uploading;
+
+  /// No description provided for @uploadingDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading document'**
+  String get uploadingDocument;
+
+  /// No description provided for @docSectionContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract'**
+  String get docSectionContract;
+
+  /// No description provided for @docSectionAccessRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Access requests'**
+  String get docSectionAccessRequests;
+
+  /// No description provided for @subcontractorsPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'subcontractors'**
+  String get subcontractorsPlural;
+
+  /// No description provided for @suppliersPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'suppliers'**
+  String get suppliersPlural;
+
+  /// No description provided for @drawings.
+  ///
+  /// In en, this message translates to:
+  /// **'Drawings'**
+  String get drawings;
+
+  /// No description provided for @tabContractDrawing.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract drawing'**
+  String get tabContractDrawing;
+
+  /// No description provided for @tabRevisions.
+  ///
+  /// In en, this message translates to:
+  /// **'Revisions'**
+  String get tabRevisions;
+
+  /// No description provided for @tabAsBuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'As built'**
+  String get tabAsBuilt;
+
+  /// No description provided for @couldNotLoadContractDrawings.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the contract drawings'**
+  String get couldNotLoadContractDrawings;
+
+  /// No description provided for @noContractDrawings.
+  ///
+  /// In en, this message translates to:
+  /// **'No contract drawings uploaded yet'**
+  String get noContractDrawings;
+
+  /// No description provided for @tapUploadContractDrawings.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the upload button to add contract drawings'**
+  String get tapUploadContractDrawings;
+
+  /// No description provided for @fileUploadedDot.
+  ///
+  /// In en, this message translates to:
+  /// **'{file} • Uploaded {date}'**
+  String fileUploadedDot(String file, String date);
+
+  /// No description provided for @enterDrawingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter drawing title'**
+  String get enterDrawingTitle;
+
+  /// No description provided for @enterContractDrawingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title for this contract drawing:'**
+  String get enterContractDrawingTitle;
+
+  /// No description provided for @contractDrawingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Main contract drawing'**
+  String get contractDrawingHint;
+
+  /// No description provided for @uploadingContractDrawing.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading contract drawing'**
+  String get uploadingContractDrawing;
+
+  /// No description provided for @uploadingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading {file}…'**
+  String uploadingFile(String file);
+
+  /// No description provided for @contractDrawingUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract drawing \"{title}\" uploaded'**
+  String contractDrawingUploaded(String title);
+
+  /// No description provided for @couldNotUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t upload the file.'**
+  String get couldNotUpload;
+
+  /// No description provided for @couldNotLoadDrawings.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the drawings'**
+  String get couldNotLoadDrawings;
+
+  /// No description provided for @noDrawingsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No drawings uploaded yet'**
+  String get noDrawingsYet;
+
+  /// No description provided for @tapUploadFirstDrawing.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the upload button to add your first drawing'**
+  String get tapUploadFirstDrawing;
+
+  /// No description provided for @couldNotLoadAsBuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the as-built drawings'**
+  String get couldNotLoadAsBuilt;
+
+  /// No description provided for @noAsBuiltYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No as-built drawings yet'**
+  String get noAsBuiltYet;
+
+  /// No description provided for @tapUploadAsBuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the upload button to add as-built drawings'**
+  String get tapUploadAsBuilt;
+
+  /// No description provided for @latestRevisionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{file} (latest) • {count, plural, =1{1 revision} other{{count} revisions}}'**
+  String latestRevisionSummary(String file, int count);
+
+  /// No description provided for @revShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Rev{number}'**
+  String revShort(String number);
+
+  /// No description provided for @uploadedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded {date}'**
+  String uploadedOn(String date);
+
+  /// No description provided for @latest.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get latest;
+
+  /// No description provided for @finalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Final'**
+  String get finalLabel;
+
+  /// No description provided for @enterAsBuiltTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter as-built drawing title'**
+  String get enterAsBuiltTitle;
+
+  /// No description provided for @enterAsBuiltTitleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title for this as-built drawing:'**
+  String get enterAsBuiltTitleBody;
+
+  /// No description provided for @asBuiltHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Final construction drawing'**
+  String get asBuiltHint;
+
+  /// No description provided for @uploadingAsBuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading as-built drawing'**
+  String get uploadingAsBuilt;
+
+  /// No description provided for @asBuiltUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'As-built drawing \"{title}\" uploaded'**
+  String asBuiltUploaded(String title);
+
+  /// No description provided for @deleteAsBuiltTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete as-built drawing'**
+  String get deleteAsBuiltTitle;
+
+  /// No description provided for @deleteItemConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"? This can\'t be undone.'**
+  String deleteItemConfirm(String name);
+
+  /// No description provided for @asBuiltDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'As-built drawing deleted'**
+  String get asBuiltDeleted;
+
+  /// No description provided for @couldNotDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete it.'**
+  String get couldNotDelete;
+
+  /// No description provided for @enterDrawingCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter drawing category'**
+  String get enterDrawingCategory;
+
+  /// No description provided for @enterDrawingCategoryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name for the new drawing category:'**
+  String get enterDrawingCategoryBody;
+
+  /// No description provided for @drawingCategoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Floor plan level 1'**
+  String get drawingCategoryHint;
+
+  /// No description provided for @noCategoriesCreateNew.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no categories yet. Please create a new one.'**
+  String get noCategoriesCreateNew;
+
+  /// No description provided for @enterDrawingTitleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title for this drawing:'**
+  String get enterDrawingTitleBody;
+
+  /// No description provided for @drawingTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Floor plan level 1 - Rev 1'**
+  String get drawingTitleHint;
+
+  /// No description provided for @uploadingDrawing.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading drawing'**
+  String get uploadingDrawing;
+
+  /// No description provided for @drawingUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Drawing \"{title}\" uploaded'**
+  String drawingUploaded(String title);
+
+  /// No description provided for @uploadType.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload type'**
+  String get uploadType;
+
+  /// No description provided for @chooseUploadType.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how to upload the drawing:'**
+  String get chooseUploadType;
+
+  /// No description provided for @newCategoryDrawing.
+  ///
+  /// In en, this message translates to:
+  /// **'New category drawing'**
+  String get newCategoryDrawing;
+
+  /// No description provided for @newCategoryDrawingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new drawing category and upload the first revision.'**
+  String get newCategoryDrawingHint;
+
+  /// No description provided for @revisionDrawing.
+  ///
+  /// In en, this message translates to:
+  /// **'Revision drawing'**
+  String get revisionDrawing;
+
+  /// No description provided for @revisionDrawingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a revision to an existing drawing category.'**
+  String get revisionDrawingHint;
+
+  /// No description provided for @selectDrawingCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Select drawing category'**
+  String get selectDrawingCategory;
+
+  /// No description provided for @fileLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'File: {name}'**
+  String fileLabel(String name);
+
+  /// No description provided for @deleteDrawingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete drawing'**
+  String get deleteDrawingTitle;
+
+  /// No description provided for @drawingDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Drawing deleted'**
+  String get drawingDeleted;
+
+  /// No description provided for @couldNotOpenDrawingViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t open the drawing viewer'**
+  String get couldNotOpenDrawingViewer;
+
+  /// No description provided for @couldNotOpenDrawing.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the drawing.'**
+  String get couldNotOpenDrawing;
+
+  /// No description provided for @photoGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo gallery'**
+  String get photoGallery;
+
+  /// No description provided for @viewPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'View photos'**
+  String get viewPhotos;
+
+  /// No description provided for @uploadPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload photo'**
+  String get uploadPhoto;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(int count);
+
+  /// No description provided for @moveToPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Photos'**
+  String get moveToPhotos;
+
+  /// No description provided for @couldNotLoadPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the photos'**
+  String get couldNotLoadPhotos;
+
+  /// No description provided for @noPhotosAddSome.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet. Add some!'**
+  String get noPhotosAddSome;
+
+  /// No description provided for @deactivateSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off selection'**
+  String get deactivateSelection;
+
+  /// No description provided for @activateSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Select multiple'**
+  String get activateSelection;
+
+  /// No description provided for @movingPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving photos'**
+  String get movingPhotos;
+
+  /// No description provided for @photosProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} photos processed…'**
+  String photosProcessed(int done, int total);
+
+  /// No description provided for @photosMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo moved to Photos.} other{{count} photos moved to Photos.}}'**
+  String photosMoved(int count);
+
+  /// No description provided for @photosAlreadyExisted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} already existed.'**
+  String photosAlreadyExisted(int count);
+
+  /// No description provided for @photosFailedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} failed.'**
+  String photosFailedCount(int count);
+
+  /// No description provided for @noPhotosMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos were moved.'**
+  String get noPhotosMoved;
+
+  /// No description provided for @moveResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Move results'**
+  String get moveResults;
+
+  /// No description provided for @moveResultsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved: {moved}\nAlready there: {existing}\nFailed: {failed}\n\nPhotos that were \"already there\" are already in the Photos collection and were not copied again.'**
+  String moveResultsBody(int moved, int existing, int failed);
+
+  /// No description provided for @shareNotOnWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing files isn\'t available in the browser. Please use the mobile app.'**
+  String get shareNotOnWeb;
+
+  /// No description provided for @preparingPhotosToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing {count} photos for sharing…'**
+  String preparingPhotosToShare(int count);
+
+  /// No description provided for @couldNotPreparePhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t prepare the photos for sharing.'**
+  String get couldNotPreparePhotos;
+
+  /// No description provided for @couldNotShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t share.'**
+  String get couldNotShare;
+
+  /// No description provided for @deletePhotosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete photos'**
+  String get deletePhotosTitle;
+
+  /// No description provided for @deletePhotosConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete the selected photo?\n\nThis can\'t be undone.} other{Delete the {count} selected photos?\n\nThis can\'t be undone.}}'**
+  String deletePhotosConfirm(int count);
+
+  /// No description provided for @photosDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo deleted.} other{{count} photos deleted.}}'**
+  String photosDeleted(int count);
+
+  /// No description provided for @photosDeletedSomeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{deleted} deleted, {failed} failed.'**
+  String photosDeletedSomeFailed(int deleted, int failed);
+
+  /// No description provided for @cannotDisplayImage.
+  ///
+  /// In en, this message translates to:
+  /// **'This image can\'t be shown'**
+  String get cannotDisplayImage;
+
+  /// No description provided for @editPhotoDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit photo details'**
+  String get editPhotoDetails;
+
+  /// No description provided for @titleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get titleLabel;
+
+  /// No description provided for @phase.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase'**
+  String get phase;
+
+  /// No description provided for @noChangesMade.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes made.'**
+  String get noChangesMade;
+
+  /// No description provided for @photoDetailsUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo details updated.'**
+  String get photoDetailsUpdated;
+
+  /// No description provided for @couldNotUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the changes.'**
+  String get couldNotUpdate;
+
+  /// No description provided for @preparingPhotoToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing photo for sharing…'**
+  String get preparingPhotoToShare;
+
+  /// No description provided for @deletePhotoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete photo'**
+  String get deletePhotoTitle;
+
+  /// No description provided for @deletePhotoConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this photo? This can\'t be undone.'**
+  String get deletePhotoConfirm;
+
+  /// No description provided for @photoDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo deleted.'**
+  String get photoDeleted;
+
+  /// No description provided for @uploadPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload photos'**
+  String get uploadPhotos;
+
+  /// No description provided for @selectUploadType.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what to upload'**
+  String get selectUploadType;
+
+  /// No description provided for @singlePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Single photo'**
+  String get singlePhoto;
+
+  /// No description provided for @multiplePhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple photos'**
+  String get multiplePhotos;
+
+  /// No description provided for @confirmUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm upload'**
+  String get confirmUpload;
+
+  /// No description provided for @uploadPhotosConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Upload 1 photo?} other{Upload {count} photos?}}'**
+  String uploadPhotosConfirm(int count);
+
+  /// No description provided for @photoDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo details'**
+  String get photoDetails;
+
+  /// No description provided for @titleForPhotoN.
+  ///
+  /// In en, this message translates to:
+  /// **'Title for photo {n} (optional)'**
+  String titleForPhotoN(int n);
+
+  /// No description provided for @titleOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (optional)'**
+  String get titleOptional;
+
+  /// No description provided for @categoryOptionalField.
+  ///
+  /// In en, this message translates to:
+  /// **'Category (optional)'**
+  String get categoryOptionalField;
+
+  /// No description provided for @phaseOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase (optional)'**
+  String get phaseOptional;
+
+  /// No description provided for @uploadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get uploadingTitle;
+
+  /// No description provided for @uploadProgressPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%  ({done} of {total} photos)'**
+  String uploadProgressPhotos(String percent, int done, int total);
+
+  /// No description provided for @photosUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo uploaded.} other{{count} photos uploaded.}}'**
+  String photosUploaded(int count);
+
+  /// No description provided for @photosUploadedSomeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{uploaded} uploaded, {failed} failed.'**
+  String photosUploadedSomeFailed(int uploaded, int failed);
+
+  /// No description provided for @couldNotUploadPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t upload the photos.'**
+  String get couldNotUploadPhotos;
+
+  /// No description provided for @unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get unavailable;
+
+  /// No description provided for @noPhotosAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos available yet.'**
+  String get noPhotosAvailable;
+
+  /// No description provided for @photosPromotedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos shared by your project team will appear here.'**
+  String get photosPromotedHint;
+
+  /// No description provided for @financials.
+  ///
+  /// In en, this message translates to:
+  /// **'Financials'**
+  String get financials;
+
+  /// No description provided for @financialDocsForMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial documents for {name}'**
+  String financialDocsForMember(String name);
+
+  /// No description provided for @indexBeingCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'This list is still being set up'**
+  String get indexBeingCreated;
+
+  /// No description provided for @indexBeingCreatedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This usually takes a few minutes. Please try again shortly.'**
+  String get indexBeingCreatedHint;
+
+  /// No description provided for @couldNotLoadFinancialDocs.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the financial documents'**
+  String get couldNotLoadFinancialDocs;
+
+  /// No description provided for @noFinancialDocsInSection.
+  ///
+  /// In en, this message translates to:
+  /// **'No financial documents in this section'**
+  String get noFinancialDocsInSection;
+
+  /// No description provided for @selectSubcontractorFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a subcontractor first'**
+  String get selectSubcontractorFirst;
+
+  /// No description provided for @selectSupplierFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a supplier first'**
+  String get selectSupplierFirst;
+
+  /// No description provided for @uploadFileConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload {file}?'**
+  String uploadFileConfirm(String file);
+
+  /// No description provided for @fileSizeMb.
+  ///
+  /// In en, this message translates to:
+  /// **'Size: {size} MB'**
+  String fileSizeMb(String size);
+
+  /// No description provided for @uploadingNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading {file}'**
+  String uploadingNamed(String file);
+
+  /// No description provided for @startingUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting upload…'**
+  String get startingUpload;
+
+  /// No description provided for @financialDocAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial document \"{title}\" added'**
+  String financialDocAdded(String title);
+
+  /// No description provided for @financialTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (e.g. invoice, receipt, payment)'**
+  String get financialTitleHint;
+
+  /// No description provided for @deleteDocumentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete document'**
+  String get deleteDocumentTitle;
+
+  /// No description provided for @deleteFinancialDocConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this financial document? This can\'t be undone.'**
+  String get deleteFinancialDocConfirm;
+
+  /// No description provided for @financialDocDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial document deleted'**
+  String get financialDocDeleted;
+
+  /// No description provided for @qualitySafety.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality & Safety'**
+  String get qualitySafety;
+
+  /// No description provided for @quality.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality'**
+  String get quality;
+
+  /// No description provided for @safety.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety'**
+  String get safety;
+
+  /// No description provided for @noDocumentsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents added yet'**
+  String get noDocumentsYet;
+
+  /// No description provided for @qualityDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality documents'**
+  String get qualityDocuments;
+
+  /// No description provided for @safetyDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety documents'**
+  String get safetyDocuments;
+
+  /// No description provided for @uploadedColon.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded: {date}'**
+  String uploadedColon(String date);
+
+  /// No description provided for @documentUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Document uploaded'**
+  String get documentUploaded;
+
+  /// No description provided for @deleteNamedConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"?'**
+  String deleteNamedConfirm(String name);
 }
 
 class _AppLocalizationsDelegate

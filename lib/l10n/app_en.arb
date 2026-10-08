@@ -2927,5 +2927,515 @@
     }
   },
   "draft": "Draft",
-  "deleteDraft": "Delete draft"
+  "deleteDraft": "Delete draft",
+  "downloadedTo": "Downloaded to {path}",
+  "@downloadedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotDownload": "Couldn't download the file.",
+  "projectSectionTitle": "{project} - {section}",
+  "@projectSectionTitle": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      },
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "documents": "Documents",
+  "docActivityHistory": "Document activity history",
+  "selectRoleFirst": "Please select a {role} first",
+  "@selectRoleFirst": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "noDocsAskAdminSub": "No documents yet — ask your project admin to add you as a Sub-Contractor team member first.",
+  "switchRole": "Switch role",
+  "docsForMember": "Documents for {name}",
+  "@docsForMember": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noMembersOfRoleYet": "No {role} added to this project yet",
+  "@noMembersOfRoleYet": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "addMembersViaEdit": "Add team members via the Edit Project section.",
+  "goToEditProject": "Go to Edit Project",
+  "couldNotLoadDocuments": "We couldn't load the documents",
+  "noDocumentsInSection": "No documents in this section",
+  "fileUploadedOn": "{file} - Uploaded: {date}",
+  "@fileUploadedOn": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentActivity": "Document activity",
+  "couldNotLoadActivity": "We couldn't load the activity",
+  "noActivityYet": "No activity recorded yet",
+  "auditUploaded": "{name} ({role}) uploaded \"{title}\"",
+  "@auditUploaded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "auditDeleted": "{name} ({role}) deleted \"{title}\"",
+  "@auditDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotReadFile": "We couldn't read the file. Please try again.",
+  "documentAdded": "Document \"{title}\" added",
+  "@documentAdded": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadCancelled": "Upload cancelled",
+  "couldNotAddDocument": "Couldn't add the document.",
+  "enterDocumentTitle": "Enter document title",
+  "documentTitleHint": "Title (e.g. RFI, close-out document)",
+  "pleaseEnterTitle": "Please enter a title",
+  "couldNotOpenViewer": "We couldn't open the document viewer",
+  "couldNotOpenThisFile": "This file couldn't be opened on your device",
+  "downloadInstead": "Download instead",
+  "offlineNoCopy": "You're offline and this file hasn't been saved on this device yet",
+  "couldNotOpenDocument": "Couldn't open the document.",
+  "documentDeleted": "Document deleted",
+  "couldNotDeleteDocument": "Couldn't delete the document.",
+  "preparing": "Preparing…",
+  "finalising": "Finalising…",
+  "uploading": "Uploading…",
+  "uploadingDocument": "Uploading document",
+  "docSectionContract": "Contract",
+  "docSectionAccessRequests": "Access requests",
+  "subcontractorsPlural": "subcontractors",
+  "suppliersPlural": "suppliers",
+  "drawings": "Drawings",
+  "tabContractDrawing": "Contract drawing",
+  "tabRevisions": "Revisions",
+  "tabAsBuilt": "As built",
+  "couldNotLoadContractDrawings": "We couldn't load the contract drawings",
+  "noContractDrawings": "No contract drawings uploaded yet",
+  "tapUploadContractDrawings": "Tap the upload button to add contract drawings",
+  "fileUploadedDot": "{file} • Uploaded {date}",
+  "@fileUploadedDot": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "enterDrawingTitle": "Enter drawing title",
+  "enterContractDrawingTitle": "Enter a title for this contract drawing:",
+  "contractDrawingHint": "e.g. Main contract drawing",
+  "uploadingContractDrawing": "Uploading contract drawing",
+  "uploadingFile": "Uploading {file}…",
+  "@uploadingFile": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "contractDrawingUploaded": "Contract drawing \"{title}\" uploaded",
+  "@contractDrawingUploaded": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotUpload": "Couldn't upload the file.",
+  "couldNotLoadDrawings": "We couldn't load the drawings",
+  "noDrawingsYet": "No drawings uploaded yet",
+  "tapUploadFirstDrawing": "Tap the upload button to add your first drawing",
+  "couldNotLoadAsBuilt": "We couldn't load the as-built drawings",
+  "noAsBuiltYet": "No as-built drawings yet",
+  "tapUploadAsBuilt": "Tap the upload button to add as-built drawings",
+  "latestRevisionSummary": "{file} (latest) • {count, plural, =1{1 revision} other{{count} revisions}}",
+  "@latestRevisionSummary": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "revShort": "Rev{number}",
+  "@revShort": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadedOn": "Uploaded {date}",
+  "@uploadedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "latest": "Latest",
+  "finalLabel": "Final",
+  "enterAsBuiltTitle": "Enter as-built drawing title",
+  "enterAsBuiltTitleBody": "Enter a title for this as-built drawing:",
+  "asBuiltHint": "e.g. Final construction drawing",
+  "uploadingAsBuilt": "Uploading as-built drawing",
+  "asBuiltUploaded": "As-built drawing \"{title}\" uploaded",
+  "@asBuiltUploaded": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAsBuiltTitle": "Delete as-built drawing",
+  "deleteItemConfirm": "Are you sure you want to delete \"{name}\"? This can't be undone.",
+  "@deleteItemConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "asBuiltDeleted": "As-built drawing deleted",
+  "couldNotDelete": "Couldn't delete it.",
+  "enterDrawingCategory": "Enter drawing category",
+  "enterDrawingCategoryBody": "Enter a name for the new drawing category:",
+  "drawingCategoryHint": "e.g. Floor plan level 1",
+  "noCategoriesCreateNew": "There are no categories yet. Please create a new one.",
+  "enterDrawingTitleBody": "Enter a title for this drawing:",
+  "drawingTitleHint": "e.g. Floor plan level 1 - Rev 1",
+  "uploadingDrawing": "Uploading drawing",
+  "drawingUploaded": "Drawing \"{title}\" uploaded",
+  "@drawingUploaded": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadType": "Upload type",
+  "chooseUploadType": "Choose how to upload the drawing:",
+  "newCategoryDrawing": "New category drawing",
+  "newCategoryDrawingHint": "Create a new drawing category and upload the first revision.",
+  "revisionDrawing": "Revision drawing",
+  "revisionDrawingHint": "Add a revision to an existing drawing category.",
+  "selectDrawingCategory": "Select drawing category",
+  "fileLabel": "File: {name}",
+  "@fileLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteDrawingTitle": "Delete drawing",
+  "drawingDeleted": "Drawing deleted",
+  "couldNotOpenDrawingViewer": "We couldn't open the drawing viewer",
+  "couldNotOpenDrawing": "Couldn't open the drawing.",
+  "photoGallery": "Photo gallery",
+  "viewPhotos": "View photos",
+  "uploadPhoto": "Upload photo",
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveToPhotos": "Move to Photos",
+  "couldNotLoadPhotos": "We couldn't load the photos",
+  "noPhotosAddSome": "No photos yet. Add some!",
+  "deactivateSelection": "Turn off selection",
+  "activateSelection": "Select multiple",
+  "movingPhotos": "Moving photos",
+  "photosProcessed": "{done} of {total} photos processed…",
+  "@photosProcessed": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "photosMoved": "{count, plural, =1{1 photo moved to Photos.} other{{count} photos moved to Photos.}}",
+  "@photosMoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosAlreadyExisted": "{count} already existed.",
+  "@photosAlreadyExisted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosFailedCount": "{count} failed.",
+  "@photosFailedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noPhotosMoved": "No photos were moved.",
+  "moveResults": "Move results",
+  "moveResultsBody": "Moved: {moved}\nAlready there: {existing}\nFailed: {failed}\n\nPhotos that were \"already there\" are already in the Photos collection and were not copied again.",
+  "@moveResultsBody": {
+    "placeholders": {
+      "moved": {
+        "type": "int"
+      },
+      "existing": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "shareNotOnWeb": "Sharing files isn't available in the browser. Please use the mobile app.",
+  "preparingPhotosToShare": "Preparing {count} photos for sharing…",
+  "@preparingPhotosToShare": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotPreparePhotos": "We couldn't prepare the photos for sharing.",
+  "couldNotShare": "Couldn't share.",
+  "deletePhotosTitle": "Delete photos",
+  "deletePhotosConfirm": "{count, plural, =1{Delete the selected photo?\n\nThis can't be undone.} other{Delete the {count} selected photos?\n\nThis can't be undone.}}",
+  "@deletePhotosConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosDeleted": "{count, plural, =1{1 photo deleted.} other{{count} photos deleted.}}",
+  "@photosDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosDeletedSomeFailed": "{deleted} deleted, {failed} failed.",
+  "@photosDeletedSomeFailed": {
+    "placeholders": {
+      "deleted": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "cannotDisplayImage": "This image can't be shown",
+  "editPhotoDetails": "Edit photo details",
+  "titleLabel": "Title",
+  "phase": "Phase",
+  "noChangesMade": "No changes made.",
+  "photoDetailsUpdated": "Photo details updated.",
+  "couldNotUpdate": "Couldn't save the changes.",
+  "preparingPhotoToShare": "Preparing photo for sharing…",
+  "deletePhotoTitle": "Delete photo",
+  "deletePhotoConfirm": "Delete this photo? This can't be undone.",
+  "photoDeleted": "Photo deleted.",
+  "uploadPhotos": "Upload photos",
+  "selectUploadType": "Choose what to upload",
+  "singlePhoto": "Single photo",
+  "multiplePhotos": "Multiple photos",
+  "confirmUpload": "Confirm upload",
+  "uploadPhotosConfirm": "{count, plural, =1{Upload 1 photo?} other{Upload {count} photos?}}",
+  "@uploadPhotosConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photoDetails": "Photo details",
+  "titleForPhotoN": "Title for photo {n} (optional)",
+  "@titleForPhotoN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "titleOptional": "Title (optional)",
+  "categoryOptionalField": "Category (optional)",
+  "phaseOptional": "Phase (optional)",
+  "uploadingTitle": "Uploading",
+  "uploadProgressPhotos": "{percent}%  ({done} of {total} photos)",
+  "@uploadProgressPhotos": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "photosUploaded": "{count, plural, =1{1 photo uploaded.} other{{count} photos uploaded.}}",
+  "@photosUploaded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosUploadedSomeFailed": "{uploaded} uploaded, {failed} failed.",
+  "@photosUploadedSomeFailed": {
+    "placeholders": {
+      "uploaded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "couldNotUploadPhotos": "Couldn't upload the photos.",
+  "unavailable": "Unavailable",
+  "noPhotosAvailable": "No photos available yet.",
+  "photosPromotedHint": "Photos shared by your project team will appear here.",
+  "financials": "Financials",
+  "financialDocsForMember": "Financial documents for {name}",
+  "@financialDocsForMember": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexBeingCreated": "This list is still being set up",
+  "indexBeingCreatedHint": "This usually takes a few minutes. Please try again shortly.",
+  "couldNotLoadFinancialDocs": "We couldn't load the financial documents",
+  "noFinancialDocsInSection": "No financial documents in this section",
+  "selectSubcontractorFirst": "Please select a subcontractor first",
+  "selectSupplierFirst": "Please select a supplier first",
+  "uploadFileConfirm": "Upload {file}?",
+  "@uploadFileConfirm": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "fileSizeMb": "Size: {size} MB",
+  "@fileSizeMb": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadingNamed": "Uploading {file}",
+  "@uploadingNamed": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "startingUpload": "Starting upload…",
+  "financialDocAdded": "Financial document \"{title}\" added",
+  "@financialDocAdded": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "financialTitleHint": "Title (e.g. invoice, receipt, payment)",
+  "deleteDocumentTitle": "Delete document",
+  "deleteFinancialDocConfirm": "Are you sure you want to delete this financial document? This can't be undone.",
+  "financialDocDeleted": "Financial document deleted",
+  "qualitySafety": "Quality & Safety",
+  "quality": "Quality",
+  "safety": "Safety",
+  "noDocumentsYet": "No documents added yet",
+  "qualityDocuments": "Quality documents",
+  "safetyDocuments": "Safety documents",
+  "uploadedColon": "Uploaded: {date}",
+  "@uploadedColon": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentUploaded": "Document uploaded",
+  "deleteNamedConfirm": "Are you sure you want to delete \"{name}\"?",
+  "@deleteNamedConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

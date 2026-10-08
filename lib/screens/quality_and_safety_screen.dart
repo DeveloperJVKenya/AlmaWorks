@@ -13,11 +13,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:open_file/open_file.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
+import 'package:almaworks/helpers/download_feedback.dart';
 import 'package:almaworks/helpers/download_helper.dart'; // Assuming this is available as per DocumentsScreen
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class QualityAndSafetyScreen extends StatefulWidget {
   final ProjectModel project;
@@ -35,7 +37,7 @@ class QualityAndSafetyScreen extends StatefulWidget {
 
 class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+  DateFormat get _dateFormat => DateFormat.yMd().add_Hm();
   bool _isLoading = false;
   String? _userRole = 'Client'; // default to most restrictive until loaded
 
@@ -85,7 +87,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
     final isMobile = MediaQuery.of(context).size.width < 600;
     widget.logger.d('📄 QualityAndSafetyScreen: Building UI, isMobile: $isMobile');
     return BaseLayout(
-      title: '${widget.project.name} - Quality & Safety',
+      title: context.l10n.projectSectionTitle(widget.project.name, context.l10n.qualitySafety),
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Quality & Safety',
@@ -123,9 +125,9 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                           unselectedLabelColor: Colors.grey[600],
                           indicatorColor: const Color(0xFF0A2E5A),
                           labelStyle: TextStyle(fontWeight: FontWeight.w600),
-                          tabs: const [
-                            Tab(text: 'Quality'),
-                            Tab(text: 'Safety'),
+                          tabs: [
+                            Tab(text: context.l10n.quality),
+                            Tab(text: context.l10n.safety),
                           ],
                         ),
                       ),
@@ -158,7 +160,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       color: const Color(0xFF0A2E5A),
       child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
@@ -186,7 +188,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
           );
           return Center(
             child: Text(
-              'Error loading documents: ${snapshot.error}',
+              context.l10n.couldNotLoadDocuments,
               style: TextStyle(color: Colors.red[600]),
             ),
           );
@@ -200,7 +202,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         widget.logger.d('📄 QualityAndSafetyScreen: Rendering Quality tab');
         if (documents.isEmpty) {
           return Center(
-            child: Text('No documents added yet', style: TextStyle(color: Colors.grey[600])),
+            child: Text(context.l10n.noDocumentsYet, style: TextStyle(color: Colors.grey[600])),
           );
         }
         return ListView(
@@ -216,7 +218,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 children: [
                   Flexible(
                     child: Text(
-                      'Quality Documents',
+                      context.l10n.qualityDocuments,
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -268,7 +270,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
           );
           return Center(
             child: Text(
-              'Error loading documents: ${snapshot.error}',
+              context.l10n.couldNotLoadDocuments,
               style: TextStyle(color: Colors.red[600]),
             ),
           );
@@ -282,7 +284,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         widget.logger.d('📄 QualityAndSafetyScreen: Rendering Safety tab');
         if (documents.isEmpty) {
           return Center(
-            child: Text('No documents added yet', style: TextStyle(color: Colors.grey[600])),
+            child: Text(context.l10n.noDocumentsYet, style: TextStyle(color: Colors.grey[600])),
           );
         }
         return ListView(
@@ -298,7 +300,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 children: [
                   Flexible(
                     child: Text(
-                      'Safety Documents',
+                      context.l10n.safetyDocuments,
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -342,7 +344,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         leading: Icon(_getDocumentIcon(type), color: _getFileIconColor(type)),
         title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
         subtitle: Text(
-          'Uploaded: ${_dateFormat.format(uploadedAt)}',
+          context.l10n.uploadedColon(_dateFormat.format(uploadedAt)),
           style: TextStyle(color: Colors.grey[600], fontSize: 14),
         ),
         trailing: PopupMenuButton<String>(
@@ -354,7 +356,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 children: [
                   Icon(Icons.visibility, color: Colors.blue[600]),
                   const SizedBox(width: 8),
-                  Text('View', style: TextStyle()),
+                  Text(context.l10n.view, style: TextStyle()),
                 ],
               ),
             ),
@@ -364,7 +366,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 children: [
                   Icon(Icons.download, color: Colors.green[600]),
                   const SizedBox(width: 8),
-                  Text('Download', style: TextStyle()),
+                  Text(context.l10n.download, style: TextStyle()),
                 ],
               ),
             ),
@@ -375,7 +377,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                   children: [
                     Icon(Icons.delete, color: Colors.red[600]),
                     const SizedBox(width: 8),
-                    Text('Delete', style: TextStyle()),
+                    Text(context.l10n.delete, style: TextStyle()),
                   ],
                 ),
               ),
@@ -417,7 +419,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       }
 
       if (fileBytes == null) {
-        throw Exception('Could not read file data');
+        throw UserFacingException(l10nNow.couldNotReadFile);
       }
 
       final title = await _getDocumentTitle(fileName);
@@ -453,14 +455,14 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       widget.logger.i('✅ QualityAndSafetyScreen: Document uploaded successfully: $fileName');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Document uploaded successfully', style: TextStyle())),
+          SnackBar(content: Text(context.l10n.documentUploaded, style: TextStyle())),
         );
       }
     } catch (e, stackTrace) {
       widget.logger.e('❌ QualityAndSafetyScreen: Error uploading document', error: e, stackTrace: stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading document: $e', style: TextStyle())),
+          SnackBar(content: Text(friendlyError(e, action: context.l10n.couldNotUpload), style: TextStyle())),
         );
       }
     } finally {
@@ -479,12 +481,12 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('Enter Document Title', style: TextStyle()),
+          title: Text(context.l10n.enterDocumentTitle, style: TextStyle()),
           content: TextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: 'Title (e.g., RFI, Close Out doc)',
+              labelText: context.l10n.documentTitleHint,
               border: const OutlineInputBorder(),
               labelStyle: TextStyle(),
             ),
@@ -494,7 +496,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle()),
+              child: Text(context.l10n.cancel, style: TextStyle()),
             ),
             TextButton(
               onPressed: () {
@@ -503,7 +505,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 } else {
                   if (!mounted) return;
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('Please enter a title', style: TextStyle())),
+                    SnackBar(content: Text(context.l10n.pleaseEnterTitle, style: TextStyle())),
                   );
                 }
               },
@@ -608,7 +610,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Close', style: TextStyle()),
+                    child: Text(context.l10n.close, style: TextStyle()),
                   ),
                 ],
               ),
@@ -625,7 +627,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
               widget.logger.e('Could not launch $viewerUrl');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Could not open document viewer', style: TextStyle()),
+                  content: Text(context.l10n.couldNotOpenViewer, style: TextStyle()),
                 ),
               );
             }
@@ -636,9 +638,9 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: ${result.message}', style: TextStyle()),
+                content: Text(context.l10n.couldNotOpenThisFile, style: TextStyle()),
                 action: SnackBarAction(
-                  label: 'Download instead',
+                  label: context.l10n.downloadInstead,
                   onPressed: () => _downloadDocument(url, name),
                 ),
               ),
@@ -649,7 +651,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('No internet and no cache available', style: TextStyle()),
+              content: Text(context.l10n.offlineNoCopy, style: TextStyle()),
             ),
           );
         }
@@ -659,7 +661,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error viewing document: $e', style: TextStyle()),
+            content: Text(friendlyError(e, action: context.l10n.couldNotOpenDocument), style: TextStyle()),
           ),
         );
       }
@@ -683,23 +685,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
 
       if (result != null) {
         // Success: result is either a path (mobile) or message (web)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Downloaded successfully!\nLocation: $result',  // Mobile: Full path
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () async {
-                await OpenFile.open(result);
-              },
-            ),
-          ),
-        );
+        showDownloadSuccess(context, result);
       } else {
         // User cancelled (shouldn't happen with new implementation)
         widget.logger.d('Download cancelled by user');
@@ -707,25 +693,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
     } catch (e) {
       widget.logger.e('❌ Error downloading', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString().contains('permission')
-                ? 'Storage permission denied. Please enable it in Settings.'
-                : 'Error downloading: $e',
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-            action: e.toString().contains('permission')
-              ? SnackBarAction(
-                  label: 'Settings',
-                  textColor: Colors.white,
-                  onPressed: () => openAppSettings(),
-                )
-              : null,
-          ),
-        );
+        showDownloadError(context, e);
       }
     }
   }
@@ -742,7 +710,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         widget.logger.i('✅ QualityAndSafetyScreen: Document deleted successfully');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Document deleted successfully', style: TextStyle()),
+            content: Text(context.l10n.documentDeleted, style: TextStyle()),
           ),
         );
       }
@@ -751,7 +719,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting: $e', style: TextStyle()),
+            content: Text(friendlyError(e, action: context.l10n.couldNotDeleteDocument), style: TextStyle()),
           ),
         );
       }
@@ -767,17 +735,17 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Delete Document', style: TextStyle(fontWeight: FontWeight.w600)),
-          content: Text('Are you sure you want to delete "$name"?', style: TextStyle()),
+          title: Text(context.l10n.deleteDocumentTitle, style: TextStyle(fontWeight: FontWeight.w600)),
+          content: Text(context.l10n.deleteNamedConfirm(name), style: TextStyle()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancel', style: TextStyle()),
+              child: Text(context.l10n.cancel, style: TextStyle()),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-              child: Text('Delete', style: TextStyle()),
+              child: Text(context.l10n.delete, style: TextStyle()),
             ),
           ],
         ),

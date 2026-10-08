@@ -12,13 +12,18 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as path;
-import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:open_file/open_file.dart';
 import 'package:almaworks/helpers/download_helper.dart';
+import 'package:almaworks/helpers/download_feedback.dart';
+import 'package:almaworks/screens/documents_screen.dart' show docTabLabel;
+import 'package:almaworks/screens/projects/add_project_screen.dart' show teamRoleLabel;
+import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class FinancialScreen extends StatefulWidget {
   final ProjectModel project;
@@ -50,12 +55,12 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
   void initState() {
     super.initState();
     _currentProject = widget.project;
-    
+
     // Initialize tab controller immediately with default values
     _mainTabController = TabController(length: _mainTabs.length, vsync: this);
-    
+
     widget.logger.i('💰 FinancialScreen: Initialized for project: ${_currentProject.name}');
-    
+
     // Fetch user role asynchronously
     _fetchUserRole();
   }
@@ -94,7 +99,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
     // Show loading indicator while fetching user data
     if (_isLoadingUserData) {
       return BaseLayout(
-        title: '${_currentProject.name} - Financials',
+        title: context.l10n.projectSectionTitle(_currentProject.name, context.l10n.financials),
         project: _currentProject,
         logger: widget.logger,
         selectedMenuItem: 'Financials',
@@ -109,7 +114,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
     final bool isClient = _userRole == 'Client';
 
     return BaseLayout(
-      title: '${_currentProject.name} - Financials',
+      title: context.l10n.projectSectionTitle(_currentProject.name, context.l10n.financials),
       project: _currentProject,
       logger: widget.logger,
       selectedMenuItem: 'Financials',
@@ -136,7 +141,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
                       if (!isClient)
                         TabBar(
                           controller: _mainTabController,
-                          tabs: _mainTabs.map((tab) => Tab(text: tab)).toList(),
+                          tabs: _mainTabs.map((tab) => Tab(text: docTabLabel(tab))).toList(),
                           labelColor: const Color(0xFF0A2E5A),
                           unselectedLabelColor: Colors.grey,
                           labelStyle: TextStyle(fontWeight: FontWeight.w600),
@@ -173,7 +178,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       color: const Color(0xFF0A2E5A),
       child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
@@ -188,7 +193,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
     final subs = _currentProject.teamMembers.where((m) => m.role == 'subcontractor').toList();
     if (subs.isEmpty) {
       return Center(
-        child: _buildEmptyMemberSection('Subcontractors', _navigateToEditProject),
+        child: _buildEmptyMemberSection(context.l10n.subcontractorsPlural, _navigateToEditProject),
       );
     }
     if (_selectedSubcontractor == null) {
@@ -206,7 +211,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
     final suppliers = _currentProject.teamMembers.where((m) => m.role == 'supplier').toList();
     if (suppliers.isEmpty) {
       return Center(
-        child: _buildEmptyMemberSection('Suppliers', _navigateToEditProject),
+        child: _buildEmptyMemberSection(context.l10n.suppliersPlural, _navigateToEditProject),
       );
     }
     if (_selectedSupplier == null) {
@@ -236,7 +241,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
           ),
           title: Text(member.name, style: TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(
-            '${member.role.capitalize()}${member.category != null ? ' - ${member.category}' : ''}',
+            '${teamRoleLabel(member.role)}${member.category != null ? ' - ${member.category}' : ''}',
             style: TextStyle(color: Colors.grey[600]),
           ),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -260,7 +265,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
               ),
               Expanded(
                 child: Text(
-                  'Financial Documents for $memberName',
+                  context.l10n.financialDocsForMember(memberName),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -283,13 +288,13 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
           Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No $title added to this project yet',
+            context.l10n.noMembersOfRoleYet(title),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Add team members via the Edit Project section.',
+            context.l10n.addMembersViaEdit,
             style: TextStyle(color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
@@ -297,7 +302,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
           ElevatedButton.icon(
             onPressed: onEdit,
             icon: const Icon(Icons.edit),
-            label: Text('Go to Edit Project'),
+            label: Text(context.l10n.goToEditProject),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0A2E5A),
               foregroundColor: Colors.white,
@@ -314,7 +319,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       .where('projectId', isEqualTo: _currentProject.id)
       .where('role', isEqualTo: role)
       .orderBy('uploadedAt', descending: true);
-  
+
     if (memberName != null) {
       query = query.where('teamMemberName', isEqualTo: memberName);
     }
@@ -324,7 +329,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           widget.logger.e('Firestore error: ${snapshot.error}');
-          
+
           // Check if it's an index error
           if (snapshot.error.toString().contains('index')) {
             return Center(
@@ -336,7 +341,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                     Icon(Icons.cloud_sync, size: 64, color: const Color.fromARGB(255, 5, 135, 68)),
                     const SizedBox(height: 16),
                     Text(
-                      'Database index is being created',
+                      context.l10n.indexBeingCreated,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -345,7 +350,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'This usually takes a few minutes. Please try again shortly.',
+                      context.l10n.indexBeingCreatedHint,
                       style: TextStyle(color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
@@ -354,10 +359,10 @@ Widget _buildFinancialList(String role, {String? memberName}) {
               ),
             );
           }
-          
+
           return Center(
             child: Text(
-              'Error loading financial documents',
+              context.l10n.couldNotLoadFinancialDocs,
               style: TextStyle(color: Colors.red[600]),
             ),
           );
@@ -373,7 +378,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 padding: const EdgeInsets.all(16.0),
                 child: Center(
                   child: Text(
-                    'No financial documents in this section',
+                    context.l10n.noFinancialDocsInSection,
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -386,12 +391,12 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 final fileName = docData['fileName'] as String;
                 final url = docData['url'] as String;
                 final type = path.extension(fileName).substring(1).toLowerCase();
-                
+
                 return ListTile(
                   leading: Icon(_getDocumentIcon(type), color: _getFileIconColor(type)),
                   title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(
-                    '$fileName - Uploaded: ${_formatDate(docData['uploadedAt'] as Timestamp)}',
+                    context.l10n.fileUploadedOn(fileName, _formatDate(docData['uploadedAt'] as Timestamp)),
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   trailing: PopupMenuButton<String>(
@@ -411,7 +416,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                           children: [
                             Icon(Icons.visibility, color: Colors.blue[600]),
                             const SizedBox(width: 8),
-                            Text('View', style: TextStyle()),
+                            Text(context.l10n.view, style: TextStyle()),
                           ],
                         ),
                       ),
@@ -421,7 +426,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                           children: [
                             Icon(Icons.download, color: Colors.green[600]),
                             const SizedBox(width: 8),
-                            Text('Download', style: TextStyle()),
+                            Text(context.l10n.download, style: TextStyle()),
                           ],
                         ),
                       ),
@@ -431,7 +436,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                           children: [
                             Icon(Icons.delete, color: Colors.red[600]),
                             const SizedBox(width: 8),
-                            Text('Delete', style: TextStyle()),
+                            Text(context.l10n.delete, style: TextStyle()),
                           ],
                         ),
                       ),
@@ -466,14 +471,14 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       if (querySnapshot.docs.isNotEmpty) {
         final userData = querySnapshot.docs.first.data();
         final role = userData['role'] as String? ?? 'Client';
-        
+
         if (mounted) {
           setState(() {
             _userRole = role;
             _isLoadingUserData = false;
           });
         }
-        
+
         widget.logger.i('✅ FinancialScreen: User role fetched: $role');
       } else {
         widget.logger.w('⚠️ FinancialScreen: User document not found');
@@ -498,7 +503,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
   Future<void> _addFinancialDocument() async {
     // Determine if user is a client
     final bool isClient = _userRole == 'Client';
-    
+
     String role;
     String? teamMemberName;
 
@@ -517,7 +522,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         if (_selectedSubcontractor == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please select a subcontractor first')),
+              SnackBar(content: Text(context.l10n.selectSubcontractorFirst)),
             );
           }
           return;
@@ -527,7 +532,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         if (_selectedSupplier == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please select a supplier first')),
+              SnackBar(content: Text(context.l10n.selectSupplierFirst)),
             );
           }
           return;
@@ -565,7 +570,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
     }
 
     if (fileBytes == null) {
-      throw Exception('Could not read file data');
+      throw UserFacingException(l10nNow.couldNotReadFile);
     }
 
     final title = await _getDocumentTitle(fileName);
@@ -578,7 +583,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
     final bool? confirmUpload = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Confirm Upload', style: TextStyle()),
+        title: Text(context.l10n.confirmUpload, style: TextStyle()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -589,12 +594,12 @@ Widget _buildFinancialList(String role, {String? memberName}) {
             ),
             const SizedBox(height: 16),
             Text(
-              'Upload: $fileName?',
+              context.l10n.uploadFileConfirm(fileName),
               style: TextStyle(),
               textAlign: TextAlign.center,
             ),
             Text(
-              'Size: ${(fileBytes!.length / 1024 / 1024).toStringAsFixed(2)} MB',
+              context.l10n.fileSizeMb((fileBytes!.length / 1024 / 1024).toStringAsFixed(2)),
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
@@ -602,11 +607,11 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Upload', style: TextStyle()),
+            child: Text(context.l10n.upload, style: TextStyle()),
           ),
         ],
       ),
@@ -630,7 +635,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         key: dialogKey,
-        title: Text('Uploading $fileName', style: TextStyle()),
+        title: Text(context.l10n.uploadingNamed(fileName), style: TextStyle()),
         content: StatefulBuilder(
           builder: (context, setDialogState) {
             return Column(
@@ -645,7 +650,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 Text(
                   _uploadProgress != null
                       ? '${(_uploadProgress! * 100).toStringAsFixed(0)}%'
-                      : 'Starting upload...',
+                      : context.l10n.startingUpload,
                   style: TextStyle(),
                 ),
               ],
@@ -663,7 +668,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 Navigator.pop(context);
               }
             },
-            child: Text('Cancel', style: TextStyle(color: Colors.red)),
+            child: Text(context.l10n.cancel, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -700,7 +705,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Upload failed: ${e.toString()}', style: TextStyle()),
+              content: Text(friendlyError(e, action: context.l10n.couldNotUpload), style: TextStyle()),
             ),
           );
         }
@@ -727,7 +732,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Financial document "$title" added successfully!', style: TextStyle()),
+            content: Text(context.l10n.financialDocAdded(title), style: TextStyle()),
           ),
         );
         widget.logger.i('✅ FinancialScreen: Document uploaded successfully: $fileName with title $title');
@@ -738,7 +743,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Upload cancelled', style: TextStyle()),
+              content: Text(context.l10n.uploadCancelled, style: TextStyle()),
             ),
           );
         }
@@ -748,7 +753,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error adding document: ${e.message}', style: TextStyle()),
+              content: Text(friendlyError(e, action: context.l10n.couldNotAddDocument), style: TextStyle()),
             ),
           );
         }
@@ -759,7 +764,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error adding document: ${e.toString()}', style: TextStyle()),
+            content: Text(friendlyError(e, action: context.l10n.couldNotAddDocument), style: TextStyle()),
           ),
         );
       }
@@ -820,12 +825,12 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('Enter Document Title', style: TextStyle()),
+          title: Text(context.l10n.enterDocumentTitle, style: TextStyle()),
           content: TextField(
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: 'Title (e.g., Invoice, Receipt, Payment)',
+              labelText: context.l10n.financialTitleHint,
               border: const OutlineInputBorder(),
               labelStyle: TextStyle(),
             ),
@@ -835,7 +840,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle()),
+              child: Text(context.l10n.cancel, style: TextStyle()),
             ),
             TextButton(
               onPressed: () {
@@ -844,7 +849,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 } else {
                   if (!mounted) return;
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('Please enter a title', style: TextStyle())),
+                    SnackBar(content: Text(context.l10n.pleaseEnterTitle, style: TextStyle())),
                   );
                 }
               },
@@ -918,7 +923,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Close', style: TextStyle()),
+                    child: Text(context.l10n.close, style: TextStyle()),
                   ),
                 ],
               ),
@@ -934,7 +939,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
               widget.logger.e('Could not launch $viewerUrl');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Could not open document viewer', style: TextStyle()),
+                  content: Text(context.l10n.couldNotOpenViewer, style: TextStyle()),
                 ),
               );
             }
@@ -944,9 +949,9 @@ Widget _buildFinancialList(String role, {String? memberName}) {
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: ${result.message}', style: TextStyle()),
+                content: Text(context.l10n.couldNotOpenThisFile, style: TextStyle()),
                 action: SnackBarAction(
-                  label: 'Download instead',
+                  label: context.l10n.downloadInstead,
                   onPressed: () => _downloadDocument(url, name),
                 ),
               ),
@@ -957,7 +962,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('No internet and no cache available', style: TextStyle()),
+              content: Text(context.l10n.offlineNoCopy, style: TextStyle()),
             ),
           );
         }
@@ -967,7 +972,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error viewing document: $e', style: TextStyle()),
+            content: Text(friendlyError(e, action: context.l10n.couldNotOpenDocument), style: TextStyle()),
           ),
         );
       }
@@ -988,71 +993,33 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       if (!mounted) return;
 
       if (result != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              kIsWeb 
-                ? result
-                : 'Downloaded successfully!\nLocation: $result',
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () async {
-                if (!kIsWeb) {
-                  await OpenFile.open(result);
-                }
-              },
-            ),
-          ),
-        );
+        showDownloadSuccess(context, result);
       } else {
         widget.logger.d('Download cancelled by user');
       }
     } catch (e) {
       widget.logger.e('❌ Error downloading', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString().contains('permission')
-                ? 'Storage permission denied. Please enable it in Settings.'
-                : 'Error downloading: $e',
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-            action: e.toString().contains('permission')
-              ? SnackBarAction(
-                  label: 'Settings',
-                  textColor: Colors.white,
-                  onPressed: () => openAppSettings(),
-                )
-              : null,
-          ),
-        );
+        showDownloadError(context, e);
       }
     }
   }
 
   Future<void> _deleteDocument(String docId, String url) async {
     widget.logger.i('🗑️ FinancialScreen: Deleting document: $docId');
-    
+
     final bool? confirmDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Document', style: TextStyle()),
+        title: Text(context.l10n.deleteDocumentTitle, style: TextStyle()),
         content: Text(
-          'Are you sure you want to delete this financial document? This action cannot be undone.',
+          context.l10n.deleteFinancialDocConfirm,
           style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -1060,7 +1027,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text('Delete', style: TextStyle()),
+            child: Text(context.l10n.delete, style: TextStyle()),
           ),
         ],
       ),
@@ -1081,7 +1048,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
         widget.logger.i('✅ FinancialScreen: Document deleted successfully');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Financial document deleted successfully', style: TextStyle()),
+            content: Text(context.l10n.financialDocDeleted, style: TextStyle()),
             backgroundColor: Colors.green,
           ),
         );
@@ -1091,7 +1058,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting: $e', style: TextStyle()),
+            content: Text(friendlyError(e, action: context.l10n.couldNotDeleteDocument), style: TextStyle()),
             backgroundColor: Colors.red,
           ),
         );
@@ -1100,7 +1067,6 @@ Widget _buildFinancialList(String role, {String? memberName}) {
   }
 
   String _formatDate(Timestamp timestamp) {
-    final date = timestamp.toDate();
-    return '${date.day}/${date.month}/${date.year}';
+    return DateFormat.yMd().format(timestamp.toDate());
   }
 }

@@ -15,9 +15,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:logger/logger.dart';
 import 'package:open_file/open_file.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:almaworks/helpers/download_helper.dart';
+import 'package:almaworks/helpers/download_feedback.dart';
+import 'package:intl/intl.dart';
+import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/errors/friendly_error.dart';
 
 class DrawingsScreen extends StatefulWidget {
   final ProjectModel project;
@@ -85,7 +88,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
   @override
   Widget build(BuildContext context) {
     return BaseLayout(
-      title: '${widget.project.name} - Drawings',
+      title: context.l10n.projectSectionTitle(widget.project.name, context.l10n.drawings),
       project: widget.project,
       logger: widget.logger,
       selectedMenuItem: 'Drawings',
@@ -150,10 +153,10 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                             fontWeight: FontWeight.w500,
                             fontSize: 16,
                           ),
-                          tabs: const [
-                            Tab(text: 'Contract Drawing'),
-                            Tab(text: 'Revisions'),
-                            Tab(text: 'As Built'),
+                          tabs: [
+                            Tab(text: context.l10n.tabContractDrawing),
+                            Tab(text: context.l10n.tabRevisions),
+                            Tab(text: context.l10n.tabAsBuilt),
                           ],
                         ),
                       ),
@@ -194,7 +197,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Error loading contract drawings',
+                  context.l10n.couldNotLoadContractDrawings,
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.red[600],
@@ -221,7 +224,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 Icon(Icons.description, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'No contract drawings uploaded yet',
+                  context.l10n.noContractDrawings,
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey[600],
@@ -230,7 +233,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tap the upload button to add contract drawings',
+                  context.l10n.tapUploadContractDrawings,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
@@ -280,7 +283,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ),
         ),
         subtitle: Text(
-          '${drawing.fileName} • Uploaded ${_formatDate(drawing.uploadedAt)}',
+          context.l10n.fileUploadedDot(drawing.fileName, _formatDate(drawing.uploadedAt)),
           style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
@@ -295,7 +298,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 children: [
                   Icon(Icons.visibility, size: 16, color: Colors.blue[600]),
                   SizedBox(width: 8),
-                  Text('View'),
+                  Text(context.l10n.view),
                 ],
               ),
             ),
@@ -306,7 +309,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   children: [
                     Icon(Icons.download, size: 16, color: Colors.green[600]),
                     SizedBox(width: 8),
-                    Text('Download'),
+                    Text(context.l10n.download),
                   ],
                 ),
               ),
@@ -317,7 +320,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   children: [
                     Icon(Icons.delete, size: 16, color: Colors.red[600]),
                     SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: Colors.red)),
+                    Text(context.l10n.delete, style: TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
@@ -352,10 +355,11 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       widget.logger.i('📤 DrawingsScreen: Contract file selected: $originalFileName');
 
       // Step 2: Input drawing title (prefilled with file name without extension)
+      if (!mounted) return;
       final drawingTitle = await _showTextInputDialog(
-        dialogTitle: 'Enter Drawing Title',
-        contentText: 'Enter a title for this contract drawing:',
-        hintText: 'e.g., Main Contract Drawing',
+        dialogTitle: context.l10n.enterDrawingTitle,
+        contentText: context.l10n.enterContractDrawingTitle,
+        hintText: context.l10n.contractDrawingHint,
         prefill: originalFileName.split('.').first,
         fileName: originalFileName,
         showFileName: true,
@@ -376,7 +380,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not read file data. Please try again.', style: TextStyle())),
+              SnackBar(content: Text(context.l10n.couldNotReadFile, style: TextStyle())),
             );
           }
           return;
@@ -387,7 +391,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File path is null on native');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not access file path. Please try again.', style: TextStyle())),
+              SnackBar(content: Text(context.l10n.couldNotReadFile, style: TextStyle())),
             );
           }
           return;
@@ -408,7 +412,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           barrierDismissible: false,
           builder: (context) => AlertDialog(
             title: Text(
-              'Uploading Contract Drawing',
+              context.l10n.uploadingContractDrawing,
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
@@ -417,7 +421,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text(
-                  'Uploading $finalFileName...',
+                  context.l10n.uploadingFile(finalFileName),
                   style: TextStyle(),
                 ),
               ],
@@ -439,7 +443,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Contract drawing "$drawingTitle" uploaded successfully!',
+                context.l10n.contractDrawingUploaded(drawingTitle),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.green,
@@ -456,7 +460,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Upload failed: ${e.toString()}',
+                friendlyError(e, action: context.l10n.couldNotUpload),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.red,
@@ -467,7 +471,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
 
     } catch (e) {
       widget.logger.e('❌ DrawingsScreen: Contract upload failed', error: e);
-      
+
       if (mounted) {
         if (Navigator.canPop(context)) {
           Navigator.pop(context); // Close progress dialog if open
@@ -475,7 +479,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Upload failed: ${e.toString()}',
+              friendlyError(e, action: context.l10n.couldNotUpload),
               style: TextStyle(),
             ),
             backgroundColor: Colors.red,
@@ -513,7 +517,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       color: const Color(0xFF0A2E5A),
       child: Text(
-        '© 2026 JV Alma C.I.S Site Management System',
+        context.l10n.copyrightFooter,
         style: TextStyle(
           color: Colors.white,
           fontSize: isMobile ? 12 : 14,
@@ -537,7 +541,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Error loading drawings',
+                  context.l10n.couldNotLoadDrawings,
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.red[600],
@@ -564,7 +568,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 Icon(Icons.architecture, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'No drawings uploaded yet',
+                  context.l10n.noDrawingsYet,
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey[600],
@@ -573,7 +577,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tap the upload button to add your first drawing',
+                  context.l10n.tapUploadFirstDrawing,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
@@ -608,7 +612,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Error loading as-built drawings',
+                  context.l10n.couldNotLoadAsBuilt,
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.red[600],
@@ -635,7 +639,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 Icon(Icons.check_circle_outline, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'No as-built drawings yet',
+                  context.l10n.noAsBuiltYet,
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey[600],
@@ -644,7 +648,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tap the upload button to add as-built drawings', 
+                  context.l10n.tapUploadAsBuilt,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
@@ -681,7 +685,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ),
         ),
         subtitle: Text(
-          '${group.latestRevision?.fileName ?? ''} (Latest) • ${group.revisions.length} revision${group.revisions.length != 1 ? 's' : ''}',
+          context.l10n.latestRevisionSummary(group.latestRevision?.fileName ?? '', group.revisions.length),
           style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
@@ -706,21 +710,21 @@ class _DrawingsScreenState extends State<DrawingsScreen>
   Widget _buildRevisionTile(DrawingModel drawing, DrawingGroup group) {
     final isLatest = drawing.revisionNumber == group.latestRevision?.revisionNumber;
     final isFinal = drawing.isFinal;
-    
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       leading: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: isLatest 
+          color: isLatest
               ? Colors.green.withValues(alpha: 0.1)
               : Colors.grey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
           child: Text(
-            'Rev${drawing.revisionNumber}',
+            context.l10n.revShort('${drawing.revisionNumber}'),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -734,7 +738,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         style: TextStyle(fontSize: 14),
       ),
       subtitle: Text(
-        'Uploaded ${_formatDate(drawing.uploadedAt)}',
+        context.l10n.uploadedOn(_formatDate(drawing.uploadedAt)),
         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
       ),
       trailing: Row(
@@ -748,7 +752,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Latest',
+                context.l10n.latest,
                 style: TextStyle(
                   fontSize: 10,
                   color: Colors.white,
@@ -766,7 +770,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Final',
+                context.l10n.finalLabel,
                 style: TextStyle(
                   fontSize: 10,
                   color: Colors.white,
@@ -785,7 +789,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   children: [
                     Icon(Icons.visibility, size: 16, color: Colors.blue[600]),
                     SizedBox(width: 8),
-                    Text('View'),
+                    Text(context.l10n.view),
                   ],
                 ),
               ),
@@ -796,7 +800,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                     children: [
                       Icon(Icons.download, size: 16, color: Colors.green[600]),
                       SizedBox(width: 8),
-                      Text('Download'),
+                      Text(context.l10n.download),
                     ],
                   ),
                 ),
@@ -807,7 +811,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                     children: [
                       Icon(Icons.delete, size: 16, color: Colors.red[600]),
                       SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
+                      Text(context.l10n.delete, style: TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),
@@ -844,7 +848,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ),
         ),
         subtitle: Text(
-          '${drawing.fileName} • Uploaded ${_formatDate(drawing.uploadedAt)}',
+          context.l10n.fileUploadedDot(drawing.fileName, _formatDate(drawing.uploadedAt)),
           style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
@@ -859,7 +863,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 children: [
                   Icon(Icons.visibility, size: 16, color: Colors.blue[600]),
                   SizedBox(width: 8),
-                  Text('View'),
+                  Text(context.l10n.view),
                 ],
               ),
             ),
@@ -870,7 +874,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   children: [
                     Icon(Icons.download, size: 16, color: Colors.green[600]),
                     SizedBox(width: 8),
-                    Text('Download'),
+                    Text(context.l10n.download),
                   ],
                 ),
               ),
@@ -882,7 +886,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   children: [
                     Icon(Icons.delete, size: 16, color: Colors.red[600]),
                     SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: Colors.red)),
+                    Text(context.l10n.delete, style: TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
@@ -892,7 +896,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
     );
   }
 
-  // New method: Upload As-Built Drawing 
+  // New method: Upload As-Built Drawing
   Future<void> _uploadAsBuiltDrawing() async {
     try {
       // Step 1: Pick file first
@@ -915,10 +919,11 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       widget.logger.i('📤 DrawingsScreen: As-Built file selected: $originalFileName');
 
       // Step 2: Input drawing title (prefilled with file name without extension)
+      if (!mounted) return;
       final drawingTitle = await _showTextInputDialog(
-        dialogTitle: 'Enter As-Built Drawing Title',
-        contentText: 'Enter a title for this as-built drawing:',
-        hintText: 'e.g., Final Construction Drawing',
+        dialogTitle: context.l10n.enterAsBuiltTitle,
+        contentText: context.l10n.enterAsBuiltTitleBody,
+        hintText: context.l10n.asBuiltHint,
         prefill: originalFileName.split('.').first,
         fileName: originalFileName,
         showFileName: true,
@@ -939,7 +944,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not read file data. Please try again.', style: TextStyle())),
+              SnackBar(content: Text(context.l10n.couldNotReadFile, style: TextStyle())),
             );
           }
           return;
@@ -950,7 +955,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File path is null on native');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not access file path. Please try again.', style: TextStyle())),
+              SnackBar(content: Text(context.l10n.couldNotReadFile, style: TextStyle())),
             );
           }
           return;
@@ -971,7 +976,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           barrierDismissible: false,
           builder: (context) => AlertDialog(
             title: Text(
-              'Uploading As-Built Drawing',
+              context.l10n.uploadingAsBuilt,
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
@@ -980,7 +985,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text(
-                  'Uploading $finalFileName...',
+                  context.l10n.uploadingFile(finalFileName),
                   style: TextStyle(),
                 ),
               ],
@@ -1002,7 +1007,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'As-Built drawing "$drawingTitle" uploaded successfully!',
+                context.l10n.asBuiltUploaded(drawingTitle),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.green,
@@ -1019,7 +1024,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Upload failed: ${e.toString()}',
+                friendlyError(e, action: context.l10n.couldNotUpload),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.red,
@@ -1030,7 +1035,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
 
     } catch (e) {
       widget.logger.e('❌ DrawingsScreen: As-Built upload failed', error: e);
-      
+
       if (mounted) {
         if (Navigator.canPop(context)) {
           Navigator.pop(context); // Close progress dialog if open
@@ -1038,7 +1043,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Upload failed: ${e.toString()}',
+              friendlyError(e, action: context.l10n.couldNotUpload),
               style: TextStyle(),
             ),
             backgroundColor: Colors.red,
@@ -1059,17 +1064,17 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Delete As-Built Drawing',
+          context.l10n.deleteAsBuiltTitle,
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: Text(
-          'Are you sure you want to delete "${drawing.title}"? This action cannot be undone.',
+          context.l10n.deleteItemConfirm(drawing.title),
           style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -1077,7 +1082,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text('Delete', style: TextStyle()),
+            child: Text(context.l10n.delete, style: TextStyle()),
           ),
         ],
       ),
@@ -1091,7 +1096,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'As-Built drawing deleted successfully',
+                context.l10n.asBuiltDeleted,
                 style: TextStyle(),
               ),
               backgroundColor: Colors.green,
@@ -1103,7 +1108,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Failed to delete: ${e.toString()}',
+                friendlyError(e, action: context.l10n.couldNotDelete),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.red,
@@ -1125,10 +1130,11 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       String drawingCategory;
       if (uploadType == 'new') {
         // For new category: Input category name first
+        if (!mounted) return;
         final categoryName = await _showTextInputDialog(
-          dialogTitle: 'Enter Drawing Category',
-          contentText: 'Enter a name for the new drawing category:',
-          hintText: 'e.g., Floor Plan Level 1',
+          dialogTitle: context.l10n.enterDrawingCategory,
+          contentText: context.l10n.enterDrawingCategoryBody,
+          hintText: context.l10n.drawingCategoryHint,
           prefill: '',
           showFileName: false,
         );
@@ -1146,7 +1152,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'No existing categories. Please create a new one.',
+                  context.l10n.noCategoriesCreateNew,
                   style: TextStyle(),
                 ),
                 backgroundColor: Colors.orange,
@@ -1184,10 +1190,11 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       widget.logger.i('📤 DrawingsScreen: File selected: $originalFileName');
 
       // Input drawing title (file name without extension, editable)
+      if (!mounted) return;
       final drawingTitle = await _showTextInputDialog(
-        dialogTitle: 'Enter Drawing Title',
-        contentText: 'Enter a title for this drawing:',
-        hintText: 'e.g., Floor Plan Level 1 - Rev 1',
+        dialogTitle: context.l10n.enterDrawingTitle,
+        contentText: context.l10n.enterDrawingTitleBody,
+        hintText: context.l10n.drawingTitleHint,
         prefill: originalFileName.split('.').first,
         fileName: originalFileName,
         showFileName: true,
@@ -1207,7 +1214,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File bytes are null on web — withData may not have worked');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not read file data. Please try again.', style: TextStyle())),
+              SnackBar(content: Text(context.l10n.couldNotReadFile, style: TextStyle())),
             );
           }
           return;
@@ -1218,7 +1225,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           widget.logger.e('❌ DrawingsScreen: File path is null on native');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not access file path. Please try again.', style: TextStyle())),
+              SnackBar(content: Text(context.l10n.couldNotReadFile, style: TextStyle())),
             );
           }
           return;
@@ -1239,7 +1246,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           barrierDismissible: false,
           builder: (context) => AlertDialog(
             title: Text(
-              'Uploading Drawing',
+              context.l10n.uploadingDrawing,
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
@@ -1248,7 +1255,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text(
-                  'Uploading $finalFileName...',
+                  context.l10n.uploadingFile(finalFileName),
                   style: TextStyle(),
                 ),
               ],
@@ -1270,7 +1277,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Drawing "$drawingTitle" uploaded successfully!',
+                context.l10n.drawingUploaded(drawingTitle),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.green,
@@ -1287,7 +1294,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Upload failed: ${e.toString()}',
+                friendlyError(e, action: context.l10n.couldNotUpload),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.red,
@@ -1298,7 +1305,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
 
     } catch (e) {
       widget.logger.e('❌ DrawingsScreen: Upload failed', error: e);
-      
+
       if (mounted) {
         if (Navigator.canPop(context)) {
           Navigator.pop(context); // Close progress dialog if open
@@ -1306,7 +1313,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Upload failed: ${e.toString()}',
+              friendlyError(e, action: context.l10n.couldNotUpload),
               style: TextStyle(),
             ),
             backgroundColor: Colors.red,
@@ -1329,7 +1336,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Colors.white,
         title: Text(
-          'Upload Type',
+          context.l10n.uploadType,
           style: TextStyle(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
         ),
         content: Column(
@@ -1337,7 +1344,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Choose how to upload the drawing:',
+              context.l10n.chooseUploadType,
               style: TextStyle(color: Colors.grey[700]),
             ),
             const SizedBox(height: 16),
@@ -1345,8 +1352,8 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                title: Text('New Category Drawing', style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green[800])),
-                subtitle: Text('Create a new drawing category and upload the first revision.', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                title: Text(context.l10n.newCategoryDrawing, style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green[800])),
+                subtitle: Text(context.l10n.newCategoryDrawingHint, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                 leading: const Icon(Icons.add, color: Colors.green),
                 onTap: () => Navigator.pop(context, 'new'),
                 tileColor: Colors.green.withValues(alpha: 0.05),
@@ -1357,8 +1364,8 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                title: Text('Revision Drawing', style: TextStyle(fontWeight: FontWeight.w500, color: const Color(0xFF0A2E5A))),
-                subtitle: Text('Add a revision to an existing drawing category.', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                title: Text(context.l10n.revisionDrawing, style: TextStyle(fontWeight: FontWeight.w500, color: const Color(0xFF0A2E5A))),
+                subtitle: Text(context.l10n.revisionDrawingHint, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                 leading: const Icon(Icons.edit, color: Color(0xFF0A2E5A)),
                 onTap: () => Navigator.pop(context, 'revision'),
                 tileColor: const Color(0xFF0A2E5A).withValues(alpha: 0.05),
@@ -1370,7 +1377,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              context.l10n.cancel,
               style: TextStyle(color: Color(0xFF800000)),
             ),
           ),
@@ -1399,7 +1406,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Colors.white,
         title: Text(
-          'Select Drawing Category',
+          context.l10n.selectDrawingCategory,
           style: TextStyle(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
         ),
         content: SizedBox(
@@ -1429,7 +1436,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              context.l10n.cancel,
               style: TextStyle(color: Color(0xFF800000)),
             ),
           ),
@@ -1485,7 +1492,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             if (showFileName && fileName != null) ...[
               const SizedBox(height: 8),
               Text(
-                'File: $fileName',
+                context.l10n.fileLabel(fileName),
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
@@ -1498,7 +1505,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              context.l10n.cancel,
               style: TextStyle(color: Color(0xFF800000)),
             ),
           ),
@@ -1510,7 +1517,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: Text(
-              'Confirm',
+              context.l10n.confirm,
               style: TextStyle(),
             ),
           ),
@@ -1554,17 +1561,17 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Delete Drawing',
+          context.l10n.deleteDrawingTitle,
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: Text(
-          'Are you sure you want to delete "${drawing.fileName}"? This action cannot be undone.',
+          context.l10n.deleteItemConfirm(drawing.fileName),
           style: TextStyle(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle()),
+            child: Text(context.l10n.cancel, style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -1572,7 +1579,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text('Delete', style: TextStyle()),
+            child: Text(context.l10n.delete, style: TextStyle()),
           ),
         ],
       ),
@@ -1586,7 +1593,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Drawing deleted successfully',
+                context.l10n.drawingDeleted,
                 style: TextStyle(),
               ),
               backgroundColor: Colors.green,
@@ -1598,7 +1605,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Failed to delete: ${e.toString()}',
+                friendlyError(e, action: context.l10n.couldNotDelete),
                 style: TextStyle(),
               ),
               backgroundColor: Colors.red,
@@ -1650,7 +1657,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
     } else {
       return '';
     }
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    return DateFormat.yMd().format(dateTime);
   }
 
   Future<void> _viewDrawing(String url, String type, String name) async {
@@ -1683,7 +1690,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Close', style: TextStyle()),
+                    child: Text(context.l10n.close, style: TextStyle()),
                   ),
                 ],
               ),
@@ -1700,7 +1707,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               widget.logger.e('Could not launch $viewerUrl');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Could not open drawing viewer', style: TextStyle()),
+                  content: Text(context.l10n.couldNotOpenDrawingViewer, style: TextStyle()),
                 ),
               );
             }
@@ -1711,9 +1718,9 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           if (result.type != ResultType.done && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Could not open file: ${result.message}', style: TextStyle()),
+                content: Text(context.l10n.couldNotOpenThisFile, style: TextStyle()),
                 action: SnackBarAction(
-                  label: 'Download instead',
+                  label: context.l10n.downloadInstead,
                   onPressed: () => _downloadDrawing(url, name),
                 ),
               ),
@@ -1724,7 +1731,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('No internet and no cache available', style: TextStyle()),
+              content: Text(context.l10n.offlineNoCopy, style: TextStyle()),
             ),
           );
         }
@@ -1734,7 +1741,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error viewing drawing: $e', style: TextStyle()),
+            content: Text(friendlyError(e, action: context.l10n.couldNotOpenDrawing), style: TextStyle()),
           ),
         );
       }
@@ -1758,27 +1765,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
 
       if (result != null) {
         // Success: result is either a path (mobile) or message (web)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              kIsWeb 
-                ? result  // Web: "Download started. Check your browser downloads."
-                : 'Downloaded successfully!\nLocation: $result',  // Mobile: Full path
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () async {
-                if (!kIsWeb) {
-                  await OpenFile.open(result);
-                }
-              },
-            ),
-          ),
-        );
+        showDownloadSuccess(context, result);
       } else {
         // User cancelled (shouldn't happen with new implementation)
         widget.logger.d('Download cancelled by user');
@@ -1786,25 +1773,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
     } catch (e) {
       widget.logger.e('❌ Error downloading', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString().contains('permission')
-                ? 'Storage permission denied. Please enable it in Settings.'
-                : 'Error downloading: $e',
-              style: TextStyle(),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-            action: e.toString().contains('permission')
-              ? SnackBarAction(
-                  label: 'Settings',
-                  textColor: Colors.white,
-                  onPressed: () => openAppSettings(),
-                )
-              : null,
-          ),
-        );
+        showDownloadError(context, e);
       }
     }
   }

@@ -18,6 +18,12 @@ class UserFacingException implements Exception {
   String toString() => message;
 }
 
+/// The device refused storage access, so a download couldn't be saved.
+/// Screens offer an "Open settings" action for this one.
+class StoragePermissionException extends UserFacingException {
+  StoragePermissionException() : super(l10nNow.storagePermissionDenied);
+}
+
 /// Turns any error into a short, plain-language sentence for the screen.
 /// Raw exception text (codes, stack details, "Exception: …") is never shown
 /// — callers still log the original error for diagnosis.
