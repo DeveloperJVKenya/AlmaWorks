@@ -108,7 +108,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settings => 'Impostazioni';
 
   @override
-  String get account => 'Account';
+  String get account => 'Profilo';
 
   @override
   String get notifications => 'Notifiche';
@@ -478,7 +478,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get navFinancials => 'Finanze';
 
   @override
-  String get navAccount => 'Account';
+  String get navAccount => 'Profilo';
 
   @override
   String get myAccount => 'Il mio account';
@@ -515,7 +515,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get emailAddress => 'Indirizzo email';
 
   @override
-  String get email => 'Email';
+  String get email => 'Indirizzo email';
 
   @override
   String get emailChangeNote =>
@@ -597,7 +597,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Un amministratore sta esaminando la tua richiesta. Avrai accesso appena sarà approvata.';
 
   @override
-  String get navDashboard => 'Dashboard';
+  String get navDashboard => 'Pannello principale';
 
   @override
   String get navProjects => 'Progetti';
@@ -1032,7 +1032,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get emailRequired => 'Inserisci la tua email';
 
   @override
-  String get password => 'Password';
+  String get password => 'Password di accesso';
 
   @override
   String get passwordHint => 'Inserisci la password';
@@ -3995,7 +3995,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get projectDetails => 'Dettagli del progetto';
 
   @override
-  String get budgetUsd => 'Budget (USD)';
+  String get budgetUsd => 'Importo previsto (USD)';
 
   @override
   String get statusOptional => 'Stato (facoltativo)';
@@ -4596,7 +4596,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tabRevisions => 'Revisioni';
 
   @override
-  String get tabAsBuilt => 'As built';
+  String get tabAsBuilt => 'Come costruito';
 
   @override
   String get couldNotLoadContractDrawings =>
@@ -5707,7 +5707,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Impossibile caricare le date del progetto';
 
   @override
-  String get offlineMode => 'Offline';
+  String get offlineMode => 'Non in linea';
 
   @override
   String get addRow => 'Aggiungi riga';
@@ -6738,7 +6738,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get maxColumnsReached => 'Raggiunto il massimo di 10 colonne';
 
   @override
-  String get addColShort => '+ Col';
+  String get addColShort => '+ Colonna';
 
   @override
   String get deleteTable => 'Elimina tabella';
