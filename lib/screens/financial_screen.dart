@@ -24,6 +24,7 @@ import 'package:almaworks/screens/projects/add_project_screen.dart' show teamRol
 import 'package:intl/intl.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class FinancialScreen extends StatefulWidget {
   final ProjectModel project;
@@ -142,7 +143,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
                         TabBar(
                           controller: _mainTabController,
                           tabs: _mainTabs.map((tab) => Tab(text: docTabLabel(tab))).toList(),
-                          labelColor: const Color(0xFF0A2E5A),
+                          labelColor: AppColors.brandInk,
                           unselectedLabelColor: Colors.grey,
                           labelStyle: TextStyle(fontWeight: FontWeight.w600),
                         ),
@@ -242,7 +243,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
           title: Text(member.name, style: TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(
             '${teamRoleLabel(member.role)}${member.category != null ? ' - ${member.category}' : ''}',
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: AppColors.inkMuted),
           ),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () => onSelected(member.name),
@@ -256,7 +257,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.grey[100],
+          color: AppColors.surfaceMuted,
           child: Row(
             children: [
               IconButton(
@@ -295,7 +296,7 @@ class _FinancialScreenState extends State<FinancialScreen> with TickerProviderSt
           const SizedBox(height: 8),
           Text(
             context.l10n.addMembersViaEdit,
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: AppColors.inkMuted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -351,7 +352,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                     const SizedBox(height: 8),
                     Text(
                       context.l10n.indexBeingCreatedHint,
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(color: AppColors.inkMuted),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -379,7 +380,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                 child: Center(
                   child: Text(
                     context.l10n.noFinancialDocsInSection,
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: AppColors.inkMuted),
                   ),
                 ),
               )
@@ -397,7 +398,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
                   title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(
                     context.l10n.fileUploadedOn(fileName, _formatDate(docData['uploadedAt'] as Timestamp)),
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: AppColors.inkMuted),
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) {
@@ -600,7 +601,7 @@ Widget _buildFinancialList(String role, {String? memberName}) {
             ),
             Text(
               context.l10n.fileSizeMb((fileBytes!.length / 1024 / 1024).toStringAsFixed(2)),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
             ),
           ],
         ),

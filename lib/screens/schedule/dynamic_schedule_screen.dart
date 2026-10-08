@@ -5,6 +5,7 @@ import 'package:almaworks/screens/schedule/schedule_monitor_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class DynamicScheduleScreen extends StatefulWidget {
   final ProjectModel project;
@@ -51,12 +52,12 @@ class _DynamicScheduleScreenState extends State<DynamicScheduleScreen>
     widget.logger.d('📅 DynamicScheduleScreen: Building UI, isMobile: $isMobile');
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.surfaceAlt,
       body: Column(
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withValues(alpha: 0.1),
@@ -67,9 +68,9 @@ class _DynamicScheduleScreenState extends State<DynamicScheduleScreen>
             ),
             child: TabBar(
               controller: _tabController,
-              labelColor: const Color(0xFF0A2E5A),
+              labelColor: AppColors.brandInk,
               unselectedLabelColor: Colors.grey[600],
-              indicatorColor: const Color(0xFF0A2E5A),
+              indicatorColor: AppColors.brandInk,
               labelStyle: TextStyle(
                 fontWeight: FontWeight.w600,
               ),

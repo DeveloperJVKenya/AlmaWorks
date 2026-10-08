@@ -20,6 +20,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class QualityAndSafetyScreen extends StatefulWidget {
   final ProjectModel project;
@@ -110,7 +111,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.grey.withValues(alpha: 0.1),
@@ -121,9 +122,9 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
                         ),
                         child: TabBar(
                           controller: _tabController,
-                          labelColor: const Color(0xFF0A2E5A),
+                          labelColor: AppColors.brandInk,
                           unselectedLabelColor: Colors.grey[600],
-                          indicatorColor: const Color(0xFF0A2E5A),
+                          indicatorColor: AppColors.brandInk,
                           labelStyle: TextStyle(fontWeight: FontWeight.w600),
                           tabs: [
                             Tab(text: context.l10n.quality),
@@ -202,7 +203,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         widget.logger.d('📄 QualityAndSafetyScreen: Rendering Quality tab');
         if (documents.isEmpty) {
           return Center(
-            child: Text(context.l10n.noDocumentsYet, style: TextStyle(color: Colors.grey[600])),
+            child: Text(context.l10n.noDocumentsYet, style: TextStyle(color: AppColors.inkMuted)),
           );
         }
         return ListView(
@@ -211,7 +212,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!, width: 1),
+                border: Border.all(color: AppColors.border, width: 1),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -284,7 +285,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         widget.logger.d('📄 QualityAndSafetyScreen: Rendering Safety tab');
         if (documents.isEmpty) {
           return Center(
-            child: Text(context.l10n.noDocumentsYet, style: TextStyle(color: Colors.grey[600])),
+            child: Text(context.l10n.noDocumentsYet, style: TextStyle(color: AppColors.inkMuted)),
           );
         }
         return ListView(
@@ -293,7 +294,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!, width: 1),
+                border: Border.all(color: AppColors.border, width: 1),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -345,7 +346,7 @@ class _QualityAndSafetyScreenState extends State<QualityAndSafetyScreen> with Si
         title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
         subtitle: Text(
           context.l10n.uploadedColon(_dateFormat.format(uploadedAt)),
-          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          style: TextStyle(color: AppColors.inkMuted, fontSize: 14),
         ),
         trailing: PopupMenuButton<String>(
           onSelected: (value) => _handleDocumentAction(value, id, name, url, collection, type),

@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:weather/weather.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal model holding current + next-slot weather for one location
@@ -301,7 +302,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                   widget.projectLocation!,
                   style: TextStyle(
                     fontSize: isMobile ? 11 : 12,
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -349,7 +350,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             const SizedBox(height: 12),
             Text(
               context.l10n.fetchingWeather,
-              style: TextStyle(color: Colors.grey[600], fontSize: isMobile ? 12 : 13),
+              style: TextStyle(color: AppColors.inkMuted, fontSize: isMobile ? 12 : 13),
             ),
           ],
         ),
@@ -497,7 +498,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                     Text(
                       _capitalise(cur.weatherDescription ?? main ?? ''),
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: AppColors.inkMuted,
                         fontSize: isMobile ? 12 : 13,
                       ),
                     ),
@@ -574,7 +575,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
         vertical: isMobile ? 8 : 10,
       ),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.surfaceAlt,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
       ),
@@ -608,7 +609,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                 Text(
                   _capitalise(cur.weatherDescription ?? main ?? ''),
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                     fontSize: isMobile ? 10 : 11,
                   ),
                   maxLines: 1,
@@ -681,7 +682,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       padding: EdgeInsets.symmetric(
           horizontal: isMobile ? 10 : 12, vertical: isMobile ? 8 : 10),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
       ),
@@ -703,7 +704,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: isMobile ? 12 : 13,
-                    color: Colors.grey[700],
+                    color: AppColors.inkMuted,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -754,7 +755,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             Text(
               subtitle,
               style: TextStyle(
-                color: Colors.grey[600],
+                color: AppColors.inkMuted,
                 fontSize: isMobile ? 11 : 12,
                 height: 1.5,
               ),

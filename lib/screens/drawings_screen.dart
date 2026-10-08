@@ -21,6 +21,7 @@ import 'package:almaworks/helpers/download_feedback.dart';
 import 'package:intl/intl.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class DrawingsScreen extends StatefulWidget {
   final ProjectModel project;
@@ -130,7 +131,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.grey.withValues(alpha: 0.1),
@@ -141,9 +142,9 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                         ),
                         child: TabBar(
                           controller: _tabController,
-                          labelColor: const Color(0xFF0A2E5A),
+                          labelColor: AppColors.brandInk,
                           unselectedLabelColor: Colors.grey[600],
-                          indicatorColor: const Color(0xFF0A2E5A),
+                          indicatorColor: AppColors.brandInk,
                           indicatorWeight: 3,
                           labelStyle: TextStyle(
                             fontWeight: FontWeight.w600,
@@ -227,7 +228,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   context.l10n.noContractDrawings,
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -286,7 +287,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           context.l10n.fileUploadedDot(drawing.fileName, _formatDate(drawing.uploadedAt)),
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: AppColors.inkMuted,
           ),
         ),
         trailing: PopupMenuButton<String>(
@@ -571,7 +572,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   context.l10n.noDrawingsYet,
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -642,7 +643,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                   context.l10n.noAsBuiltYet,
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -688,7 +689,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           context.l10n.latestRevisionSummary(group.latestRevision?.fileName ?? '', group.revisions.length),
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: AppColors.inkMuted,
           ),
         ),
         leading: Container(
@@ -728,7 +729,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: isLatest ? Colors.green[700] : Colors.grey[600],
+              color: isLatest ? Colors.green[700] : AppColors.inkMuted,
             ),
           ),
         ),
@@ -739,7 +740,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       ),
       subtitle: Text(
         context.l10n.uploadedOn(_formatDate(drawing.uploadedAt)),
-        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -851,7 +852,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           context.l10n.fileUploadedDot(drawing.fileName, _formatDate(drawing.uploadedAt)),
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: AppColors.inkMuted,
           ),
         ),
         trailing: PopupMenuButton<String>(
@@ -1334,10 +1335,10 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         title: Text(
           context.l10n.uploadType,
-          style: TextStyle(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
+          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.brandInk),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1345,7 +1346,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           children: [
             Text(
               context.l10n.chooseUploadType,
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
             const SizedBox(height: 16),
             Card(
@@ -1353,7 +1354,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
                 title: Text(context.l10n.newCategoryDrawing, style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green[800])),
-                subtitle: Text(context.l10n.newCategoryDrawingHint, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                subtitle: Text(context.l10n.newCategoryDrawingHint, style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                 leading: const Icon(Icons.add, color: Colors.green),
                 onTap: () => Navigator.pop(context, 'new'),
                 tileColor: Colors.green.withValues(alpha: 0.05),
@@ -1364,9 +1365,9 @@ class _DrawingsScreenState extends State<DrawingsScreen>
               elevation: 1,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                title: Text(context.l10n.revisionDrawing, style: TextStyle(fontWeight: FontWeight.w500, color: const Color(0xFF0A2E5A))),
-                subtitle: Text(context.l10n.revisionDrawingHint, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                leading: const Icon(Icons.edit, color: Color(0xFF0A2E5A)),
+                title: Text(context.l10n.revisionDrawing, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.brandInk)),
+                subtitle: Text(context.l10n.revisionDrawingHint, style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
+                leading: Icon(Icons.edit, color: AppColors.brandInk),
                 onTap: () => Navigator.pop(context, 'revision'),
                 tileColor: const Color(0xFF0A2E5A).withValues(alpha: 0.05),
               ),
@@ -1404,17 +1405,17 @@ class _DrawingsScreenState extends State<DrawingsScreen>
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         title: Text(
           context.l10n.selectDrawingCategory,
-          style: TextStyle(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
+          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.brandInk),
         ),
         content: SizedBox(
           width: min(400, MediaQuery.of(context).size.width * 0.8),
           height: 300,
           child: ListView.separated(
             itemCount: titles.length,
-            separatorBuilder: (context, index) => Divider(color: Colors.grey[300]),
+            separatorBuilder: (context, index) => Divider(color: AppColors.border),
             itemBuilder: (context, index) {
               final title = titles[index];
               return Card(
@@ -1422,7 +1423,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 color: index % 2 == 0 ? Colors.white : Colors.grey[50],
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
-                  title: Text(title, style: TextStyle(color: Colors.grey[800])),
+                  title: Text(title, style: TextStyle(color: AppColors.ink)),
                   onTap: () {
                     selectedTitle = title;
                     Navigator.pop(context);
@@ -1464,7 +1465,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           dialogTitle,
-          style: TextStyle(fontWeight: FontWeight.w600, color: const Color(0xFF0A2E5A)),
+          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.brandInk),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1472,7 +1473,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
           children: [
             Text(
               contentText,
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -1495,7 +1496,7 @@ class _DrawingsScreenState extends State<DrawingsScreen>
                 context.l10n.fileLabel(fileName),
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: AppColors.inkMuted,
                 ),
               ),
             ],

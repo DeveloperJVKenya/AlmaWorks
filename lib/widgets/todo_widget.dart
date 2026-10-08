@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class TodoWidget extends StatefulWidget {
   final String? projectId;
@@ -629,7 +630,7 @@ class _TodoWidgetState extends State<TodoWidget> {
           Text(
             context.l10n.noActiveTasks,
             style: TextStyle(
-              color: Colors.grey[600],
+              color: AppColors.inkMuted,
               fontSize: isMobile ? 12 : 14,
               fontWeight: FontWeight.w500,
             ),
@@ -755,7 +756,7 @@ class _TodoWidgetState extends State<TodoWidget> {
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: isMobile ? 12 : 14,
-                          color: isUrgent ? statusColor : Colors.grey[800],
+                          color: isUrgent ? statusColor : AppColors.ink,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -793,7 +794,7 @@ class _TodoWidgetState extends State<TodoWidget> {
                       Icon(
                         Icons.folder_outlined,
                         size: isMobile ? 10 : 12,
-                        color: Colors.grey[600],
+                        color: AppColors.inkMuted,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
@@ -801,7 +802,7 @@ class _TodoWidgetState extends State<TodoWidget> {
                           task.projectName,
                           style: TextStyle(
                             fontSize: isMobile ? 9 : 11,
-                            color: Colors.grey[600],
+                            color: AppColors.inkMuted,
                             fontStyle: FontStyle.italic,
                           ),
                           maxLines: 1,

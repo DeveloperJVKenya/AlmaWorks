@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class MSProjectGanttScreen extends StatefulWidget {
   final ProjectModel project;
@@ -306,9 +307,9 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                       maxWidth: 400,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                      border: Border.all(color: AppColors.border, width: 1),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.15),
@@ -325,7 +326,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                           padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             border: Border(
-                              bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+                              bottom: BorderSide(color: AppColors.border, width: 1),
                             ),
                           ),
                           child: TextField(
@@ -338,11 +339,11 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                               prefixIcon: Icon(Icons.search, size: 18, color: Colors.grey.shade500),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(6),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(color: AppColors.border),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(6),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(color: AppColors.border),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(6),
@@ -377,10 +378,10 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             decoration: BoxDecoration(
                               color: row.resourceId == null
-                                  ? Colors.blue.shade50
+                                  ? AppColors.brandTint
                                   : Colors.transparent,
                               border: Border(
-                                bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
+                                bottom: BorderSide(color: AppColors.border, width: 0.5),
                               ),
                             ),
                             child: Row(
@@ -1591,7 +1592,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
@@ -1608,7 +1609,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
-                    color: Colors.grey.shade700,
+                    color: AppColors.inkMuted,
                   ),
                 ),
               ],
@@ -1627,7 +1628,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+                  color: AppColors.inkMuted,
                 ),
               ),
             ),
@@ -2449,7 +2450,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
@@ -2466,7 +2467,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
-                    color: Colors.grey.shade700,
+                    color: AppColors.inkMuted,
                   ),
                 ),
               ],
@@ -2485,7 +2486,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+                  color: AppColors.inkMuted,
                 ),
               ),
             ),
@@ -2593,10 +2594,10 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             width: double.infinity,
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.blue.shade50 : Colors.transparent,
+              color: isSelected ? AppColors.brandTint : Colors.transparent,
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.grey.shade200,
+                  color: AppColors.border,
                   width: (_showQuantityInput[index] == true && isSelected) ? 0 : 0.5,
                 ),
               ),
@@ -2628,7 +2629,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected ? Colors.blue.shade600 : Colors.grey.shade800,
+                          color: isSelected ? Colors.blue.shade600 : AppColors.ink,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -2659,9 +2660,9 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             width: double.infinity,
             padding: EdgeInsets.fromLTRB(12, 8, 12, 12),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: AppColors.brandTint,
               border: Border(
-                bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
+                bottom: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: Column(
@@ -2673,7 +2674,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade700,
+                    color: AppColors.inkMuted,
                   ),
                 ),
                 SizedBox(height: 6),
@@ -2690,11 +2691,11 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
+                            borderSide: BorderSide(color: AppColors.border),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
+                            borderSide: BorderSide(color: AppColors.border),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
@@ -2783,7 +2784,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.grey.shade600,
+              color: AppColors.inkMuted,
             ),
           ),
           SizedBox(height: 4),
@@ -2844,7 +2845,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   Container(
                     width: ganttWidth,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
+                      color: AppColors.surfaceMuted,
                       border: Border.all(color: Colors.grey.shade400, width: 1),
                     ),
                     child: _buildTimelineHeader(),
@@ -2870,7 +2871,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       width: width,
       height: headerHeight,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: AppColors.surfaceMuted,
         border: Border(
           right: BorderSide(color: Colors.grey.shade400, width: 0.5),
           bottom: BorderSide(color: Colors.grey.shade400, width: 1),
@@ -2884,7 +2885,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade700,
+            color: AppColors.inkMuted,
           ),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
@@ -2913,7 +2914,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       decoration: BoxDecoration(
         color: index % 2 == 0 ? Colors.white : Colors.grey.shade50,
         border: Border(
-          bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
+          bottom: BorderSide(color: AppColors.border, width: 0.5),
         ),
       ),
       child: Row(
@@ -2923,9 +2924,9 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             width: _numberColumnWidth,
             height: rowHeight,
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: AppColors.surfaceMuted,
               border: Border(
-                right: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                right: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: Padding(
@@ -2969,7 +2970,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             height: rowHeight,
             decoration: BoxDecoration(
               border: Border(
-                right: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                right: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: GestureDetector(
@@ -3021,7 +3022,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             height: rowHeight,
             decoration: BoxDecoration(
               border: Border(
-                right: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                right: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: ConstrainedBox(
@@ -3059,7 +3060,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             height: rowHeight,
             decoration: BoxDecoration(
               border: Border(
-                right: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                right: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: _buildDateCell(
@@ -3074,7 +3075,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
             height: rowHeight,
             decoration: BoxDecoration(
               border: Border(
-                right: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                right: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
             child: _buildDateCell(
@@ -3096,10 +3097,10 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               height: rowHeight,
               decoration: BoxDecoration(
                 border: Border(
-                  right: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                  right: BorderSide(color: AppColors.border, width: 0.5),
                 ),
                 color: row.taskType == TaskType.task
-                    ? (isDropdownOpen ? Colors.blue.shade50 : Colors.transparent)
+                    ? (isDropdownOpen ? AppColors.brandTint : Colors.transparent)
                     : Colors.grey.shade100,
               ),
               child: Padding(
@@ -3176,7 +3177,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
               height: rowHeight,
               decoration: BoxDecoration(
                 border: Border(
-                  right: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                  right: BorderSide(color: AppColors.border, width: 0.5),
                 ),
                 color: row.taskType == TaskType.task
                     ? Colors.transparent
@@ -3313,7 +3314,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
@@ -3330,7 +3331,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade700,
+                    color: AppColors.inkMuted,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -3358,7 +3359,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade600,
+                    color: AppColors.inkMuted,
                   ),
                 ),
                 SizedBox(height: 12),
@@ -3371,7 +3372,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 )),
                 if (hasActualStart || hasActualEnd) ...[
                   SizedBox(height: 12),
-                  Divider(height: 1, color: Colors.grey.shade300),
+                  Divider(height: 1, color: AppColors.border),
                   SizedBox(height: 12),
                   _buildDialogOption(
                     option: 'Clear All Actual Dates',
@@ -3393,7 +3394,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+                  color: AppColors.inkMuted,
                 ),
               ),
             ),
@@ -3432,11 +3433,11 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isDestructive ? Colors.red.shade200 : Colors.grey.shade300,
+            color: isDestructive ? Colors.red.shade200 : AppColors.border,
             width: 1,
           ),
           borderRadius: BorderRadius.circular(8),
-          color: isDestructive ? Colors.red.shade50 : Colors.grey.shade50,
+          color: isDestructive ? AppColors.dangerTint : AppColors.surfaceAlt,
         ),
         child: Row(
           children: [
@@ -3452,7 +3453,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: isDestructive ? Colors.red.shade700 : Colors.grey.shade800,
+                  color: isDestructive ? Colors.red.shade700 : AppColors.ink,
                 ),
               ),
             ),
@@ -4072,7 +4073,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
@@ -4089,7 +4090,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
-                    color: Colors.grey.shade700,
+                    color: AppColors.inkMuted,
                   ),
                 ),
               ],
@@ -4108,7 +4109,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+                  color: AppColors.inkMuted,
                 ),
               ),
             ),
@@ -4211,8 +4212,8 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
       height: 50,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+        color: AppColors.surfaceMuted,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
@@ -4230,7 +4231,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                        color: AppColors.ink,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -4242,7 +4243,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
                           : context.l10n.couldNotLoadProjectDates,
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.grey.shade700,
+                        color: AppColors.inkMuted,
                         fontWeight: FontWeight.w400,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -4339,7 +4340,7 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           height: headerHeight / 2,
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade400, width: 0.5),
-            color: Colors.grey.shade100,
+            color: AppColors.surfaceMuted,
           ),
           child: Center(
             child: Text(
@@ -4387,8 +4388,8 @@ class _MSProjectGanttScreenState extends State<MSProjectGanttScreen>
           width: dayWidth,
           height: headerHeight / 2,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300, width: 0.5),
-            color: Colors.white,
+            border: Border.all(color: AppColors.border, width: 0.5),
+            color: AppColors.surface,
           ),
           child: Center(
             child: Text(
@@ -4837,9 +4838,9 @@ class TaskContextMenu extends StatelessWidget {
       child: Container(
         width: 180,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

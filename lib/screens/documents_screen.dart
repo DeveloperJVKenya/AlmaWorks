@@ -24,6 +24,7 @@ import 'package:almaworks/screens/projects/add_project_screen.dart' show teamRol
 import 'package:intl/intl.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class DocumentsScreen extends StatefulWidget {
   final ProjectModel project;
@@ -284,7 +285,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                             Tab(text: docTabLabel('Sub-Contractor')),
                             Tab(child: _buildSupplierTabLabel()),
                           ],
-                          labelColor: const Color(0xFF0A2E5A),
+                          labelColor: AppColors.brandInk,
                           unselectedLabelColor: Colors.grey,
                           labelStyle: TextStyle(fontWeight: FontWeight.w600),
                         ),
@@ -306,7 +307,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                                           child: Text(
                                             context.l10n.noDocsAskAdminSub,
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(color: Colors.grey[600]),
+                                            style: TextStyle(color: AppColors.inkMuted),
                                           ),
                                         ),
                                       )
@@ -379,7 +380,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
               tabs: tabSections
                   .map((section) => Tab(text: docTabLabel(section)))
                   .toList(),
-              labelColor: const Color(0xFF0A2E5A),
+              labelColor: AppColors.brandInk,
               unselectedLabelColor: Colors.grey,
               labelStyle:
                   TextStyle(fontWeight: FontWeight.w600),
@@ -526,7 +527,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           title: Text(member.name, style: TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(
             '${teamRoleLabel(member.role)}${member.category != null ? ' - ${member.category}' : ''}',
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: AppColors.inkMuted),
           ),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () => onSelected(member.name),
@@ -540,7 +541,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.grey[100],
+          color: AppColors.surfaceMuted,
           child: Row(
             children: [
               IconButton(
@@ -579,7 +580,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
           const SizedBox(height: 8),
           Text(
             context.l10n.addMembersViaEdit,
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: AppColors.inkMuted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -631,7 +632,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                 child: Center(
                   child: Text(
                     context.l10n.noDocumentsInSection,
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: AppColors.inkMuted),
                   ),
                 ),
               )
@@ -648,7 +649,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                   title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(
                     context.l10n.fileUploadedOn(fileName, _formatDate(docData['uploadedAt'] as Timestamp)),
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: AppColors.inkMuted),
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) {
@@ -747,7 +748,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.history, color: Color(0xFF0A2E5A)),
+            Icon(Icons.history, color: AppColors.brandInk),
             const SizedBox(width: 10),
             Text(context.l10n.documentActivity, style: TextStyle(fontWeight: FontWeight.w600)),
           ],
@@ -776,7 +777,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                   .toList();
               if (entries.isEmpty) {
                 return Center(
-                  child: Text(context.l10n.noActivityYet, style: TextStyle(color: Colors.grey[600])),
+                  child: Text(context.l10n.noActivityYet, style: TextStyle(color: AppColors.inkMuted)),
                 );
               }
               return ListView.separated(
@@ -801,7 +802,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> with TickerProviderSt
                     ),
                     subtitle: Text(
                       '$scope\n${_formatDateTime(e.createdAt)}',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 11, color: AppColors.inkMuted),
                     ),
                     isThreeLine: true,
                   );
@@ -1435,7 +1436,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       title: Row(
         children: [
-          const Icon(Icons.cloud_upload_outlined, color: Color(0xFF0A2E5A), size: 22),
+          Icon(Icons.cloud_upload_outlined, color: AppColors.brandInk, size: 22),
           const SizedBox(width: 10),
           Text(
             context.l10n.uploadingDocument,
@@ -1469,7 +1470,7 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0A2E5A),
+                    color: AppColors.brandInk,
                   ),
                 ),
               ],
@@ -1496,12 +1497,12 @@ class _UploadProgressDialogState extends State<_UploadProgressDialog> {
               children: [
                 Text(
                   _statusLabel,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                 ),
                 if (_bytesLabel.isNotEmpty)
                   Text(
                     _bytesLabel,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
                   ),
               ],
             ),

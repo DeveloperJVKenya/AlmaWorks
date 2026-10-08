@@ -7,6 +7,7 @@ import 'communication_models.dart';
 import 'communication_service.dart';
 import 'communication_compose_dialog.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class CommunicationMessageDetailScreen extends StatefulWidget {
   final CommunicationMessage message;
@@ -215,7 +216,7 @@ class _CommunicationMessageDetailScreenState
     final isMobile = screenWidth < 600;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.surfaceAlt,
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A2E5A),
         foregroundColor: Colors.white,
@@ -299,7 +300,7 @@ class _CommunicationMessageDetailScreenState
               style: TextStyle(
                 fontSize: isMobile ? 18 : 22,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF0A2E5A),
+                color: AppColors.brandInk,
               ),
             ),
             const SizedBox(height: 16),
@@ -372,7 +373,7 @@ class _CommunicationMessageDetailScreenState
             '$label:',
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey[600],
+              color: AppColors.inkMuted,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -410,7 +411,7 @@ class _CommunicationMessageDetailScreenState
                         p.username.isNotEmpty ? p.username : p.email,
                         style: TextStyle(
                           fontSize: 13,
-                          color: const Color(0xFF0A2E5A),
+                          color: AppColors.brandInk,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -438,7 +439,7 @@ class _CommunicationMessageDetailScreenState
       padding:
           const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: AppColors.brandTint,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.blue.shade200),
       ),
@@ -467,7 +468,7 @@ class _CommunicationMessageDetailScreenState
             paragraph: quill.DefaultTextBlockStyle(
               TextStyle(
                   fontSize: isMobile ? 13 : 14,
-                  color: Colors.grey[800]),
+                  color: AppColors.ink),
               const quill.HorizontalSpacing(0, 0),
               const quill.VerticalSpacing(0, 0),
               const quill.VerticalSpacing(0, 0),
@@ -488,7 +489,7 @@ class _CommunicationMessageDetailScreenState
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
-            color: const Color(0xFF0A2E5A),
+            color: AppColors.brandInk,
           ),
         ),
         const SizedBox(height: 8),
@@ -509,15 +510,15 @@ class _CommunicationMessageDetailScreenState
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: AppColors.border),
                   borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey[50],
+                  color: AppColors.surfaceAlt,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(att.icon,
-                        size: 20, color: const Color(0xFF0A2E5A)),
+                        size: 20, color: AppColors.brandInk),
                     const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,14 +590,14 @@ class _CommunicationMessageDetailScreenState
                 _showThread
                     ? Icons.expand_less
                     : Icons.expand_more,
-                color: const Color(0xFF0A2E5A),
+                color: AppColors.brandInk,
               ),
               const SizedBox(width: 6),
               Text(
                 context.l10n.repliesInThread(replies.length),
                 style: TextStyle(
                   fontSize: 13,
-                  color: const Color(0xFF0A2E5A),
+                  color: AppColors.brandInk,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -637,9 +638,9 @@ class _ThreadMessageTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, left: 16),
       padding: EdgeInsets.all(isMobile ? 12 : 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withValues(alpha: 0.06),
@@ -697,7 +698,7 @@ class _ThreadMessageTile extends StatelessWidget {
                 ? message.bodyPlainText
                 : context.l10n.noContent,
             style: TextStyle(
-                fontSize: 13, color: Colors.grey[700]),
+                fontSize: 13, color: AppColors.inkMuted),
           ),
         ],
       ),
@@ -724,7 +725,7 @@ class _ActionButton extends StatelessWidget {
       icon: Icon(icon, size: 16),
       label: Text(label, style: TextStyle(fontSize: 13)),
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF0A2E5A),
+        foregroundColor: AppColors.brandInk,
         side: BorderSide(color: const Color(0xFF0A2E5A).withValues(alpha: 0.4)),
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

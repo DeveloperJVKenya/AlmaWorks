@@ -11,6 +11,7 @@ import 'communication_message_detail_screen.dart';
 import 'communication_models.dart';
 import 'communication_service.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 // ─── Folder / View types ──────────────────────────────────────────────────────
 enum _Folder { inbox, sent, drafts, trash }
@@ -168,7 +169,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
   // ─── Sidebar (desktop) ────────────────────────────────────────────────────
   Widget _buildSidebar() {
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       child: SizedBox(
         width: 220,
         child: Column(
@@ -242,7 +243,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                     widget.project.name,
                     style: TextStyle(
                       fontSize: 13,
-                      color: const Color(0xFF0A2E5A),
+                      color: AppColors.brandInk,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 2,
@@ -260,9 +261,9 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                 margin: const EdgeInsets.all(12),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
                   children: [
@@ -330,14 +331,14 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
         leading: Icon(
           icon,
           size: 20,
-          color: isSelected ? const Color(0xFF0A2E5A) : Colors.grey[600],
+          color: isSelected ? const Color(0xFF0A2E5A) : AppColors.inkMuted,
         ),
         title: Text(
           label,
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected ? const Color(0xFF0A2E5A) : Colors.grey[700],
+            color: isSelected ? const Color(0xFF0A2E5A) : AppColors.inkMuted,
           ),
         ),
         selected: isSelected,
@@ -385,7 +386,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.grey[50],
+      color: AppColors.surfaceAlt,
       child: TextField(
         controller: _searchCtrl,
         style: TextStyle(fontSize: 13),
@@ -403,14 +404,14 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                 )
               : null,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.surface,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(color: AppColors.border),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -526,7 +527,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
           padding: const EdgeInsets.symmetric(vertical: 4),
           itemCount: items.length,
           separatorBuilder: (_, _) =>
-              Divider(height: 1, color: Colors.grey.shade200),
+              Divider(height: 1, color: AppColors.border),
           itemBuilder: (_, i) => itemBuilder(items[i]),
         );
       },
@@ -547,7 +548,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: AppColors.inkMuted,
               ),
             ),
             const SizedBox(height: 6),
@@ -587,7 +588,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
           padding: const EdgeInsets.symmetric(vertical: 4),
           itemCount: drafts.length,
           separatorBuilder: (_, _) =>
-              Divider(height: 1, color: Colors.grey.shade200),
+              Divider(height: 1, color: AppColors.border),
           itemBuilder: (_, i) {
             final d = drafts[i];
             return _DraftTile(
@@ -631,7 +632,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
       onTap: (i) => setState(() => _activeFolder = _Folder.values[i]),
       selectedLabelStyle: TextStyle(fontSize: 11),
       unselectedLabelStyle: TextStyle(fontSize: 11),
-      selectedItemColor: const Color(0xFF0A2E5A),
+      selectedItemColor: AppColors.brandInk,
       unselectedItemColor: Colors.grey[500],
       type: BottomNavigationBarType.fixed,
       items: [
@@ -748,7 +749,7 @@ class _MessageTile extends StatelessWidget {
                               fontWeight: _isUnread && !isSent
                                   ? FontWeight.w700
                                   : FontWeight.w500,
-                              color: const Color(0xFF0A2E5A),
+                              color: AppColors.brandInk,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -778,7 +779,7 @@ class _MessageTile extends StatelessWidget {
                               fontWeight: _isUnread && !isSent
                                   ? FontWeight.w600
                                   : FontWeight.normal,
-                              color: Colors.grey[800],
+                              color: AppColors.ink,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -791,7 +792,7 @@ class _MessageTile extends StatelessWidget {
                               vertical: 1,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
+                              color: AppColors.surfaceMuted,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -799,7 +800,7 @@ class _MessageTile extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey[600],
+                                color: AppColors.inkMuted,
                               ),
                             ),
                           ),
@@ -953,7 +954,7 @@ class _DraftTile extends StatelessWidget {
                     draft.subject.isNotEmpty ? draft.subject : context.l10n.noSubject,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[700],
+                      color: AppColors.inkMuted,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),

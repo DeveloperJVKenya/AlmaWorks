@@ -18,6 +18,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:almaworks/screens/photos_screen.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class _SelectionState extends ChangeNotifier {
   bool _multiSelectMode = false;
@@ -131,8 +132,8 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                           ),
                         );
                       },
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF0A2E5A),
+                      backgroundColor: AppColors.surface,
+                      foregroundColor: AppColors.brandInk,
                       elevation: 4,
                       icon: const Icon(Icons.photo_album),
                       label: Text(context.l10n.viewPhotos),
@@ -183,7 +184,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF0A2E5A),
+              color: AppColors.brandInk,
             ),
           ),
           TextButton.icon(
@@ -191,10 +192,10 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               widget.logger.i('🔄 Exiting multi-select mode');
               _selection.exitMultiSelect();
             },
-            icon: const Icon(Icons.close, color: Color(0xFF0A2E5A)),
+            icon: Icon(Icons.close, color: AppColors.brandInk),
             label: Text(
               context.l10n.cancel,
-              style: TextStyle(color: const Color(0xFF0A2E5A)),
+              style: TextStyle(color: AppColors.brandInk),
             ),
           ),
         ],
@@ -366,7 +367,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                   Text(
                     context.l10n.noPhotosAddSome,
                     style: TextStyle(
-                        color: Colors.grey[600], fontSize: 16),
+                        color: AppColors.inkMuted, fontSize: 16),
                   ),
                 ],
               ),
@@ -494,7 +495,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               _selection.multiSelectMode
                   ? Icons.check_box
                   : Icons.check_box_outline_blank,
-              color: const Color(0xFF0A2E5A),
+              color: AppColors.brandInk,
             ),
             title: Text(
               _selection.multiSelectMode
@@ -512,7 +513,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                 .addPostFrameCallback((_) => _viewPhotoFullScreen(photo)),
             child: ListTile(
               leading:
-                  const Icon(Icons.visibility, color: Color(0xFF0A2E5A)),
+                  Icon(Icons.visibility, color: AppColors.brandInk),
               title: Text(context.l10n.view, style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
@@ -521,7 +522,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
             onTap: () => WidgetsBinding.instance
                 .addPostFrameCallback((_) => _editPhotoDetails(photo)),
             child: ListTile(
-              leading: const Icon(Icons.edit, color: Color(0xFF0A2E5A)),
+              leading: Icon(Icons.edit, color: AppColors.brandInk),
               title: Text(context.l10n.edit, style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
@@ -530,7 +531,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
             onTap: () => WidgetsBinding.instance
                 .addPostFrameCallback((_) => _sharePhoto(photo)),
             child: ListTile(
-              leading: const Icon(Icons.share, color: Color(0xFF0A2E5A)),
+              leading: Icon(Icons.share, color: AppColors.brandInk),
               title: Text(context.l10n.share, style: TextStyle(fontSize: 14)),
               contentPadding: EdgeInsets.zero,
             ),
@@ -581,7 +582,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             title: Row(
               children: [
-                const Icon(Icons.drive_file_move, color: Color(0xFF0A2E5A)),
+                Icon(Icons.drive_file_move, color: AppColors.brandInk),
                 const SizedBox(width: 8),
                 Text(context.l10n.movingPhotos, style: TextStyle()),
               ],
@@ -1298,7 +1299,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                 borderRadius: BorderRadius.circular(12)),
             title: Row(
               children: [
-                const Icon(Icons.cloud_upload, color: Color(0xFF0A2E5A)),
+                Icon(Icons.cloud_upload, color: AppColors.brandInk),
                 const SizedBox(width: 8),
                 Text(context.l10n.uploadingTitle, style: TextStyle()),
               ],
@@ -1539,7 +1540,7 @@ class _PhotoTileState extends State<_PhotoTile> {
                 maxHeightDiskCache: 600,
                 maxWidthDiskCache: 600,
                 placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
+                  color: AppColors.surfaceMuted,
                   child: const Center(
                     child: CircularProgressIndicator(
                         color: Color(0xFF0A2E5A), strokeWidth: 2),
@@ -1582,7 +1583,7 @@ class _PhotoTileState extends State<_PhotoTile> {
                       decoration: BoxDecoration(
                         color: _isSelected
                             ? const Color(0xFF0A2E5A)
-                            : Colors.white,
+                            : AppColors.surface,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -1627,7 +1628,7 @@ class _PhotoTileState extends State<_PhotoTile> {
 
   Widget _buildErrorWidget() {
     return Container(
-      color: Colors.grey[200],
+      color: AppColors.surfaceMuted,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -1635,7 +1636,7 @@ class _PhotoTileState extends State<_PhotoTile> {
           const SizedBox(height: 4),
           Text(
             l10nNow.unavailable,
-            style: TextStyle(color: Colors.grey[600], fontSize: 10),
+            style: TextStyle(color: AppColors.inkMuted, fontSize: 10),
             textAlign: TextAlign.center,
           ),
         ],

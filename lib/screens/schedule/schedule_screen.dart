@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class ScheduleScreen extends StatefulWidget {
   final ProjectModel project;
@@ -147,7 +148,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
                       if (!isClient)
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.grey.withValues(alpha: 0.1),
@@ -158,9 +159,9 @@ class _ScheduleScreenState extends State<ScheduleScreen>
                           ),
                           child: TabBar(
                             controller: _tabController,
-                            labelColor: const Color(0xFF0A2E5A),
+                            labelColor: AppColors.brandInk,
                             unselectedLabelColor: Colors.grey[600],
-                            indicatorColor: const Color(0xFF0A2E5A),
+                            indicatorColor: AppColors.brandInk,
                             indicatorWeight: 3,
                             labelStyle: TextStyle(
                               fontWeight: FontWeight.w600,

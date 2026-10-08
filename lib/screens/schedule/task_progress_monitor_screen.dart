@@ -16,6 +16,7 @@ import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 // ══════════════════════════════════════════════════════════════════
 // ENUMS
@@ -59,21 +60,21 @@ extension DayStatusX on DayStatus {
 
   Color get color {
     switch (this) {
-      case DayStatus.done:       return const Color(0xFF2E7D32);
-      case DayStatus.completed:  return const Color(0xFF2E7D32);
-      case DayStatus.holiday:    return const Color(0xFF6A1B9A);
-      case DayStatus.badWeather: return const Color(0xFF00838F);
+      case DayStatus.done:       return AppColors.success;
+      case DayStatus.completed:  return AppColors.success;
+      case DayStatus.holiday:    return AppColors.isDark ? const Color(0xFFCE93D8) : const Color(0xFF6A1B9A);
+      case DayStatus.badWeather: return AppColors.isDark ? const Color(0xFF4DD0E1) : const Color(0xFF00838F);
       default:                   return Colors.grey;
     }
   }
 
   Color get bgColor {
     switch (this) {
-      case DayStatus.done:       return const Color(0xFFE8F5E9);
-      case DayStatus.completed:  return const Color(0xFFE8F5E9);
-      case DayStatus.holiday:    return const Color(0xFFF3E5F5);
-      case DayStatus.badWeather: return const Color(0xFFE0F7FA);
-      default:                   return Colors.white;
+      case DayStatus.done:       return AppColors.successTint;
+      case DayStatus.completed:  return AppColors.successTint;
+      case DayStatus.holiday:    return AppColors.isDark ? const Color(0xFF2E1A33) : const Color(0xFFF3E5F5);
+      case DayStatus.badWeather: return AppColors.brandTint;
+      default:                   return AppColors.surface;
     }
   }
 
@@ -276,7 +277,7 @@ class _TaskProgressMonitorScreenState
   static const _navyLight  = Color(0xFF1A3C6A);
   static const _navyMid    = Color(0xFF0D3060);
   static const _fieldBorder = Color(0xFFB0BEC5);
-  static const _sectionBg  = Color(0xFFF5F7FA);
+  static Color get _sectionBg => AppColors.surfaceAlt;
 
   // Week-boundary separator (darker, thicker)
   static const _weekBorderColor = Color(0xFF78909C);
@@ -1588,7 +1589,7 @@ class _TaskProgressMonitorScreenState
               width: 38, height: 4,
               margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.surfaceMuted,
                   borderRadius: BorderRadius.circular(2)),
             ),
             Padding(
@@ -1596,7 +1597,7 @@ class _TaskProgressMonitorScreenState
               child: Text(
                 '${row.taskName.trim()}  ·  ${DateFormat.yMMMEd().format(day)}',
                 style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700, color: _navy),
+                    fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.brandInk),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -1616,7 +1617,7 @@ class _TaskProgressMonitorScreenState
               status: DayStatus.done,
               current: current,
               label: DayStatus.done.label,
-              labelColor: Colors.black87,
+              labelColor: AppColors.ink,
               onPick: pick,
             ),
             // ── Work Done – Completed (forces task to 100 %) ───────
@@ -1625,7 +1626,7 @@ class _TaskProgressMonitorScreenState
               status: DayStatus.completed,
               current: current,
               label: DayStatus.completed.label,
-              labelColor: Colors.black87,
+              labelColor: AppColors.ink,
               onPick: pick,
             ),
             // ── Holiday ────────────────────────────────────────────
@@ -1634,7 +1635,7 @@ class _TaskProgressMonitorScreenState
               status: DayStatus.holiday,
               current: current,
               label: DayStatus.holiday.label,
-              labelColor: Colors.black87,
+              labelColor: AppColors.ink,
               onPick: pick,
             ),
             // ── Bad Weather ────────────────────────────────────────
@@ -1643,7 +1644,7 @@ class _TaskProgressMonitorScreenState
               status: DayStatus.badWeather,
               current: current,
               label: DayStatus.badWeather.label,
-              labelColor: Colors.black87,
+              labelColor: AppColors.ink,
               onPick: pick,
             ),
             const SizedBox(height: 8),
@@ -1692,7 +1693,7 @@ class _TaskProgressMonitorScreenState
       return Container(
         width: 26, height: 26,
         decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: AppColors.border),
             borderRadius: BorderRadius.circular(6)),
         child: const Icon(Icons.remove_rounded, size: 12, color: Colors.grey),
       );
@@ -1719,7 +1720,7 @@ class _TaskProgressMonitorScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.surfaceAlt,
       appBar: _buildAppBar(),
       body: Stack(
         children: [
@@ -1768,7 +1769,7 @@ class _TaskProgressMonitorScreenState
             margin: const EdgeInsets.all(24),
             padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
@@ -1808,7 +1809,7 @@ class _TaskProgressMonitorScreenState
                             style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
-                                color: _navy)),
+                                color: AppColors.brandInk)),
                         Text(context.l10n.pleaseWait,
                             style: TextStyle(
                                 fontSize: 11,
@@ -1831,7 +1832,7 @@ class _TaskProgressMonitorScreenState
                           child: LinearProgressIndicator(
                             value: _importProgress,
                             minHeight: 8,
-                            backgroundColor: const Color(0xFFE8EEF6),
+                            backgroundColor: AppColors.brandTint,
                             valueColor: const AlwaysStoppedAnimation(_navy),
                           ),
                         ),
@@ -1842,7 +1843,7 @@ class _TaskProgressMonitorScreenState
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: _navy),
+                            color: AppColors.brandInk),
                       ),
                     ]),
                     const SizedBox(height: 10),
@@ -1850,7 +1851,7 @@ class _TaskProgressMonitorScreenState
                       _importStep,
                       style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600]),
+                          color: AppColors.inkMuted),
                     ),
                   ],
                 ),
@@ -1884,7 +1885,7 @@ class _TaskProgressMonitorScreenState
                                     width: 8, height: 8,
                                     margin: const EdgeInsets.all(5),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[300],
+                                      color: AppColors.surfaceMuted,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -2074,7 +2075,7 @@ class _TaskProgressMonitorScreenState
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(bottom: BorderSide(color: _fieldBorder, width: 0.8)),
         boxShadow: [
           BoxShadow(
@@ -2130,7 +2131,7 @@ class _TaskProgressMonitorScreenState
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text('${(_zoomFactor * 100).round()}%',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey[700])),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.inkMuted)),
           ),
         ),
         InkWell(
@@ -2201,13 +2202,13 @@ class _TaskProgressMonitorScreenState
               width: 0.9),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 14, color: active ? c : Colors.grey[600]),
+          Icon(icon, size: 14, color: active ? c : AppColors.inkMuted),
           const SizedBox(width: 4),
           Text(label,
               style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: active ? c : Colors.grey[600])),
+                  color: active ? c : AppColors.inkMuted)),
         ]),
       ),
     );
@@ -2671,14 +2672,13 @@ class _TaskProgressMonitorScreenState
   (Color, Color, Color) _rowColors(TaskRowType t) {
     switch (t) {
       case TaskRowType.project:
-        return (const Color(0xFFE8EEF6), _navy, _navy);
+        return (AppColors.brandTint, AppColors.brandInk, AppColors.brandInk);
       case TaskRowType.category:
-        return (const Color(0xFFF0F4F9),
-            const Color(0xFF1A3C6A), const Color(0xFF1A3C6A));
+        return (AppColors.surfaceAlt, AppColors.brandInk, AppColors.brandInk);
       case TaskRowType.phase:
-        return (const Color(0xFFE3ECF8), _navy, _navy);
+        return (AppColors.brandTint, AppColors.brandInk, AppColors.brandInk);
       case TaskRowType.task:
-        return (Colors.white, Colors.black87, _navy);
+        return (AppColors.surface, AppColors.ink, AppColors.brandInk);
     }
   }
 
@@ -2836,7 +2836,7 @@ class _TaskProgressMonitorScreenState
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 3,
-              backgroundColor: const Color(0xFFE0E6EF),
+              backgroundColor: AppColors.surfaceMuted,
               valueColor: AlwaysStoppedAnimation(barColor),
             ),
           ),
@@ -3055,7 +3055,7 @@ class _TaskProgressMonitorScreenState
                   Text(widget.project.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 4),
                   Text(context.l10n.extensionMainlyEnd,
-                      style: TextStyle(fontSize: 11.5, color: Colors.grey[600])),
+                      style: TextStyle(fontSize: 11.5, color: AppColors.inkMuted)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -3079,7 +3079,7 @@ class _TaskProgressMonitorScreenState
                   const SizedBox(height: 8),
                   Text(
                     context.l10n.extensionApprovalNote,
-                    style: TextStyle(fontSize: 11.5, color: Colors.grey[600], height: 1.4),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.inkMuted, height: 1.4),
                   ),
                 ],
               ),
@@ -3372,7 +3372,7 @@ class _TaskProgressMonitorScreenState
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor)),
                       const Spacer(),
                       Text(_dfDisplay.format(r.requestedAt),
-                          style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                          style: TextStyle(fontSize: 10, color: AppColors.inkMuted)),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -3383,7 +3383,7 @@ class _TaskProgressMonitorScreenState
                   ),
                   const SizedBox(height: 4),
                   Text(context.l10n.requestedByNameRole(r.requestedByName, roleLabel(r.requestedByRole)),
-                      style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+                      style: TextStyle(fontSize: 11, color: AppColors.inkMuted)),
                   const SizedBox(height: 6),
                   Text(r.reason, style: TextStyle(fontSize: 12.5, height: 1.4)),
                   if (r.respondedByName != null) ...[
@@ -3391,9 +3391,9 @@ class _TaskProgressMonitorScreenState
                     Text(r.status == ProjectDateExtensionRequestModel.statusApproved
                             ? context.l10n.approvedByName(r.respondedByName!)
                             : context.l10n.rejectedByName(r.respondedByName!),
-                        style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+                        style: TextStyle(fontSize: 11, color: AppColors.inkMuted)),
                     if (r.rejectionReason != null && r.rejectionReason!.isNotEmpty)
-                      Text(context.l10n.reasonColon(r.rejectionReason!), style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+                      Text(context.l10n.reasonColon(r.rejectionReason!), style: TextStyle(fontSize: 11, color: AppColors.inkMuted)),
                   ],
                   if (r.isPending && _canApproveProjectExtension) ...[
                     const SizedBox(height: 10),
@@ -3474,7 +3474,7 @@ class _TaskProgressMonitorScreenState
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Text(context.l10n.awaitingPmApproval,
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                       ),
                     ...requests.map(buildRequestCard),
                   ],
@@ -3515,8 +3515,8 @@ class _TaskProgressMonitorScreenState
               width: phaseW, height: h,
               child: ColoredBox(
                 color: row.type == TaskRowType.project
-                    ? const Color(0xFFE8EEF6)
-                    : const Color(0xFFF0F4F9),
+                    ? AppColors.brandTint
+                    : AppColors.surfaceAlt,
                 child: const Divider(height: 1, thickness: 0.3),
               ),
             );
@@ -3529,7 +3529,7 @@ class _TaskProgressMonitorScreenState
             }
             return SizedBox(
               width: phaseW, height: h,
-              child: const ColoredBox(color: Color(0xFFF5F7FA)),
+              child: ColoredBox(color: AppColors.surfaceAlt),
             );
           }
 
@@ -3538,11 +3538,11 @@ class _TaskProgressMonitorScreenState
           if (!inPhase) {
             return SizedBox(
               width: phaseW, height: h,
-              child: const ColoredBox(
-                color: Color(0xFFF9FAFB),
+              child: ColoredBox(
+                color: AppColors.surfaceAlt,
                 child: Center(
                   child: Divider(
-                      color: Color(0xFFE0E4EA), thickness: 0.5, height: 1),
+                      color: AppColors.divider, thickness: 0.5, height: 1),
                 ),
               ),
             );
@@ -3700,7 +3700,7 @@ class _TaskProgressMonitorScreenState
         width: _kDayW,
         height: h,
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F5E9),
+          color: AppColors.successTint,
           border: Border(
             right: isWeekEnd
                 ? BorderSide(color: _weekBorderColor, width: _weekBorderWidth)
@@ -3717,8 +3717,8 @@ class _TaskProgressMonitorScreenState
         ? const Color(0xFFE65100)
         : status.color;
     final effectiveBg = (isOverrun && (status == DayStatus.done || status == DayStatus.completed))
-        ? const Color(0xFFFFF3E0)
-        : (active ? status.bgColor : const Color(0xFFF3F5F7));
+        ? AppColors.warningTint
+        : (active ? status.bgColor : AppColors.surfaceAlt);
 
     return Container(
       width: _kDayW,
@@ -3776,7 +3776,7 @@ class _TaskProgressMonitorScreenState
     return Container(
       width: phaseW,
       height: h,
-      color: const Color(0xFFE3ECF8),
+      color: AppColors.brandTint,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3786,7 +3786,7 @@ class _TaskProgressMonitorScreenState
             Text(
               context.l10n.workDaysCount(totalChecked, totalExpected),
               style: TextStyle(
-                  fontSize: 9, color: _navy.withValues(alpha: 0.6)),
+                  fontSize: 9, color: AppColors.brandInk.withValues(alpha: 0.6)),
             ),
             const Spacer(),
             Text(
@@ -3861,7 +3861,7 @@ class _TaskProgressMonitorScreenState
                   style: TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 12)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _navy,
+                foregroundColor: AppColors.brandInk,
                 side: BorderSide(color: _navy),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),

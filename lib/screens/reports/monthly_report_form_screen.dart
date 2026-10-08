@@ -32,6 +32,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 // ══════════════════════════════════════════════════════════════════
 // MONTHLY TABLE DATA MODEL
@@ -272,7 +273,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
   // ── Design constants ───────────────────────────────────────────
   static const _navy = Color(0xFF0A2E5A);
   static const _fieldBorder = Color(0xFFB0BEC5);
-  static const _sectionBg = Color(0xFFF5F7FA);
+  static Color get _sectionBg => AppColors.surfaceAlt;
   static const _accentGreen = Color(0xFF1B5E20);
   static const _accentPurple = Color(0xFF6A1B9A);
 
@@ -712,7 +713,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(2)),
               ),
               Padding(
@@ -721,18 +722,18 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
-                        color: _navy)),
+                        color: AppColors.brandInk)),
               ),
               const Divider(height: 1),
               ListTile(
                 leading:
-                    const Icon(Icons.photo_library_rounded, color: _navy),
+                    Icon(Icons.photo_library_rounded, color: AppColors.brandInk),
                 title: Text(context.l10n.chooseFromGallery,
                     style: TextStyle(fontSize: 13)),
                 onTap: () => Navigator.pop(ctx, ImageSource.gallery),
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt_rounded, color: _navy),
+                leading: Icon(Icons.camera_alt_rounded, color: AppColors.brandInk),
                 title: Text(context.l10n.takeAPhoto,
                     style: TextStyle(fontSize: 13)),
                 onTap: () => Navigator.pop(ctx, ImageSource.camera),
@@ -886,7 +887,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   child: Text(
                     context.l10n.tapPageWithSignature,
                     style: TextStyle(
-                        fontSize: 12, color: Colors.grey[600]),
+                        fontSize: 12, color: AppColors.inkMuted),
                   ),
                 ),
                 Flexible(
@@ -925,7 +926,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: _navy)),
+                                color: AppColors.brandInk)),
                       ]),
                     ),
                   ),
@@ -1912,7 +1913,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.surfaceAlt,
       floatingActionButton: _isReadOnly && !widget.isClientView
           ? FloatingActionButton.extended(
               onPressed: () => setState(() => _isReadOnly = false),
@@ -2124,7 +2125,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         child: Text(
           context.l10n.rfMonthlyReportCaps,
           style: TextStyle(
-            color: _navy,
+            color: AppColors.brandInk,
             fontSize: 18,
             fontWeight: FontWeight.w800,
             letterSpacing: 3,
@@ -2149,7 +2150,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
           child: Container(
             height: 58,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: _fieldBorder, width: 1),
               boxShadow: [
@@ -2167,14 +2168,14 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(children: [
-                  const Icon(Icons.calendar_month_rounded,
-                      color: _navy, size: 15),
+                  Icon(Icons.calendar_month_rounded,
+                      color: AppColors.brandInk, size: 15),
                   const SizedBox(width: 4),
                   Text(label,
                       style: TextStyle(
                         fontSize: labelFs,
                         fontWeight: FontWeight.w600,
-                        color: _navy.withValues(alpha: 0.7),
+                        color: AppColors.brandInk.withValues(alpha: 0.7),
                         letterSpacing: 0.3,
                       )),
                 ]),
@@ -2184,7 +2185,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   style: TextStyle(
                     fontSize: valueFs,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    color: AppColors.ink,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -2211,7 +2212,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -2221,8 +2222,8 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
           Container(
             width: 100,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8EEF6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(6),
                 bottomLeft: Radius.circular(6),
@@ -2232,7 +2233,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: _navy,
+                  color: AppColors.brandInk,
                   letterSpacing: 0.5,
                 )),
           ),
@@ -2247,7 +2248,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       RegExp(r'[a-zA-Z0-9\s\-_/]'))
                 ],
                 style: TextStyle(
-                    fontSize: 13, color: Colors.black87),
+                    fontSize: 13, color: AppColors.ink),
                 decoration: InputDecoration(
                   hintText: context.l10n.buildingHint,
                   hintStyle: TextStyle(
@@ -2291,7 +2292,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
 
       return Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(color: _fieldBorder, width: 1),
           boxShadow: [
@@ -2332,7 +2333,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                   if (allImages.isNotEmpty) ...[
                     Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F7FA),
+                        color: AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                             color: const Color(0xFFB0BEC5), width: 0.8),
@@ -2342,14 +2343,14 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(children: [
-                            const Icon(Icons.photo_library_rounded,
-                                size: 14, color: _navy),
+                            Icon(Icons.photo_library_rounded,
+                                size: 14, color: AppColors.brandInk),
                             const SizedBox(width: 6),
                             Text(context.l10n.imagesWithCount(allImages.length),
                                 style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: _navy)),
+                                    color: AppColors.brandInk)),
                           ]),
                           const SizedBox(height: 8),
                           if (allImages.length == 1) ...[
@@ -2502,7 +2503,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: _fieldBorder, width: 1),
         boxShadow: [
@@ -2677,7 +2678,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: _fieldBorder, width: 1),
         boxShadow: [
@@ -2760,8 +2761,8 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                       width: toolbarSz,
                       height: toolbarSz,
                       alignment: Alignment.center,
-                      child: const Icon(Icons.table_chart_rounded,
-                          color: _navy, size: 20),
+                      child: Icon(Icons.table_chart_rounded,
+                          color: AppColors.brandInk, size: 20),
                     ),
                   ),
                 ),
@@ -2796,7 +2797,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                     ),
                     paragraph: quill.DefaultTextBlockStyle(
                       TextStyle(
-                          color: Colors.black87, fontSize: 13),
+                          color: AppColors.ink, fontSize: 13),
                       const quill.HorizontalSpacing(0, 0),
                       const quill.VerticalSpacing(2, 2),
                       const quill.VerticalSpacing(0, 0),
@@ -2854,11 +2855,11 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.table_chart_outlined,
-                          color: _navy.withValues(alpha: 0.5), size: 16),
+                          color: AppColors.brandInk.withValues(alpha: 0.5), size: 16),
                       const SizedBox(width: 6),
                       Text(context.l10n.tapToInsertTable,
                           style: TextStyle(
-                              color: _navy.withValues(alpha: 0.5),
+                              color: AppColors.brandInk.withValues(alpha: 0.5),
                               fontSize: 11)),
                     ],
                   ),
@@ -2893,7 +2894,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               style: TextStyle(fontSize: 12),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: _navy,
+              foregroundColor: AppColors.brandInk,
               side: const BorderSide(color: _navy, width: 1.2),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(7)),
@@ -2934,7 +2935,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: _fieldBorder, width: 1),
         boxShadow: [
@@ -3025,7 +3026,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FA),
+        color: AppColors.surfaceAlt,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -3050,7 +3051,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
+                  color: AppColors.successTint,
                   border: Border.all(color: Colors.green[300]!),
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -3089,7 +3090,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: _navy.withValues(alpha: 0.8))),
+                  color: AppColors.brandInk.withValues(alpha: 0.8))),
           const SizedBox(height: 6),
 
           if (_isReadOnly) ...[
@@ -3169,19 +3170,19 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? _navy : Colors.white,
+          color: active ? _navy : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: active ? _navy : _fieldBorder, width: 1.2),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 13, color: active ? Colors.white : _navy),
+          Icon(icon, size: 13, color: active ? Colors.white : AppColors.brandInk),
           const SizedBox(width: 5),
           Text(label,
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : _navy)),
+                  color: active ? Colors.white : AppColors.brandInk)),
         ]),
       ),
     );
@@ -3209,7 +3210,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
                 style: TextStyle(fontSize: 11),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _navy,
+                foregroundColor: AppColors.brandInk,
                 side: const BorderSide(color: _navy, width: 1.2),
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 8),
@@ -3242,19 +3243,19 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
-            color: const Color(0xFFE8EEF6),
+            color: AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Row(children: [
             Icon(Icons.info_outline_rounded,
-                size: 13, color: _navy.withValues(alpha: 0.7)),
+                size: 13, color: AppColors.brandInk.withValues(alpha: 0.7)),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 context.l10n.pdfSignatureSteps,
                 style: TextStyle(
                     fontSize: 10,
-                    color: _navy.withValues(alpha: 0.75)),
+                    color: AppColors.brandInk.withValues(alpha: 0.75)),
               ),
             ),
           ]),
@@ -3301,7 +3302,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       height: 120,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: hasImage
@@ -3396,7 +3397,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
         height: 80,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: _fieldBorder),
         ),
@@ -3412,7 +3413,7 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
       height: 100,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
             color: _navy.withValues(alpha: 0.3), width: 1.2),
@@ -3455,19 +3456,19 @@ class _MonthlyReportFormScreenState extends State<MonthlyReportFormScreen> {
     return TextFormField(
       controller: ctrl,
       readOnly: _isReadOnly,
-      style: TextStyle(fontSize: 13, color: Colors.black87),
+      style: TextStyle(fontSize: 13, color: AppColors.ink),
       decoration: InputDecoration(
         labelText: label,
         labelStyle:
-            TextStyle(fontSize: 11, color: _navy.withValues(alpha: 0.7)),
+            TextStyle(fontSize: 11, color: AppColors.brandInk.withValues(alpha: 0.7)),
         hintText: hint,
         hintStyle:
             TextStyle(color: Colors.grey[400], fontSize: 12),
         prefixIcon:
-            Icon(icon, color: _navy.withValues(alpha: 0.6), size: 18),
+            Icon(icon, color: AppColors.brandInk.withValues(alpha: 0.6), size: 18),
         isDense: true,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(
@@ -3740,7 +3741,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: _navy)),
+                                  color: AppColors.brandInk)),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -3787,7 +3788,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                       ),
                       child: Text(context.l10n.cancel,
                           style: TextStyle(
-                              color: _navy, fontSize: 13)),
+                              color: AppColors.brandInk, fontSize: 13)),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -3902,7 +3903,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                     isDense: true,
                     labelText: context.l10n.columnName,
                     labelStyle:
-                        TextStyle(fontSize: 12, color: _navy),
+                        TextStyle(fontSize: 12, color: AppColors.brandInk),
                     hintText: context.l10n.columnNameHint,
                     hintStyle: TextStyle(
                         color: Colors.grey[400], fontSize: 12),
@@ -3931,7 +3932,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                       ),
                       child: Text(context.l10n.cancel,
                           style: TextStyle(
-                              color: _navy, fontSize: 13)),
+                              color: AppColors.brandInk, fontSize: 13)),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -4007,7 +4008,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
             border: Border.all(
                 color: onTap != null
                     ? color.withValues(alpha: 0.4)
-                    : Colors.grey[300]!,
+                    : AppColors.border,
                 width: 0.8),
           ),
           child: Icon(icon,
@@ -4039,7 +4040,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Text(
           _controllers[rowIdx][colIdx].text,
-          style: TextStyle(fontSize: 12, color: Colors.black87),
+          style: TextStyle(fontSize: 12, color: AppColors.ink),
           softWrap: true,
         ),
       );
@@ -4050,7 +4051,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
         controller: _controllers[rowIdx][colIdx],
         maxLines: null,   // ← unlimited lines; cell grows with content
         minLines: 1,
-        style: TextStyle(fontSize: 12, color: Colors.black87),
+        style: TextStyle(fontSize: 12, color: AppColors.ink),
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding:
@@ -4100,7 +4101,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
           ...widget.tableData.rows.asMap().entries.map((entry) {
             final idx = entry.key;
             final bg =
-                idx.isEven ? Colors.white : const Color(0xFFF8FAFC);
+                idx.isEven ? AppColors.surface : AppColors.surfaceAlt;
             return TableRow(children: [
               if (widget.tableData.showRowNumbers)
                 Container(
@@ -4112,7 +4113,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: _navy.withValues(alpha: 0.55))),
+                          color: AppColors.brandInk.withValues(alpha: 0.55))),
                 ),
               ...List.generate(
                   colCount, (ci) => _dataCell(idx, ci, bg, readOnly)),
@@ -4152,13 +4153,13 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             child: Row(children: [
-              const Icon(Icons.table_chart_rounded,
-                  color: _navy, size: 15),
+              Icon(Icons.table_chart_rounded,
+                  color: AppColors.brandInk, size: 15),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(widget.tableData.title,
                     style: TextStyle(
-                        color: _navy,
+                        color: AppColors.brandInk,
                         fontWeight: FontWeight.w600,
                         fontSize: 12)),
               ),
@@ -4227,13 +4228,13 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
                           Icon(
                               Icons.drive_file_rename_outline_rounded,
                               size: 13,
-                              color: Colors.grey[600]),
+                              color: AppColors.inkMuted),
                           const SizedBox(width: 3),
                           Text(context.l10n.headersButton,
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.grey[600])),
+                                  color: AppColors.inkMuted)),
                         ]),
                   ),
                 ),
@@ -4342,7 +4343,7 @@ class _InlineTableWidgetState extends State<_InlineTableWidget> {
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            color: const Color(0xFFF3F6FA),
+            color: AppColors.surfaceAlt,
             child: Row(children: [
               Icon(Icons.info_outline_rounded,
                   size: 12, color: Colors.grey[450]),
@@ -4441,7 +4442,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
         height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? _navy : Colors.grey[200],
+          color: active ? _navy : AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(icon,
@@ -4454,7 +4455,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
     padding: const EdgeInsets.only(bottom: 6),
     child: Text(text,
         style: TextStyle(
-            fontSize: 12, fontWeight: FontWeight.w600, color: _navy)),
+            fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.brandInk)),
   );
 
   @override
@@ -4535,7 +4536,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                             style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
-                                color: _navy)),
+                                color: AppColors.brandInk)),
                       ),
                       _counterBtn(
                           Icons.add, _colCount < 10 ? _incCol : null),
@@ -4559,7 +4560,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                                 style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
-                                    color: _navy)),
+                                    color: AppColors.brandInk)),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -4606,7 +4607,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                             style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
-                                color: _navy)),
+                                color: AppColors.brandInk)),
                       ),
                       _counterBtn(
                           Icons.add, _rowCount < 30 ? _incRow : null),
@@ -4630,14 +4631,14 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                             decoration: BoxDecoration(
                               color: _showRowNumbers
                                   ? _navy
-                                  : Colors.grey[300],
+                                  : AppColors.surfaceMuted,
                               borderRadius: BorderRadius.circular(11),
                             ),
                             child: Container(
                               width: 18,
                               height: 18,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.surface,
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
@@ -4659,7 +4660,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                                   fontWeight: FontWeight.w500,
                                   color: _showRowNumbers
                                       ? _navy
-                                      : Colors.grey[600])),
+                                      : AppColors.inkMuted)),
                         ]),
                       ),
                     ),
@@ -4684,7 +4685,7 @@ class _InsertTableDialogState extends State<_InsertTableDialog> {
                     ),
                     child: Text(context.l10n.cancel,
                         style: TextStyle(
-                            color: _navy, fontSize: 13)),
+                            color: AppColors.brandInk, fontSize: 13)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -4878,7 +4879,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                 height: 160, // taller for comfortable signing
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: _hasSignature
@@ -4967,7 +4968,7 @@ class _SignaturePadWidgetState extends State<_SignaturePadWidget> {
                     child: Text(_inputLabel,
                         style: TextStyle(
                             fontSize: 9,
-                            color: _navy,
+                            color: AppColors.brandInk,
                             fontWeight: FontWeight.w500)),
                   ),
                 ],
@@ -5366,7 +5367,7 @@ class _CropDialogState extends State<_CropDialog> {
               child: Text(
                 context.l10n.cropHelp,
                 style: TextStyle(
-                    fontSize: 11, color: Colors.grey[600]),
+                    fontSize: 11, color: AppColors.inkMuted),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -5415,7 +5416,7 @@ class _CropDialogState extends State<_CropDialog> {
                         style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _navy),
-                      foregroundColor: _navy,
+                      foregroundColor: AppColors.brandInk,
                       padding:
                           const EdgeInsets.symmetric(vertical: 11),
                       shape: RoundedRectangleBorder(

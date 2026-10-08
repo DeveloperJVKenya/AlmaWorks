@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class ClientAccessRequestsScreen extends StatefulWidget {
   final Logger logger;
@@ -179,7 +180,7 @@ class _ClientAccessRequestsScreenState
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -240,7 +241,7 @@ class _ClientAccessRequestsScreenState
                         request.clientEmail,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppColors.inkMuted,
                         ),
                       ),
                     ],
@@ -269,13 +270,13 @@ class _ClientAccessRequestsScreenState
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                Icon(Icons.calendar_today, size: 14, color: AppColors.inkMuted),
                 const SizedBox(width: 4),
                 Text(
                   context.l10n.requestedOn(DateFormat.yMMMd().add_Hm().format(request.requestDate)),
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                   ),
                 ),
               ],
@@ -363,7 +364,7 @@ class _ClientAccessRequestsScreenState
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                   ),
                 ),
               ],
@@ -403,7 +404,7 @@ class _ClientAccessRequestsScreenState
                       const Color(0xFF0A2E5A).withValues(alpha: 0.15),
                   child: Text(
                     request.clientUsername[0].toUpperCase(),
-                    style: const TextStyle(color: Color(0xFF0A2E5A)),
+                    style: TextStyle(color: AppColors.brandInk),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -422,7 +423,7 @@ class _ClientAccessRequestsScreenState
                         request.clientEmail,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: AppColors.inkMuted,
                         ),
                       ),
                     ],
@@ -486,7 +487,7 @@ class _ClientAccessRequestsScreenState
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.red[50],
+                    color: AppColors.dangerTint,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -685,13 +686,13 @@ class _ClientAccessRequestsScreenState
       padding: const EdgeInsets.only(top: 4),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: Colors.grey[600]),
+          Icon(icon, size: 14, color: AppColors.inkMuted),
           const SizedBox(width: 4),
           Text(
             text,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: AppColors.inkMuted,
             ),
           ),
         ],
@@ -746,7 +747,7 @@ class _ClientAccessRequestsScreenState
                               dense: true,
                               title: Text(r.label, style: TextStyle(fontSize: 14)),
                               subtitle: Text(r.subtitle,
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                  style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                               value: r.value,
                               activeColor: const Color(0xFF0A2E5A),
                             ))
@@ -762,7 +763,7 @@ class _ClientAccessRequestsScreenState
                 if (projects.isEmpty)
                   Text(context.l10n.noProjectsAvailable,
                       style: TextStyle(
-                          color: Colors.grey[600], fontSize: 14))
+                          color: AppColors.inkMuted, fontSize: 14))
                 else
                   Container(
                     constraints: const BoxConstraints(maxHeight: 300),
@@ -1008,7 +1009,7 @@ class _ClientAccessRequestsScreenState
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.orange[50],
+                    color: AppColors.warningTint,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -1158,7 +1159,7 @@ class _ClientAccessRequestsScreenState
                 Text(
                   context.l10n.currentRole(roleLabel(request.grantedRole)),
                   style: TextStyle(
-                      fontSize: 12, color: Colors.grey[600]),
+                      fontSize: 12, color: AppColors.inkMuted),
                 ),
                 const SizedBox(height: 8),
                 RadioGroup<String>(
@@ -1172,7 +1173,7 @@ class _ClientAccessRequestsScreenState
                               dense: true,
                               title: Text(r.label, style: TextStyle(fontSize: 14)),
                               subtitle: Text(r.subtitle,
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                  style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                               value: r.value,
                               activeColor: const Color(0xFF0A2E5A),
                             ))
@@ -1189,7 +1190,7 @@ class _ClientAccessRequestsScreenState
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     subtitle: Text(
                         context.l10n.pmEligibleHint,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                        style: TextStyle(fontSize: 12, color: AppColors.inkMuted)),
                     value: isProjectManager,
                     activeColor: const Color(0xFF0A2E5A),
                     onChanged: (v) => setDialogState(() => isProjectManager = v ?? false),
@@ -1266,7 +1267,7 @@ class _ClientAccessRequestsScreenState
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red[50],
+                      color: AppColors.dangerTint,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -1313,7 +1314,7 @@ class _ClientAccessRequestsScreenState
                 if (projects.isEmpty)
                   Text(context.l10n.noProjectsAvailable,
                       style: TextStyle(
-                          color: Colors.grey[600], fontSize: 13))
+                          color: AppColors.inkMuted, fontSize: 13))
                 else
                   Container(
                     constraints: const BoxConstraints(maxHeight: 260),

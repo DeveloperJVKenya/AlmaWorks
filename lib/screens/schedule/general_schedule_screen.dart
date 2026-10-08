@@ -17,6 +17,7 @@ import 'package:almaworks/helpers/download_feedback.dart';
 import 'package:intl/intl.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class GeneralScheduleScreen extends StatefulWidget {
   final ProjectModel project;
@@ -55,7 +56,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.surfaceAlt,
       body: StreamBuilder<List<ScheduleDocument>>(
         stream: _scheduleService.getGeneralScheduleDocuments(widget.project.id),
         builder: (context, snapshot) {
@@ -101,7 +102,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                     context.l10n.noScheduleYet,
                     style: TextStyle(
                       fontSize: 18,
-                      color: Colors.grey[600],
+                      color: AppColors.inkMuted,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -178,7 +179,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           context.l10n.fileUploadedDot(document.fileName, _formatDate(document.uploadedAt)),
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: AppColors.inkMuted,
           ),
         ),
         trailing: PopupMenuButton<String>(
@@ -407,7 +408,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           dialogTitle,
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF0A2E5A),
+            color: AppColors.brandInk,
           ),
         ),
         content: Column(
@@ -416,7 +417,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
           children: [
             Text(
               contentText,
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(color: AppColors.inkMuted),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -439,7 +440,7 @@ class _GeneralScheduleScreenState extends State<GeneralScheduleScreen> {
                 context.l10n.fileLabel(fileName),
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: AppColors.inkMuted,
                 ),
               ),
             ],

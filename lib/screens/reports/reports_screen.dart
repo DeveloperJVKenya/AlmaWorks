@@ -28,6 +28,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class ReportsScreen extends StatefulWidget {
   final ProjectModel project;
@@ -127,7 +128,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           // ── Tab Bar: fills evenly on wide screens, scrollable on mobile ──
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withValues(alpha: 0.1),
@@ -147,9 +148,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                   tabAlignment: isMobile
                       ? TabAlignment.start
                       : TabAlignment.fill,
-                  labelColor: const Color(0xFF0A2E5A),
+                  labelColor: AppColors.brandInk,
                   unselectedLabelColor: Colors.grey[600],
-                  indicatorColor: const Color(0xFF0A2E5A),
+                  indicatorColor: AppColors.brandInk,
                   labelStyle: TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 13),
                   unselectedLabelStyle: TextStyle(
@@ -368,7 +369,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           Text(
             context.l10n.noTypeReportsYet(reportTabLabel(type).toLowerCase()),
             style: TextStyle(
-                color: Colors.grey[600], fontSize: 16),
+                color: AppColors.inkMuted, fontSize: 16),
           ),
           const SizedBox(height: 8),
           // Clients/Technician cannot create reports — show a neutral message instead.
@@ -388,7 +389,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       decoration: BoxDecoration(
         color: const Color(0xFF0A2E5A).withValues(alpha: 0.05),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -396,7 +397,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF0A2E5A)),
+            color: AppColors.brandInk),
       ),
     );
   }
@@ -438,7 +439,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             Text(
               context.l10n.uploadedColon(_dateFormat.format(report.uploadedAt)),
               style: TextStyle(
-                  color: Colors.grey[600], fontSize: 13),
+                  color: AppColors.inkMuted, fontSize: 13),
             ),
             ...[
             const SizedBox(height: 2),
@@ -454,7 +455,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                 reportTabLabel(report.type),
                 style: TextStyle(
                     fontSize: 11,
-                    color: const Color(0xFF0A2E5A),
+                    color: AppColors.brandInk,
                     fontWeight: FontWeight.w500),
               ),
             ),
@@ -571,9 +572,9 @@ class _ReportsScreenState extends State<ReportsScreen>
           leading: CircleAvatar(
             backgroundColor:
                 const Color(0xFF0A2E5A).withValues(alpha: 0.12),
-            child: const Icon(
+            child: Icon(
               Icons.description_rounded,
-              color: Color(0xFF0A2E5A),
+              color: AppColors.brandInk,
               size: 22,
             ),
           ),
@@ -589,7 +590,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               Text(
                 context.l10n.savedColon(_dateFormat.format(savedAt)),
                 style:
-                    TextStyle(color: Colors.grey[600], fontSize: 13),
+                    TextStyle(color: AppColors.inkMuted, fontSize: 13),
               ),
               const SizedBox(height: 2),
               Container(
@@ -603,7 +604,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                   context.l10n.typeForm(reportTabLabel(type)),
                   style: TextStyle(
                       fontSize: 11,
-                      color: const Color(0xFF0A2E5A),
+                      color: AppColors.brandInk,
                       fontWeight: FontWeight.w500),
                 ),
               ),
@@ -822,9 +823,9 @@ class _ReportsScreenState extends State<ReportsScreen>
           leading: CircleAvatar(
             backgroundColor:
                 const Color(0xFF0A2E5A).withValues(alpha: 0.12),
-            child: const Icon(
+            child: Icon(
               Icons.security_rounded,
-              color: Color(0xFF0A2E5A),
+              color: AppColors.brandInk,
               size: 22,
             ),
           ),
@@ -840,7 +841,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               Text(
                 context.l10n.savedColon(_dateFormat.format(savedAt)),
                 style: TextStyle(
-                    color: Colors.grey[600], fontSize: 13),
+                    color: AppColors.inkMuted, fontSize: 13),
               ),
               const SizedBox(height: 2),
               Container(
@@ -854,7 +855,7 @@ class _ReportsScreenState extends State<ReportsScreen>
                   context.l10n.safetyForm,
                   style: TextStyle(
                       fontSize: 11,
-                      color: const Color(0xFF0A2E5A),
+                      color: AppColors.brandInk,
                       fontWeight: FontWeight.w500),
                 ),
               ),
@@ -1338,7 +1339,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1349,19 +1350,19 @@ class _ReportsScreenState extends State<ReportsScreen>
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: const Color(0xFF0A2E5A)),
+                    color: AppColors.brandInk),
               ),
             ),
             const Divider(),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F0FB),
-                child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.brandTint,
+                child: Icon(Icons.edit_note_rounded, color: AppColors.brandInk),
               ),
               title: Text(context.l10n.fillDailyForm, style: TextStyle()),
               subtitle: Text(
                 context.l10n.completeFormInApp,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1379,14 +1380,14 @@ class _ReportsScreenState extends State<ReportsScreen>
               },
             ),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F5E9),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.successTint,
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
               title: Text(context.l10n.uploadDailyFile, style: TextStyle()),
               subtitle: Text(
                 context.l10n.fileTypesFromDevice,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1416,7 +1417,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1427,19 +1428,19 @@ class _ReportsScreenState extends State<ReportsScreen>
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: const Color(0xFF0A2E5A)),
+                    color: AppColors.brandInk),
               ),
             ),
             const Divider(),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F0FB),
-                child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.brandTint,
+                child: Icon(Icons.edit_note_rounded, color: AppColors.brandInk),
               ),
               title: Text(context.l10n.fillWeeklyForm, style: TextStyle()),
               subtitle: Text(
                 context.l10n.completeFormInApp,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1457,14 +1458,14 @@ class _ReportsScreenState extends State<ReportsScreen>
               },
             ),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F5E9),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.successTint,
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
               title: Text(context.l10n.uploadWeeklyFile, style: TextStyle()),
               subtitle: Text(
                 context.l10n.fileTypesFromDevice,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1494,7 +1495,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1505,19 +1506,19 @@ class _ReportsScreenState extends State<ReportsScreen>
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: const Color(0xFF0A2E5A)),
+                    color: AppColors.brandInk),
               ),
             ),
             const Divider(),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F0FB),
-                child: Icon(Icons.edit_note_rounded, color: Color(0xFF0A2E5A)),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.brandTint,
+                child: Icon(Icons.edit_note_rounded, color: AppColors.brandInk),
               ),
               title: Text(context.l10n.fillMonthlyForm, style: TextStyle()),
               subtitle: Text(
                 context.l10n.completeFormInApp,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1535,14 +1536,14 @@ class _ReportsScreenState extends State<ReportsScreen>
               },
             ),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F5E9),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.successTint,
                 child: Icon(Icons.upload_file_rounded, color: Colors.green),
               ),
               title: Text(context.l10n.uploadMonthlyFile, style: TextStyle()),
               subtitle: Text(
                 context.l10n.fileTypesFromDevice,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -1571,7 +1572,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1582,21 +1583,21 @@ class _ReportsScreenState extends State<ReportsScreen>
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: const Color(0xFF0A2E5A)),
+                    color: AppColors.brandInk),
               ),
             ),
             const Divider(),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F0FB),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.brandTint,
                 child:
-                    Icon(Icons.edit_note, color: Color(0xFF0A2E5A)),
+                    Icon(Icons.edit_note, color: AppColors.brandInk),
               ),
               title:
                   Text(context.l10n.fillSafetyForm, style: TextStyle()),
               subtitle: Text(context.l10n.completeFormInApp,
                   style: TextStyle(
-                      fontSize: 12, color: Colors.grey[600])),
+                      fontSize: 12, color: AppColors.inkMuted)),
               onTap: () {
                 Navigator.pop(context);
                 if (mounted) {
@@ -1613,15 +1614,15 @@ class _ReportsScreenState extends State<ReportsScreen>
               },
             ),
             ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE8F5E9),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.successTint,
                 child: Icon(Icons.upload_file, color: Colors.green),
               ),
               title: Text(context.l10n.uploadSafetyFile,
                   style: TextStyle()),
               subtitle: Text(context.l10n.fileTypesFromDevice,
                   style: TextStyle(
-                      fontSize: 12, color: Colors.grey[600])),
+                      fontSize: 12, color: AppColors.inkMuted)),
               onTap: () {
                 Navigator.pop(context);
                 _uploadReport('Safety');
@@ -1774,14 +1775,14 @@ class _ReportsScreenState extends State<ReportsScreen>
           dialogTitle,
           style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF0A2E5A)),
+              color: AppColors.brandInk),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(contentText,
-                style: TextStyle(color: Colors.grey[700])),
+                style: TextStyle(color: AppColors.inkMuted)),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
@@ -1804,7 +1805,7 @@ class _ReportsScreenState extends State<ReportsScreen>
               const SizedBox(height: 8),
               Text(context.l10n.fileLabel(fileName),
                   style: TextStyle(
-                      fontSize: 12, color: Colors.grey[600])),
+                      fontSize: 12, color: AppColors.inkMuted)),
             ],
           ],
         ),

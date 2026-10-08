@@ -12,6 +12,7 @@ import 'communication_models.dart';
 import 'communication_service.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 // ─── Module-level logger (mirrors the pattern used in BaseLayout) ─────────────
 final _log = Logger(
@@ -215,7 +216,7 @@ class _RecipientFieldState extends State<_RecipientField> {
                           style: TextStyle(fontSize: 13)),
                       subtitle: Text(p.email,
                           style: TextStyle(
-                              fontSize: 11, color: Colors.grey[600])),
+                              fontSize: 11, color: AppColors.inkMuted)),
                     ),
                   );
                 },
@@ -267,7 +268,7 @@ class _RecipientFieldState extends State<_RecipientField> {
         constraints: const BoxConstraints(minHeight: 48),
         decoration: BoxDecoration(
           border:
-              Border(bottom: BorderSide(color: Colors.grey.shade300)),
+              Border(bottom: BorderSide(color: AppColors.border)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
@@ -281,7 +282,7 @@ class _RecipientFieldState extends State<_RecipientField> {
                   widget.label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey[600],
+                    color: AppColors.inkMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -702,7 +703,7 @@ class _CommunicationComposeDialogState
     final isMobile = screenWidth < 600;
 
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       insetPadding: isMobile
           ? const EdgeInsets.all(8)
@@ -786,7 +787,7 @@ class _CommunicationComposeDialogState
                 },
                 child: Text(context.l10n.msgCc,
                     style: TextStyle(
-                        color: Colors.grey[600], fontSize: 13)),
+                        color: AppColors.inkMuted, fontSize: 13)),
               ),
             )
           else
@@ -799,7 +800,7 @@ class _CommunicationComposeDialogState
           Container(
             decoration: BoxDecoration(
                 border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300))),
+                    bottom: BorderSide(color: AppColors.border))),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Row(
               children: [
@@ -808,7 +809,7 @@ class _CommunicationComposeDialogState
                   child: Text(context.l10n.subject,
                       style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600],
+                          color: AppColors.inkMuted,
                           fontWeight: FontWeight.w500)),
                 ),
                 Expanded(
@@ -832,7 +833,7 @@ class _CommunicationComposeDialogState
           Container(
             decoration: BoxDecoration(
                 border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200))),
+                    bottom: BorderSide(color: AppColors.border))),
             child: quill.QuillSimpleToolbar(
               controller: _quillCtrl,
               config: const quill.QuillSimpleToolbarConfig(
@@ -863,7 +864,7 @@ class _CommunicationComposeDialogState
                 customStyles: quill.DefaultStyles(
                   paragraph: quill.DefaultTextBlockStyle(
                     TextStyle(
-                        fontSize: 13, color: Colors.grey[800]),
+                        fontSize: 13, color: AppColors.ink),
                     const quill.HorizontalSpacing(0, 0),
                     const quill.VerticalSpacing(0, 0),
                     const quill.VerticalSpacing(0, 0),
@@ -884,15 +885,15 @@ class _CommunicationComposeDialogState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-          color: Colors.grey[50],
-          border: Border(top: BorderSide(color: Colors.grey.shade200))),
+          color: AppColors.surfaceAlt,
+          border: Border(top: BorderSide(color: AppColors.border))),
       child: Wrap(
         spacing: 8,
         runSpacing: 6,
         children: _pendingAttachments.map((pa) {
           return Chip(
             avatar: Icon(_iconForMime(pa.mimeType),
-                size: 16, color: const Color(0xFF0A2E5A)),
+                size: 16, color: AppColors.brandInk),
             label: Text(pa.name,
                 style: TextStyle(fontSize: 11),
                 overflow: TextOverflow.ellipsis),
@@ -904,7 +905,7 @@ class _CommunicationComposeDialogState
             backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
-              side: BorderSide(color: Colors.grey.shade300),
+              side: BorderSide(color: AppColors.border),
             ),
           );
         }).toList(),
@@ -930,7 +931,7 @@ class _CommunicationComposeDialogState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Colors.grey.shade200))),
+          border: Border(top: BorderSide(color: AppColors.border))),
       child: Row(
         children: [
           ElevatedButton.icon(

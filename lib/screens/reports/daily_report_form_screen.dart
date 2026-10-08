@@ -19,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 // ══════════════════════════════════════════════════════════════════
 //  DATA MODEL
@@ -187,7 +188,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
   // ── colours / constants ────────────────────────────────────────
   static const _navy = Color(0xFF0A2E5A);
   static const _fieldBorder = Color(0xFFB0BEC5);
-  static const _sectionBg = Color(0xFFF5F7FA);
+  static Color get _sectionBg => AppColors.surfaceAlt;
 
   // ── cache key ─────────────────────────────────────────────────
   String get _cacheKey =>
@@ -1328,7 +1329,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
   Widget build(BuildContext context) {
     widget.logger.d('📋 DailyForm: build()');
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.surfaceAlt,
       appBar: AppBar(
         backgroundColor: _navy,
         foregroundColor: Colors.white,
@@ -1557,7 +1558,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         child: Text(
           context.l10n.rfDailyReportCaps,
           style: TextStyle(
-            color: _navy,
+            color: AppColors.brandInk,
             fontSize: 18,
             fontWeight: FontWeight.w800,
             letterSpacing: 3,
@@ -1601,7 +1602,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         child: Container(
           height: 58,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(cellRad),
             border: Border.all(color: _fieldBorder, width: 1),
             boxShadow: [
@@ -1619,13 +1620,13 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(children: [
-                Icon(icon, color: _navy, size: iconSz),
+                Icon(icon, color: AppColors.brandInk, size: iconSz),
                 const SizedBox(width: 4),
                 Text(label,
                     style: TextStyle(
                       fontSize: labelFs,
                       fontWeight: FontWeight.w600,
-                      color: _navy.withValues(alpha: 0.7),
+                      color: AppColors.brandInk.withValues(alpha: 0.7),
                       letterSpacing: 0.3,
                     )),
               ]),
@@ -1651,7 +1652,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
     final weatherCell = Container(
       height: 58,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(cellRad),
         border: Border.all(color: _fieldBorder, width: 1),
         boxShadow: [
@@ -1669,13 +1670,13 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(children: [
-            const Icon(Icons.wb_sunny_rounded, color: _navy, size: iconSz),
+            Icon(Icons.wb_sunny_rounded, color: AppColors.brandInk, size: iconSz),
             const SizedBox(width: 4),
             Text(context.l10n.rfWeatherCaps,
                 style: TextStyle(
                   fontSize: labelFs,
                   fontWeight: FontWeight.w600,
-                  color: _navy.withValues(alpha: 0.7),
+                  color: AppColors.brandInk.withValues(alpha: 0.7),
                   letterSpacing: 0.3,
                 )),
           ]),
@@ -1688,10 +1689,10 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       color: Colors.grey[400], fontSize: valueFs)),
               isExpanded: true,
               isDense: true,
-              icon: const Icon(Icons.expand_more_rounded,
-                  color: _navy, size: 16),
+              icon: Icon(Icons.expand_more_rounded,
+                  color: AppColors.brandInk, size: 16),
               style: TextStyle(
-                  fontSize: valueFs, color: Colors.black87),
+                  fontSize: valueFs, color: AppColors.ink),
               items: _weatherOptions
                   .map((w) => DropdownMenuItem(
                       value: w,
@@ -1744,7 +1745,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -1755,8 +1756,8 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
           Container(
             width: 100,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8EEF6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(6),
                 bottomLeft: Radius.circular(6),
@@ -1767,7 +1768,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: _navy,
+                color: AppColors.brandInk,
                 letterSpacing: 0.5,
               ),
             ),
@@ -1784,7 +1785,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       RegExp(r'[a-zA-Z0-9\s\-_/]'))
                 ],
                 style:
-                    TextStyle(fontSize: 13, color: Colors.black87),
+                    TextStyle(fontSize: 13, color: AppColors.ink),
                 decoration: InputDecoration(
                   hintText: _isReadOnly ? '—' : context.l10n.buildingHint,
                   hintStyle: TextStyle(
@@ -1905,7 +1906,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   ),
                   paragraph: quill.DefaultTextBlockStyle(
                     TextStyle(
-                        color: Colors.black87, fontSize: editorFs),
+                        color: AppColors.ink, fontSize: editorFs),
                     const quill.HorizontalSpacing(0, 0),
                     const quill.VerticalSpacing(2, 2),
                     const quill.VerticalSpacing(0, 0),
@@ -1921,7 +1922,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         widget.logger.e('❌ DailyForm: [$fieldKey] QuillEditor FAILED', error: e, stackTrace: st);
         editorWidget = Container(
           constraints: BoxConstraints(minHeight: minH),
-          color: Colors.red[50],
+          color: AppColors.dangerTint,
           padding: EdgeInsets.all(editorPad),
           child: Text(
             '⚠ ${context.l10n.rfSectionError}',
@@ -1933,7 +1934,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
 
       return Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(color: _fieldBorder, width: 1),
           boxShadow: [
@@ -1983,7 +1984,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         decoration: BoxDecoration(
           border: Border.all(color: Colors.red, width: 1.5),
           borderRadius: BorderRadius.circular(aw * 0.022),
-          color: Colors.red[50],
+          color: AppColors.dangerTint,
         ),
         child: Text(
           '⚠ ${context.l10n.rfSectionError}',
@@ -2027,7 +2028,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
         Container(
           margin: const EdgeInsets.only(bottom: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0F4FA),
+            color: AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(aw * 0.014),
             border: Border.all(color: _fieldBorder, width: 0.8),
           ),
@@ -2050,7 +2051,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   style: TextStyle(
                       fontSize: labelFs,
                       fontWeight: FontWeight.w700,
-                      color: _navy),
+                      color: AppColors.brandInk),
                 ),
               ),
               const SizedBox(width: 10),
@@ -2061,7 +2062,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                   style: TextStyle(
                       fontSize: valueFs,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87),
+                      color: AppColors.ink),
                 ),
               ),
               // Remove button — edit mode only
@@ -2088,7 +2089,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: _fieldBorder, width: 1),
         boxShadow: [
@@ -2162,7 +2163,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                       style: TextStyle(
                           fontSize: labelFs,
                           fontWeight: FontWeight.w600,
-                          color: _navy.withValues(alpha: 0.7),
+                          color: AppColors.brandInk.withValues(alpha: 0.7),
                           letterSpacing: 0.4),
                     ),
                     const SizedBox(height: 6),
@@ -2195,7 +2196,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                         ),
                       ),
                       style: TextStyle(
-                          fontSize: valueFs, color: Colors.black87),
+                          fontSize: valueFs, color: AppColors.ink),
                       items: available
                           .map((n) => DropdownMenuItem(
                               value: n,
@@ -2242,7 +2243,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                         style: TextStyle(
                             fontSize: labelFs,
                             fontWeight: FontWeight.w600,
-                            color: _navy.withValues(alpha: 0.7),
+                            color: AppColors.brandInk.withValues(alpha: 0.7),
                             letterSpacing: 0.4),
                       ),
                     const SizedBox(height: 8),
@@ -2296,7 +2297,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -2477,7 +2478,7 @@ class _DailyReportFormScreenState extends State<DailyReportFormScreen> {
                           fontSize: (aw * 0.032).clamp(11.0, 14.0)),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _navy,
+                      foregroundColor: AppColors.brandInk,
                       side: const BorderSide(color: _navy, width: 1.5),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(aw * 0.018)),

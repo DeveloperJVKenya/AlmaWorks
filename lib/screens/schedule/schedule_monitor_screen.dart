@@ -12,6 +12,7 @@ import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:workmanager/workmanager.dart' hide TaskStatus;
 import 'dart:async';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 // NEW: Helper method for notification colors based on type
 
@@ -1021,7 +1022,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       filled: true,
-                      fillColor: Colors.grey.shade50,
+                      fillColor: AppColors.surfaceAlt,
                     ),
                   ),
                 ),
@@ -1147,7 +1148,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: itemColor.withValues(alpha: 0.3), width: 1),
         boxShadow: [
@@ -1199,7 +1200,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
-                                color: Colors.grey.shade800,
+                                color: AppColors.ink,
                               ),
                             ),
                           ),
@@ -1208,7 +1209,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                             child: PopupMenuButton<String>(
                               icon: Icon(
                                 Icons.more_vert,
-                                color: Colors.grey.shade600,
+                                color: AppColors.inkMuted,
                                 size: 20,
                               ),
                               shape: RoundedRectangleBorder(
@@ -1259,13 +1260,13 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                         children: [
                           Icon(Icons.calendar_today_outlined,
                               size: 14,
-                              color: Colors.grey.shade600),
+                              color: AppColors.inkMuted),
                           const SizedBox(width: 6),
                           Text(
                             task.formattedDateRange,
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey.shade600,
+                              color: AppColors.inkMuted,
                             ),
                           ),
                         ],
@@ -1276,13 +1277,13 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                         children: [
                           Icon(Icons.timelapse_outlined,
                               size: 14,
-                              color: Colors.grey.shade600),
+                              color: AppColors.inkMuted),
                           const SizedBox(width: 6),
                           Text(
                             context.l10n.durationDays(task.duration),
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey.shade600,
+                              color: AppColors.inkMuted,
                             ),
                           ),
                         ],
@@ -1336,8 +1337,8 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                           ),
                           decoration: BoxDecoration(
                             color: task.taskStatus == 'COMPLETED'
-                                ? Colors.green.shade50
-                                : Colors.blue.shade50,
+                                ? AppColors.successTint
+                                : AppColors.brandTint,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
                               color: task.taskStatus == 'COMPLETED'
@@ -1454,7 +1455,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
                   isSearch ? context.l10n.noTasksMatchSearch : context.l10n.noCategoryTasks(title.toLowerCase()),
                   style: TextStyle(
                     fontSize: fontSize,
-                    color: Colors.grey.shade600,
+                    color: AppColors.inkMuted,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -1525,7 +1526,7 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
+                color: AppColors.inkMuted,
               ),
               textAlign: TextAlign.center,
             ),

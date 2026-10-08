@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 class PurchasingPlanScreen extends StatefulWidget {
   final String projectId;
@@ -108,7 +109,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.grey.shade700,
+              color: AppColors.inkMuted,
             ),
           ),
           const SizedBox(height: 8),
@@ -261,7 +262,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
                 title,
                 style: TextStyle(
                   fontSize: titleSize,
-                  color: Colors.grey.shade600,
+                  color: AppColors.inkMuted,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -364,7 +365,7 @@ class _PurchasingPlanScreenState extends State<PurchasingPlanScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.straighten, size: isWide ? 14 : 12, color: Colors.grey.shade600),
+                    Icon(Icons.straighten, size: isWide ? 14 : 12, color: AppColors.inkMuted),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(

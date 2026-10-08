@@ -18,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 // ══════════════════════════════════════════════════════════════════
 // ACTIVITY ROW MODEL
 // ══════════════════════════════════════════════════════════════════
@@ -1052,7 +1053,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.surfaceAlt,
       floatingActionButton: _isReadOnly && !widget.isClientView
           ? FloatingActionButton.extended(
               onPressed: () => setState(() => _isReadOnly = false),
@@ -1217,7 +1218,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
         child: Text(
           context.l10n.rfWeeklyReportCaps,
           style: TextStyle(
-            color: _navy,
+            color: AppColors.brandInk,
             fontSize: 18,
             fontWeight: FontWeight.w800,
             letterSpacing: 3,
@@ -1243,7 +1244,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
           child: Container(
             height: 58,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(cellRad),
               border: Border.all(color: _fieldBorder, width: 1),
               boxShadow: [
@@ -1261,14 +1262,14 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(children: [
-                  const Icon(Icons.calendar_today_rounded,
-                      color: _navy, size: iconSz),
+                  Icon(Icons.calendar_today_rounded,
+                      color: AppColors.brandInk, size: iconSz),
                   const SizedBox(width: 4),
                   Text(label,
                       style: TextStyle(
                         fontSize: labelFs,
                         fontWeight: FontWeight.w600,
-                        color: _navy.withValues(alpha: 0.7),
+                        color: AppColors.brandInk.withValues(alpha: 0.7),
                         letterSpacing: 0.3,
                       )),
                 ]),
@@ -1278,7 +1279,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   style: TextStyle(
                     fontSize: valueFs,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    color: AppColors.ink,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1305,7 +1306,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -1315,8 +1316,8 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
           Container(
             width: 100,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8EEF6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(6),
                 bottomLeft: Radius.circular(6),
@@ -1326,7 +1327,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: _navy,
+                  color: AppColors.brandInk,
                   letterSpacing: 0.5,
                 )),
           ),
@@ -1341,7 +1342,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       RegExp(r'[a-zA-Z0-9\s\-_/]'))
                 ],
                 style: TextStyle(
-                    fontSize: 13, color: Colors.black87),
+                    fontSize: 13, color: AppColors.ink),
                 decoration: InputDecoration(
                   hintText: context.l10n.buildingHint,
                   hintStyle: TextStyle(
@@ -1381,7 +1382,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
         Container(
           margin: const EdgeInsets.only(bottom: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0F4FA),
+            color: AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: _fieldBorder, width: 0.8),
           ),
@@ -1404,7 +1405,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   style: TextStyle(
                       fontSize: labelFs,
                       fontWeight: FontWeight.w700,
-                      color: _navy),
+                      color: AppColors.brandInk),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1414,7 +1415,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   style: TextStyle(
                       fontSize: valueFs,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87),
+                      color: AppColors.ink),
                 ),
               ),
               // Remove button — edit mode only
@@ -1442,7 +1443,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: _fieldBorder, width: 1),
         boxShadow: [
@@ -1517,7 +1518,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       style: TextStyle(
                           fontSize: labelFs,
                           fontWeight: FontWeight.w600,
-                          color: _navy.withValues(alpha: 0.7),
+                          color: AppColors.brandInk.withValues(alpha: 0.7),
                           letterSpacing: 0.4),
                     ),
                     const SizedBox(height: 6),
@@ -1551,7 +1552,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                         ),
                       ),
                       style: TextStyle(
-                          fontSize: valueFs, color: Colors.black87),
+                          fontSize: valueFs, color: AppColors.ink),
                       items: available
                           .map((n) => DropdownMenuItem(
                               value: n,
@@ -1600,7 +1601,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                         style: TextStyle(
                             fontSize: labelFs,
                             fontWeight: FontWeight.w600,
-                            color: _navy.withValues(alpha: 0.7),
+                            color: AppColors.brandInk.withValues(alpha: 0.7),
                             letterSpacing: 0.4),
                       ),
                     const SizedBox(height: 8),
@@ -1640,7 +1641,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
     const double radius = 8.0;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -1674,7 +1675,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
   Widget _buildRoofSubHeader(String label) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EEF6),
+        color: AppColors.surfaceAlt,
         borderRadius: BorderRadius.circular(4),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1683,7 +1684,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          color: _navy,
+          color: AppColors.brandInk,
           letterSpacing: 0.5,
         ),
       ),
@@ -1694,7 +1695,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
     const double radius = 8.0;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -1711,7 +1712,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               minLines: 3,
               maxLength: 800,
               style:
-                  TextStyle(fontSize: 13, color: Colors.black87),
+                  TextStyle(fontSize: 13, color: AppColors.ink),
               decoration: InputDecoration(
                 hintText: context.l10n.additionalNotesHint,
                 hintStyle: TextStyle(
@@ -1744,7 +1745,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
     return Container(
       height: 58,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -1754,8 +1755,8 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
           // Label tab
           Container(
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8EEF6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(6),
                 bottomLeft: Radius.circular(6),
@@ -1767,7 +1768,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: _navy,
+                color: AppColors.brandInk,
                 letterSpacing: 0.3,
               ),
             ),
@@ -1790,7 +1791,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: _navy,
+                  color: AppColors.brandInk,
                 ),
                 decoration: InputDecoration(
                   hintText: '0',
@@ -1800,7 +1801,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                   suffixStyle: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: _navy,
+                    color: AppColors.brandInk,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -1833,7 +1834,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: _fieldBorder, width: 1),
       ),
@@ -1999,7 +2000,7 @@ class _WeeklyReportFormScreenState extends State<WeeklyReportFormScreen> {
                       style: TextStyle(fontSize: 13),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _navy,
+                      foregroundColor: AppColors.brandInk,
                       side: const BorderSide(color: _navy, width: 1.5),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
@@ -2279,7 +2280,7 @@ class _WeeklyActivityTableWidgetState
                           ),
                           child: Text('${i + 1}',
                               style: TextStyle(
-                                  fontSize: 11, fontWeight: FontWeight.w700, color: _navy)),
+                                  fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.brandInk)),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -2324,7 +2325,7 @@ class _WeeklyActivityTableWidgetState
                             borderRadius: BorderRadius.circular(8)),
                       ),
                       child: Text(context.l10n.cancel,
-                          style: TextStyle(color: _navy, fontSize: 13)),
+                          style: TextStyle(color: AppColors.brandInk, fontSize: 13)),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -2392,7 +2393,7 @@ class _WeeklyActivityTableWidgetState
             border: Border.all(
                 color: onTap != null
                     ? color.withValues(alpha: 0.4)
-                    : Colors.grey[300]!,
+                    : AppColors.border,
                 width: 0.8),
           ),
           child: Icon(icon,
@@ -2423,12 +2424,12 @@ class _WeeklyActivityTableWidgetState
             ),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             child: Row(children: [
-              const Icon(Icons.table_chart_rounded, color: _navy, size: 15),
+              Icon(Icons.table_chart_rounded, color: AppColors.brandInk, size: 15),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(context.l10n.activityTable,
                     style: TextStyle(
-                        color: _navy, fontWeight: FontWeight.w600, fontSize: 12)),
+                        color: AppColors.brandInk, fontWeight: FontWeight.w600, fontSize: 12)),
               ),
               // Row-number toggle
               if (!widget.readOnly)
@@ -2482,13 +2483,13 @@ class _WeeklyActivityTableWidgetState
                       ),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.drive_file_rename_outline_rounded,
-                            size: 13, color: Colors.grey[600]),
+                            size: 13, color: AppColors.inkMuted),
                         const SizedBox(width: 3),
                         Text(context.l10n.headersButton,
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey[600])),
+                                color: AppColors.inkMuted)),
                       ]),
                     ),
                   ),
@@ -2512,7 +2513,7 @@ class _WeeklyActivityTableWidgetState
           // ── Hint strip ─────────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            color: const Color(0xFFF3F6FA),
+            color: AppColors.surfaceAlt,
             child: Row(children: [
               Icon(Icons.info_outline_rounded, size: 12, color: Colors.grey[450]),
               const SizedBox(width: 4),
@@ -2566,7 +2567,7 @@ class _WeeklyActivityTableWidgetState
           // Data rows
           ...widget.rows.asMap().entries.map((entry) {
             final idx = entry.key;
-            final bg = idx.isEven ? Colors.white : const Color(0xFFF8FAFC);
+            final bg = idx.isEven ? AppColors.surface : AppColors.surfaceAlt;
             return TableRow(children: [
               if (_showRowNumbers)
                 Container(
@@ -2577,7 +2578,7 @@ class _WeeklyActivityTableWidgetState
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: _navy.withValues(alpha: 0.55))),
+                          color: AppColors.brandInk.withValues(alpha: 0.55))),
                 ),
               ...List.generate(3, (ci) => _dataCell(idx, ci, bg)),
             ]);
@@ -2603,7 +2604,7 @@ class _WeeklyActivityTableWidgetState
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Text(
           _controllers[rowIdx][colIdx].text,
-          style: TextStyle(fontSize: 12, color: Colors.black87),
+          style: TextStyle(fontSize: 12, color: AppColors.ink),
           softWrap: true,
         ),
       );
@@ -2614,7 +2615,7 @@ class _WeeklyActivityTableWidgetState
         controller: _controllers[rowIdx][colIdx],
         maxLines: null,
         minLines: 1,
-        style: TextStyle(fontSize: 12, color: Colors.black87),
+        style: TextStyle(fontSize: 12, color: AppColors.ink),
         decoration: InputDecoration(
           border: InputBorder.none,
           contentPadding:

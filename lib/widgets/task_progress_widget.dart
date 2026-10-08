@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
+import 'package:almaworks/core/theme/app_colors.dart';
 
 // ══════════════════════════════════════════════════════════════════
 // INTERNAL PARSE HELPERS
@@ -344,8 +345,8 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
   static const _navy = Color(0xFF0A2E5A);
   static const _ongoingColor = Color(0xFF1565C0);
   static const _completedColor = Color(0xFF2E7D32);
-  static const _ongoingBg = Color(0xFFE3F0FF);
-  static const _completedBg = Color(0xFFE8F5E9);
+  static Color get _ongoingBg => AppColors.brandTint;
+  static Color get _completedBg => AppColors.successTint;
 
   /// Cycling palette — visually distinct colours for phase bars.
   static const _phaseColors = [
@@ -516,7 +517,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
   Widget _buildHeader(bool isMobile) {
     return Row(
       children: [
-        Icon(Icons.task_alt_rounded, color: _navy, size: isMobile ? 20 : 24),
+        Icon(Icons.task_alt_rounded, color: AppColors.brandInk, size: isMobile ? 20 : 24),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -578,7 +579,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
       curve: Curves.easeInOut,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F4FA),
+          color: AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFFD0DCF0), width: 1),
         ),
@@ -601,14 +602,14 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                 child: Row(
                   children: [
                     Icon(Icons.stacked_bar_chart_rounded,
-                        size: isMobile ? 14 : 15, color: _navy),
+                        size: isMobile ? 14 : 15, color: AppColors.brandInk),
                     const SizedBox(width: 6),
                     Text(
                       context.l10n.phaseBreakdown,
                       style: TextStyle(
                         fontSize: isMobile ? 11 : 12,
                         fontWeight: FontWeight.w700,
-                        color: _navy,
+                        color: AppColors.brandInk,
                       ),
                     ),
                     const Spacer(),
@@ -616,7 +617,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                       context.l10n.phasesCount(phases.length),
                       style: TextStyle(
                         fontSize: isMobile ? 9 : 10,
-                        color: Colors.grey[600],
+                        color: AppColors.inkMuted,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -626,7 +627,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                           ? Icons.expand_less_rounded
                           : Icons.expand_more_rounded,
                       size: isMobile ? 16 : 18,
-                      color: _navy.withValues(alpha: 0.7),
+                      color: AppColors.brandInk.withValues(alpha: 0.7),
                     ),
                   ],
                 ),
@@ -716,7 +717,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                         ? Icons.folder_open_outlined
                         : Icons.folder_outlined,
                     size: isMobile ? 11 : 12,
-                    color: _navy.withValues(alpha: 0.65),
+                    color: AppColors.brandInk.withValues(alpha: 0.65),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -727,7 +728,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                       style: TextStyle(
                         fontSize: isMobile ? 9 : 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.grey[700],
+                        color: AppColors.inkMuted,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -746,7 +747,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                         ? Icons.expand_less_rounded
                         : Icons.expand_more_rounded,
                     size: isMobile ? 14 : 15,
-                    color: _navy.withValues(alpha: 0.55),
+                    color: AppColors.brandInk.withValues(alpha: 0.55),
                   ),
                 ],
               ),
@@ -792,7 +793,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
             style: TextStyle(
               fontSize: isMobile ? 10 : 11,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[800],
+              color: AppColors.ink,
             ),
           ),
         ),
@@ -974,7 +975,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
       margin: const EdgeInsets.only(bottom: 7),
       padding: EdgeInsets.all(isMobile ? 9 : 11),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.22), width: 1),
         boxShadow: [
@@ -1027,7 +1028,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                       style: TextStyle(
                         fontSize: isMobile ? 8 : 9,
                         fontWeight: FontWeight.w700,
-                        color: _navy.withValues(alpha: 0.75),
+                        color: AppColors.brandInk.withValues(alpha: 0.75),
                         letterSpacing: 0.2,
                       ),
                     ),
@@ -1079,7 +1080,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                   Row(
                     children: [
                       Icon(Icons.folder_outlined,
-                          size: isMobile ? 10 : 11, color: Colors.grey[600]),
+                          size: isMobile ? 10 : 11, color: AppColors.inkMuted),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
@@ -1088,7 +1089,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: isMobile ? 9 : 10,
-                            color: Colors.grey[600],
+                            color: AppColors.inkMuted,
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -1184,7 +1185,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
                   Text(
                     context.l10n.noActiveTasksYet,
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: AppColors.inkMuted,
                       fontSize: isMobile ? 12 : 14,
                       fontWeight: FontWeight.w500,
                     ),
