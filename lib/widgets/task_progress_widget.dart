@@ -529,9 +529,9 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        _legendChip('ONGOING', _ongoingColor, _ongoingBg, isMobile),
+        _legendChip(context.l10n.monitorOngoing.toUpperCase(), _ongoingColor, _ongoingBg, isMobile),
         const SizedBox(width: 6),
-        _legendChip('COMPLETED', _completedColor, _completedBg, isMobile),
+        _legendChip(context.l10n.taskCompleted.toUpperCase(), _completedColor, _completedBg, isMobile),
       ],
     );
   }
@@ -959,7 +959,7 @@ class _TaskProgressWidgetState extends State<TaskProgressWidget> {
     final color = isCompleted ? _completedColor : _ongoingColor;
     final bg = isCompleted ? _completedBg : _ongoingBg;
 
-    final statusLabel = isCompleted ? 'COMPLETED' : 'ONGOING';
+    final statusLabel = (isCompleted ? l10nNow.taskCompleted : l10nNow.monitorOngoing).toUpperCase();
     final statusIcon = isCompleted
         ? Icons.check_circle_rounded
         : Icons.play_circle_filled_rounded;

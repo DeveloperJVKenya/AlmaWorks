@@ -230,7 +230,7 @@ class _CommunicationScreenState extends State<CommunicationScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'PROJECT',
+                    context.l10n.projectCaps,
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.grey[400],

@@ -3369,7 +3369,7 @@ class _TaskProgressMonitorScreenState
                         color: statusColor,
                       ),
                       const SizedBox(width: 6),
-                      Text(r.status.toUpperCase(),
+                      Text((r.status == ProjectDateExtensionRequestModel.statusApproved ? context.l10n.approvedStatus : r.status == ProjectDateExtensionRequestModel.statusRejected ? context.l10n.extensionStatusRejected : context.l10n.pendingStatus).toUpperCase(),
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor)),
                       const Spacer(),
                       Text(_dfDisplay.format(r.requestedAt),

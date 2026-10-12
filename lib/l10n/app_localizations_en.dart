@@ -7417,4 +7417,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get badgeGroup => 'GRP';
+
+  @override
+  String get tagDone => 'Done';
+
+  @override
+  String get tagSoon => 'Soon';
+
+  @override
+  String get projectCaps => 'PROJECT';
+
+  @override
+  String get extensionStatusRejected => 'Rejected';
 }

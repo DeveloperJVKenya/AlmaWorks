@@ -2060,5 +2060,9 @@
   "daysHint": "giorni",
   "rfPhaseCaps": "FASE",
   "badgeProject": "PRG",
-  "badgeGroup": "GRP"
+  "badgeGroup": "GRP",
+  "tagDone": "Fatto",
+  "tagSoon": "A breve",
+  "projectCaps": "PROGETTO",
+  "extensionStatusRejected": "Respinta"
 }

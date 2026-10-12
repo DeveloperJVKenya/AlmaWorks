@@ -31,7 +31,7 @@ void callbackDispatcher() {
 
       if (projectId == null) {
         logger.e('❌ Background task: projectId is null');
-        return Future.value(false);
+        return false;
       }
 
       logger.d('📋 Background task processing project: $projectId');
@@ -62,7 +62,7 @@ void callbackDispatcher() {
 
       if (snapshot.docs.isEmpty) {
         logger.i('ℹ️ No tasks found for project $projectId');
-        return Future.value(true);
+        return true;
       }
 
       final List<ScheduleMonitorData> tasks = snapshot.docs
@@ -138,7 +138,7 @@ void callbackDispatcher() {
 
       if (notifyTasks.isEmpty) {
         logger.i('✅ No tasks need notifications');
-        return Future.value(true);
+        return true;
       }
 
       // STEP 5: Batch check notification status
@@ -166,7 +166,7 @@ void callbackDispatcher() {
 
       if (unsentTasks.isEmpty) {
         logger.i('✅ All tasks already notified');
-        return Future.value(true);
+        return true;
       }
 
       logger.i('🔔 Triggering ${unsentTasks.length} notifications');
@@ -228,11 +228,11 @@ void callbackDispatcher() {
       }
 
       logger.i('🎉 Background task completed - sent ${unsentTasks.length} notifications');
-      return Future.value(true);
+      return true;
 
     } catch (e, stackTrace) {
       logger.e('❌ Background task failed', error: e, stackTrace: stackTrace);
-      return Future.value(false);
+      return false;
     }
   });
 }

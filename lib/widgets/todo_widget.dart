@@ -844,13 +844,13 @@ class _TodoWidgetState extends State<TodoWidget> {
   String _getStatusLabel(MonitorStatus status) {
     switch (status) {
       case MonitorStatus.overdue:
-        return 'OVERDUE';
+        return l10nNow.monitorOverdue.toUpperCase();
       case MonitorStatus.ongoing:
-        return 'ONGOING';
+        return l10nNow.monitorOngoing.toUpperCase();
       case MonitorStatus.completed:
-        return 'DONE';
+        return l10nNow.tagDone.toUpperCase();
       case MonitorStatus.upcoming:
-        return 'SOON';
+        return l10nNow.tagSoon.toUpperCase();
     }
   }
 }

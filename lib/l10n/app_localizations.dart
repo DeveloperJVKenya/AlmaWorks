@@ -12498,6 +12498,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'GRP'**
   String get badgeGroup;
+
+  /// No description provided for @tagDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get tagDone;
+
+  /// No description provided for @tagSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Soon'**
+  String get tagSoon;
+
+  /// No description provided for @projectCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'PROJECT'**
+  String get projectCaps;
+
+  /// No description provided for @extensionStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get extensionStatusRejected;
 }
 
 class _AppLocalizationsDelegate
