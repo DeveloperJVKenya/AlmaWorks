@@ -1090,18 +1090,42 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
     html.Url.revokeObjectUrl(blobUrl);
   }
 
-  // ── Share single photo (web: copy URL) ──────────────────────────────────────
+  // ── Share single photo ───────────────────────────────────────────────────────
+  // Web: tries navigator.share (opens the device/browser's native share sheet).
+  //      Falls back to clipboard only if the browser has no share API.
+  // Mobile: downloads to temp then shares via platform share sheet.
   Future<void> _sharePhoto(PhotoModel photo) async {
     widget.logger.i('📤 Share: ${photo.id}');
 
     if (kIsWeb) {
-      await Clipboard.setData(ClipboardData(text: photo.url));
-      if (!mounted) return;
-      _showSnackBar('🔗 ${context.l10n.shareWebCopied}',
-          backgroundColor: Colors.green[700]!);
+      try {
+        await SharePlus.instance.share(
+          ShareParams(
+            subject: photo.name,
+            text: photo.name,
+            uri: Uri.parse(photo.url),
+          ),
+        );
+        // Success — native share sheet handled it.
+      } catch (e) {
+        final msg = e.toString().toLowerCase();
+        // AbortError / cancel = user dismissed the share sheet — no feedback.
+        if (msg.contains('abort') || msg.contains('cancel') ||
+            msg.contains('dismiss') || msg.contains('platform')) {
+          widget.logger.d('📤 Web share dismissed by user');
+          return;
+        }
+        // navigator.share not supported on this browser — copy URL as fallback.
+        widget.logger.w('📤 Web Share API unavailable: $e — falling back to clipboard');
+        await Clipboard.setData(ClipboardData(text: photo.url));
+        if (!mounted) return;
+        _showSnackBar('🔗 ${context.l10n.shareWebCopied}',
+            backgroundColor: Colors.green[700]!);
+      }
       return;
     }
 
+    // ── Mobile: download to temp file then share ─────────────────────────────
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
 
     try {
@@ -1125,8 +1149,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
       messenger.clearSnackBars();
       if (!mounted) return;
       await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
-      widget.logger
-          .i('✅ Share completed for ${photo.id}');
+      widget.logger.i('✅ Share completed for ${photo.id}');
     } catch (e, st) {
       widget.logger.e('📤 Share error: $e', stackTrace: st);
       messenger.clearSnackBars();
@@ -1144,6 +1167,11 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
     _selection.exitMultiSelect();
 
     if (kIsWeb) {
+      // Capture l10n before any await.
+      final String shareSubject = context.l10n.galleryTabPhotos;
+      final String shareWebMultiCopiedMsg = context.l10n.shareWebMultiCopied;
+
+      // Collect all URLs first.
       final List<String> urls = [];
       for (final String id in idsToShare) {
         try {
@@ -1152,16 +1180,36 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
               .doc(id)
               .get();
           if (doc.exists) {
-            final PhotoModel photo =
-                PhotoModel.fromMap(id, doc.data() as Map<String, dynamic>);
-            urls.add(photo.url);
+            urls.add(PhotoModel.fromMap(id, doc.data() as Map<String, dynamic>).url);
           }
         } catch (_) {}
       }
-      await Clipboard.setData(ClipboardData(text: urls.join('\n')));
-      if (!mounted) return;
-      _showSnackBar('🔗 ${context.l10n.shareWebMultiCopied}',
-          backgroundColor: Colors.green[700]!);
+      if (urls.isEmpty) return;
+
+      // Try navigator.share with all URLs joined as text.
+      // On mobile browsers this opens the native share sheet.
+      final String shareText = urls.join('\n');
+      try {
+        await SharePlus.instance.share(
+          ShareParams(
+            subject: shareSubject,
+            text: shareText,
+          ),
+        );
+      } catch (e) {
+        final msg = e.toString().toLowerCase();
+        if (msg.contains('abort') || msg.contains('cancel') ||
+            msg.contains('dismiss') || msg.contains('platform')) {
+          widget.logger.d('📤 Web multi-share dismissed by user');
+          return;
+        }
+        // navigator.share not supported — fall back to clipboard.
+        widget.logger.w('📤 Web Share API unavailable: $e — falling back to clipboard');
+        await Clipboard.setData(ClipboardData(text: shareText));
+        if (!mounted) return;
+        _showSnackBar('🔗 $shareWebMultiCopiedMsg',
+            backgroundColor: Colors.green[700]!);
+      }
       return;
     }
 
