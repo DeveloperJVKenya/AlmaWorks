@@ -2738,6 +2738,48 @@ abstract class AppLocalizations {
   /// **'Result'**
   String get stepResult;
 
+  /// No description provided for @stepSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted'**
+  String get stepSubmitted;
+
+  /// No description provided for @reasoningSubmittedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Response submitted'**
+  String get reasoningSubmittedTitle;
+
+  /// No description provided for @reasoningSubmittedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your written response has been submitted. A safety officer will review it shortly.'**
+  String get reasoningSubmittedMessage;
+
+  /// No description provided for @reviewStatusSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted'**
+  String get reviewStatusSubmitted;
+
+  /// No description provided for @reviewStatusWaitingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for review'**
+  String get reviewStatusWaitingReview;
+
+  /// No description provided for @reviewStatusUnderReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Under review'**
+  String get reviewStatusUnderReview;
+
+  /// No description provided for @resultAvailableAfterReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Your result and feedback will be shown here once the safety officer has completed their review.'**
+  String get resultAvailableAfterReview;
+
   /// No description provided for @filterCorrect.
   ///
   /// In en, this message translates to:

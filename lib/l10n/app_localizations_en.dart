@@ -1526,6 +1526,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stepResult => 'Result';
 
   @override
+  String get stepSubmitted => 'Submitted';
+
+  @override
+  String get reasoningSubmittedTitle => 'Response submitted';
+
+  @override
+  String get reasoningSubmittedMessage =>
+      'Your written response has been submitted. A safety officer will review it shortly.';
+
+  @override
+  String get reviewStatusSubmitted => 'Submitted';
+
+  @override
+  String get reviewStatusWaitingReview => 'Waiting for review';
+
+  @override
+  String get reviewStatusUnderReview => 'Under review';
+
+  @override
+  String get resultAvailableAfterReview =>
+      'Your result and feedback will be shown here once the safety officer has completed their review.';
+
+  @override
   String get filterCorrect => 'Correct';
 
   @override

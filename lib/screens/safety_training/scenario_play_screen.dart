@@ -14,7 +14,7 @@ import 'package:logger/logger.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/theme/app_colors.dart';
 
-enum _Stage { question, reasoning, result }
+enum _Stage { question, reasoning, pendingReview, result }
 
 /// Plays one scenario: observe the hazard scene, choose an answer, explain
 /// the reasoning in your own words, then see the server-graded result.
@@ -80,7 +80,7 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
       if (!mounted) return;
       setState(() {
         _result = result;
-        _stage = _Stage.result;
+        _stage = _Stage.pendingReview;
         _isSaving = false;
       });
     } on FirebaseFunctionsException catch (e) {
@@ -168,6 +168,7 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
                   child: switch (_stage) {
                     _Stage.question => _buildQuestion(),
                     _Stage.reasoning => _buildReasoning(),
+                    _Stage.pendingReview => _buildPendingReview(),
                     _Stage.result => _buildResult(),
                   },
                 );
@@ -179,7 +180,14 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _StepIndicator(current: _stage.index + 1),
+                  _StepIndicator(
+                    current: switch (_stage) {
+                      _Stage.question => 1,
+                      _Stage.reasoning => 2,
+                      _Stage.pendingReview => 3,
+                      _Stage.result => 3,
+                    },
+                  ),
                   const SizedBox(height: 18),
                   if (wide)
                     Row(
@@ -353,7 +361,105 @@ class _ScenarioPlayScreenState extends ConsumerState<ScenarioPlayScreen> {
     );
   }
 
-  // ── Stage 3: result ───────────────────────────────────────────────────────
+  // ── Stage 3: pending review ───────────────────────────────────────────────
+
+  Widget _buildPendingReview() {
+    final l = context.l10n;
+    return AppCard(
+      key: const ValueKey('pendingReview'),
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.elasticOut,
+            builder: (context, v, child) => Transform.scale(scale: v, child: child),
+            child: Center(
+              child: Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(colors: [
+                    AppPalette.brightBlue.withValues(alpha: 0.18),
+                    AppPalette.brightBlue.withValues(alpha: 0.06),
+                  ]),
+                ),
+                child: const Icon(Icons.send_rounded, color: AppPalette.brightBlue, size: 50),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            l.reasoningSubmittedTitle,
+            textAlign: TextAlign.center,
+            style: appText(21, weight: FontWeight.w800, color: AppPalette.brightBlue),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l.reasoningSubmittedMessage,
+            textAlign: TextAlign.center,
+            style: appText(13.5, color: AppPalette.inkMuted, height: 1.55),
+          ),
+          const SizedBox(height: 24),
+          // Status progression: Submitted → Waiting Review → Under Review
+          _ReviewStatusRow(steps: [
+            (label: l.reviewStatusSubmitted, done: true),
+            (label: l.reviewStatusWaitingReview, done: false),
+            (label: l.reviewStatusUnderReview, done: false),
+          ]),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: AppPalette.skyBlue, borderRadius: BorderRadius.circular(16)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 19, color: AppPalette.brightBlue),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l.resultAvailableAfterReview,
+                    style: appText(13, height: 1.55),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _practiceAgain,
+                icon: const Icon(Icons.replay_rounded, size: 18),
+                label: Text(
+                  l.practiceAgain,
+                  style: appText(13.5, weight: FontWeight.w600, color: AppColors.brandInk),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  side: BorderSide(color: AppPalette.border),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+              PrimaryButton(
+                label: l.backToScenarios,
+                icon: Icons.grid_view_rounded,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Stage 4: result (shown after safety officer review) ───────────────────
 
   Widget _buildResult() {
     final result = _result!;
@@ -531,7 +637,7 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = Breakpoints.isCompact(context);
     final l = context.l10n;
-    final steps = [l.stepObserve, l.stepAnswer, l.stepExplain, l.stepResult];
+    final steps = [l.stepObserve, l.stepAnswer, l.stepExplain, l.stepSubmitted];
     return Row(
       children: [
         for (var i = 0; i < steps.length; i++) ...[
@@ -723,6 +829,62 @@ class _AnswerLine extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Horizontal status progression for the pending-review state.
+/// Each step shows a check icon (done) or a hollow circle (pending).
+class _ReviewStatusRow extends StatelessWidget {
+  const _ReviewStatusRow({required this.steps});
+
+  final List<({String label, bool done})> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < steps.length; i++) ...[
+          if (i > 0)
+            Expanded(
+              child: Container(
+                height: 2,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                color: steps[i].done ? AppPalette.brightBlue : AppPalette.border,
+              ),
+            ),
+          _statusStep(steps[i].label, steps[i].done),
+        ],
+      ],
+    );
+  }
+
+  Widget _statusStep(String label, bool done) {
+    final color = done ? AppPalette.brightBlue : AppPalette.border;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: done ? AppPalette.brightBlue : Colors.transparent,
+            border: Border.all(color: color, width: 2),
+          ),
+          child: done
+              ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
+              : Container(width: 10, height: 10, decoration: BoxDecoration(shape: BoxShape.circle, color: AppPalette.border)),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: appText(10.5, weight: done ? FontWeight.w700 : FontWeight.w400, color: done ? AppPalette.brightBlue : AppPalette.inkFaint),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

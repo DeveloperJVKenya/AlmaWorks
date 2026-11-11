@@ -1538,6 +1538,29 @@ class AppLocalizationsIt extends AppLocalizations {
   String get stepResult => 'Risultato';
 
   @override
+  String get stepSubmitted => 'Inviato';
+
+  @override
+  String get reasoningSubmittedTitle => 'Risposta inviata';
+
+  @override
+  String get reasoningSubmittedMessage =>
+      'La tua risposta scritta è stata inviata. Un responsabile della sicurezza la esaminerà a breve.';
+
+  @override
+  String get reviewStatusSubmitted => 'Inviato';
+
+  @override
+  String get reviewStatusWaitingReview => 'In attesa di revisione';
+
+  @override
+  String get reviewStatusUnderReview => 'In corso di revisione';
+
+  @override
+  String get resultAvailableAfterReview =>
+      'Il tuo risultato e il feedback saranno visibili qui una volta completata la revisione da parte del responsabile della sicurezza.';
+
+  @override
   String get filterCorrect => 'Corrette';
 
   @override
