@@ -8486,6 +8486,138 @@ abstract class AppLocalizations {
   /// **'Photos shared by your project team will appear here.'**
   String get photosPromotedHint;
 
+  /// No description provided for @galleryTabPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get galleryTabPhotos;
+
+  /// No description provided for @galleryTabCollections.
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get galleryTabCollections;
+
+  /// No description provided for @searchPhotosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, category or date…'**
+  String get searchPhotosHint;
+
+  /// No description provided for @noResultsForSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos match your search.'**
+  String get noResultsForSearch;
+
+  /// No description provided for @noCollectionsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No collections yet.'**
+  String get noCollectionsYet;
+
+  /// No description provided for @collectionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos will be grouped by category once some are uploaded.'**
+  String get collectionsHint;
+
+  /// No description provided for @uncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get uncategorized;
+
+  /// No description provided for @downloadingPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading…'**
+  String get downloadingPhoto;
+
+  /// No description provided for @photoSavedToGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo saved to your gallery.'**
+  String get photoSavedToGallery;
+
+  /// No description provided for @couldNotDownloadPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t download the photo.'**
+  String get couldNotDownloadPhoto;
+
+  /// No description provided for @photosDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo downloaded.} other{{count} photos downloaded.}}'**
+  String photosDownloaded(int count);
+
+  /// No description provided for @photosDownloadSomeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{downloaded} downloaded, {failed} failed.'**
+  String photosDownloadSomeFailed(int downloaded, int failed);
+
+  /// No description provided for @shareWebCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo link copied — paste it to share.'**
+  String get shareWebCopied;
+
+  /// No description provided for @shareWebMultiCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo links copied — paste them to share.'**
+  String get shareWebMultiCopied;
+
+  /// No description provided for @backToGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Gallery'**
+  String get backToGallery;
+
+  /// No description provided for @photosCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 photo} other{{count} photos}}'**
+  String photosCount(int count);
+
+  /// No description provided for @zoomIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get zoomIn;
+
+  /// No description provided for @zoomOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get zoomOut;
+
+  /// No description provided for @resetZoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset zoom'**
+  String get resetZoom;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get selectAll;
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect all'**
+  String get deselectAll;
+
+  /// No description provided for @downloadingPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {done} of {total}…'**
+  String downloadingPhotos(int done, int total);
+
   /// No description provided for @financials.
   ///
   /// In en, this message translates to:

@@ -61,5 +61,7 @@
 	<string>Almaworks uses the camera to scan documents and capture photos for inventory and delivery records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Almaworks uses your photo library to attach existing photos to inventory and delivery records.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>AlmaWorks saves project photos to your gallery.</string>
 </dict>
 </plist>

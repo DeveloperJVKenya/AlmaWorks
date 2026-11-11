@@ -1393,6 +1393,62 @@
   "unavailable": "Non disponibile",
   "noPhotosAvailable": "Ancora nessuna foto disponibile.",
   "photosPromotedHint": "Le foto condivise dal team di progetto appariranno qui.",
+  "galleryTabPhotos": "Foto",
+  "galleryTabCollections": "Raccolte",
+  "searchPhotosHint": "Cerca per nome, categoria o data…",
+  "noResultsForSearch": "Nessuna foto corrisponde alla ricerca.",
+  "noCollectionsYet": "Nessuna raccolta ancora.",
+  "collectionsHint": "Le foto verranno raggruppate per categoria una volta caricate.",
+  "uncategorized": "Senza categoria",
+  "downloadingPhoto": "Download in corso…",
+  "photoSavedToGallery": "Foto salvata nella galleria.",
+  "couldNotDownloadPhoto": "Impossibile scaricare la foto.",
+  "photosDownloaded": "{count, plural, =1{1 foto scaricata.} other{{count} foto scaricate.}}",
+  "@photosDownloaded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosDownloadSomeFailed": "{downloaded} scaricate, {failed} fallite.",
+  "@photosDownloadSomeFailed": {
+    "placeholders": {
+      "downloaded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "shareWebCopied": "Link copiato — incollalo per condividere.",
+  "shareWebMultiCopied": "Link delle foto copiati — incollali per condividere.",
+  "backToGallery": "Torna alla Galleria",
+  "photosCount": "{count, plural, =1{1 foto} other{{count} foto}}",
+  "@photosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "zoomIn": "Ingrandisci",
+  "zoomOut": "Riduci",
+  "resetZoom": "Reimposta zoom",
+  "selectAll": "Seleziona tutto",
+  "deselectAll": "Deseleziona tutto",
+  "downloadingPhotos": "Download {done} di {total}…",
+  "@downloadingPhotos": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "financials": "Finanze",
   "financialDocsForMember": "Documenti finanziari di {name}",
   "indexBeingCreated": "Questo elenco è ancora in preparazione",

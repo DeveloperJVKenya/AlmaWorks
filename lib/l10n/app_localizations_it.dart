@@ -5044,6 +5044,94 @@ class AppLocalizationsIt extends AppLocalizations {
       'Le foto condivise dal team di progetto appariranno qui.';
 
   @override
+  String get galleryTabPhotos => 'Foto';
+
+  @override
+  String get galleryTabCollections => 'Raccolte';
+
+  @override
+  String get searchPhotosHint => 'Cerca per nome, categoria o data…';
+
+  @override
+  String get noResultsForSearch => 'Nessuna foto corrisponde alla ricerca.';
+
+  @override
+  String get noCollectionsYet => 'Nessuna raccolta ancora.';
+
+  @override
+  String get collectionsHint =>
+      'Le foto verranno raggruppate per categoria una volta caricate.';
+
+  @override
+  String get uncategorized => 'Senza categoria';
+
+  @override
+  String get downloadingPhoto => 'Download in corso…';
+
+  @override
+  String get photoSavedToGallery => 'Foto salvata nella galleria.';
+
+  @override
+  String get couldNotDownloadPhoto => 'Impossibile scaricare la foto.';
+
+  @override
+  String photosDownloaded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count foto scaricate.',
+      one: '1 foto scaricata.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosDownloadSomeFailed(int downloaded, int failed) {
+    return '$downloaded scaricate, $failed fallite.';
+  }
+
+  @override
+  String get shareWebCopied => 'Link copiato — incollalo per condividere.';
+
+  @override
+  String get shareWebMultiCopied =>
+      'Link delle foto copiati — incollali per condividere.';
+
+  @override
+  String get backToGallery => 'Torna alla Galleria';
+
+  @override
+  String photosCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count foto',
+      one: '1 foto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get zoomIn => 'Ingrandisci';
+
+  @override
+  String get zoomOut => 'Riduci';
+
+  @override
+  String get resetZoom => 'Reimposta zoom';
+
+  @override
+  String get selectAll => 'Seleziona tutto';
+
+  @override
+  String get deselectAll => 'Deseleziona tutto';
+
+  @override
+  String downloadingPhotos(int done, int total) {
+    return 'Download $done di $total…';
+  }
+
+  @override
   String get financials => 'Finanze';
 
   @override

@@ -3370,6 +3370,62 @@
   "unavailable": "Unavailable",
   "noPhotosAvailable": "No photos available yet.",
   "photosPromotedHint": "Photos shared by your project team will appear here.",
+  "galleryTabPhotos": "Photos",
+  "galleryTabCollections": "Collections",
+  "searchPhotosHint": "Search by name, category or date…",
+  "noResultsForSearch": "No photos match your search.",
+  "noCollectionsYet": "No collections yet.",
+  "collectionsHint": "Photos will be grouped by category once some are uploaded.",
+  "uncategorized": "Uncategorized",
+  "downloadingPhoto": "Downloading…",
+  "photoSavedToGallery": "Photo saved to your gallery.",
+  "couldNotDownloadPhoto": "Couldn't download the photo.",
+  "photosDownloaded": "{count, plural, =1{1 photo downloaded.} other{{count} photos downloaded.}}",
+  "@photosDownloaded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosDownloadSomeFailed": "{downloaded} downloaded, {failed} failed.",
+  "@photosDownloadSomeFailed": {
+    "placeholders": {
+      "downloaded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "shareWebCopied": "Photo link copied — paste it to share.",
+  "shareWebMultiCopied": "Photo links copied — paste them to share.",
+  "backToGallery": "Back to Gallery",
+  "photosCount": "{count, plural, =1{1 photo} other{{count} photos}}",
+  "@photosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "zoomIn": "Zoom in",
+  "zoomOut": "Zoom out",
+  "resetZoom": "Reset zoom",
+  "selectAll": "Select all",
+  "deselectAll": "Deselect all",
+  "downloadingPhotos": "Downloading {done} of {total}…",
+  "@downloadingPhotos": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "financials": "Financials",
   "financialDocsForMember": "Financial documents for {name}",
   "@financialDocsForMember": {

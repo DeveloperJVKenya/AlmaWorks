@@ -5008,6 +5008,93 @@ class AppLocalizationsEn extends AppLocalizations {
       'Photos shared by your project team will appear here.';
 
   @override
+  String get galleryTabPhotos => 'Photos';
+
+  @override
+  String get galleryTabCollections => 'Collections';
+
+  @override
+  String get searchPhotosHint => 'Search by name, category or date…';
+
+  @override
+  String get noResultsForSearch => 'No photos match your search.';
+
+  @override
+  String get noCollectionsYet => 'No collections yet.';
+
+  @override
+  String get collectionsHint =>
+      'Photos will be grouped by category once some are uploaded.';
+
+  @override
+  String get uncategorized => 'Uncategorized';
+
+  @override
+  String get downloadingPhoto => 'Downloading…';
+
+  @override
+  String get photoSavedToGallery => 'Photo saved to your gallery.';
+
+  @override
+  String get couldNotDownloadPhoto => 'Couldn\'t download the photo.';
+
+  @override
+  String photosDownloaded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos downloaded.',
+      one: '1 photo downloaded.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosDownloadSomeFailed(int downloaded, int failed) {
+    return '$downloaded downloaded, $failed failed.';
+  }
+
+  @override
+  String get shareWebCopied => 'Photo link copied — paste it to share.';
+
+  @override
+  String get shareWebMultiCopied => 'Photo links copied — paste them to share.';
+
+  @override
+  String get backToGallery => 'Back to Gallery';
+
+  @override
+  String photosCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos',
+      one: '1 photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get zoomIn => 'Zoom in';
+
+  @override
+  String get zoomOut => 'Zoom out';
+
+  @override
+  String get resetZoom => 'Reset zoom';
+
+  @override
+  String get selectAll => 'Select all';
+
+  @override
+  String get deselectAll => 'Deselect all';
+
+  @override
+  String downloadingPhotos(int done, int total) {
+    return 'Downloading $done of $total…';
+  }
+
+  @override
   String get financials => 'Financials';
 
   @override
