@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:almaworks/models/photo_model.dart';
 import 'package:almaworks/models/project_model.dart';
 import 'package:almaworks/widgets/base_layout.dart';
@@ -485,9 +483,9 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
               imageUrl: photos.first.url,
               fit: BoxFit.cover,
               cacheKey: 'col_${photos.first.id}',
-              placeholder: (_, __) =>
+              placeholder: (ctx, url) =>
                   Container(color: AppColors.surfaceMuted),
-              errorWidget: (_, __, ___) =>
+              errorWidget: (ctx, url, err) =>
                   Container(color: AppColors.surfaceMuted,
                       child: Icon(Icons.broken_image, color: Colors.grey[400])),
             ),
@@ -2161,9 +2159,9 @@ class _CollectionDetailPage extends StatelessWidget {
                 cacheKey: photos[i].id,
                 memCacheWidth: 400,
                 memCacheHeight: 400,
-                placeholder: (_, __) =>
+                placeholder: (ctx, url) =>
                     Container(color: AppColors.surfaceMuted),
-                errorWidget: (_, __, ___) => Container(
+                errorWidget: (ctx, url, err) => Container(
                   color: AppColors.surfaceMuted,
                   child: Icon(Icons.broken_image,
                       color: Colors.grey[400]),
@@ -2389,16 +2387,4 @@ class _PhotoTileState extends State<_PhotoTile> {
       ),
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MultiSliver helper
-// ─────────────────────────────────────────────────────────────────────────────
-class _MultiSliverRaw extends StatelessWidget {
-  final List<Widget> slivers;
-  const _MultiSliverRaw({required this.slivers});
-
-  @override
-  Widget build(BuildContext context) =>
-      SliverMainAxisGroup(slivers: slivers);
 }
