@@ -3,11 +3,13 @@ import 'package:almaworks/widgets/base_layout.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +18,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
 import 'package:almaworks/core/theme/app_colors.dart';
+// ignore: depend_on_referenced_packages
+import 'package:universal_html/html.dart' as html;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PhotosScreen
@@ -215,6 +219,8 @@ class _PhotosScreenState extends State<PhotosScreen> {
           floatingActionButton: null,
           child: Column(
             children: [
+              if (_userRole != null && _userRole != 'Client')
+                _buildBackToGalleryBanner(),
               Expanded(
                 child: CustomScrollView(
                   slivers: [
@@ -230,6 +236,38 @@ class _PhotosScreenState extends State<PhotosScreen> {
           ),
         );
       },
+    );
+  }
+
+  // ── Back-to-Gallery banner (admin / tech roles only) ─────────────────────────
+  Widget _buildBackToGalleryBanner() {
+    return Material(
+      color: const Color(0xFF0A2E5A).withValues(alpha: 0.08),
+      child: InkWell(
+        onTap: () {
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.arrow_back_ios_new,
+                  size: 15, color: Color(0xFF0A2E5A)),
+              const SizedBox(width: 6),
+              Text(
+                context.l10n.backToGallery,
+                style: const TextStyle(
+                  color: Color(0xFF0A2E5A),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -588,6 +626,17 @@ class _PhotosScreenState extends State<PhotosScreen> {
               contentPadding: EdgeInsets.zero,
             ),
           ),
+          // ── Properties ──────────────────────────────────────────────────────
+          PopupMenuItem<void>(
+            onTap: () => WidgetsBinding.instance
+                .addPostFrameCallback((_) => _showPhotoProperties(photo)),
+            child: ListTile(
+              leading: Icon(Icons.info_outline, color: AppColors.brandInk),
+              title: Text(context.l10n.viewProperties,
+                  style: TextStyle(fontSize: 14)),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
           // ── Edit ────────────────────────────────────────────────────────────
           PopupMenuItem<void>(
             onTap: () => WidgetsBinding.instance
@@ -626,6 +675,18 @@ class _PhotosScreenState extends State<PhotosScreen> {
     );
   }
 
+  // ── Web helpers ──────────────────────────────────────────────────────────────
+  static String _mimeFromName(String name) {
+    final ext = name.split('.').last.toLowerCase();
+    return switch (ext) {
+      'png' => 'image/png',
+      'gif' => 'image/gif',
+      'webp' => 'image/webp',
+      'bmp' => 'image/bmp',
+      _ => 'image/jpeg',
+    };
+  }
+
   // ── Multi-share ──────────────────────────────────────────────────────────────
   Future<void> _handleMultiShare() async {
     final List<String> idsToShare = _selection.snapshot();
@@ -634,11 +695,72 @@ class _PhotosScreenState extends State<PhotosScreen> {
     _selection.exitMultiSelect();
 
     if (kIsWeb) {
-      _showSnackBar(
-        '⚠️ ${context.l10n.shareNotOnWeb}',
-        backgroundColor: Colors.orange[800]!,
-        duration: const Duration(seconds: 5),
-      );
+      // Capture l10n before any await.
+      final String preparingMsg = context.l10n.preparingPhotosToShare(idsToShare.length);
+      final String downloadLabel = context.l10n.download;
+      final String couldNotShareMsg = context.l10n.couldNotShare;
+
+      _showSnackBar(preparingMsg,
+          backgroundColor: const Color(0xFF0A2E5A),
+          duration: const Duration(seconds: 60));
+
+      // Fetch actual image bytes for all selected photos.
+      final List<({String name, Uint8List bytes})> items = [];
+      for (final String id in idsToShare) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('Photos')
+              .doc(id)
+              .get();
+          if (!doc.exists) continue;
+          final _PhotoItem p = _PhotoItem.fromMap(id, doc.data() as Map<String, dynamic>);
+          final Response<List<int>> r = await Dio().get<List<int>>(
+            p.url,
+            options: Options(responseType: ResponseType.bytes),
+          );
+          if (r.data != null) {
+            items.add((name: p.name, bytes: Uint8List.fromList(r.data!)));
+          }
+        } catch (e) {
+          widget.logger.e('📤 PhotosScreen: could not fetch $id: $e');
+        }
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+
+      if (items.isEmpty) {
+        _showSnackBar('❌ $couldNotShareMsg', backgroundColor: Colors.red[700]!);
+        return;
+      }
+
+      // Try navigator.share with actual image files.
+      try {
+        final List<XFile> xFiles = items
+            .map((it) => XFile.fromData(it.bytes, name: it.name, mimeType: _mimeFromName(it.name)))
+            .toList();
+        await SharePlus.instance.share(ShareParams(files: xFiles));
+        widget.logger.i('✅ PhotosScreen: Web multi-share with image files completed');
+        return;
+      } catch (e) {
+        final msg = e.toString().toLowerCase();
+        if (msg.contains('abort') || msg.contains('cancel') || msg.contains('dismiss')) {
+          return;
+        }
+        widget.logger.w('📤 PhotosScreen: navigator.share(files) not supported: $e');
+      }
+
+      // Not supported: auto-download each image.
+      for (final it in items) {
+        final mime = _mimeFromName(it.name);
+        final blob = html.Blob([it.bytes], mime);
+        final blobUrl = html.Url.createObjectUrlFromBlob(blob);
+        (html.AnchorElement(href: blobUrl)..setAttribute('download', it.name)).click();
+        html.Url.revokeObjectUrl(blobUrl);
+      }
+
+      if (!mounted) return;
+      _showSnackBar('📥 $downloadLabel', backgroundColor: Colors.green[700]!);
       return;
     }
 
@@ -772,6 +894,11 @@ class _PhotosScreenState extends State<PhotosScreen> {
             title: Text(photo.name, style: TextStyle()),
             actions: [
               IconButton(
+                icon: const Icon(Icons.info_outline),
+                tooltip: context.l10n.viewProperties,
+                onPressed: () => _showPhotoProperties(photo),
+              ),
+              IconButton(
                 icon: const Icon(Icons.edit),
                 tooltip: context.l10n.edit,
                 onPressed: () => _editPhotoDetails(photo),
@@ -808,6 +935,83 @@ class _PhotosScreenState extends State<PhotosScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ── Read-only properties panel ───────────────────────────────────────────────
+  void _showPhotoProperties(_PhotoItem photo) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        final l = ctx.l10n;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(l.imageProperties,
+                    style: const TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+                _propRow(ctx, Icons.title, l.titleLabel,
+                    photo.name.isEmpty ? '—' : photo.name),
+                _propRow(ctx, Icons.folder_outlined, l.category,
+                    photo.category.isEmpty ? l.uncategorized : photo.category),
+                _propRow(ctx, Icons.layers_outlined, l.phase,
+                    photo.phase.isEmpty ? l.unphased : photo.phase),
+                _propRow(
+                    ctx,
+                    Icons.calendar_today_outlined,
+                    l.uploadedOn('').trim(),
+                    DateFormat('d MMM yyyy, HH:mm').format(photo.uploadedAt)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _propRow(
+      BuildContext ctx, IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500)),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w400)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -903,10 +1107,75 @@ class _PhotosScreenState extends State<PhotosScreen> {
     widget.logger.i('📤 PhotosScreen: Share: ${photo.id}');
 
     if (kIsWeb) {
-      _showSnackBar(
-        '⚠️ ${context.l10n.shareNotOnWeb}',
-        backgroundColor: Colors.orange[800]!,
-      );
+      // Capture l10n before any await.
+      final String preparingMsg = context.l10n.preparingPhotoToShare;
+      final String downloadLabel = context.l10n.download;
+      final String copiedMsg = context.l10n.shareWebCopied;
+      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+
+      messenger.clearSnackBars();
+      messenger.showSnackBar(SnackBar(
+        content: Text(preparingMsg, style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF0A2E5A),
+        duration: const Duration(seconds: 60),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ));
+
+      // Fetch actual image bytes.
+      Uint8List? bytes;
+      try {
+        final Response<List<int>> r = await Dio().get<List<int>>(
+          photo.url,
+          options: Options(responseType: ResponseType.bytes),
+        );
+        if (r.data != null) bytes = Uint8List.fromList(r.data!);
+      } catch (e) {
+        widget.logger.e('📤 PhotosScreen: Could not fetch image bytes: $e');
+      }
+
+      messenger.clearSnackBars();
+      if (!mounted) return;
+
+      if (bytes == null) {
+        // Bytes unavailable — share URL as last resort.
+        try {
+          await SharePlus.instance.share(ShareParams(uri: Uri.parse(photo.url)));
+        } catch (e) {
+          final msg = e.toString().toLowerCase();
+          if (!msg.contains('abort') && !msg.contains('cancel') && !msg.contains('dismiss')) {
+            await Clipboard.setData(ClipboardData(text: photo.url));
+            if (!mounted) return;
+            _showSnackBar('📋 $copiedMsg', backgroundColor: Colors.grey[700]!);
+          }
+        }
+        return;
+      }
+
+      final String mime = _mimeFromName(photo.name);
+
+      // Try navigator.share with actual image file.
+      try {
+        final xFile = XFile.fromData(bytes, name: photo.name, mimeType: mime);
+        await SharePlus.instance.share(ShareParams(files: [xFile]));
+        widget.logger.i('✅ PhotosScreen: Web share with image file for ${photo.id}');
+        return;
+      } catch (e) {
+        final msg = e.toString().toLowerCase();
+        if (msg.contains('abort') || msg.contains('cancel') || msg.contains('dismiss')) {
+          return;
+        }
+        widget.logger.w('📤 PhotosScreen: navigator.share(files) not supported: $e');
+      }
+
+      // navigator.share not supported: auto-download the image.
+      final blob = html.Blob([bytes], mime);
+      final blobUrl = html.Url.createObjectUrlFromBlob(blob);
+      (html.AnchorElement(href: blobUrl)..setAttribute('download', photo.name)).click();
+      html.Url.revokeObjectUrl(blobUrl);
+      if (!mounted) return;
+      _showSnackBar('📥 $downloadLabel', backgroundColor: Colors.green[700]!);
       return;
     }
 
@@ -1084,7 +1353,9 @@ class _PhotoTileState extends State<_PhotoTile> {
       child: GestureDetector(
         onTap: widget.onTap,
         onLongPress: widget.onLongPress,
-        child: AnimatedContainer(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           decoration: BoxDecoration(
             border: _isSelected
@@ -1185,6 +1456,7 @@ class _PhotoTileState extends State<_PhotoTile> {
             ],
           ),
         ),
+        ),  // ClipRRect
       ),
     );
   }

@@ -12696,6 +12696,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rejected'**
   String get extensionStatusRejected;
+
+  /// No description provided for @imageProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Properties'**
+  String get imageProperties;
+
+  /// No description provided for @viewProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Properties'**
+  String get viewProperties;
+
+  /// No description provided for @groupByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'By Category'**
+  String get groupByCategory;
+
+  /// No description provided for @groupByPhase.
+  ///
+  /// In en, this message translates to:
+  /// **'By Phase'**
+  String get groupByPhase;
+
+  /// No description provided for @groupByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'By Month'**
+  String get groupByDate;
+
+  /// No description provided for @unphased.
+  ///
+  /// In en, this message translates to:
+  /// **'No Phase'**
+  String get unphased;
 }
 
 class _AppLocalizationsDelegate

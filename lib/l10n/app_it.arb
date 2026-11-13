@@ -2127,5 +2127,11 @@
   "tagDone": "Fatto",
   "tagSoon": "A breve",
   "projectCaps": "PROGETTO",
-  "extensionStatusRejected": "Respinta"
+  "extensionStatusRejected": "Respinta",
+  "imageProperties": "Proprietà immagine",
+  "viewProperties": "Proprietà",
+  "groupByCategory": "Per categoria",
+  "groupByPhase": "Per fase",
+  "groupByDate": "Per mese",
+  "unphased": "Nessuna fase"
 }

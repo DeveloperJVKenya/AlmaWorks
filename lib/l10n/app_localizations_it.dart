@@ -7592,4 +7592,22 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get extensionStatusRejected => 'Respinta';
+
+  @override
+  String get imageProperties => 'Proprietà immagine';
+
+  @override
+  String get viewProperties => 'Proprietà';
+
+  @override
+  String get groupByCategory => 'Per categoria';
+
+  @override
+  String get groupByPhase => 'Per fase';
+
+  @override
+  String get groupByDate => 'Per mese';
+
+  @override
+  String get unphased => 'Nessuna fase';
 }

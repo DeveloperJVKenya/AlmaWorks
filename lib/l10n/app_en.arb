@@ -4998,5 +4998,11 @@
   "tagDone": "Done",
   "tagSoon": "Soon",
   "projectCaps": "PROJECT",
-  "extensionStatusRejected": "Rejected"
+  "extensionStatusRejected": "Rejected",
+  "imageProperties": "Image Properties",
+  "viewProperties": "Properties",
+  "groupByCategory": "By Category",
+  "groupByPhase": "By Phase",
+  "groupByDate": "By Month",
+  "unphased": "No Phase"
 }

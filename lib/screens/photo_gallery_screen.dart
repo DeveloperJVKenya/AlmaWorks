@@ -23,6 +23,8 @@ import 'package:almaworks/core/l10n/l10n.dart';
 import 'package:almaworks/core/errors/friendly_error.dart';
 import 'package:almaworks/core/theme/app_colors.dart';
 
+enum _CollectionGroupBy { category, phase, date }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Selection state
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,6 +107,9 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _searchActive = false;
+
+  // Collections grouping
+  _CollectionGroupBy _groupBy = _CollectionGroupBy.category;
 
   @override
   void initState() {
@@ -213,7 +218,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
                       controller: _tabController,
                       children: [
                         _buildPhotosTab(filtered, allPhotos),
-                        _buildCollectionsTab(allPhotos),
+                        _buildCollectionsTab(filtered),
                       ],
                     );
                   },
@@ -413,61 +418,124 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
   }
 
   // ── Collections tab ──────────────────────────────────────────────────────────
-  Widget _buildCollectionsTab(List<PhotoModel> allPhotos) {
-    final Map<String, List<PhotoModel>> collections = {};
-    for (final p in allPhotos) {
-      final String key =
-          p.category.isEmpty ? context.l10n.uncategorized : p.category;
-      collections.update(key, (l) => l..add(p), ifAbsent: () => [p]);
+  Widget _buildCollectionsTab(List<PhotoModel> photos) {
+    // Group photos by the selected attribute.
+    Map<String, List<PhotoModel>> groupPhotos(List<PhotoModel> src) {
+      final Map<String, List<PhotoModel>> map = {};
+      for (final p in src) {
+        final String key;
+        switch (_groupBy) {
+          case _CollectionGroupBy.category:
+            key = p.category.isEmpty ? context.l10n.uncategorized : p.category;
+          case _CollectionGroupBy.phase:
+            key = p.phase.isEmpty ? context.l10n.unphased : p.phase;
+          case _CollectionGroupBy.date:
+            key = DateFormat('MMMM yyyy').format(p.uploadedAt);
+        }
+        map.update(key, (l) => l..add(p), ifAbsent: () => [p]);
+      }
+      return map;
     }
 
-    if (collections.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.collections_outlined,
-                size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(context.l10n.noCollectionsYet,
-                style:
-                    TextStyle(color: AppColors.inkMuted, fontSize: 16)),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(context.l10n.collectionsHint,
-                  style:
-                      TextStyle(color: Colors.grey[500], fontSize: 13),
-                  textAlign: TextAlign.center),
-            ),
-          ],
+    final Map<String, List<PhotoModel>> collections = groupPhotos(photos);
+
+    // Segmented grouping selector
+    Widget selector() => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: SegmentedButton<_CollectionGroupBy>(
+        segments: [
+          ButtonSegment(
+              value: _CollectionGroupBy.category,
+              label: Text(context.l10n.groupByCategory,
+                  style: const TextStyle(fontSize: 12)),
+              icon: const Icon(Icons.folder_outlined, size: 16)),
+          ButtonSegment(
+              value: _CollectionGroupBy.phase,
+              label: Text(context.l10n.groupByPhase,
+                  style: const TextStyle(fontSize: 12)),
+              icon: const Icon(Icons.layers_outlined, size: 16)),
+          ButtonSegment(
+              value: _CollectionGroupBy.date,
+              label: Text(context.l10n.groupByDate,
+                  style: const TextStyle(fontSize: 12)),
+              icon: const Icon(Icons.calendar_month_outlined, size: 16)),
+        ],
+        selected: {_groupBy},
+        onSelectionChanged: (s) => setState(() => _groupBy = s.first),
+        style: ButtonStyle(
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
+      ),
+    );
+
+    if (collections.isEmpty) {
+      return Column(
+        children: [
+          selector(),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.collections_outlined,
+                      size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    _searchQuery.isNotEmpty
+                        ? context.l10n.noResultsForSearch
+                        : context.l10n.noCollectionsYet,
+                    style: TextStyle(color: AppColors.inkMuted, fontSize: 16)),
+                  if (_searchQuery.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                        onPressed: _searchController.clear,
+                        child: Text(context.l10n.clear)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     final List<MapEntry<String, List<PhotoModel>>> entries =
         collections.entries.toList()
-          ..sort((a, b) => a.key.compareTo(b.key));
+          ..sort((a, b) {
+            if (_groupBy == _CollectionGroupBy.date) {
+              // Sort months newest first
+              return b.key.compareTo(a.key);
+            }
+            return a.key.compareTo(b.key);
+          });
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final int cols = constraints.maxWidth < 600
-          ? 2
-          : constraints.maxWidth < 1200
-              ? 3
-              : 4;
-      return GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: cols,
-          childAspectRatio: 1,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+    return Column(
+      children: [
+        selector(),
+        Expanded(
+          child: LayoutBuilder(builder: (context, constraints) {
+            final int cols = constraints.maxWidth < 600
+                ? 2
+                : constraints.maxWidth < 1200
+                    ? 3
+                    : 4;
+            return GridView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cols,
+                childAspectRatio: 1,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: entries.length,
+              itemBuilder: (context, i) =>
+                  _buildCollectionCard(entries[i].key, entries[i].value),
+            );
+          }),
         ),
-        itemCount: entries.length,
-        itemBuilder: (context, i) =>
-            _buildCollectionCard(entries[i].key, entries[i].value),
-      );
-    });
+      ],
+    );
   }
 
   Widget _buildCollectionCard(
@@ -533,12 +601,12 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
     );
   }
 
-  void _openCollection(String category, List<PhotoModel> photos) {
+  void _openCollection(String label, List<PhotoModel> photos) {
     Navigator.push(
       context,
       MaterialPageRoute<void>(
         builder: (_) => _CollectionDetailPage(
-          category: category,
+          category: label,
           photos: photos,
           onViewFullScreen: _viewPhotoFullScreen,
         ),
@@ -846,6 +914,16 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
           ),
           PopupMenuItem<void>(
             onTap: () => WidgetsBinding.instance.addPostFrameCallback(
+                (_) => _showPhotoProperties(photo)),
+            child: ListTile(
+              leading: Icon(Icons.info_outline, color: AppColors.brandInk),
+              title: Text(context.l10n.viewProperties,
+                  style: const TextStyle(fontSize: 14)),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+          PopupMenuItem<void>(
+            onTap: () => WidgetsBinding.instance.addPostFrameCallback(
                 (_) => _editPhotoDetails(photo)),
             child: ListTile(
               leading: Icon(Icons.edit, color: AppColors.brandInk),
@@ -898,6 +976,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
       MaterialPageRoute<void>(
         builder: (_) => _FullScreenViewerPage(
           photo: photo,
+          onInfo: (p) => _showPhotoProperties(p),
           onEdit: (p) => _editPhotoDetails(p),
           onShare: (p) => _sharePhoto(p),
           onDownload: (p) => _downloadPhoto(p),
@@ -1094,34 +1173,93 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
   // Web: tries navigator.share (opens the device/browser's native share sheet).
   //      Falls back to clipboard only if the browser has no share API.
   // Mobile: downloads to temp then shares via platform share sheet.
+  // ── Web helpers ──────────────────────────────────────────────────────────────
+  static String _mimeFromName(String name) {
+    final ext = name.split('.').last.toLowerCase();
+    return switch (ext) {
+      'png' => 'image/png',
+      'gif' => 'image/gif',
+      'webp' => 'image/webp',
+      'bmp' => 'image/bmp',
+      _ => 'image/jpeg',
+    };
+  }
+
   Future<void> _sharePhoto(PhotoModel photo) async {
     widget.logger.i('📤 Share: ${photo.id}');
 
     if (kIsWeb) {
+      // Capture l10n before any await (use_build_context_synchronously).
+      final String preparingMsg = context.l10n.preparingPhotoToShare;
+      final String downloadLabel = context.l10n.download;
+      final String copiedMsg = context.l10n.shareWebCopied;
+      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+
+      messenger.clearSnackBars();
+      messenger.showSnackBar(SnackBar(
+        content: Text(preparingMsg, style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF0A2E5A),
+        duration: const Duration(seconds: 60),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ));
+
+      // Fetch actual image bytes so we can share the file, not just a URL.
+      Uint8List? bytes;
       try {
-        await SharePlus.instance.share(
-          ShareParams(
-            subject: photo.name,
-            text: photo.name,
-            uri: Uri.parse(photo.url),
-          ),
+        final Response<List<int>> r = await Dio().get<List<int>>(
+          photo.url,
+          options: Options(responseType: ResponseType.bytes),
         );
-        // Success — native share sheet handled it.
+        if (r.data != null) bytes = Uint8List.fromList(r.data!);
+      } catch (e) {
+        widget.logger.e('📤 Could not fetch image bytes: $e');
+      }
+
+      messenger.clearSnackBars();
+      if (!mounted) return;
+
+      if (bytes == null) {
+        // Bytes unavailable — share URL as last resort.
+        try {
+          await SharePlus.instance.share(ShareParams(uri: Uri.parse(photo.url)));
+        } catch (e) {
+          final msg = e.toString().toLowerCase();
+          if (!msg.contains('abort') && !msg.contains('cancel') && !msg.contains('dismiss')) {
+            await Clipboard.setData(ClipboardData(text: photo.url));
+            if (!mounted) return;
+            _showSnackBar('📋 $copiedMsg', backgroundColor: Colors.grey[700]!);
+          }
+        }
+        return;
+      }
+
+      final String mime = _mimeFromName(photo.name);
+
+      // Try navigator.share with the actual image file.
+      // On modern mobile browsers and desktop Chrome/Edge this opens the
+      // native OS share sheet with the image attached.
+      try {
+        final xFile = XFile.fromData(bytes, name: photo.name, mimeType: mime);
+        await SharePlus.instance.share(ShareParams(files: [xFile]));
+        widget.logger.i('✅ Web share with image file for ${photo.id}');
+        return;
       } catch (e) {
         final msg = e.toString().toLowerCase();
-        // AbortError / cancel = user dismissed the share sheet — no feedback.
-        if (msg.contains('abort') || msg.contains('cancel') ||
-            msg.contains('dismiss') || msg.contains('platform')) {
-          widget.logger.d('📤 Web share dismissed by user');
-          return;
+        if (msg.contains('abort') || msg.contains('cancel') || msg.contains('dismiss')) {
+          return; // User dismissed share sheet — silent.
         }
-        // navigator.share not supported on this browser — copy URL as fallback.
-        widget.logger.w('📤 Web Share API unavailable: $e — falling back to clipboard');
-        await Clipboard.setData(ClipboardData(text: photo.url));
-        if (!mounted) return;
-        _showSnackBar('🔗 ${context.l10n.shareWebCopied}',
-            backgroundColor: Colors.green[700]!);
+        widget.logger.w('📤 navigator.share(files) not supported: $e — triggering download');
       }
+
+      // navigator.share with files not supported: auto-download the image.
+      final blob = html.Blob([bytes], mime);
+      final blobUrl = html.Url.createObjectUrlFromBlob(blob);
+      (html.AnchorElement(href: blobUrl)..setAttribute('download', photo.name)).click();
+      html.Url.revokeObjectUrl(blobUrl);
+      if (!mounted) return;
+      _showSnackBar('📥 $downloadLabel', backgroundColor: Colors.green[700]!);
       return;
     }
 
@@ -1168,48 +1306,70 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
 
     if (kIsWeb) {
       // Capture l10n before any await.
-      final String shareSubject = context.l10n.galleryTabPhotos;
-      final String shareWebMultiCopiedMsg = context.l10n.shareWebMultiCopied;
+      final String preparingMsg = context.l10n.preparingPhotosToShare(idsToShare.length);
+      final String downloadLabel = context.l10n.download;
 
-      // Collect all URLs first.
-      final List<String> urls = [];
+      _showSnackBar(preparingMsg,
+          backgroundColor: const Color(0xFF0A2E5A),
+          duration: const Duration(seconds: 60));
+
+      // Fetch bytes and photo metadata for all selected photos.
+      final List<({String name, Uint8List bytes})> items = [];
       for (final String id in idsToShare) {
         try {
           final DocumentSnapshot doc = await FirebaseFirestore.instance
               .collection('PhotoGallery')
               .doc(id)
               .get();
-          if (doc.exists) {
-            urls.add(PhotoModel.fromMap(id, doc.data() as Map<String, dynamic>).url);
+          if (!doc.exists) continue;
+          final PhotoModel p = PhotoModel.fromMap(id, doc.data() as Map<String, dynamic>);
+          final Response<List<int>> r = await Dio().get<List<int>>(
+            p.url,
+            options: Options(responseType: ResponseType.bytes),
+          );
+          if (r.data != null) {
+            items.add((name: p.name, bytes: Uint8List.fromList(r.data!)));
           }
-        } catch (_) {}
+        } catch (e) {
+          widget.logger.e('📤 Multi-share: could not fetch $id: $e');
+        }
       }
-      if (urls.isEmpty) return;
 
-      // Try navigator.share with all URLs joined as text.
-      // On mobile browsers this opens the native share sheet.
-      final String shareText = urls.join('\n');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      if (items.isEmpty) {
+        _showSnackBar('❌ ${context.l10n.couldNotPreparePhotos}',
+            backgroundColor: Colors.red[700]!);
+        return;
+      }
+
+      // Try navigator.share with all image files.
       try {
-        await SharePlus.instance.share(
-          ShareParams(
-            subject: shareSubject,
-            text: shareText,
-          ),
-        );
+        final List<XFile> xFiles = items
+            .map((it) => XFile.fromData(it.bytes, name: it.name, mimeType: _mimeFromName(it.name)))
+            .toList();
+        await SharePlus.instance.share(ShareParams(files: xFiles));
+        widget.logger.i('✅ Web multi-share with image files completed');
+        return;
       } catch (e) {
         final msg = e.toString().toLowerCase();
-        if (msg.contains('abort') || msg.contains('cancel') ||
-            msg.contains('dismiss') || msg.contains('platform')) {
-          widget.logger.d('📤 Web multi-share dismissed by user');
+        if (msg.contains('abort') || msg.contains('cancel') || msg.contains('dismiss')) {
           return;
         }
-        // navigator.share not supported — fall back to clipboard.
-        widget.logger.w('📤 Web Share API unavailable: $e — falling back to clipboard');
-        await Clipboard.setData(ClipboardData(text: shareText));
-        if (!mounted) return;
-        _showSnackBar('🔗 $shareWebMultiCopiedMsg',
-            backgroundColor: Colors.green[700]!);
+        widget.logger.w('📤 navigator.share(files) not supported for multi: $e');
       }
+
+      // Not supported: auto-download each image.
+      for (final it in items) {
+        final mime = _mimeFromName(it.name);
+        final blob = html.Blob([it.bytes], mime);
+        final blobUrl = html.Url.createObjectUrlFromBlob(blob);
+        (html.AnchorElement(href: blobUrl)..setAttribute('download', it.name)).click();
+        html.Url.revokeObjectUrl(blobUrl);
+      }
+
+      if (!mounted) return;
+      _showSnackBar('📥 $downloadLabel', backgroundColor: Colors.green[700]!);
       return;
     }
 
@@ -1501,6 +1661,79 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
             )
           : null,
     ));
+  }
+
+  // ── View photo properties (read-only) ───────────────────────────────────────
+  void _showPhotoProperties(PhotoModel photo) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        final l = ctx.l10n;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(l.imageProperties,
+                    style: const TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+                _propRow(Icons.title, l.titleLabel, photo.name.isEmpty ? '—' : photo.name),
+                _propRow(Icons.folder_outlined, l.category, photo.category.isEmpty ? l.uncategorized : photo.category),
+                _propRow(Icons.layers_outlined, l.phase, photo.phase.isEmpty ? l.unphased : photo.phase),
+                _propRow(Icons.calendar_today_outlined,
+                    l.uploadedOn('').trim(),
+                    DateFormat('d MMM yyyy, HH:mm').format(photo.uploadedAt)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _propRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF0A2E5A)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500)),
+                const SizedBox(height: 2),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── Edit photo metadata ──────────────────────────────────────────────────────
@@ -2015,6 +2248,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 class _FullScreenViewerPage extends StatefulWidget {
   final PhotoModel photo;
+  final void Function(PhotoModel) onInfo;
   final void Function(PhotoModel) onEdit;
   final void Function(PhotoModel) onShare;
   final void Function(PhotoModel) onDownload;
@@ -2022,6 +2256,7 @@ class _FullScreenViewerPage extends StatefulWidget {
 
   const _FullScreenViewerPage({
     required this.photo,
+    required this.onInfo,
     required this.onEdit,
     required this.onShare,
     required this.onDownload,
@@ -2067,6 +2302,11 @@ class _FullScreenViewerPageState extends State<_FullScreenViewerPage> {
         foregroundColor: Colors.white,
         title: Text(widget.photo.name, style: const TextStyle()),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: context.l10n.viewProperties,
+            onPressed: () => widget.onInfo(widget.photo),
+          ),
           IconButton(
             icon: const Icon(Icons.edit),
             tooltip: context.l10n.edit,
@@ -2197,27 +2437,66 @@ class _CollectionDetailPage extends StatelessWidget {
             mainAxisSpacing: spacing,
           ),
           itemCount: photos.length,
-          itemBuilder: (context, i) => GestureDetector(
-            onTap: () => onViewFullScreen(photos[i]),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: photos[i].url,
-                fit: BoxFit.cover,
-                cacheKey: photos[i].id,
-                memCacheWidth: 400,
-                memCacheHeight: 400,
-                placeholder: (ctx, url) =>
-                    Container(color: AppColors.surfaceMuted),
-                errorWidget: (ctx, url, err) => Container(
-                  color: AppColors.surfaceMuted,
-                  child: Icon(Icons.broken_image,
-                      color: Colors.grey[400]),
+          itemBuilder: (context, i) {
+            final p = photos[i];
+            return GestureDetector(
+              onTap: () => onViewFullScreen(p),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: p.url,
+                      fit: BoxFit.cover,
+                      cacheKey: p.id,
+                      memCacheWidth: 400,
+                      memCacheHeight: 400,
+                      placeholder: (ctx, url) =>
+                          Container(color: AppColors.surfaceMuted),
+                      errorWidget: (ctx, url, err) => Container(
+                        color: AppColors.surfaceMuted,
+                        child: Icon(Icons.broken_image,
+                            color: Colors.grey[400]),
+                      ),
+                      fadeInDuration: const Duration(milliseconds: 200),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 4),
+                        color: Colors.black.withValues(alpha: 0.55),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              [
+                                if (p.category.isNotEmpty) p.category,
+                                if (p.phase.isNotEmpty) p.phase,
+                              ].join(' · '),
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 10),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            Text(
+                              DateFormat('d MMM yyyy').format(p.uploadedAt),
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 9),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                fadeInDuration: const Duration(milliseconds: 200),
               ),
-            ),
-          ),
+            );
+          },
         );
       }),
     );
@@ -2341,20 +2620,38 @@ class _PhotoTileState extends State<_PhotoTile> {
                       const Duration(milliseconds: 200),
                 ),
 
-                // Category / phase label
+                // Category / phase / date label
                 Positioned(
                   bottom: 0,
                   left: 0,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
-                    color: Colors.black.withValues(alpha: 0.5),
-                    child: Text(
-                      '${widget.photo.category} - ${widget.photo.phase}',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 11),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 4),
+                    color: Colors.black.withValues(alpha: 0.55),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          [
+                            if (widget.photo.category.isNotEmpty)
+                              widget.photo.category,
+                            if (widget.photo.phase.isNotEmpty)
+                              widget.photo.phase,
+                          ].join(' · '),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 10),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        Text(
+                          DateFormat('d MMM yyyy')
+                              .format(widget.photo.uploadedAt),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 9),
+                        ),
+                      ],
                     ),
                   ),
                 ),
