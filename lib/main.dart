@@ -13,6 +13,7 @@ import 'package:almaworks/screens/communication/communication_notification_servi
 import 'package:almaworks/services/notification_service.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -62,8 +63,10 @@ void main() async {
     // This top-level function handles FCM pushes when the app is terminated
     // or backgrounded. It is defined in firebase_notification_handler.dart
     // and annotated with @pragma('vm:entry-point') to survive tree-shaking.
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    logger.i('✅ FCM background handler registered');
+    if (!kIsWeb) {
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      logger.i('✅ FCM background handler registered');
+    }
 
     // Enable Firestore offline persistence
     FirebaseFirestore.instance.settings = const Settings(
@@ -72,9 +75,9 @@ void main() async {
     );
     logger.i('✅ Firestore settings configured');
 
-    // ── Awesome Notifications ────────────────────────────────────────────────
-    // Single notification manager app-wide — every channel (schedule,
-    // client requests, Communication) is registered here.
+    // ── Awesome Notifications (mobile only) ─────────────────────────────────
+    // awesome_notifications is not supported on web; skip entirely.
+    if (!kIsWeb) {
     await AwesomeNotifications().initialize(
       // Was `null` ("use default app icon") — Android has rendered
       // status-bar/notification icons from ONLY their alpha channel since
@@ -156,26 +159,31 @@ void main() async {
       debug: false,
     );
     logger.i('✅ Awesome Notifications initialized successfully');
+    } // end !kIsWeb
 
     // ── Existing Notification Service (client requests) ───────────────────
-    try {
-      await NotificationService(logger: logger).initialize();
-      logger.i('✅ Notification Service initialized successfully');
-    } catch (e) {
-      logger.w(
-          '⚠️ Notification Service initialization failed (non-critical): $e');
+    if (!kIsWeb) {
+      try {
+        await NotificationService(logger: logger).initialize();
+        logger.i('✅ Notification Service initialized successfully');
+      } catch (e) {
+        logger.w(
+            '⚠️ Notification Service initialization failed (non-critical): $e');
+      }
     }
 
     // ── Communication Notification Service (FCM + foreground messages) ────
     // Handles FCM token registration and foreground message display for the
     // Communication section. Non-critical — app runs fully without it.
-    try {
-      await CommunicationNotificationService().initialize();
-      logger.i(
-          '✅ Communication Notification Service initialized successfully');
-    } catch (e) {
-      logger.w(
-          '⚠️ Communication Notification Service initialization failed (non-critical): $e');
+    if (!kIsWeb) {
+      try {
+        await CommunicationNotificationService().initialize();
+        logger.i(
+            '✅ Communication Notification Service initialized successfully');
+      } catch (e) {
+        logger.w(
+            '⚠️ Communication Notification Service initialization failed (non-critical): $e');
+      }
     }
 
     // ProviderScope wraps the whole app because Riverpod requires it as a
@@ -211,6 +219,7 @@ class _AlmaWorksAppState extends ConsumerState<AlmaWorksApp> {
     widget.logger.i('🔔 Setting up notification action listeners');
 
     // Listen to notification actions when user taps from system tray
+    if (!kIsWeb) {
     AwesomeNotifications().setListeners(
       onActionReceivedMethod: (ReceivedAction receivedAction) async {
         widget.logger.i('👆 User tapped notification: ${receivedAction.id}');
@@ -277,6 +286,7 @@ class _AlmaWorksAppState extends ConsumerState<AlmaWorksApp> {
         }
       },
     );
+    } // end !kIsWeb
   }
 
   @override

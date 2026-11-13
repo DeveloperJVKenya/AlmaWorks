@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
-import 'package:elegant_notification/elegant_notification.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:workmanager/workmanager.dart' hide TaskStatus;
 import 'dart:async';
@@ -926,20 +925,48 @@ class _ScheduleMonitorScreenState extends State<ScheduleMonitorScreen>
 
       if (!mounted) return;
 
-      ElegantNotification.success(
-        title: Text(context.l10n.taskUpdated),
-        description: Text(action == 'completed'
-            ? context.l10n.taskMarkedCompleted(task.taskName)
-            : context.l10n.taskMarkedStarted(task.taskName)),
-      ).show(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.green[700],
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(context.l10n.taskUpdated,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(
+              action == 'completed'
+                  ? context.l10n.taskMarkedCompleted(task.taskName)
+                  : context.l10n.taskMarkedStarted(task.taskName),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        duration: const Duration(seconds: 4),
+      ));
 
     } catch (e, stackTrace) {
       widget.logger.e('❌ Error updating task status', error: e, stackTrace: stackTrace);
       if (!mounted) return;
-      ElegantNotification.error(
-        title: Text(context.l10n.errorTitle),
-        description: Text(context.l10n.couldNotUpdateTaskStatus),
-      ).show(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red[700],
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(context.l10n.errorTitle,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(context.l10n.couldNotUpdateTaskStatus,
+                style: const TextStyle(color: Colors.white)),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        duration: const Duration(seconds: 4),
+      ));
     }
   }
 
