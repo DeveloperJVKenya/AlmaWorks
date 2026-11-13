@@ -4,20 +4,20 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   awesome_notifications
-  cloud_firestore
   connectivity_plus
   file_selector_windows
-  firebase_auth
   firebase_core
+  cloud_firestore
+  firebase_auth
   firebase_storage
   flutter_inappwebview_windows
   gal
   permission_handler_windows
   printing
   rive_common
-  share_plus
   syncfusion_pdfviewer_windows
   url_launcher_windows
+  share_plus
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

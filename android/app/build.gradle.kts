@@ -1,10 +1,6 @@
-import java.util.Properties
-import java.io.FileInputStream
-
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
-    id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -19,20 +15,14 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     defaultConfig {
         applicationId = "com.jvalmacis.almaworks"
-        minSdk = flutter.minSdkVersion.toInt()
-        targetSdk = flutter.targetSdkVersion.toInt()
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
         versionCode = 1
         versionName = "1.0.0"
-        multiDexEnabled = true
     }
 
-    // Split APKs by ABI for smaller file sizes
     splits {
         abi {
             isEnable = true
@@ -46,12 +36,10 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -67,7 +55,6 @@ flutter {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.20")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
 }

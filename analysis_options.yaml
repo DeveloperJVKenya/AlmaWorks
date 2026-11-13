@@ -16,6 +16,11 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+  errors:
+    # Flutter 3.47+ deprecated package:flutter/material.dart in favour of
+    # package:material_ui/material_ui.dart. Suppress until the ecosystem
+    # (including flutter gen-l10n output) has fully migrated.
+    deprecated_member_use: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
